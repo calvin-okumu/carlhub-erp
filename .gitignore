@@ -130,3 +130,6 @@ yarn-error.log*
 
 # Static files
 staticfiles/README_UPDATED.md
+
+# Agents
+AGENTS.md

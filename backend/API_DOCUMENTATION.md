@@ -425,10 +425,20 @@ if (response.status === 400) {
 
 #### Pagination
 ```javascript
-// Handle large datasets
-const response = await fetch('/api/tasks/?page=1&page_size=50');
+// Handle large datasets (default page_size=10, max=100)
+const response = await fetch('/api/tasks/?page=1&page_size=20');
 const data = await response.json();
-// Use data.results and data.next for pagination
+
+// Response includes pagination metadata
+console.log(data.count);     // Total items
+console.log(data.next);      // Next page URL or null
+console.log(data.previous);  // Previous page URL or null
+console.log(data.results);   // Array of items
+
+// Navigate pages
+if (data.next) {
+  const nextResponse = await fetch(data.next);
+}
 ```
 
 #### Selective Field Loading

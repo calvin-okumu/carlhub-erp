@@ -1,8 +1,23 @@
 
 services:
+  redis:
+    image: redis:alpine
+    volumes:
+      - redis_prod_data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - backend
+    restart: unless-stopped
+    mem_limit: 256m
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+
   db:
     image: postgres:13
-    restart: always
+    restart: unless-stopped
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -11,31 +26,87 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - backend
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     image: your-dockerhub-username/saascrm-backend:latest
-    restart: always
-     environment:
-       - DJANGO_ENV=production
-       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-       - SECRET_KEY=${SECRET_KEY}
-       - RUN_SETUP=false
+    restart: unless-stopped
+    environment:
+      - DJANGO_ENV=production
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - SECRET_KEY=${SECRET_KEY}
+      - RUN_SETUP=false
     command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - static_prod:/app/static
     ports:
       - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+      - frontend
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
     image: your-dockerhub-username/saascrm-frontend:latest
-    restart: always
+    restart: unless-stopped
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_URL=https://api.yourdomain.com
     command: npm run start
     ports:
       - "80:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: 3
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  backend:
+    driver: bridge
+  frontend:
+    driver: bridge
 
 volumes:
   static_prod:
   db_data:
+  redis_prod_data:
