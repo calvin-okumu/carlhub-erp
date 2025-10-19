@@ -83,6 +83,8 @@ dev:
 	@cd backend && . venv/bin/activate && python manage.py migrate
 	@echo "Starting backend..."
 	@cd backend && (. venv/bin/activate && python manage.py runserver 0.0.0.0:8000 & echo "Backend started with PID $$!")
+	@echo "Installing frontend dependencies..."
+	@cd frontend && npm install
 	@echo "Starting frontend..."
 	@cd frontend && (npm run dev -- -p 3000 & echo "Frontend started with PID $$!")
 	@echo ""
