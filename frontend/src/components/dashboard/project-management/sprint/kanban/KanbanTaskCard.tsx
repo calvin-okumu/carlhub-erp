@@ -27,8 +27,8 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
     const getNextStatuses = (currentStatus: string) => {
         const statusFlow: Record<string, string[]> = {
             'to_do': ['in_progress'],
-            'in_progress': ['review'],
-            'review': ['testing'],
+            'in_progress': ['in_review'],
+            'in_review': ['testing'],
             'testing': ['done']
         };
         return statusFlow[currentStatus] || [];
@@ -38,7 +38,7 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
 
     const getButtonText = (status: string) => {
         if (status === 'in_progress') return 'Move to Progress';
-        if (status === 'review') return 'Move to Review';
+        if (status === 'in_review') return 'Move to Review';
         if (status === 'testing') return 'Move to Testing';
         if (status === 'done') return 'Mark as Done';
         return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
@@ -47,7 +47,7 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
     const getButtonColor = (status: string) => {
         const colorMap: Record<string, string> = {
             'in_progress': 'bg-pink-500 hover:bg-pink-600 text-white',
-            'review': 'bg-blue-500 hover:bg-blue-600 text-white',
+            'in_review': 'bg-blue-500 hover:bg-blue-600 text-white',
             'testing': 'bg-green-500 hover:bg-green-600 text-white',
             'done': 'bg-emerald-500 hover:bg-emerald-600 text-white'
         };

@@ -17,8 +17,8 @@ export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDel
     const getNextStatus = (currentStatus: string) => {
         const statusFlow = {
             'todo': 'in_progress',
-            'in_progress': 'review',
-            'review': 'testing',
+            'in_progress': 'in_review',
+            'in_review': 'testing',
             'testing': 'done',
             'done': 'completed'
         };
@@ -29,7 +29,7 @@ export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDel
         const buttonTexts = {
             'todo': 'Move to In Progress',
             'in_progress': 'Move to Review',
-            'review': 'Move to Testing',
+            'in_review': 'Move to Testing',
             'testing': 'Mark as Done',
             'done': 'Move to Completed'
         };

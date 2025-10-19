@@ -12,14 +12,14 @@ export default function KanbanBoard({ tasks, onTaskClick, onStatusChange }: Kanb
       const columns = [
            { id: 'to_do', title: 'To Do', status: 'to_do' },
            { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
-           { id: 'review', title: 'Review', status: 'review' },
+            { id: 'in_review', title: 'Review', status: 'in_review' },
            { id: 'testing', title: 'Testing', status: 'testing' }
        ];
 
       const colorMap: Record<string, string> = {
            to_do: 'bg-gray-100',
            in_progress: 'bg-pink-100',
-           review: 'bg-blue-100',
+            in_review: 'bg-blue-100',
            testing: 'bg-green-100'
        };
 

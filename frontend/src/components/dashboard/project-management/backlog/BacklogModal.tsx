@@ -200,7 +200,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                         >
                             <option value="todo">To Do</option>
                             <option value="in_progress">In Progress</option>
-                            <option value="review">Review</option>
+                            <option value="in_review">Review</option>
                             <option value="testing">Testing</option>
                             <option value="done">Done</option>
                             <option value="completed">Completed</option>
