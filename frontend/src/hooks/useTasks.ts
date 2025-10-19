@@ -22,13 +22,7 @@ export function useTasks(projectId: number, backlog: boolean = false) {
 
     setLoading(true);
     try {
-      const data = await getTasks(
-        token,
-        undefined,
-        undefined,
-        projectId,
-        undefined,
-      );
+      const data = await getTasks(token, { projectId, backlog, ordering: '-created_at' });
       setTasks(data);
     } catch (err) {
       console.error(err);

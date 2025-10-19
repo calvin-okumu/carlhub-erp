@@ -1,8 +1,18 @@
 import { Project, Milestone, Sprint, Task } from './types';
 import { API_BASE } from './index';
 
-export async function getProjects(token: string, tenant?: number): Promise<Project[]> {
-  const url = tenant ? `${API_BASE}/projects/?tenant=${tenant}` : `${API_BASE}/projects/`;
+export async function getProjects(token: string, params?: { tenant?: number; search?: string; ordering?: string; status?: string; client?: number; priority?: string; page?: number; limit?: number }): Promise<Project[]> {
+  const query = new URLSearchParams();
+  if (params?.tenant) query.append('tenant', params.tenant.toString());
+  if (params?.search) query.append('search', params.search);
+  if (params?.ordering) query.append('ordering', params.ordering);
+  if (params?.status) query.append('status', params.status);
+  if (params?.client) query.append('client', params.client.toString());
+  if (params?.priority) query.append('priority', params.priority);
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+
+  const url = `${API_BASE}/projects/?${query.toString()}`;
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -117,12 +127,17 @@ export async function deleteProject(token: string, id: number): Promise<void> {
 }
 
 // Milestone API functions
-export async function getMilestones(token: string, projectId?: number, tenant?: number): Promise<Milestone[]> {
+export async function getMilestones(token: string, params?: { projectId?: number; tenant?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Milestone[]> {
   let url = `${API_BASE}/milestones/`;
-  const params = new URLSearchParams();
-  if (projectId) params.append('project', projectId.toString());
-  if (tenant) params.append('tenant', tenant.toString());
-  if (params.toString()) url += `?${params.toString()}`;
+  const query = new URLSearchParams();
+  if (params?.projectId) query.append('project', params.projectId.toString());
+  if (params?.tenant) query.append('tenant', params.tenant.toString());
+  if (params?.search) query.append('search', params.search);
+  if (params?.ordering) query.append('ordering', params.ordering);
+  if (params?.status) query.append('status', params.status);
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+  if (query.toString()) url += `?${query.toString()}`;
 
   const response = await fetch(url, {
     method: "GET",
@@ -234,8 +249,17 @@ export async function deleteMilestone(token: string, id: number): Promise<void> 
 }
 
 // Sprint API functions
-export async function getSprints(token: string, projectId?: number): Promise<Sprint[]> {
-  const url = projectId ? `${API_BASE}/sprints/?milestone__project=${projectId}` : `${API_BASE}/sprints/`;
+export async function getSprints(token: string, params?: { projectId?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Sprint[]> {
+  let url = `${API_BASE}/sprints/`;
+  const query = new URLSearchParams();
+  if (params?.projectId) query.append('milestone__project', params.projectId.toString());
+  if (params?.search) query.append('search', params.search);
+  if (params?.ordering) query.append('ordering', params.ordering);
+  if (params?.status) query.append('status', params.status);
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+  if (query.toString()) url += `?${query.toString()}`;
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -404,17 +428,22 @@ export async function unassignTaskFromSprint(token: string, sprintId: number, ta
 }
 
 // Task API functions
-export async function getTasks(token: string, milestoneId?: number, sprintId?: number, projectId?: number, backlog?: boolean): Promise<Task[]> {
+export async function getTasks(token: string, params?: { milestoneId?: number; sprintId?: number; projectId?: number; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Task[]> {
   let url = `${API_BASE}/tasks/`;
-  const params = new URLSearchParams();
+  const query = new URLSearchParams();
 
-  if (milestoneId) params.append('milestone', milestoneId.toString());
-  if (sprintId) params.append('sprint', sprintId.toString());
-  if (projectId) params.append('milestone__project', projectId.toString());
-  if (backlog !== undefined) params.append('backlog', backlog.toString());
+  if (params?.milestoneId) query.append('milestone', params.milestoneId.toString());
+  if (params?.sprintId) query.append('sprint', params.sprintId.toString());
+  if (params?.projectId) query.append('milestone__project', params.projectId.toString());
+  if (params?.backlog !== undefined) query.append('backlog', params.backlog.toString());
+  if (params?.search) query.append('search', params.search);
+  if (params?.ordering) query.append('ordering', params.ordering);
+  if (params?.status) query.append('status', params.status);
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
 
-  if (params.toString()) {
-    url += `?${params.toString()}`;
+  if (query.toString()) {
+    url += `?${query.toString()}`;
   }
 
   const response = await fetch(url, {

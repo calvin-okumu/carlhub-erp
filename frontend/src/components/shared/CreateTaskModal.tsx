@@ -3,56 +3,60 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
-import type { Task, Sprint, UserTenant } from '@/api/types';
+import type { Task, Sprint, UserTenant, Milestone } from '@/api/types';
 import { useForm } from 'react-hook-form';
 
 interface CreateTaskModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    mode: 'add' | 'edit';
-    task?: Task;
-    sprints: Sprint[];
-    assignees: UserTenant[];
-    onSave: (data: {
-        title: string;
-        description?: string;
-        status: string;
-        milestone: number;
-        sprint?: number;
-        assignee?: number;
-        start_date?: string;
-        end_date?: string;
-        estimated_hours?: number;
-    }) => void;
-    defaultSprintId?: number; // For pre-filling sprint in Kanban
-}
+     isOpen: boolean;
+     onClose: () => void;
+     mode: 'add' | 'edit';
+     task?: Task;
+     sprints: Sprint[];
+     assignees: UserTenant[];
+     milestones: Milestone[];
+     onSave: (data: {
+         title: string;
+         description?: string;
+         status: string;
+         milestone: number;
+         sprint?: number;
+         assignee?: number;
+         start_date?: string;
+         end_date?: string;
+         estimated_hours?: number;
+     }) => void;
+     defaultSprintId?: number; // For pre-filling sprint in Kanban
+     isBacklog?: boolean; // To simplify fields for backlog
+ }
 
 type FormData = {
-    title: string;
-    description: string;
-    status: string;
-    priority: string;
-    sprint: string;
-    assignee: string;
-    start_date: string;
-    end_date: string;
-    estimated_hours: string;
-};
+     title: string;
+     description: string;
+     status: string;
+     priority: string;
+     sprint: string;
+     assignee: string;
+     milestone: string;
+     start_date: string;
+     end_date: string;
+     estimated_hours: string;
+ };
 
-export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, assignees, onSave, defaultSprintId }: CreateTaskModalProps) {
-    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
-        defaultValues: {
-            title: '',
-            description: '',
-            status: 'to_do',
-            priority: 'medium',
-            sprint: defaultSprintId?.toString() || '',
-            assignee: '',
-            start_date: '',
-            end_date: '',
-            estimated_hours: '',
-        }
-    });
+export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, assignees, milestones, onSave, defaultSprintId, isBacklog = false }: CreateTaskModalProps) {
+     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+         defaultValues: {
+             title: '',
+             description: '',
+             status: 'to_do',
+             priority: 'medium',
+             sprint: defaultSprintId?.toString() || '',
+             assignee: '',
+             milestone: milestones?.[0]?.id?.toString() || '',
+             start_date: '',
+             end_date: '',
+             estimated_hours: '',
+         }
+     });
     const [minDate, setMinDate] = useState('');
     const [maxDate, setMaxDate] = useState('');
 
@@ -73,13 +77,17 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
 
     const onSubmit = (data: FormData) => {
         let milestoneId: number;
-        if (data.sprint) {
-            const sprint = sprints.find(s => s.id === parseInt(data.sprint));
-            if (!sprint) return;
-            milestoneId = sprint.milestone;
+        if (isBacklog) {
+            milestoneId = parseInt(data.milestone);
         } else {
-            alert('Please select a sprint to assign the milestone.');
-            return;
+            if (data.sprint) {
+                const sprint = sprints.find(s => s.id === parseInt(data.sprint));
+                if (!sprint) return;
+                milestoneId = sprint.milestone;
+            } else {
+                alert('Please select a sprint to assign the milestone.');
+                return;
+            }
         }
 
         const saveData = {
@@ -179,37 +187,58 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             <option value="high">High</option>
                         </select>
                     </div>
-                </div>
-                <div>
-                    <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
-                        <select
-                            id="sprint"
-                            {...register('sprint', { required: 'Sprint is required' })}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        >
-                        <option value="">Select Sprint</option>
-                        {sprints.map(sprint => (
-                            <option key={sprint.id} value={sprint.id}>
-                                {sprint.name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div>
-                    <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
-                        <select
-                            id="assignee"
-                            {...register('assignee')}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        >
-                        <option value="">Select Assignee</option>
-                        {assignees.map(user => (
-                            <option key={user.user} value={user.user}>
-                                {user.user_first_name} {user.user_last_name}
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                 </div>
+                 {isBacklog && milestones && (
+                     <div>
+                         <label htmlFor="milestone" className="block text-sm font-medium text-gray-700">Milestone</label>
+                         <select
+                             id="milestone"
+                             {...register('milestone', { required: 'Milestone is required' })}
+                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                         >
+                             <option value="">Select Milestone</option>
+                             {milestones.map(milestone => (
+                                 <option key={milestone.id} value={milestone.id}>
+                                     {milestone.name}
+                                 </option>
+                             ))}
+                         </select>
+                     </div>
+                 )}
+                 {!isBacklog && (
+                     <div>
+                         <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
+                         <select
+                             id="sprint"
+                             {...register('sprint', { required: 'Sprint is required' })}
+                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                         >
+                             <option value="">Select Sprint</option>
+                             {sprints.map(sprint => (
+                                 <option key={sprint.id} value={sprint.id}>
+                                     {sprint.name}
+                                 </option>
+                             ))}
+                         </select>
+                     </div>
+                 )}
+                 {!isBacklog && (
+                     <div>
+                         <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
+                         <select
+                             id="assignee"
+                             {...register('assignee')}
+                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                         >
+                             <option value="">Select Assignee</option>
+                             {assignees.map(user => (
+                                 <option key={user.user} value={user.user}>
+                                     {user.user_first_name} {user.user_last_name}
+                                 </option>
+                             ))}
+                         </select>
+                     </div>
+                 )}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date</label>
@@ -246,16 +275,18 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                         {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date.message}</p>}
                     </div>
                 </div>
-                <div>
-                    <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
-                    <input
-                        type="number"
-                        id="estimated_hours"
-                        {...register('estimated_hours')}
-                        min="0"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    />
-                </div>
+                 {!isBacklog && (
+                     <div>
+                         <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
+                         <input
+                             type="number"
+                             id="estimated_hours"
+                             {...register('estimated_hours')}
+                             min="0"
+                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-blue-500 focus:border-blue-500"
+                         />
+                     </div>
+                 )}
                 <div className="flex justify-end space-x-3 pt-4">
                     <Button type="button" onClick={onClose} variant="outline">
                         Cancel

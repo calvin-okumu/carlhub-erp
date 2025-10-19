@@ -22,7 +22,7 @@ export function useMilestones(projectId: number, tenant?: number) {
 
     setLoading(true);
     try {
-      const data = await getMilestones(token, projectId, tenant);
+      const data = await getMilestones(token, { projectId, tenant, ordering: '-created_at' });
       setMilestones(data);
     } catch (err) {
       console.error(err);

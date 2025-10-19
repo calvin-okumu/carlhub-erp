@@ -28,7 +28,7 @@ export function useProjects() {
       const ownerTenant = tenants.find((t) => t.is_owner) || tenants[0];
       setCurrentTenant(ownerTenant || null);
 
-      const data = await getProjects(token, ownerTenant?.tenant);
+      const data = await getProjects(token, { tenant: ownerTenant?.tenant, ordering: '-created_at' });
       setProjects(data);
     } catch (err) {
       console.error(err);
