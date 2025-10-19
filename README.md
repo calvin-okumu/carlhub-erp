@@ -49,6 +49,43 @@ A comprehensive multi-tenant Customer Relationship Management system with a mode
 - Docker & Docker Compose (for containerized deployment)
 - OAuth credentials from Google and/or GitHub (for social authentication)
 
+## ⚙️ Environment Configuration
+
+DjangoCRM uses environment variables for configuration, supporting both direct Python execution and Docker deployment.
+
+### Environment Files
+- **backend/.env**: Used when running Django directly (e.g., `make dev`). Contains full Django settings.
+- **root/.env**: Minimal config for Docker Compose with essential variables (SECRET_KEY, DB credentials, SITE_URL, etc.).
+- **root/env.example**: Template for Docker .env with default values.
+- **.env.staging**: Staging-specific environment file for Docker staging deployment.
+
+### Setup Instructions
+1. **For Local Development (Direct Python)**:
+   ```bash
+   cp backend/env.example backend/.env
+   # Edit backend/.env with your local settings
+   ```
+
+2. **For Docker Development**:
+   ```bash
+   cp env.example .env
+   # The .env contains minimal required variables for Docker
+   # Update SECRET_KEY and DB credentials as needed
+   ```
+
+3. **For Docker Staging**:
+   ```bash
+   # .env.staging is pre-configured for staging Docker deployment
+   # Update with your staging-specific values
+   ```
+
+### Key Differences
+- **Local Dev**: Uses backend/.env with DB_HOST=localhost, DOCKER_CONTAINER=false
+- **Docker Dev**: Uses root/.env with DB_HOST=db, DOCKER_CONTAINER=true, minimal vars
+- **Staging**: Uses .env.staging with production-like settings
+
+Both backend and root .env files can coexist, allowing flexible deployment options.
+
 ## 🚀 Quick Start
 
 ### Automated Setup (Recommended)
