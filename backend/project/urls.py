@@ -29,4 +29,5 @@ urlpatterns = [
     path('approve-member/', views.approve_member_view, name='approve_member'),
     path('invite-member/', views.invite_member_view, name='invite_member'),
     path('auth-methods/', views.auth_methods_view, name='auth_methods'),
+    path('health/', views.health_check, name='health_check'),
 ]

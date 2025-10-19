@@ -8,6 +8,7 @@ for Django components and application modules.
 
 import logging
 import logging.handlers
+import os
 from pathlib import Path
 
 
@@ -26,15 +27,18 @@ def setup_logging(base_dir: Path) -> dict:
     logs_dir = base_dir.parent / 'logs' / 'backend'
     logs_dir.mkdir(parents=True, exist_ok=True)
 
+    # Get environment info
+    env_info = f"[{os.getenv('DJANGO_ENV', 'unknown')}]"
+
     # Logging formatters
     formatters = {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {filename} {lineno:d} {funcName} {process:d} {thread:d} {message}',
+            'format': f'{env_info} {{levelname}} {{asctime}} {{module}} {{filename}} {{lineno:d}} {{funcName}} {{process:d}} {{thread:d}} {{message}}',
             'style': '{',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': f'{env_info} {{levelname}} {{asctime}} {{module}} {{message}}',
             'style': '{',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },

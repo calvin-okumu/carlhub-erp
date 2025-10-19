@@ -121,6 +121,19 @@ make dev-backend   # Django server on http://localhost:8000
 make dev-frontend  # Next.js on http://localhost:3000
 ```
 
+### Utility Commands
+```bash
+# Environment validation
+make env-check     # Validate all required environment variables
+
+# Database management
+make db-backup     # Create timestamped database backup
+make db-restore    # Restore from latest backup
+
+# Health monitoring
+curl http://localhost:8000/api/health/  # Check API health status
+```
+
 ### Docker Deployment
 ```bash
 # Start full stack with Docker
@@ -241,11 +254,41 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 curl -H "Authorization: Token YOUR_TOKEN" \
   http://localhost:8000/api/projects/1/
 # Returns: {"id": 1, "name": "Project Alpha", "progress": 75, ...}
+
+# Health check (no auth required)
+curl http://localhost:8000/api/health/
+# Returns: {"status": "healthy", "timestamp": "2025-10-19T05:21:07.965244+00:00", "service": "DjangoCRM API"}
 ```
 
 ## 📊 Sample Data
 
 Run `python manage.py generate_sample_data` to create realistic test data including tenants, clients, projects, milestones, sprints, tasks, and users.
+
+**Note**: Sample data generation is automatically disabled in production environments (when `DEBUG=False`) to prevent accidental data pollution.
+
+### Setup Flags and Options
+
+#### `make setup` / `setup.sh` Flags
+- `--backend-only`: Setup only the Django backend
+- `--frontend-only`: Setup only the Next.js frontend
+- `--docker`: Setup Docker environment instead of local development
+- `--help`: Show help message
+
+#### `python manage.py setup_project` Flags
+- `--skip-sample-data`: Skip generating sample data
+- `--production`: Production mode - skips sample data and superuser creation
+- `--skip-db-setup`: Skip database creation (useful if DB already exists)
+
+#### Environment Differences
+
+| Component | Local Setup (`make setup`) | Docker Setup (`make setup --docker`) |
+|-----------|---------------------------|-------------------------------------|
+| Database | Uses local PostgreSQL, checks existence | Uses Docker PostgreSQL container |
+| Groups | ✅ Created | ✅ Created |
+| Sample Data | ✅ Generated (development only) | ❌ Skipped (production mode) |
+| Superuser | ✅ Created (admin@example.com) | ❌ Skipped |
+| Virtual Env | ✅ Created/activated | ❌ Not needed (containerized) |
+| Redis | ✅ Started locally | ✅ Started in container |
 
 ## 🔧 Configuration
 

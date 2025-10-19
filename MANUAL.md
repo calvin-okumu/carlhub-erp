@@ -67,6 +67,25 @@ The setup script handles the entire installation process:
 
 This creates virtual environments, installs dependencies, sets up the database, runs migrations, creates user groups, generates sample data, and creates a superuser.
 
+#### Setup Script Flags
+- `--backend-only`: Setup only the backend components
+- `--frontend-only`: Setup only the frontend components
+- `--docker`: Initialize Docker environment instead of local setup
+- `--help`: Display usage information
+
+#### Advanced Setup Options
+For more control, use the Django management command directly:
+
+```bash
+cd backend
+python manage.py setup_project [options]
+```
+
+**Available options:**
+- `--skip-sample-data`: Skip sample data generation
+- `--production`: Production mode (skips sample data and superuser)
+- `--skip-db-setup`: Skip database creation if it already exists
+
 ### Manual Setup
 
 For custom installations:
@@ -132,11 +151,40 @@ sudo -u postgres psql -c "ALTER USER saascrm_user PASSWORD 'saascrm_password';"
 
 ## Development
 
+### Setup Differences: Local vs Docker
+
+| Feature | Local Development | Docker Development |
+|---------|------------------|-------------------|
+| Database | Local PostgreSQL | Docker container |
+| Groups Created | Yes | Yes |
+| Sample Data | Yes (development) | No (production mode) |
+| Superuser | Yes | No |
+| Virtual Environment | Required | Not needed |
+| Port Access | Direct (8000, 3000) | Through containers |
+
 ### Starting Servers
 ```bash
 make dev          # Both backend and frontend
 make dev-backend  # Backend only (http://localhost:8000)
 make dev-frontend # Frontend only (http://localhost:3000)
+```
+
+### Utility Commands
+```bash
+make env-check    # Validate environment configuration
+make db-backup    # Create database backup
+make db-restore   # Restore from latest backup
+make shell        # Open Django shell
+make dbshell      # Open database shell
+```
+
+### Health Monitoring
+```bash
+# API health check
+curl http://localhost:8000/api/health/
+
+# Docker health status
+docker ps
 ```
 
 ### Project Structure

@@ -9,6 +9,7 @@ ENV DJANGO_SETTINGS_MODULE=saasCRM.settings
 RUN apt-get update && apt-get install -y \
     gcc \
     postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create app directory
@@ -28,7 +29,7 @@ USER app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python manage.py check || exit 1
+    CMD curl -f http://localhost:8000/api/health/ || exit 1
 
 # Default command
 CMD ["python", "manage.py", "setup_project", "--production"]
