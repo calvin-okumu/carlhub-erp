@@ -172,7 +172,7 @@ class Sprint(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
-        if self.start_date and self.end_date and self.start_date >= self.end_date:
+        if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError('End date must be after start date.')
         # Validate dates within milestone
         if self.milestone and self.start_date and self.milestone.planned_start and self.start_date < self.milestone.planned_start:
@@ -236,7 +236,7 @@ class Task(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        if self.start_date and self.end_date and self.start_date >= self.end_date:
+        if self.start_date and self.end_date and self.start_date > self.end_date:
             raise ValidationError('End date must be after start date.')
         if self.sprint and self.sprint.milestone != self.milestone:
             raise ValidationError('Task milestone must match sprint milestone.')
