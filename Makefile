@@ -60,6 +60,17 @@ help:
 	@echo "  make ci-setup           - Setup for CI environment"
 	@echo "  make ci-test            - Run CI tests"
 	@echo "  make ci-build           - Run CI build"
+	@echo ""
+	@echo "Docker Troubleshooting:"
+	@echo "  make docker-troubleshoot - Show troubleshooting guide"
+	@echo "  make docker-status       - Check service status"
+	@echo "  make docker-logs-all    - View recent logs from all services"
+	@echo "  make docker-networks    - Inspect Docker networks"
+	@echo "  make docker-connectivity - Test inter-service connectivity"
+	@echo "  make docker-resources   - Show resource usage"
+	@echo "  make docker-clean       - Clean up containers and volumes"
+	@echo "  make docker-restart     - Restart all services"
+	@echo "  make docker-rebuild     - Rebuild and restart services"
 
 # Setup commands
 setup:
@@ -279,3 +290,76 @@ ci-build:
 	@echo "Running CI build..."
 	@make build-backend
 	@make build-frontend
+
+# Docker Troubleshooting commands
+docker-troubleshoot:
+	@echo "Docker Troubleshooting Guide"
+	@echo "==========================="
+	@echo "1. Check service status: make docker-status"
+	@echo "2. View logs: make docker-logs-all"
+	@echo "3. Check networks: make docker-networks"
+	@echo "4. Test connectivity: make docker-connectivity"
+	@echo "5. Check resource usage: make docker-resources"
+	@echo "6. Clean up: make docker-clean"
+
+docker-status:
+	@echo "Service Status:"
+	@docker compose ps
+
+docker-logs-all:
+	@echo "All Service Logs (last 50 lines each):"
+	@echo "======================================"
+	@echo "DB Logs:"
+	@docker compose logs db --tail=50
+	@echo ""
+	@echo "Redis Logs:"
+	@docker compose logs redis --tail=50
+	@echo ""
+	@echo "Backend Logs:"
+	@docker compose logs backend --tail=50
+	@echo ""
+	@echo "Frontend Logs:"
+	@docker compose logs frontend --tail=50
+
+docker-networks:
+	@echo "Docker Networks:"
+	@docker network ls | grep django
+	@echo ""
+	@echo "Network Details:"
+	@docker network inspect django_frontend
+	@docker network inspect django_backend
+
+docker-connectivity:
+	@echo "Testing Service Connectivity:"
+	@echo "============================"
+	@echo "Backend health:"
+	@docker compose exec backend curl -f http://localhost:8000/api/health/ || echo "Backend not responding"
+	@echo ""
+	@echo "Database connectivity:"
+	@docker compose exec backend python manage.py dbshell -c "SELECT 1;" 2>/dev/null && echo "Database connected" || echo "Database connection failed"
+	@echo ""
+	@echo "Redis connectivity:"
+	@docker compose exec backend python -c "import redis; r = redis.Redis(host='redis', port=6379, db=0); r.ping(); print('Redis connected')" 2>/dev/null || echo "Redis connection failed"
+	@echo ""
+	@echo "Frontend connectivity:"
+	@docker compose exec frontend curl -f http://localhost:3000 2>/dev/null && echo "Frontend responding" || echo "Frontend not responding"
+
+docker-resources:
+	@echo "Resource Usage:"
+	@docker stats --no-stream --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+
+docker-clean:
+	@echo "Cleaning up Docker resources..."
+	@docker compose down -v
+	@docker system prune -f
+	@echo "Cleanup complete. Run 'make docker-up' to restart."
+
+docker-restart:
+	@echo "Restarting all services..."
+	@docker compose restart
+
+docker-rebuild:
+	@echo "Rebuilding and restarting services..."
+	@docker compose down
+	@docker compose build --no-cache
+	@docker compose up -d
