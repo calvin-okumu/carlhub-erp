@@ -79,8 +79,10 @@ dev:
 	@echo ""
 	@echo "Starting Redis..."
 	@redis-server --daemonize yes 2>/dev/null || echo "Redis already running or not installed"
+	@echo "Preparing backend environment..."
+	@cd backend && . venv/bin/activate && python manage.py migrate
 	@echo "Starting backend..."
-	@cd backend && (python manage.py runserver 0.0.0.0:8000 & echo "Backend started with PID $$!")
+	@cd backend && (. venv/bin/activate && python manage.py runserver 0.0.0.0:8000 & echo "Backend started with PID $$!")
 	@echo "Starting frontend..."
 	@cd frontend && (npm run dev -- -p 3000 & echo "Frontend started with PID $$!")
 	@echo ""
@@ -94,7 +96,7 @@ dev:
 
 dev-backend:
 	@echo "Starting backend development server..."
-	@cd backend && python manage.py runserver
+	@cd backend && . venv/bin/activate && python manage.py runserver
 
 dev-frontend:
 	@echo "Starting frontend development server..."
@@ -130,7 +132,7 @@ test:
 
 test-backend:
 	@echo "Running backend tests..."
-	@cd backend && python manage.py test
+	@cd backend && . venv/bin/activate && python manage.py test
 
 test-frontend:
 	@echo "Running frontend tests..."
@@ -144,7 +146,7 @@ build:
 
 build-backend:
 	@echo "Building backend..."
-	@cd backend && python manage.py collectstatic --noinput
+	@cd backend && . venv/bin/activate && python manage.py collectstatic --noinput
 
 build-frontend:
 	@echo "Building frontend..."
@@ -155,26 +157,27 @@ docker-up:
 	@echo "Starting development Docker services..."
 	@docker compose up -d
 	@echo "Services started:"
-	@echo "  - PostgreSQL: localhost:5432
-  - Redis: localhost:6379"
+	@echo "  - PostgreSQL: localhost:5432"
+	@echo "  - Redis: localhost:6379"
 	@echo "  - Backend: http://localhost:8000"
 	@echo "  - Frontend: http://localhost:3000"
 
 docker-down:
+	@echo "Stopping Docker services..."
+	@docker compose down
+
 docker-up-staging:
 	@echo "Starting staging Docker services..."
 	@docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
 	@echo "Staging services started:"
-	@echo "  - PostgreSQL: localhost:5432
-  - Redis: localhost:6379"
+	@echo "  - PostgreSQL: localhost:5432"
+	@echo "  - Redis: localhost:6379"
 	@echo "  - Backend: http://localhost:8000"
 	@echo "  - Frontend: http://localhost:80"
 
 docker-down-staging:
 	@echo "Stopping staging Docker services..."
 	@docker compose -f docker-compose.yml -f docker-compose.staging.yml down
-	@echo "Stopping Docker services..."
-	@docker compose down
 
 docker-logs:
 	@echo "Showing Docker logs..."
@@ -208,19 +211,35 @@ install:
 
 migrate:
 	@echo "Running database migrations..."
-	@cd backend && python manage.py migrate
+	@cd backend && . venv/bin/activate && python manage.py migrate
 
 createsuperuser:
 	@echo "Creating Django superuser..."
-	@cd backend && python manage.py createsuperuser
+	@cd backend && . venv/bin/activate && python manage.py createsuperuser
 
 shell:
 	@echo "Opening Django shell..."
-	@cd backend && python manage.py shell
+	@cd backend && . venv/bin/activate && python manage.py shell
 
 dbshell:
 	@echo "Opening database shell..."
-	@cd backend && python manage.py dbshell
+	@cd backend && . venv/bin/activate && python manage.py dbshell
+
+# Environment management
+env-check:
+	@echo "Checking environment configuration..."
+	@cd backend && . venv/bin/activate && python check_env.py
+
+# Database management
+db-backup:
+	@echo "Backing up database..."
+	@cd backend && . venv/bin/activate && python manage.py dumpdata --natural-foreign --natural-primary > db_backup_$(shell date +%Y%m%d_%H%M%S).json
+	@echo "Backup completed: db_backup_$(shell date +%Y%m%d_%H%M%S).json"
+
+db-restore:
+	@echo "Restoring database from latest backup..."
+	@cd backend && . venv/bin/activate && python manage.py flush --no-input && python manage.py loaddata $$(ls -t backend/db_backup_*.json | head -1)
+	@echo "Database restored from latest backup"
 
 # CI/CD commands
 ci-setup:

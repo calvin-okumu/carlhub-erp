@@ -1,5 +1,17 @@
 
 services:
+  db:
+    image: postgres:13
+    restart: always
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
   backend:
     image: your-dockerhub-username/saascrm-backend:latest
     restart: always
@@ -26,3 +38,4 @@ services:
 
 volumes:
   static_prod:
+  db_data:

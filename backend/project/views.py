@@ -1442,3 +1442,16 @@ def auth_methods_view(request):
     return Response(auth_methods)
 
 
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def health_check(request):
+    """
+    Health check endpoint for monitoring service availability
+    """
+    return Response({
+        'status': 'healthy',
+        'timestamp': timezone.now().isoformat(),
+        'service': 'DjangoCRM API'
+    }, status=200)
+
+

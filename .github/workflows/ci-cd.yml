@@ -20,6 +20,16 @@ jobs:
       CI: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: .
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -121,22 +131,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Create environment file
-        run: |
-          cd backend
-          echo "SECRET_KEY=${{ env.SECRET_KEY }}" > .env
-          echo "DEBUG=${{ env.DEBUG }}" >> .env
-          echo "ALLOWED_HOSTS=${{ env.ALLOWED_HOSTS }}" >> .env
-          echo "SITE_URL=${{ env.SITE_URL }}" >> .env
-          echo "MULTI_TENANCY_ENABLED=${{ env.MULTI_TENANCY_ENABLED }}" >> .env
-          echo "DB_NAME=${{ env.DB_NAME }}" >> .env
-          echo "DB_USER=${{ env.DB_USER }}" >> .env
-          echo "DB_PASSWORD=${{ env.DB_PASSWORD }}" >> .env
-          echo "DB_HOST=${{ env.DB_HOST }}" >> .env
-          echo "DB_PORT=${{ env.DB_PORT }}" >> .env
-          echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
+       - name: Create environment file
+         run: |
+           cd backend
+           echo "SECRET_KEY=${{ env.SECRET_KEY }}" > .env
+           echo "DEBUG=${{ env.DEBUG }}" >> .env
+           echo "ALLOWED_HOSTS=${{ env.ALLOWED_HOSTS }}" >> .env
+           echo "SITE_URL=${{ env.SITE_URL }}" >> .env
+           echo "MULTI_TENANCY_ENABLED=${{ env.MULTI_TENANCY_ENABLED }}" >> .env
+           echo "DB_NAME=${{ env.DB_NAME }}" >> .env
+           echo "DB_USER=${{ env.DB_USER }}" >> .env
+           echo "DB_PASSWORD=${{ env.DB_PASSWORD }}" >> .env
+           echo "DB_HOST=${{ env.DB_HOST }}" >> .env
+           echo "DB_PORT=${{ env.DB_PORT }}" >> .env
+           echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
 
-      - name: Build Backend Image (Dev)
+       - name: Validate database migrations
+         run: |
+           cd backend
+           python manage.py check
+           python manage.py makemigrations --check --dry-run
+
+       - name: Build Backend Image (Dev)
         if: github.ref == 'refs/heads/dev'
         uses: docker/build-push-action@v5
         with:

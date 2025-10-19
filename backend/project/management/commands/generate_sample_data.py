@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
@@ -19,6 +20,10 @@ class Command(BaseCommand):
     help = 'Generate sample data for CRM using factory-boy'
 
     def handle(self, *args, **options):
+        if not settings.DEBUG:
+            self.stdout.write('Skipping sample data generation in production environment')
+            return
+
         self.stdout.write('Generating sample data...')
 
         # Create or get groups (let signal handle assignment)
