@@ -1,7 +1,7 @@
 # DjangoCRM Project Makefile
 # Unified commands for development, testing, and deployment
 
-.PHONY: help setup setup-backend setup-frontend setup-docker dev dev-backend dev-frontend check-servers stop test test-backend test-frontend build build-backend build-frontend clean clean-backend clean-frontend docker-up docker-down docker-logs
+.PHONY: help setup setup-backend setup-frontend setup-docker dev dev-backend dev-frontend check-servers stop test test-backend test-frontend build build-backend build-frontend clean clean-backend clean-frontend docker-up docker-down docker-up-staging docker-down-staging docker-logs install migrate createsuperuser shell dbshell env-check db-backup db-restore ci-setup ci-test ci-build
 
 # Default target
 help:
@@ -31,14 +31,35 @@ help:
 	@echo "  make build-frontend     - Build frontend"
 	@echo ""
 	@echo "Docker Commands:"
-	@echo "  make docker-up          - Start Docker services"
-	@echo "  make docker-down        - Stop Docker services"
+	@echo "  make docker-up          - Start development Docker services"
+	@echo "  make docker-down        - Stop development Docker services"
+	@echo "  make docker-up-staging  - Start staging Docker services"
+	@echo "  make docker-down-staging - Stop staging Docker services"
 	@echo "  make docker-logs        - Show Docker logs"
 	@echo ""
 	@echo "Cleanup Commands:"
 	@echo "  make clean              - Clean all build artifacts"
 	@echo "  make clean-backend      - Clean backend artifacts"
 	@echo "  make clean-frontend     - Clean frontend artifacts"
+	@echo ""
+	@echo "Utility Commands:"
+	@echo "  make install            - Install all dependencies"
+	@echo "  make migrate            - Run database migrations"
+	@echo "  make createsuperuser    - Create Django superuser"
+	@echo "  make shell              - Open Django shell"
+	@echo "  make dbshell            - Open database shell"
+	@echo ""
+	@echo "Environment Management:"
+	@echo "  make env-check          - Check environment configuration"
+	@echo ""
+	@echo "Database Management:"
+	@echo "  make db-backup          - Backup database"
+	@echo "  make db-restore         - Restore database from latest backup"
+	@echo ""
+	@echo "CI/CD Commands:"
+	@echo "  make ci-setup           - Setup for CI environment"
+	@echo "  make ci-test            - Run CI tests"
+	@echo "  make ci-build           - Run CI build"
 
 # Setup commands
 setup:
