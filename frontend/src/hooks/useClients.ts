@@ -31,7 +31,7 @@ export function useClients() {
       const ownerTenant = tenants.find((t) => t.is_owner) || tenants[0];
       setCurrentTenant(ownerTenant || null);
 
-      const data = await getClients(token);
+      const data = await getClients(token, { ordering: '-created_at' });
       setClients(data);
     } catch (err) {
       console.error(err);
