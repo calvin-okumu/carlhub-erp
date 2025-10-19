@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+ import React from 'react';
 import { Edit, Download } from 'lucide-react';
 import type { Project } from '@/api/types';
 

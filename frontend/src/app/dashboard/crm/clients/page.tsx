@@ -1,6 +1,4 @@
-"use client";
-
-import ClientSection from '@/components/dashboard/crm/clients/ClientSection';
+ import ClientSection from '@/components/dashboard/crm/clients/ClientSection';
 
 export default function ClientsPage() {
     return (

@@ -1,6 +1,4 @@
-"use client";
-
-import ProjectSection from "@/components/dashboard/project-management/ProjectSection";
+ import ProjectSection from "@/components/dashboard/project-management/ProjectSection";
 
 export default function ProjectManagementPage() {
     return (

@@ -1,6 +1,4 @@
-"use client";
-
-import React from 'react';
+ import React from 'react';
 import type { Project } from '@/api/types';
 import ProjectHeader from './project-overview/ProjectHeader';
 import ProjectTabs from './project-overview/ProjectTabs';
