@@ -163,7 +163,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                         >
                             <option value="to_do">To Do</option>
                             <option value="in_progress">In Progress</option>
-                            <option value="review">Review</option>
+                            <option value="in_review">Review</option>
                             <option value="testing">Testing</option>
                         </select>
                     </div>
