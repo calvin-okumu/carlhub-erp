@@ -53,6 +53,8 @@ export interface User {
   last_name: string;
   is_active: boolean;
   date_joined: string;
+  organization?: string;
+  job?: string;
 }
 
 export interface UserTenant {
