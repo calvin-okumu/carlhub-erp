@@ -42,12 +42,15 @@ services:
         max-file: 3
 
   backend:
+    image: local-backend
     build: ./backend
+    pull_policy: never
     environment:
       - DJANGO_ENV=development
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - SECRET_KEY=${SECRET_KEY}
       - RUN_SETUP=true
+      - DOCKER_CONTAINER=true
     ports:
       - "8000:8000"
     depends_on:
@@ -75,15 +78,18 @@ services:
       retries: 3
 
   frontend:
+    image: local-frontend
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: ../Dockerfile.dev
+    pull_policy: never
     ports:
       - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
       - /app/.next
+      - ~/.npm:/root/.npm
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://backend:8000

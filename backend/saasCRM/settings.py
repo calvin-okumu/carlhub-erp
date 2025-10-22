@@ -50,7 +50,10 @@ else:
         }
 
 # Load environment variables from .env file
-load_dotenv(dotenv_path=BASE_DIR.parent / '.env')
+if os.getenv('DOCKER_CONTAINER') == 'true':
+    load_dotenv(dotenv_path=BASE_DIR.parent / '.env')  # Root .env for Docker
+else:
+    load_dotenv(dotenv_path=BASE_DIR / '.env')  # Backend .env for local
 
 # Import logging configuration
 import importlib.util

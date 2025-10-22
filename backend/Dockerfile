@@ -31,5 +31,5 @@ USER app
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health/ || exit 1
 
-# Default command
-CMD ["python", "manage.py", "setup_project", "--production"]
+# Default command for development
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
