@@ -40,6 +40,8 @@ Handles user authentication, tenant management, and user-tenant relationships.
 
 **Models:**
 - `CustomUser`: Extended Django user model with email as username
+- `UserProfile`: Comprehensive user profile with personal, employment, medical, and banking information
+- `EmployeeDocument`: File uploads for employee documents
 - `Tenant`: Organization entity
 - `UserTenant`: Many-to-many relationship between users and tenants with roles
 - `Invitation`: System for inviting users to tenants
@@ -693,6 +695,60 @@ Use the interactive Swagger UI for manual API testing:
 - **ReDoc**: `http://127.0.0.1:8000/api/schema/redoc/`
 
 The Swagger UI provides interactive forms for testing all endpoints with proper authentication.
+
+### User Profile Management
+
+The API includes comprehensive user profile management with role-based profile creation.
+
+#### Profile Creation Logic
+- **Tenant Owners**: UserProfile created immediately during signup
+- **Other Members**: UserProfile created when approved by tenant owner
+
+#### Get User Profile
+- **GET** `/api/accounts/profile/`
+- Returns the current user's profile information
+- Requires authentication
+
+#### Update User Profile
+- **PUT/PATCH** `/api/accounts/profile/`
+- Updates the current user's profile
+- Requires authentication
+
+**Profile Fields:**
+- `job_title`: Job title/position
+- `phone`: Phone number
+- `linkedin_profile`: LinkedIn URL
+- `employee_id`: Employee ID number
+- `employee_number`: Employee number
+- `tax_number`: Tax identification number
+- `hire_date`: Date of hire
+- `street_address`, `city`, `state_province`, `postal_code`, `country`: Address
+- `emergency_contact`, `emergency_phone`: Emergency contact info
+- `medical_aid_provider`, `medical_aid_plan`, `medical_aid_number`: Medical insurance
+- `medical_conditions`, `allergies`, `medications`: Health information
+- `bank_name`, `account_number`, `branch_code`, `account_type`, `routing_number`, `swift_code`: Banking details
+
+#### Employee Documents
+
+##### List Documents
+- **GET** `/api/accounts/documents/`
+- Returns list of user's uploaded documents
+
+##### Upload Document
+- **POST** `/api/accounts/documents/`
+- Upload a new document
+- Form data: `title`, `description`, `document_file`
+
+##### Document Detail
+- **GET/PUT/PATCH/DELETE** `/api/accounts/documents/{id}/`
+- Manage individual documents
+
+**Document Fields:**
+- `title`: Document title
+- `description`: Document description
+- `document_file`: File upload (max 10MB, PDF/DOC formats)
+- `file_size`: Auto-calculated file size
+- `file_type`: Auto-detected file extension
 
 ### Nested API Endpoints
 

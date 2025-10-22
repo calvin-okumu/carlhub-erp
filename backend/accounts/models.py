@@ -95,6 +95,79 @@ class UserTenant(models.Model):
         return f"{self.user.email} - {self.tenant.name}"
 
 
+class UserProfile(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='profile')
+
+    # Basic Info (extends CustomUser)
+    job_title = models.CharField(max_length=100, blank=True)
+    phone = models.CharField(max_length=20, blank=True)
+    linkedin_profile = models.URLField(blank=True)
+
+    # Employee Info
+    employee_id = models.CharField(max_length=50, blank=True, unique=True)
+    employee_number = models.CharField(max_length=50, blank=True)
+    tax_number = models.CharField(max_length=50, blank=True)
+    hire_date = models.DateField(null=True, blank=True)
+
+    # Address Info
+    street_address = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state_province = models.CharField(max_length=100, blank=True)
+    postal_code = models.CharField(max_length=20, blank=True)
+    country = models.CharField(max_length=100, blank=True, default='USA')
+
+    # Emergency & Medical Info
+    emergency_contact = models.CharField(max_length=100, blank=True)
+    emergency_phone = models.CharField(max_length=20, blank=True)
+    medical_aid_provider = models.CharField(max_length=100, blank=True)
+    medical_aid_plan = models.CharField(max_length=100, blank=True)
+    medical_aid_number = models.CharField(max_length=50, blank=True)
+    medical_conditions = models.TextField(blank=True)
+    allergies = models.TextField(blank=True)
+    medications = models.TextField(blank=True)
+
+    # Banking Info
+    bank_name = models.CharField(max_length=100, blank=True)
+    account_number = models.CharField(max_length=50, blank=True)
+    branch_code = models.CharField(max_length=20, blank=True)
+    account_type = models.CharField(max_length=20, choices=[
+        ('checking', 'Checking'),
+        ('savings', 'Savings'),
+    ], blank=True)
+    routing_number = models.CharField(max_length=20, blank=True)
+    swift_code = models.CharField(max_length=20, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} - Profile"
+
+
+class EmployeeDocument(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='documents')
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    document_file = models.FileField(upload_to='employee_documents/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    # File metadata
+    file_size = models.PositiveIntegerField(default=0)
+    file_type = models.CharField(max_length=10, blank=True, default='')
+
+    class Meta:
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return f"{self.user.email} - {self.title}"
+
+    def save(self, *args, **kwargs):
+        if self.document_file:
+            self.file_size = self.document_file.size
+            self.file_type = self.document_file.name.split('.')[-1].lower()
+        super().save(*args, **kwargs)
+
+
 class Invitation(models.Model):
     email = models.EmailField()
     tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE)
