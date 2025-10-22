@@ -1,0 +1,3 @@
+module.exports=[27572,a=>{"use strict";a.s(["default",()=>d,"metadata",()=>c]);var b=a.i(7997);let c={title:"Carlhub",description:"Intelligent Business Management",icons:{icon:"/logo.png",shortcut:"/logo.png"}};function d({children:a}){return(0,b.jsx)("html",{lang:"en",children:(0,b.jsx)("body",{className:"font-sans antialiased",children:a})})}}];
+
+//# sourceMappingURL=src_app_layout_tsx_cc8184fa._.js.map
