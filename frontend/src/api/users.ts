@@ -1,6 +1,16 @@
 import { User, UserTenant } from './types';
 import { API_BASE } from './index';
 
+// Type for API response that might contain nested arrays
+interface ApiResponse {
+  results?: UserTenant[];
+  data?: UserTenant[];
+  users?: UserTenant[];
+  members?: UserTenant[];
+  items?: UserTenant[];
+  [key: string]: unknown; // For any other properties
+}
+
 export async function getUsers(token: string): Promise<User[]> {
   const url = `${API_BASE}/members/`;
   const response = await fetch(url, {
@@ -31,8 +41,8 @@ export async function getUsers(token: string): Promise<User[]> {
     // Check for common nested array patterns
     const possibleKeys = ['results', 'data', 'users', 'members', 'items'];
     for (const key of possibleKeys) {
-      if (key in data && Array.isArray((data as any)[key])) {
-        usersArray = (data as any)[key];
+      if (key in data && Array.isArray((data as ApiResponse)[key as keyof ApiResponse])) {
+        usersArray = (data as ApiResponse)[key as keyof ApiResponse] as UserTenant[];
         break;
       }
     }
