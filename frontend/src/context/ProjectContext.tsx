@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { getProject } from '@/api/project_mgmt';
 import type { Project } from '@/api/types';
@@ -23,7 +23,7 @@ export function ProjectProvider({ children, activeTab, onTabChange }: { children
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchProject = async () => {
+    const fetchProject = useCallback(async () => {
         const token = localStorage.getItem('access_token');
         if (!token) {
             setError('No access token');
@@ -40,11 +40,11 @@ export function ProjectProvider({ children, activeTab, onTabChange }: { children
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
     useEffect(() => {
         fetchProject();
-    }, [id]);
+    }, [fetchProject]);
 
     return (
         <ProjectContext.Provider value={{ project, loading, error, refetch: fetchProject, activeTab, onTabChange }}>

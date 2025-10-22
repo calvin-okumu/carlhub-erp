@@ -5,13 +5,12 @@ import type { Task } from '@/api/types';
 interface KanbanColumnProps {
     title: string;
     tasks: Task[];
-    status: string;
     color: string;
     onTaskClick: (task: Task) => void;
     onStatusChange: (taskId: number, newStatus: string) => void;
 }
 
-export default function KanbanColumn({ title, tasks, status, color, onTaskClick, onStatusChange }: KanbanColumnProps) {
+export default function KanbanColumn({ title, tasks, color, onTaskClick, onStatusChange }: KanbanColumnProps) {
     return (
          <div className={`${color} rounded-lg p-4 h-full`}>
             <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center justify-between">

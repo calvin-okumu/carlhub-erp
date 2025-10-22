@@ -10,25 +10,27 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 
 interface SprintTableProps {
-     sprints: Sprint[];
-     loading: boolean;
-     error: string | null;
-     onEditSprint: (sprint: Sprint) => void;
-     onDeleteSprint: (id: number) => void;
-     onAddSprint: () => void;
-     projectId: number;
-     searchValue: string;
- }
+      sprints: Sprint[];
+      loading: boolean;
+      error: string | null;
+      onEditSprint: (sprint: Sprint) => void;
+      onDeleteSprint: (id: number) => void;
+      onAddSprint: () => void;
+      projectId: number;
+      searchValue: string;
+      statusFilter: string;
+  }
 
-const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectId, searchValue }: SprintTableProps) {
+const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectId, searchValue, statusFilter }: SprintTableProps) {
     const [page, setPage] = useState(1);
 
-    const filteredSprints = useMemo(() =>
-        sprints.filter(sprint =>
-            sprint.name.toLowerCase().includes(searchValue.toLowerCase())
-        ),
-        [sprints, searchValue]
-    );
+     const filteredSprints = useMemo(() =>
+         sprints.filter(sprint =>
+             sprint.name.toLowerCase().includes(searchValue.toLowerCase()) &&
+             (statusFilter === 'all' || sprint.status === statusFilter)
+         ),
+         [sprints, searchValue, statusFilter]
+     );
 
     const itemsPerPage = 10;
     const totalPages = useMemo(() =>

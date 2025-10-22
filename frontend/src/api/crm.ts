@@ -1,8 +1,16 @@
 import { Client, CreateClientData, UpdateClientData, UserTenant } from './types';
 import { API_BASE } from './index';
 
-export async function getClients(token: string): Promise<Client[]> {
-  const response = await fetch(`${API_BASE}/clients/`, {
+export async function getClients(token: string, params?: { search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[]> {
+  const query = new URLSearchParams();
+  if (params?.search) query.append('search', params.search);
+  if (params?.ordering) query.append('ordering', params.ordering);
+  if (params?.status) query.append('status', params.status);
+  if (params?.page) query.append('page', params.page.toString());
+  if (params?.limit) query.append('limit', params.limit.toString());
+
+  const url = `${API_BASE}/clients/?${query.toString()}`;
+  const response = await fetch(url, {
     method: "GET",
     headers: {
       Authorization: `Token ${token}`,
@@ -16,7 +24,7 @@ export async function getClients(token: string): Promise<Client[]> {
     throw new Error(data.error || "Failed to fetch clients");
   }
 
-  return data;
+  return data.results || data;
 }
 
 export async function createClient(token: string, clientData: CreateClientData): Promise<Client> {
@@ -87,6 +95,6 @@ export async function getUserTenants(token: string): Promise<UserTenant[]> {
     throw new Error(data.error || "Failed to fetch user tenants");
   }
 
-  return data;
+  return data.results || data;
 }
 

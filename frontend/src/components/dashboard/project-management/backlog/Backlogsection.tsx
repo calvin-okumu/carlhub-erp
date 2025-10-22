@@ -32,8 +32,8 @@ export default function BacklogSection({ projectId }: BacklogSectionProps) {
 
             try {
                 const [milestonesData, sprintsData, usersData] = await Promise.all([
-                    getMilestones(token, projectId),
-                    getSprints(token, projectId),
+                    getMilestones(token, { projectId }),
+                    getSprints(token, { projectId }),
                     getUserTenants(token)
                 ]);
                 setMilestones(milestonesData);
@@ -105,15 +105,17 @@ export default function BacklogSection({ projectId }: BacklogSectionProps) {
                 onAddTask={handleAddTask}
                 searchValue={searchValue}
             />
-            <CreateTaskModal
-                isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                mode={modalMode}
-                task={selectedTask || undefined}
-                sprints={sprints}
-                assignees={users}
-                onSave={handleSaveTask}
-            />
+             <CreateTaskModal
+                 isOpen={modalOpen}
+                 onClose={() => setModalOpen(false)}
+                 mode={modalMode}
+                 task={selectedTask || undefined}
+                 sprints={sprints}
+                 assignees={users}
+                 milestones={milestones}
+                 onSave={handleSaveTask}
+                 isBacklog={true}
+             />
         </div>
     );
 };

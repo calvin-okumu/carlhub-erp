@@ -29,7 +29,7 @@ export default function CompletedTasksSection({ projectId }: CompletedTasksSecti
 
             try {
                 // Get all tasks for the project and filter for completed status
-                const allTasks = await getTasks(token, undefined, undefined, projectId);
+                const allTasks = await getTasks(token, { projectId });
                 const completedTasks = allTasks.filter(task => task.status === 'done');
                 setTasks(completedTasks);
             } catch (err) {

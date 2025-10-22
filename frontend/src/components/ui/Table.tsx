@@ -26,7 +26,7 @@ export default function Table({ headers, rows, className = '' }: TableProps) {
            {rows.map((row) => (
              <tr key={row.key} className="hover:bg-gray-50">
                {row.data.map((cell, cellIndex) => (
-                 <td key={cellIndex} className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <td key={cellIndex} className="px-4 py-4 truncate max-w-xs text-sm text-gray-900">
                    {cell}
                  </td>
                ))}

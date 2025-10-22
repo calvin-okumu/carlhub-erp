@@ -1,12 +1,11 @@
 "use client";
 
 import React from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import KanbanSection from '@/components/dashboard/project-management/sprint/kanban/KanbanSection';
 
 const KanbanPage = () => {
     const params = useParams();
-    const searchParams = useSearchParams();
     const projectId = parseInt(params.id as string);
     const sprintId = parseInt(params.sprintId as string);
 
