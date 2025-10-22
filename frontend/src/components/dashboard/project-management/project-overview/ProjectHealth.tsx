@@ -1,6 +1,6 @@
 import React from "react";
 import Card from "@/components/ui/Card";
-import StatusBadge from "@/components/ui/StatusBadge";
+
 import type { Project } from "@/api/types";
 import { AlertTriangle, CheckCircle2, Activity } from "lucide-react";
 

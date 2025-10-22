@@ -1,8 +1,8 @@
 "use client";
 
 import { getUserTenants } from '@/api/crm';
-import { assignTaskToSprint, createTask, deleteTask, getSprint, getSprints, getTasks, updateTask } from '@/api/project_mgmt';
-import type { Sprint, Task, UserTenant } from '@/api/types';
+import { assignTaskToSprint, createTask, deleteTask, getSprint, getSprints, getTasks, updateTask, getMilestones } from '@/api/project_mgmt';
+import type { Sprint, Task, UserTenant, Milestone } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import { useRouter } from 'next/navigation';
@@ -34,6 +34,7 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
     const [backlogTasks, setBacklogTasks] = useState<Task[]>([]);
     const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
     const [sprints, setSprints] = useState<Sprint[]>([]);
+    const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [users, setUsers] = useState<UserTenant[]>([]);
     const [addError, setAddError] = useState<string | null>(null);
 
@@ -52,7 +53,7 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
         try {
             const [sprintData, tasksData] = await Promise.all([
                 getSprint(token, sprintId),
-                getTasks(token, undefined, sprintId)
+                getTasks(token, { sprintId })
             ]);
             setSprint(sprintData);
             setTasks(tasksData);
@@ -62,7 +63,7 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
         } finally {
             setLoading(false);
         }
-    }, [sprintId]);
+    }, [sprintId, router]);
 
     useEffect(() => {
         if (sprintId) {
@@ -75,12 +76,14 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
             const token = localStorage.getItem('access_token');
             if (!token) return;
             try {
-                const [sprintsData, usersData, backlogData] = await Promise.all([
-                    getSprints(token, projectId),
+                const [sprintsData, milestonesData, usersData, backlogData] = await Promise.all([
+                    getSprints(token, { projectId }),
+                    getMilestones(token, { projectId }),
                     getUserTenants(token),
-                    getTasks(token, undefined, undefined, projectId, true) // backlog=true
+                    getTasks(token, { projectId, backlog: true }) // backlog=true
                 ]);
                 setSprints(sprintsData);
+                setMilestones(milestonesData);
                 setUsers(usersData);
                 // Filter out tasks that are already in this sprint (safety check)
                 const filteredBacklog = backlogData.filter(task => task.sprint !== sprintId);
@@ -90,7 +93,7 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
             }
         };
         fetchModalData();
-    }, [projectId]);
+    }, [projectId, sprintId]);
 
     const handleBack = () => {
         if (onBack) {
@@ -271,6 +274,7 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
                     mode={createModalMode}
                     task={createSelectedTask || undefined}
                     sprints={sprints}
+                    milestones={milestones}
                     assignees={users}
                     onSave={handleSaveTask}
                     defaultSprintId={sprintId}
