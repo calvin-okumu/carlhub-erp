@@ -2,7 +2,25 @@ from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from .models import UserTenant
+from .models import UserTenant, CustomUser, UserProfile
+
+
+@receiver(post_save, sender=UserTenant)
+def create_user_profile_based_on_role(sender, instance, created, **kwargs):
+    """Create UserProfile based on user role and approval status"""
+    if created:
+        if instance.is_owner:
+            # Create profile immediately for tenant owners
+            UserProfile.objects.get_or_create(user=instance.user)
+        # For non-owners, profile will be created when approved (see below)
+
+
+@receiver(post_save, sender=UserTenant)
+def create_profile_for_approved_member(sender, instance, **kwargs):
+    """Create UserProfile when non-owner members are approved"""
+    if not instance.is_owner and instance.is_approved:
+        # Check if profile already exists (don't create duplicate)
+        UserProfile.objects.get_or_create(user=instance.user)
 
 
 @receiver(post_save, sender=UserTenant)
