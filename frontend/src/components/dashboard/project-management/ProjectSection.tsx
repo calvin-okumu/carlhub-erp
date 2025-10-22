@@ -4,11 +4,7 @@ import React from 'react';
 import ProjectTable from '@/components/dashboard/project-management/table/ProjectTable';
 import { useProjects } from '@/hooks/useProjects';
 
-interface ProjectSectionProps {
-    title?: string;
-}
-
-export default function ProjectSection({ title = "Projects" }: ProjectSectionProps) {
+export default function ProjectSection() {
     const { projects, loading, error, addProject, editProject, removeProject } = useProjects();
 
     return (

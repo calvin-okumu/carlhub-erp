@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Project, UserTenant } from "../api/types";
+import { Project } from "../api/types";
 import {
     getProjects,
     createProject,
@@ -14,7 +14,7 @@ function getToken(): string | null {
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [currentTenant, setCurrentTenant] = useState<UserTenant | null>(null);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +25,7 @@ export function useProjects() {
     setLoading(true);
     try {
       const tenants = await getUserTenants(token);
-      const ownerTenant = tenants.find((t) => t.is_owner) || tenants[0];
-      setCurrentTenant(ownerTenant || null);
+      const ownerTenant = Array.isArray(tenants) ? tenants.find((t) => t.is_owner) || tenants[0] : tenants;
 
       const data = await getProjects(token, { tenant: ownerTenant?.tenant, ordering: '-created_at' });
       setProjects(data);

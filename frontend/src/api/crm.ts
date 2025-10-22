@@ -95,6 +95,6 @@ export async function getUserTenants(token: string): Promise<UserTenant[]> {
     throw new Error(data.error || "Failed to fetch user tenants");
   }
 
-  return data;
+  return data.results || data;
 }
 
