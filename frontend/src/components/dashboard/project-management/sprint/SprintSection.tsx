@@ -108,7 +108,6 @@ export default function SprintSection({ projectId }: SprintSectionProps) {
                 onClose={() => setModalOpen(false)}
                 mode={modalMode}
                 sprint={selectedSprint || undefined}
-                projectId={projectId}
                 milestones={milestones}
                 onSave={handleSaveSprint}
             />

@@ -189,7 +189,7 @@ build-frontend:
 # Docker commands
 docker-up:
 	@echo "Starting development Docker services..."
-	@docker compose up -d
+	@DOCKER_BUILDKIT=1 docker compose up -d
 	@echo "Services started:"
 	@echo "  - PostgreSQL: localhost:5432"
 	@echo "  - Redis: localhost:6379"

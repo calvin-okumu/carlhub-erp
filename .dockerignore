@@ -1,0 +1,32 @@
+# Exclude backend directory
+backend/
+
+# Exclude git
+.git/
+.gitignore
+
+# Exclude documentation
+*.md
+MANUAL.md
+QUICKSTART.md
+README_UPDATED.md
+TROUBLESHOOTING.md
+
+# Exclude env files
+.env*
+env.example
+
+# Exclude docker files
+docker-compose*.yml
+Dockerfile*
+
+# Exclude test files
+test_*.py
+*.sql
+
+# Exclude logs and dumps
+dump.rdb
+
+# Exclude scripts
+setup.sh
+Makefile

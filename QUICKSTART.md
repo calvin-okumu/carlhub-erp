@@ -103,7 +103,7 @@ make stop
 
 ### Step 3: Start with Docker
 ```bash
-# Start all services
+# Start all services (optimized with BuildKit for faster builds)
 make docker-up
 
 # Services:
@@ -111,6 +111,8 @@ make docker-up
 # Frontend: http://localhost:3000
 # DB: localhost:5433 (external access)
 ```
+
+**Build Optimization Note:** The development setup uses a separate Dockerfile.dev for the frontend that skips production builds, making `docker compose up` significantly faster. BuildKit is enabled for better layer caching.
 
 ### Step 4: Verify Docker Setup
 ```bash
