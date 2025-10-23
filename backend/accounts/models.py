@@ -104,7 +104,7 @@ class UserProfile(models.Model):
     linkedin_profile = models.URLField(blank=True)
 
     # Employee Info
-    employee_id = models.CharField(max_length=50, blank=True, unique=True)
+    employee_id = models.CharField(max_length=50, blank=True)
     employee_number = models.CharField(max_length=50, blank=True)
     tax_number = models.CharField(max_length=50, blank=True)
     hire_date = models.DateField(null=True, blank=True)

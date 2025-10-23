@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
-from accounts.models import CustomUser, Tenant
+from accounts.models import CustomUser, Tenant, UserProfile, EmployeeDocument
 from project.factories import (
     ClientFactory,
     InvoiceFactory,
@@ -86,6 +86,75 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'Link already exists: {user.email} to {tenant.name}')
         self.stdout.write('User-tenant links established')
+
+        # Create user profiles for all users (they should have profiles since is_approved=True)
+        self.stdout.write('Creating user profiles...')
+        for i, user in enumerate(users):
+            # Generate unique values for each user
+            employee_id = f'EMP{i+1:03d}'
+            employee_number = f'EN{i+1:03d}'
+            tax_number = f'TX{i+1:03d}'
+            phone = f'+1-555-01{i+1}000'
+            postal_code = f'1234{i+1}'
+
+            profile, created = UserProfile.objects.get_or_create(
+                user=user,
+                defaults={
+                    'job_title': f'Sample {user.first_name} Position',
+                    'phone': phone,
+                    'linkedin_profile': f'https://linkedin.com/in/{user.first_name.lower()}{user.last_name.lower()}',
+                    'employee_id': employee_id,
+                    'employee_number': employee_number,
+                    'tax_number': tax_number,
+                    'hire_date': '2023-01-15',
+                    'street_address': f'{i+1}23 Sample Street',
+                    'city': 'Sample City',
+                    'state_province': 'Sample State',
+                    'postal_code': postal_code,
+                    'country': 'USA',
+                    'emergency_contact': f'Emergency Contact {i+1}',
+                    'emergency_phone': f'+1-555-01{i+1}111',
+                    'medical_aid_provider': f'Medical Provider {i+1}',
+                    'medical_aid_plan': f'Plan {i+1}',
+                    'medical_aid_number': f'MA{i+1:03d}',
+                    'bank_name': f'Sample Bank {i+1}',
+                    'account_number': f'123456789{i+1}',
+                    'branch_code': f'BR{i+1:03d}',
+                    'account_type': 'checking',
+                    'routing_number': f'0210000{i+1}',
+                    'swift_code': f'SWFT{i+1:03d}'
+                }
+            )
+            if created:
+                self.stdout.write(f'Created profile for {user.email}')
+            else:
+                self.stdout.write(f'Profile already exists for {user.email}')
+        self.stdout.write('User profiles created')
+
+        # Create sample employee documents
+        self.stdout.write('Creating sample employee documents...')
+        sample_documents = [
+            ('Employee Handbook', 'Company policies and procedures', 'handbook.pdf'),
+            ('Benefits Package', 'Health and retirement benefits information', 'benefits.pdf'),
+            ('Tax Forms', 'W-2 and tax-related documents', 'tax_forms.pdf'),
+            ('Performance Review', 'Annual performance evaluation', 'review.pdf'),
+        ]
+
+        for user in users:
+            for title, description, filename in sample_documents:
+                doc, created = EmployeeDocument.objects.get_or_create(
+                    user=user,
+                    title=title,
+                    defaults={
+                        'description': description,
+                        'document_file': f'employee_documents/sample_{filename}',
+                        'file_size': 1024000,  # 1MB sample size
+                        'file_type': 'pdf'
+                    }
+                )
+                if created:
+                    self.stdout.write(f'Created document "{title}" for {user.email}')
+        self.stdout.write('Sample employee documents created')
 
         # Create clients if not exist
         if Client.objects.count() < 6:
