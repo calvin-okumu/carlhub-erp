@@ -1309,12 +1309,20 @@ def approve_member_view(request):
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def invite_member_view(request):
-    if not hasattr(request, 'tenant') or not request.tenant:
-        return Response({'error': 'Tenant context required'}, status=status.HTTP_400_BAD_REQUEST)
+    # Handle tenant context
+    if hasattr(request, 'tenant') and request.tenant:
+        tenant = request.tenant
+    else:
+        # Dev mode: get tenant from user's ownership
+        try:
+            user_tenant = UserTenant.objects.get(user=request.user, is_owner=True)
+            tenant = user_tenant.tenant
+        except UserTenant.DoesNotExist:
+            return Response({'error': 'No tenant ownership found'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Check if user is owner
     try:
-        user_tenant = UserTenant.objects.get(user=request.user, tenant=request.tenant, is_owner=True)
+        user_tenant = UserTenant.objects.get(user=request.user, tenant=tenant, is_owner=True)
     except UserTenant.DoesNotExist:
         return Response({'error': 'Only owners can invite members'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -1329,7 +1337,7 @@ def invite_member_view(request):
 
     invitation = Invitation.objects.create(
         email=email,
-        tenant=request.tenant,
+        tenant=tenant,
         token=token,
         role=role,
         invited_by=request.user,
@@ -1341,10 +1349,10 @@ def invite_member_view(request):
     from django.core.mail import send_mail
     from django.urls import reverse
 
-    subject = f"Invitation to join {request.tenant.name}"
+    subject = f"Invitation to join {tenant.name}"
     invitation_url = f"{settings.SITE_URL or 'http://127.0.0.1:8000'}/api/signup/?token={token}"
     message = f"""
-    You have been invited to join {request.tenant.name} as a {role}.
+    You have been invited to join {tenant.name} as a {role}.
 
     Click the link below to accept the invitation and create your account:
 
