@@ -1,1 +1,0 @@
-{"version":3,"sources":["turbopack:///[project]/src/app/dashboard/project-management/[id]/sprint/layout.tsx"],"sourcesContent":["export default function SprintLayout({ children }: { children: React.ReactNode }) {\n  return <div>{children}</div>;\n}"],"names":[],"mappings":"8EAAe,SAAS,EAAa,UAAE,CAAQ,CAAiC,EAC9E,MAAO,CAAA,EAAA,EAAA,GAAA,EAAC,MAAA,UAAK,GACf"}

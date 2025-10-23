@@ -1,9 +1,0 @@
-@import "tailwindcss";
-
-.h1-title {
-  font-style: italic;
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 1.5rem;
-}
