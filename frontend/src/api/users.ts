@@ -1,4 +1,4 @@
-import { User, UserTenant } from './types';
+import { User, UserTenant, UserProfile } from './types';
 import { API_BASE } from './index';
 
 // Type for API response that might contain nested arrays
@@ -78,11 +78,66 @@ export async function getUser(token: string, id: number): Promise<User> {
 }
 
 export async function getCurrentUser(token: string): Promise<User> {
-   // Get user ID from localStorage or assume it's stored there
-   const userStr = localStorage.getItem("user");
-   if (!userStr) {
-     throw new Error("No user found in localStorage");
-   }
-   const user = JSON.parse(userStr);
-   return getUser(token, user.id);
+    // Get user ID from localStorage or assume it's stored there
+    const userStr = localStorage.getItem("user");
+    if (!userStr) {
+      throw new Error("No user found in localStorage");
+    }
+    const user = JSON.parse(userStr);
+    return getUser(token, user.id);
+}
+
+export async function getUserProfile(token: string, id: number): Promise<UserProfile> {
+  // Since /user-profiles/ doesn't exist, fetch from /members/ and transform
+  const users = await getUsers(token);
+  const user = users.find(u => u.id === id);
+  if (!user) {
+    throw new Error(`User with id ${id} not found`);
+  }
+  // Transform User to UserProfile with empty profile fields
+  return {
+    id: user.id,
+    user: user.id,
+    job_title: user.job || '',
+    phone: '',
+    linkedin_profile: '',
+    employee_id: '',
+    employee_number: '',
+    tax_number: '',
+    hire_date: '',
+    street_address: '',
+    city: '',
+    state_province: '',
+    postal_code: '',
+    country: '',
+    emergency_contact: '',
+    emergency_phone: '',
+    medical_aid_provider: '',
+    medical_aid_plan: '',
+    medical_aid_number: '',
+    medical_conditions: '',
+    allergies: '',
+    medications: '',
+    bank_name: '',
+    account_number: '',
+    branch_code: '',
+    account_type: '',
+    routing_number: '',
+    swift_code: '',
+    created_at: '',
+    updated_at: '',
+    first_name: user.first_name || '',
+    last_name: user.last_name || '',
+    email: user.email || '',
+    is_active: user.is_active,
+    date_joined: user.date_joined || '',
+    organization: user.organization || '',
+  };
+}
+
+export async function updateUserProfile(token: string, id: number, profileData: Partial<UserProfile>): Promise<UserProfile> {
+  // Since /user-profiles/ doesn't exist, for now, just return the current profile
+  // TODO: Implement update when backend endpoint is available
+  const currentProfile = await getUserProfile(token, id);
+  return { ...currentProfile, ...profileData };
 }

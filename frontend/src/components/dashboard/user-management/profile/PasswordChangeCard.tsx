@@ -3,6 +3,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
+import { changePassword } from '@/api/auth';
 
 interface PasswordForm {
     current: string;
@@ -20,7 +21,7 @@ export default function PasswordChangeCard() {
     const [showNew, setShowNew] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
 
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         const { current, new: newPass, confirm } = passwordForm;
 
         if (!current || !newPass || !confirm) {
@@ -32,8 +33,17 @@ export default function PasswordChangeCard() {
             return;
         }
 
-        // TODO: call backend API here
-        console.log('Password updated successfully');
+        try {
+            const token = localStorage.getItem("access_token");
+            if (!token) {
+                throw new Error("No access token found. Please log in.");
+            }
+            await changePassword(token, current, newPass);
+            alert('Password updated successfully');
+            setPasswordForm({ current: '', new: '', confirm: '' });
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to change password');
+        }
     };
 
     const validatePassword = (password: string) => {

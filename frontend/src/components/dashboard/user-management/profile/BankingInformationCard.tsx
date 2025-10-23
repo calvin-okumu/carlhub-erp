@@ -1,0 +1,71 @@
+import React, { useState, useEffect } from 'react';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import { useProfile } from '@/hooks/useProfile';
+
+export default function BankingInformationCard() {
+    const { profile, updateProfile } = useProfile();
+    const [bankName, setBankName] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
+    const [branchCode, setBranchCode] = useState('');
+    const [accountType, setAccountType] = useState('');
+    const [routingNumber, setRoutingNumber] = useState('');
+    const [swiftCode, setSwiftCode] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
+
+    useEffect(() => {
+        if (profile) {
+            setBankName(profile.bank_name || '');
+            setAccountNumber(profile.account_number || '');
+            setBranchCode(profile.branch_code || '');
+            setAccountType(profile.account_type || '');
+            setRoutingNumber(profile.routing_number || '');
+            setSwiftCode(profile.swift_code || '');
+        }
+    }, [profile]);
+
+    const handleSave = async () => {
+        try {
+            await updateProfile({
+                bank_name: bankName,
+                account_number: accountNumber,
+                branch_code: branchCode,
+                account_type: accountType,
+                routing_number: routingNumber,
+                swift_code: swiftCode,
+            });
+            setSuccessMessage('Banking information updated successfully');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to update banking information');
+        }
+    };
+
+    return (
+        <Card className="p-6">
+            <h2 className="text-lg font-semibold mb-4">Banking Information</h2>
+            <div className="space-y-4">
+                <Input type="text" placeholder="Bank Name" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+                <Input type="text" placeholder="Account Number" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} />
+                <Input type="text" placeholder="Branch Code" value={branchCode} onChange={(e) => setBranchCode(e.target.value)} />
+                <Select value={accountType} onChange={(e) => setAccountType(e.target.value)}>
+                    <option>Checking</option>
+                    <option>Savings</option>
+                </Select>
+                <Input type="text" placeholder="Routing Number" value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} />
+                <Input type="text" placeholder="SWIFT Code" value={swiftCode} onChange={(e) => setSwiftCode(e.target.value)} />
+            </div>
+             <div className="flex space-x-2 mt-4">
+                 <Button onClick={handleSave}>Save changes</Button>
+                 <Button variant="outline" onClick={() => {}}>Cancel</Button>
+             </div>
+             {successMessage && (
+                 <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
+                     {successMessage}
+                 </div>
+             )}
+        </Card>
+    );
+}
