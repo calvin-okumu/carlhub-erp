@@ -414,6 +414,7 @@ class SprintViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "milestone", "milestone__project"]
     search_fields = ["name"]
     ordering_fields = ["name", "start_date"]
+    ordering = ['start_date']
 
     def get_queryset(self):
         queryset = Sprint.objects.select_related('milestone').prefetch_related('tasks')
@@ -566,6 +567,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "milestone", "sprint", "assignee", "milestone__project"]
     search_fields = ["title", "description"]
     ordering_fields = ["title", "created_at"]
+    ordering = ['created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
