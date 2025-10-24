@@ -40,9 +40,14 @@ class ClientSerializer(serializers.ModelSerializer):
         return obj.projects.count()
 
 class ProjectSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField(help_text='Obfuscated project ID')
     client_name = serializers.CharField(source='client.name', read_only=True, help_text='Name of the associated client')
     milestones_count = serializers.SerializerMethodField(help_text='Number of milestones in this project')
     progress = serializers.SerializerMethodField(help_text='Overall project progress percentage (0-100)')
+
+    def get_id(self, obj):
+        from saasCRM.utils import encode_id
+        return encode_id(obj.pk)
 
     def validate_budget(self, value):
         if value is not None:

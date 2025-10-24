@@ -2,6 +2,7 @@ import uuid
 from datetime import timedelta
 
 from django.contrib.auth import authenticate
+from django.http import Http404
 from django.shortcuts import render
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -91,48 +92,13 @@ class TenantViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
     ordering = ['name']
 
-
-@extend_schema_view(
-    list=extend_schema(
-        summary="List clients",
-        description="Retrieve a list of clients for the current tenant."
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve client",
-        description="Retrieve details of a specific client including project count."
-    ),
-    create=extend_schema(
-        summary="Create client",
-        description="Create a new client for the current tenant."
-    ),
-    update=extend_schema(
-        summary="Update client",
-        description="Update an existing client's information."
-    ),
-    partial_update=extend_schema(
-        summary="Partially update client",
-        description="Partially update a client's information."
-    ),
-    destroy=extend_schema(
-        summary="Delete client",
-        description="Delete a client and all associated projects."
-    ),
-)
-class ClientViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for managing clients.
-
-    Provides CRUD operations for client management with tenant isolation.
-    Includes filtering by status, searching by name/email, and ordering capabilities.
-    """
-    queryset = Client.objects.all()
-    serializer_class = ClientSerializer
-    permission_classes = [permissions.IsAuthenticated, CanManageClients]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "tenant"]
-    search_fields = ["name", "email"]
-    ordering_fields = ["name", "created_at"]
-    ordering = ['name']
+    def get_object(self):
+        from saasCRM.utils import decode_id
+        pk = decode_id(self.kwargs['pk'])
+        if pk is None:
+            raise Http404
+        self.kwargs['pk'] = pk
+        return super().get_object()
 
     def get_queryset(self):
         if self.request.tenant:
