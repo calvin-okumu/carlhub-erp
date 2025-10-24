@@ -435,11 +435,21 @@ const data = await response.json();
 console.log(data.count);     // Total items
 console.log(data.next);      // Next page URL or null
 console.log(data.previous);  // Previous page URL or null
+console.log(data.first);     // First page URL or null
+console.log(data.last);      // Last page URL or null
 console.log(data.results);   // Array of items
 
 // Navigate pages
 if (data.next) {
   const nextResponse = await fetch(data.next);
+}
+
+// Jump to first or last page
+if (data.first) {
+  const firstResponse = await fetch(data.first);
+}
+if (data.last) {
+  const lastResponse = await fetch(data.last);
 }
 ```
 
