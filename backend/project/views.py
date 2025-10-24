@@ -5,13 +5,23 @@ from django.contrib.auth import authenticate
 from django.http import Http404
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.response import Response
+
+from accounts.models import CustomUser, Invitation, Tenant, UserTenant
 
 from saasCRM.utils import decode_id
+
+from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
+from .permissions import CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments, CanManageProjects, CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner
+from .serializers import ClientSerializer, CustomUserSerializer, InvitationSerializer, InvoiceSerializer, MilestoneSerializer, PaymentSerializer, ProjectSerializer, SprintSerializer, TaskSerializer, TenantSerializer, UserTenantSerializer
 
 
 class ObfuscatedIDMixin:
@@ -53,6 +63,88 @@ class TenantViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.request.tenant:
+            return Tenant.objects.filter(id=self.request.tenant.id)
+        elif self.request.user.is_authenticated:
+            # In dev mode, filter by user's tenants
+            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
+            if user_tenants:
+                return Tenant.objects.filter(id__in=user_tenants)
+            else:
+                return Tenant.objects.none()  # No tenants, no access
+        else:
+            return Tenant.objects.none()  # Unauthenticated, no access
+
+    def perform_create(self, serializer):
+        # Determine the tenant
+        if hasattr(self.request, 'tenant') and self.request.tenant:
+            tenant = self.request.tenant
+        else:
+            # Development/Test mode: try to get tenant from user or create default
+            from accounts.models import Tenant, UserTenant
+            try:
+                user_tenant = UserTenant.objects.filter(user=self.request.user, is_owner=True).first()
+                if user_tenant:
+                    tenant = user_tenant.tenant
+                else:
+                    # Create a default tenant for testing
+                    tenant, created = Tenant.objects.get_or_create(
+                        name="Default Test Tenant",
+                        defaults={'domain': 'test.com'}
+                    )
+            except Exception as e:
+                # Fallback for any issues
+                tenant, created = Tenant.objects.get_or_create(
+                    name="Default Test Tenant",
+                    defaults={'domain': 'test.com'}
+                )
+                tenant = tenant
+
+        serializer.save(tenant=tenant)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List clients",
+        description="Retrieve a list of clients for the current tenant."
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve client",
+        description="Retrieve details of a specific client."
+    ),
+    create=extend_schema(
+        summary="Create client",
+        description="Create a new client for the current tenant."
+    ),
+    update=extend_schema(
+        summary="Update client",
+        description="Update an existing client's information."
+    ),
+    partial_update=extend_schema(
+        summary="Partially update client",
+        description="Partially update a client's information."
+    ),
+    destroy=extend_schema(
+        summary="Delete client",
+        description="Delete a client."
+    ),
+)
+class ClientViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing clients.
+
+    Provides CRUD operations for client management with tenant isolation.
+    """
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    permission_classes = [permissions.IsAuthenticated, CanManageClients]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_fields = ["status"]
+    search_fields = ["name", "email"]
+    ordering_fields = ["name", "created_at", "status"]
+    ordering = ['name']
+
+    def get_queryset(self):
+        if self.request.tenant:
             return Client.objects.filter(tenant=self.request.tenant)
         elif self.request.user.is_authenticated:
             # In dev mode, filter by user's tenants
@@ -70,7 +162,6 @@ class TenantViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
             tenant = self.request.tenant
         else:
             # Development/Test mode: try to get tenant from user or create default
-            from accounts.models import Tenant, UserTenant
             try:
                 user_tenant = UserTenant.objects.filter(user=self.request.user, is_owner=True).first()
                 if user_tenant:
@@ -254,7 +345,7 @@ class MilestoneViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
     """
     queryset = Milestone.objects.all()
     serializer_class = MilestoneSerializer
-    permission_classes = [permissions.IsAuthenticated, CanManageTasks]
+    permission_classes = [permissions.IsAuthenticated, CanManageMilestones]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "project"]
     search_fields = ["name", "description"]
