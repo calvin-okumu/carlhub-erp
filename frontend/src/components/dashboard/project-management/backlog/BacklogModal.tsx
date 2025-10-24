@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
 import type { Task, Sprint, UserTenant } from '@/api/types';
 
 interface BacklogModalProps {
@@ -167,36 +170,33 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title *</label>
-                    <input
+                    <Input
                         type="text"
                         id="title"
                         name="title"
                         value={formData.title}
                         onChange={handleChange}
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
+                    <Textarea
                         id="description"
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
                         rows={3}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                        <select
+                        <Select
                             id="status"
                             name="status"
                             value={formData.status}
                             onChange={handleChange}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="todo">To Do</option>
                             <option value="in_progress">In Progress</option>
@@ -204,61 +204,58 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                             <option value="testing">Testing</option>
                             <option value="done">Done</option>
                             <option value="completed">Completed</option>
-                        </select>
+                        </Select>
                     </div>
                     <div>
                         <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
-                        <select
+                        <Select
                             id="priority"
                             name="priority"
                             value={formData.priority}
                             onChange={handleChange}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="low">Low</option>
                             <option value="medium">Medium</option>
                             <option value="high">High</option>
-                        </select>
+                        </Select>
                     </div>
                 </div>
                 <div>
                     <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint (Optional)</label>
-                    <select
+                    <Select
                         id="sprint"
                         name="sprint"
                         value={formData.sprint}
                         onChange={handleChange}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="">No Sprint</option>
-                        {sprints.map(sprint => (
+                        {Array.isArray(sprints) && sprints.map(sprint => (
                             <option key={sprint.id} value={sprint.id}>
                                 {sprint.name}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div>
                     <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
-                    <select
+                    <Select
                         id="assignee"
                         name="assignee"
                         value={formData.assignee}
                         onChange={handleChange}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="">Select Assignee</option>
-                        {assignees.map(user => (
+                        {Array.isArray(assignees) && assignees.map(user => (
                             <option key={user.user} value={user.user}>
                                 {user.user_first_name} {user.user_last_name}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                      <div>
                          <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date</label>
-                         <input
+                         <Input
                              type="date"
                              id="start_date"
                              name="start_date"
@@ -266,13 +263,13 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                              onChange={handleChange}
                              min={minDate}
                              max={maxDate}
-                             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.start_date ? 'border-red-500' : 'border-gray-300'}`}
+                             className={errors.start_date ? 'border-red-500' : ''}
                          />
                          {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
                      </div>
                      <div>
                          <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">End Date</label>
-                         <input
+                         <Input
                              type="date"
                              id="end_date"
                              name="end_date"
@@ -280,21 +277,20 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                              onChange={handleChange}
                              min={minDate}
                              max={maxDate}
-                             className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.end_date ? 'border-red-500' : 'border-gray-300'}`}
+                             className={errors.end_date ? 'border-red-500' : ''}
                          />
                          {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
                      </div>
                  </div>
                 <div>
                     <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
-                    <input
+                    <Input
                         type="number"
                         id="estimated_hours"
                         name="estimated_hours"
                         value={formData.estimated_hours}
                         onChange={handleChange}
                         min="0"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">

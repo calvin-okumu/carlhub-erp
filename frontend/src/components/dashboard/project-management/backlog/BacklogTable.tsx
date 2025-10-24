@@ -48,7 +48,7 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
         }
     }, [onDeleteTask]);
 
-    const headers = ["Title", "Description", "Status", "Priority", "Milestone", "Assignee", "Actions"];
+    const headers = ["Title", "Description", "Status", "Priority", "Progress", "Milestone", "Assignee", "Actions"];
 
     const rows = visibleTasks.map(task => ({
         key: task.id,
@@ -83,6 +83,17 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
         >
             {task.priority}
         </span>,
+        <div key={task.id + '-progress'} className="flex items-center gap-2">
+            <span className="text-sm font-medium">{task.progress}%</span>
+            <div className="w-12 h-1 bg-gray-200 rounded">
+                <div
+                    className={`h-1 rounded transition-all duration-300 ${
+                        task.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${task.progress}%` }}
+                />
+            </div>
+        </div>,
         task.milestone_name || "-",
         task.assignee ? "Assigned" : "-", // Placeholder
         <div key={task.id + '-actions'} className="flex gap-2">

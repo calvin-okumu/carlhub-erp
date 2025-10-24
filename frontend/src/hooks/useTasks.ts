@@ -23,7 +23,7 @@ export function useTasks(projectId: number, backlog: boolean = false) {
     setLoading(true);
     try {
       const data = await getTasks(token, { projectId, backlog, ordering: '-created_at' });
-      setTasks(data);
+      setTasks(data.results);
     } catch (err) {
       console.error(err);
       setError("Failed to load tasks. Please try again.");

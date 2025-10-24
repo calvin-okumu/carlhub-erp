@@ -58,11 +58,24 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
             <div className="p-3">
                 <h3 className="font-medium text-gray-900 mb-2">{task.title}</h3>
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-2">
                     <PriorityBadge priority={task.priority} />
                     <div className="text-xs text-gray-500">
                         {task.assignee && <span>Assigned to: {task.assignee}</span>}
                         {task.estimated_hours && <span className="ml-2">{task.estimated_hours}h</span>}
+                    </div>
+                </div>
+                <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-gray-600">
+                        Progress: {task.progress}%
+                    </span>
+                    <div className="w-16 h-1 bg-gray-200 rounded">
+                        <div
+                            className={`h-1 rounded transition-all duration-300 ${
+                                task.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+                            }`}
+                            style={{ width: `${task.progress}%` }}
+                        />
                     </div>
                 </div>
                 {nextStatuses.length > 0 && (

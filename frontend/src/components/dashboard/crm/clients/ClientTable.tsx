@@ -20,9 +20,10 @@ interface ClientTableProps {
     } | null;
     currentPage: number;
     onPageChange: (page: number) => void;
+    searchValue: string;
 }
 
-export default function ClientTable({ clients, loading, error, onEditClient, onDeleteClient, pagination, currentPage, onPageChange }: ClientTableProps) {
+export default function ClientTable({ clients, loading, error, onEditClient, onDeleteClient, pagination, currentPage, onPageChange, searchValue }: ClientTableProps) {
 
     const handleEdit = (client: Client) => {
         onEditClient(client);
@@ -72,6 +73,14 @@ export default function ClientTable({ clients, loading, error, onEditClient, onD
 
     if (error) {
         return <div className="text-red-500">{error}</div>;
+    }
+
+    if (!loading && !error && clients.length === 0) {
+        return (
+            <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 p-8 text-center text-gray-500">
+                {searchValue ? `No clients found matching "${searchValue}"` : 'No clients found'}
+            </div>
+        );
     }
 
     const totalPages = pagination ? Math.ceil(pagination.count / 10) : 1;

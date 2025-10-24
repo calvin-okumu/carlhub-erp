@@ -14,32 +14,43 @@ interface ProjectTableProps {
     projects: Project[];
     loading: boolean;
     error: string | null;
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
     onAddProject: (data: ProjectFormData) => void;
     onEditProject: (id: number, data: ProjectFormData) => void;
     onDeleteProject: (id: number) => void;
 }
 
-export default function ProjectTable({ projects, loading, error, onAddProject, onEditProject, onDeleteProject }: ProjectTableProps) {
-    const [page, setPage] = useState(1);
+export default function ProjectTable({
+    projects,
+    loading,
+    error,
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    onPageChange,
+    onAddProject,
+    onEditProject,
+    onDeleteProject
+}: ProjectTableProps) {
     const [searchValue, setSearchValue] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-     const filteredProjects = useMemo(() =>
-         projects.filter(project =>
-             project.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-             project.client_name.toLowerCase().includes(searchValue.toLowerCase())
-         ),
-         [projects, searchValue]
-     );
-
-     const itemsPerPage = 10;
-     const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
-     const visibleProjects = useMemo(() =>
-         filteredProjects.slice((page - 1) * itemsPerPage, page * itemsPerPage),
-         [filteredProjects, page, itemsPerPage]
-     );
+    // For now, we'll do client-side search filtering on the current page's results
+    // In a full implementation, search would be sent to the API
+    const filteredProjects = useMemo(() =>
+        projects.filter(project =>
+            project.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+            project.client_name.toLowerCase().includes(searchValue.toLowerCase())
+        ),
+        [projects, searchValue]
+    );
 
      const handleNewProject = useCallback(() => {
          setModalMode('add');
@@ -75,7 +86,7 @@ export default function ProjectTable({ projects, loading, error, onAddProject, o
 
     const headers = ["Name", "Client", "Status", "Priority", "Start Date", "End Date", "Budget", "Progress", "Milestones", "Actions"];
 
-    const rows = visibleProjects.map(p => ({
+    const rows = filteredProjects.map(p => ({
         key: p.id,
         data: [
         <Link key={p.id + '-name'} href={`/dashboard/project-management/${p.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
@@ -146,7 +157,13 @@ export default function ProjectTable({ projects, loading, error, onAddProject, o
                         New Project
                     </Button>
                 </div>
-                <Table headers={headers} rows={rows} currentPage={page} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} totalItems={filteredProjects.length} />
+                {filteredProjects.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">
+                        {searchValue ? `No projects found matching "${searchValue}"` : 'No projects found'}
+                    </div>
+                ) : (
+                    <Table headers={headers} rows={rows} currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} itemsPerPage={itemsPerPage} totalItems={totalItems} />
+                )}
             </div>
             <ProjectModal
                 isOpen={modalOpen}

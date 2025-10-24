@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
 import type { Task, Sprint, UserTenant, Milestone } from '@/api/types';
 import { useForm } from 'react-hook-form';
 
@@ -145,104 +148,97 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
                     <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title *</label>
-                    <input
+                    <Input
                         type="text"
                         id="title"
                         {...register('title', { required: 'Title is required' })}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
+                    <Textarea
                         id="description"
                         {...register('description')}
                         rows={3}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                        <select
-                            id="status"
-                            {...register('status')}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="to_do">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="in_review">Review</option>
-                            <option value="testing">Testing</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
-                        <select
-                            id="priority"
-                            {...register('priority')}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                        >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
+                        <div>
+                            <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
+                            <Select
+                                id="status"
+                                {...register('status')}
+                            >
+                                <option value="to_do">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="in_review">Review</option>
+                                <option value="testing">Testing</option>
+                            </Select>
+                        </div>
+                        <div>
+                            <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
+                            <Select
+                                id="priority"
+                                {...register('priority')}
+                            >
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </Select>
+                        </div>
                  </div>
-                 {isBacklog && milestones && (
-                     <div>
-                         <label htmlFor="milestone" className="block text-sm font-medium text-gray-700">Milestone</label>
-                         <select
-                             id="milestone"
-                             {...register('milestone', { required: 'Milestone is required' })}
-                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                         >
-                             <option value="">Select Milestone</option>
-                             {milestones.map(milestone => (
-                                 <option key={milestone.id} value={milestone.id}>
-                                     {milestone.name}
-                                 </option>
-                             ))}
-                         </select>
-                     </div>
+                  {isBacklog && milestones && Array.isArray(milestones) && (
+                      <div>
+                          <label htmlFor="milestone" className="block text-sm font-medium text-gray-700">Milestone</label>
+                          <Select
+                              id="milestone"
+                              {...register('milestone', { required: 'Milestone is required' })}
+                          >
+                              <option value="">Select Milestone</option>
+                              {Array.isArray(milestones) && milestones.map(milestone => (
+                                  <option key={milestone.id} value={milestone.id}>
+                                      {milestone.name}
+                                  </option>
+                              ))}
+                          </Select>
+                      </div>
+                  )}
+                 {!isBacklog && (
+                      <div>
+                          <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
+                          <Select
+                              id="sprint"
+                              {...register('sprint', { required: 'Sprint is required' })}
+                          >
+                              <option value="">Select Sprint</option>
+                              {Array.isArray(sprints) && sprints.map(sprint => (
+                                  <option key={sprint.id} value={sprint.id}>
+                                      {sprint.name}
+                                  </option>
+                              ))}
+                          </Select>
+                      </div>
                  )}
                  {!isBacklog && (
-                     <div>
-                         <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
-                         <select
-                             id="sprint"
-                             {...register('sprint', { required: 'Sprint is required' })}
-                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                         >
-                             <option value="">Select Sprint</option>
-                             {sprints.map(sprint => (
-                                 <option key={sprint.id} value={sprint.id}>
-                                     {sprint.name}
-                                 </option>
-                             ))}
-                         </select>
-                     </div>
-                 )}
-                 {!isBacklog && (
-                     <div>
-                         <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
-                         <select
-                             id="assignee"
-                             {...register('assignee')}
-                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                         >
-                             <option value="">Select Assignee</option>
-                             {assignees.map(user => (
-                                 <option key={user.user} value={user.user}>
-                                     {user.user_first_name} {user.user_last_name}
-                                 </option>
-                             ))}
-                         </select>
-                     </div>
+                      <div>
+                          <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
+                          <Select
+                              id="assignee"
+                              {...register('assignee')}
+                          >
+                              <option value="">Select Assignee</option>
+                              {Array.isArray(assignees) && assignees.map(user => (
+                                  <option key={user.user} value={user.user}>
+                                      {user.user_first_name} {user.user_last_name}
+                                  </option>
+                              ))}
+                          </Select>
+                      </div>
                  )}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date</label>
-                        <input
+                        <Input
                             type="date"
                             id="start_date"
                             {...register('start_date', {
@@ -253,13 +249,13 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             })}
                             min={minDate}
                             max={maxDate}
-                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.start_date ? 'border-red-500' : 'border-gray-300'}`}
+                            className={errors.start_date ? 'border-red-500' : ''}
                         />
                         {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date.message}</p>}
                     </div>
                     <div>
                         <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">End Date</label>
-                        <input
+                        <Input
                             type="date"
                             id="end_date"
                             {...register('end_date', {
@@ -270,22 +266,21 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             })}
                             min={minDate}
                             max={maxDate}
-                            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.end_date ? 'border-red-500' : 'border-gray-300'}`}
+                            className={errors.end_date ? 'border-red-500' : ''}
                         />
                         {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date.message}</p>}
                     </div>
                 </div>
                  {!isBacklog && (
-                     <div>
-                         <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
-                         <input
-                             type="number"
-                             id="estimated_hours"
-                             {...register('estimated_hours')}
-                             min="0"
-                             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-blue-500 focus:border-blue-500"
-                         />
-                     </div>
+                      <div>
+                          <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
+                          <Input
+                              type="number"
+                              id="estimated_hours"
+                              {...register('estimated_hours')}
+                              min="0"
+                          />
+                      </div>
                  )}
                 <div className="flex justify-end space-x-3 pt-4">
                     <Button type="button" onClick={onClose} variant="outline">

@@ -23,7 +23,7 @@ export function useMilestones(projectId: number, tenant?: number) {
     setLoading(true);
     try {
       const data = await getMilestones(token, { projectId, tenant, ordering: '-created_at' });
-      setMilestones(data);
+      setMilestones(data.results);
     } catch (err) {
       console.error(err);
       setError("Failed to load milestones. Please try again.");

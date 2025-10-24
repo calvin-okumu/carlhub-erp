@@ -23,7 +23,7 @@ export function useSprints(projectId: number) {
     setLoading(true);
     try {
       const data = await getSprints(token, { projectId, ordering: '-created_at' });
-      setSprints(data);
+      setSprints(data.results);
     } catch (err) {
       console.error(err);
       setError("Failed to load sprints. Please try again.");

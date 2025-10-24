@@ -1,11 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, UserCheck, UserPlus } from 'lucide-react';
 import StatCard from '@/components/ui/StatCard';
 import Button from '@/components/ui/Button';
-
-import { useClients } from '@/hooks/useClients';
+import Input from '@/components/ui/Input';
+import { getClients } from '@/api/crm';
+import type { Client } from '@/api/types';
 
 interface ClientHeaderProps {
     onAddClient: () => void;
@@ -14,7 +15,35 @@ interface ClientHeaderProps {
 }
 
 export default function ClientHeader({ onAddClient, searchValue, onSearchChange }: ClientHeaderProps) {
-    const { clients } = useClients();
+    const [allClients, setAllClients] = useState<Client[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchAllClients = async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+
+            try {
+                // Fetch all clients with a high limit for metrics calculation
+                const data = await getClients(token, { limit: 1000 });
+
+                // Handle both paginated and non-paginated responses
+                if (data && typeof data === 'object' && 'results' in data) {
+                    setAllClients(data.results);
+                } else {
+                    setAllClients(data as Client[]);
+                }
+            } catch (error) {
+                console.error('Failed to fetch clients for metrics:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAllClients();
+    }, []);
+
+    const clients = allClients;
 
     const totalClients = clients.length;
     const activeClients = clients.filter(c => c.status === 'active').length;
@@ -58,14 +87,14 @@ export default function ClientHeader({ onAddClient, searchValue, onSearchChange 
                 />
             </div>
             <div className="flex justify-between items-center">
-                <input
+                <Input
                     type="text"
                     placeholder="Search clients..."
                     value={searchValue}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="max-w-xs"
                 />
-                <Button onClick={handleAddClient} variant="primary" size="md">
+                <Button onClick={handleAddClient} variant="primary" size="sm">
                     + Add Client
                 </Button>
             </div>

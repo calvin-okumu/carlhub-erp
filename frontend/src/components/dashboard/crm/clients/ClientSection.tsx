@@ -61,6 +61,7 @@ export default function ClientSection() {
                 pagination={pagination}
                 currentPage={currentPage}
                 onPageChange={handlePageChange}
+                searchValue={searchValue}
             />
             <ClientModal
                 isOpen={modalOpen}
