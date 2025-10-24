@@ -10,73 +10,24 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.filters import OrderingFilter, SearchFilter
-from rest_framework.response import Response
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 
-from accounts.models import (
-    CustomUser,
-    Invitation,
-    Tenant,
-    UserTenant,
-)
-
-from .models import (
-    Client,
-    Invoice,
-    Milestone,
-    Payment,
-    Project,
-    Sprint,
-    Task,
-)
-from .permissions import (
-    CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments,
-    CanManageProjects, CanManageSprints, CanManageTasks, IsTenantOwner, IsTenantCreator
-)
-from .serializers import (
-    ClientSerializer,
-    CustomUserSerializer,
-    InvitationSerializer,
-    InvoiceSerializer,
-    MilestoneSerializer,
-    PaymentSerializer,
-    ProjectSerializer,
-    SprintSerializer,
-    TaskSerializer,
-    TenantSerializer,
-    UserTenantSerializer,
-)
+from saasCRM.utils import decode_id
 
 
-@extend_schema_view(
-    list=extend_schema(
-        summary="List tenants",
-        description="Retrieve a list of all tenants. In multi-tenant mode, returns only the current user's tenant."
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve tenant",
-        description="Retrieve details of a specific tenant."
-    ),
-    create=extend_schema(
-        summary="Create tenant",
-        description="Create a new tenant organization."
-    ),
-    update=extend_schema(
-        summary="Update tenant",
-        description="Update an existing tenant's information."
-    ),
-    partial_update=extend_schema(
-        summary="Partially update tenant",
-        description="Partially update a tenant's information."
-    ),
-    destroy=extend_schema(
-        summary="Delete tenant",
-        description="Delete a tenant organization."
-    ),
-)
-class TenantViewSet(viewsets.ModelViewSet):
+class ObfuscatedIDMixin:
+    """
+    Mixin for ViewSets that use obfuscated IDs.
+    Decodes obfuscated PKs in URLs.
+    """
+    def get_object(self):
+        pk = decode_id(self.kwargs['pk'])
+        if pk is None:
+            raise Http404
+        self.kwargs['pk'] = pk
+        return super().get_object()
+
+
+class TenantViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing tenant organizations.
 
@@ -293,7 +244,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         description="Delete a milestone and all associated sprints and tasks."
     ),
 )
-class MilestoneViewSet(viewsets.ModelViewSet):
+class MilestoneViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing project milestones.
 
@@ -369,7 +320,7 @@ class MilestoneViewSet(viewsets.ModelViewSet):
         description="Remove a task from this sprint."
     ),
 )
-class SprintViewSet(viewsets.ModelViewSet):
+class SprintViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing agile sprints.
 
@@ -523,7 +474,7 @@ class SprintViewSet(viewsets.ModelViewSet):
         description="Delete a task."
     ),
 )
-class TaskViewSet(viewsets.ModelViewSet):
+class TaskViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing individual tasks.
 
