@@ -3,6 +3,8 @@
 import React, { useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import type { Client, CreateClientData, UpdateClientData } from '@/api/types';
 import { useForm } from 'react-hook-form';
 
@@ -65,44 +67,40 @@ export default function ClientModal({ isOpen, onClose, mode, client, onSave }: C
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name *</label>
-                    <input
+                    <Input
                         type="text"
                         id="name"
                         {...register("name", { required: "Name is required" })}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                     {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
                 </div>
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email *</label>
-                    <input
+                    <Input
                         type="email"
                         id="email"
                         {...register("email", { required: "Email is required", pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" } })}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                     {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                 </div>
                 <div>
                     <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone</label>
-                    <input
+                    <Input
                         type="tel"
                         id="phone"
                         {...register("phone")}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                    <select
+                    <Select
                         id="status"
                         {...register("status")}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                         <option value="prospect">Prospect</option>
-                    </select>
+                    </Select>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
                     <Button type="button" onClick={onClose} variant="outline">

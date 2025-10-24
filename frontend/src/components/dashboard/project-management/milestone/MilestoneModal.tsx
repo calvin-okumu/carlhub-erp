@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
 import type { Milestone, UserTenant } from '@/api/types';
 
 interface MilestoneModalProps {
@@ -117,44 +120,41 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name *</label>
-                    <input
+                    <Input
                         type="text"
                         id="name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
+                    <Textarea
                         id="description"
                         name="description"
                         value={formData.description}
                         onChange={handleChange}
                         rows={3}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                    <select
+                    <Select
                         id="status"
                         name="status"
                         value={formData.status}
                         onChange={handleChange}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="planning">Planning</option>
                         <option value="active">Active</option>
                         <option value="completed">Completed</option>
-                    </select>
+                    </Select>
                 </div>
                  <div>
                      <label htmlFor="planned_start" className="block text-sm font-medium text-gray-700">Planned Start</label>
-                     <input
+                     <Input
                          type="date"
                          id="planned_start"
                          name="planned_start"
@@ -162,14 +162,14 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
                          onChange={handleChange}
                          min={projectStart}
                          max={projectEnd}
-                         className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.planned_start ? 'border-red-500' : 'border-gray-300'}`}
+                         className={errors.planned_start ? 'border-red-500' : ''}
                      />
                      {errors.planned_start && <p className="text-red-500 text-sm mt-1">{errors.planned_start}</p>}
                  </div>
 
                  <div>
                      <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">Due Date</label>
-                     <input
+                     <Input
                          type="date"
                          id="due_date"
                          name="due_date"
@@ -177,26 +177,25 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
                          onChange={handleChange}
                          min={projectStart}
                          max={projectEnd}
-                         className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.due_date ? 'border-red-500' : 'border-gray-300'}`}
+                         className={errors.due_date ? 'border-red-500' : ''}
                      />
                      {errors.due_date && <p className="text-red-500 text-sm mt-1">{errors.due_date}</p>}
                  </div>
                 <div>
                     <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
-                    <select
+                    <Select
                         id="assignee"
                         name="assignee"
                         value={formData.assignee}
                         onChange={handleChange}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="">Select Assignee</option>
-                        {assignees.map(user => (
+                        {Array.isArray(assignees) && assignees.map(user => (
                             <option key={user.user} value={user.user}>
                                 {user.user_first_name} {user.user_last_name}
                             </option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
                     <Button type="button" onClick={onClose} variant="outline">

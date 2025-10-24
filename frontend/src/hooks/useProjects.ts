@@ -14,11 +14,15 @@ function getToken(): string | null {
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage] = useState(10);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProjects = useCallback(async () => {
+  const fetchProjects = useCallback(async (page = 1) => {
     const token = getToken();
     if (!token) return;
 
@@ -27,18 +31,32 @@ export function useProjects() {
       const tenants = await getUserTenants(token);
       const ownerTenant = Array.isArray(tenants) ? tenants.find((t) => t.is_owner) || tenants[0] : tenants;
 
-      const data = await getProjects(token, { tenant: ownerTenant?.tenant, ordering: '-created_at' });
-      setProjects(data);
+      const data = await getProjects(token, {
+        tenant: ownerTenant?.tenant,
+        ordering: '-created_at',
+        page,
+        limit: itemsPerPage
+      });
+
+      // Handle paginated response
+      setProjects(data.results);
+      setTotalItems(data.count);
+      setTotalPages(Math.ceil(data.count / itemsPerPage));
+      setCurrentPage(page);
     } catch (err) {
       console.error(err);
       setError("Failed to load projects. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [itemsPerPage]);
 
   useEffect(() => {
-    fetchProjects();
+    fetchProjects(1);
+  }, [fetchProjects]);
+
+  const handlePageChange = useCallback((page: number) => {
+    fetchProjects(page);
   }, [fetchProjects]);
 
   const addProject = async (data: {
@@ -125,6 +143,11 @@ export function useProjects() {
     projects,
     loading,
     error,
+    currentPage,
+    totalPages,
+    totalItems,
+    itemsPerPage,
+    onPageChange: handlePageChange,
     addProject,
     editProject,
     removeProject,

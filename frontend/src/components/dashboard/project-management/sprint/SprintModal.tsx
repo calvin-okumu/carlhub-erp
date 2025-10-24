@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import type { Sprint, Milestone } from '@/api/types';
 
 interface SprintModalProps {
@@ -131,53 +133,50 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name *</label>
-                    <input
+                    <Input
                         type="text"
                         id="name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
                 <div>
                     <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                    <select
+                    <Select
                         id="status"
                         name="status"
                         value={formData.status}
                         onChange={handleChange}
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     >
                         <option value="planned">Planned</option>
                         <option value="active">Active</option>
                         <option value="completed">Completed</option>
                         <option value="canceled">Canceled</option>
-                    </select>
+                    </Select>
                 </div>
                 <div>
                     <div>
                         <label htmlFor="milestone" className="block text-sm font-medium text-gray-700">Milestone *</label>
-                        <select
+                        <Select
                             id="milestone"
                             name="milestone"
                             value={formData.milestone}
                             onChange={handleChange}
                             required
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="">Select Milestone</option>
-                            {milestones.map(milestone => (
+                            {Array.isArray(milestones) && milestones.map(milestone => (
                                 <option key={milestone.id} value={milestone.id}>
                                     {milestone.name}
                                 </option>
                             ))}
-                        </select>
+                        </Select>
                     </div>
 
                     <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input
+                    <Input
                         type="date"
                         id="start_date"
                         name="start_date"
@@ -185,13 +184,13 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                         onChange={handleChange}
                         min={minDate}
                         max={maxDate}
-                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.start_date ? 'border-red-500' : 'border-gray-300'}`}
+                        className={errors.start_date ? 'border-red-500' : ''}
                     />
                     {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
                 </div>
                 <div>
                     <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">End Date</label>
-                    <input
+                    <Input
                         type="date"
                         id="end_date"
                         name="end_date"
@@ -199,7 +198,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                         onChange={handleChange}
                         min={minDate}
                         max={maxDate}
-                        className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${errors.end_date ? 'border-red-500' : 'border-gray-300'}`}
+                        className={errors.end_date ? 'border-red-500' : ''}
                     />
                     {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
                 </div>

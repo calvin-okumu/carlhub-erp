@@ -1,7 +1,7 @@
-import { Project, Milestone, Sprint, Task } from './types';
+import { Project, Milestone, Sprint, Task, PaginatedResponse } from './types';
 import { API_BASE } from './index';
 
-export async function getProjects(token: string, params?: { tenant?: number; search?: string; ordering?: string; status?: string; client?: number; priority?: string; page?: number; limit?: number }): Promise<Project[]> {
+export async function getProjects(token: string, params?: { tenant?: number; search?: string; ordering?: string; status?: string; client?: number; priority?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Project>> {
   const query = new URLSearchParams();
   if (params?.tenant) query.append('tenant', params.tenant.toString());
   if (params?.search) query.append('search', params.search);
@@ -27,8 +27,8 @@ export async function getProjects(token: string, params?: { tenant?: number; sea
     throw new Error(data.error || "Failed to fetch projects");
   }
 
-  // Handle paginated response
-  return data.results || data;
+  // Return full paginated response
+  return data;
 }
 
 export async function getProject(token: string, id: number): Promise<Project> {
@@ -127,7 +127,7 @@ export async function deleteProject(token: string, id: number): Promise<void> {
 }
 
 // Milestone API functions
-export async function getMilestones(token: string, params?: { projectId?: number; tenant?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Milestone[]> {
+export async function getMilestones(token: string, params?: { projectId?: number; tenant?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Milestone>> {
   let url = `${API_BASE}/milestones/`;
   const query = new URLSearchParams();
   if (params?.projectId) query.append('project', params.projectId.toString());
@@ -153,8 +153,8 @@ export async function getMilestones(token: string, params?: { projectId?: number
     throw new Error(data.error || "Failed to fetch milestones");
   }
 
-  // Handle paginated response
-  return data.results || data;
+  // Return full paginated response
+  return data;
 }
 
 export async function getMilestone(token: string, id: number): Promise<Milestone> {
@@ -249,7 +249,7 @@ export async function deleteMilestone(token: string, id: number): Promise<void> 
 }
 
 // Sprint API functions
-export async function getSprints(token: string, params?: { projectId?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Sprint[]> {
+export async function getSprints(token: string, params?: { projectId?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Sprint>> {
   let url = `${API_BASE}/sprints/`;
   const query = new URLSearchParams();
   if (params?.projectId) query.append('milestone__project', params.projectId.toString());
@@ -274,8 +274,8 @@ export async function getSprints(token: string, params?: { projectId?: number; s
     throw new Error(data.error || "Failed to fetch sprints");
   }
 
-  // Handle paginated response
-  return data.results || data;
+  // Return full paginated response
+  return data;
 }
 
 export async function getSprint(token: string, id: number): Promise<Sprint> {
@@ -428,7 +428,7 @@ export async function unassignTaskFromSprint(token: string, sprintId: number, ta
 }
 
 // Task API functions
-export async function getTasks(token: string, params?: { milestoneId?: number; sprintId?: number; projectId?: number; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Task[]> {
+export async function getTasks(token: string, params?: { milestoneId?: number; sprintId?: number; projectId?: number; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Task>> {
   let url = `${API_BASE}/tasks/`;
   const query = new URLSearchParams();
 
@@ -460,8 +460,8 @@ export async function getTasks(token: string, params?: { milestoneId?: number; s
     throw new Error(data.error || "Failed to fetch tasks");
   }
 
-  // Handle paginated response
-  return data.results || data;
+  // Return full paginated response
+  return data;
 }
 
 export async function getTask(token: string, id: number): Promise<Task> {
@@ -515,6 +515,7 @@ export async function updateTask(token: string, id: number, taskData: Partial<{
   title: string;
   description: string;
   status: string;
+  progress: number;
   milestone: number;
   sprint: number;
   assignee: number;

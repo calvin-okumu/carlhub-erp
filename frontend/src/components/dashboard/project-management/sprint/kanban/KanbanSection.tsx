@@ -56,7 +56,7 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
                 getTasks(token, { sprintId })
             ]);
             setSprint(sprintData);
-            setTasks(tasksData);
+            setTasks(tasksData.results);
         } catch (err) {
             console.error('Fetch error:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch data. Please check your connection or try again.');
@@ -82,11 +82,11 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
                     getUserTenants(token),
                     getTasks(token, { projectId, backlog: true }) // backlog=true
                 ]);
-                setSprints(sprintsData);
-                setMilestones(milestonesData);
+                setSprints(sprintsData.results);
+                setMilestones(milestonesData.results);
                 setUsers(usersData);
                 // Filter out tasks that are already in this sprint (safety check)
-                const filteredBacklog = backlogData.filter(task => task.sprint !== sprintId);
+                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprintId);
                 setBacklogTasks(filteredBacklog);
             } catch (err) {
                 console.error('Failed to fetch modal data:', err);
@@ -113,16 +113,34 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
         setSelectedTask(null);
     };
 
+    const getProgressForStatus = (status: string): number => {
+        const progressMap = {
+            'todo': 0,
+            'in_progress': 0,
+            'in_review': 0,
+            'testing': 100,
+            'done': 100,
+            'completed': 100
+        };
+        return progressMap[status as keyof typeof progressMap] ?? 0;
+    };
+
     const handleStatusChange = async (taskId: number, newStatus: string) => {
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
         try {
-            await updateTask(token, taskId, { status: newStatus });
+            // Calculate progress based on new status
+            const newProgress = getProgressForStatus(newStatus);
+
+            await updateTask(token, taskId, {
+                status: newStatus,
+                progress: newProgress
+            });
             // Refetch tasks
             fetchData();
         } catch (error) {
-            console.error('Error updating task status:', error);
+            console.error('Error updating task status and progress:', error);
             alert('Failed to update task status. Please try again.');
         }
     };
