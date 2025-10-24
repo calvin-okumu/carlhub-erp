@@ -224,17 +224,16 @@ class TenantAPITests(APITestCase):
         self.client.force_authenticate(user=self.user)
 
         self.org1 = Tenant.objects.create(name="Org 1", address="Address 1", domain="org1.example.com")
-        self.org2 = Tenant.objects.create(name="Org 2", address="Address 2", domain="org2.example.com")
-        # Create UserTenant association for all tenants (superuser-like access for tests)
+        # Note: UserTenant has OneToOneField, so user can only belong to one tenant
+        # For testing multiple tenants, we'd need separate users or modify the model
         from accounts.models import UserTenant
         UserTenant.objects.create(user=self.user, tenant=self.org1, is_owner=True, is_approved=True)
-        UserTenant.objects.create(user=self.user, tenant=self.org2, is_owner=True, is_approved=True)
 
     def test_list_tenants(self):
         """Test listing tenants"""
         response = self.client.get('/api/tenants/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 1)
 
     def test_create_tenant(self):
         """Test creating tenant"""
