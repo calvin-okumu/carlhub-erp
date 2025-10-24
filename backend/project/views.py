@@ -89,6 +89,7 @@ class TenantViewSet(viewsets.ModelViewSet):
     filterset_fields = ["name"]
     search_fields = ["name"]
     ordering_fields = ["name", "created_at"]
+    ordering = ['name']
 
 
 @extend_schema_view(
@@ -131,6 +132,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "tenant"]
     search_fields = ["name", "email"]
     ordering_fields = ["name", "created_at"]
+    ordering = ['name']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -214,6 +216,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "priority", "client"]
     search_fields = ["name", "description"]
     ordering_fields = ["name", "created_at"]
+    ordering = ['name']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -339,6 +342,7 @@ class MilestoneViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "project"]
     search_fields = ["name", "description"]
     ordering_fields = ["name", "due_date"]
+    ordering = ['name']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -697,6 +701,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     filterset_fields = ["paid", "client", "project"]
     search_fields = ["client__name"]
     ordering_fields = ["issued_at"]
+    ordering = ['issued_at']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -790,6 +795,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     filterset_fields = ["invoice"]
     search_fields = ["invoice__id"]
     ordering_fields = ["paid_at"]
+    ordering = ['paid_at']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -933,6 +939,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
     filterset_fields = ["tenant", "is_used", "role"]
     search_fields = ["email", "tenant__name"]
     ordering_fields = ["created_at"]
+    ordering = ['created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -987,6 +994,7 @@ class UserViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_active"]
     search_fields = ["email", "first_name", "last_name"]
     ordering_fields = ["email", "date_joined"]
+    ordering = ['email']
 
     def get_queryset(self):
         # Users can only see their own profile unless they have admin permissions
