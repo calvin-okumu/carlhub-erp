@@ -2,12 +2,11 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import Pagination from '@/components/shared/Pagination';
+import Table from '@/components/ui/Table';
 import Loader from '@/components/shared/Loader';
 import type { Sprint } from '@/api/types';
 import { Edit, Trash2, AlertCircle, Columns } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Card from '@/components/ui/Card';
 
 interface SprintTableProps {
       sprints: Sprint[];
@@ -52,53 +51,37 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
         }
     }, [onDeleteSprint]);
 
-    const sprintCards = visibleSprints.map(sprint => (
-        <Card key={sprint.id} className="p-6">
-            <div className="flex justify-between items-start mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{sprint.name}</h3>
-                <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${sprint.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
-                        : sprint.status === 'active'
-                            ? 'bg-blue-100 text-blue-800'
-                            : sprint.status === 'planned'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
-                        }`}
-                >
-                    {sprint.status}
-                </span>
-            </div>
-            <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Start Date:</span>
-                    <span className="text-sm text-gray-900">{sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : "-"}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">End Date:</span>
-                    <span className="text-sm text-gray-900">{sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : "-"}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Milestone:</span>
-                    <span className="text-sm text-gray-900">{sprint.milestone_name || "-"}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Tasks:</span>
-                    <span className="text-sm text-gray-900">{sprint.tasks_count}</span>
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Progress:</span>
-                    <span className="text-sm text-gray-900">{sprint.progress}%</span>
-                </div>
-            </div>
-             <div className="flex gap-2">
-                 <Link href={`/dashboard/project-management/${projectId}/sprint/${sprint.id}/kanban`}>
-                     <Button variant="outline" size="sm">
-                         <Columns className="h-4 w-4 mr-2" />
-                         Open Kanban
-                     </Button>
-                 </Link>
+    const headers = ["Name", "Status", "Start Date", "End Date", "Milestone", "Tasks", "Progress", "Actions"];
 
+    const rows = visibleSprints.map(sprint => ({
+        key: sprint.id,
+        data: [
+            sprint.name,
+            <span
+                key={sprint.id + '-status'}
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${sprint.status === 'completed'
+                    ? 'bg-green-100 text-green-800'
+                    : sprint.status === 'active'
+                        ? 'bg-blue-100 text-blue-800'
+                        : sprint.status === 'planned'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
+                    }`}
+            >
+                {sprint.status}
+            </span>,
+            sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : "-",
+            sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : "-",
+            sprint.milestone_name || "-",
+            sprint.tasks_count,
+            `${sprint.progress}%`,
+            <div key={sprint.id + '-actions'} className="flex gap-2">
+                <Link href={`/dashboard/project-management/${projectId}/sprint/${sprint.id}/kanban`}>
+                    <Button variant="outline" size="sm">
+                        <Columns className="h-4 w-4 mr-2" />
+                        Open Kanban
+                    </Button>
+                </Link>
                 <Button onClick={() => handleEdit(sprint)} variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit
@@ -108,8 +91,8 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
                     Delete
                 </Button>
             </div>
-        </Card>
-    ));
+        ]
+    }));
 
     if (loading) {
         return <Loader />;
@@ -132,18 +115,8 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
     }
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sprintCards}
-            </div>
-            <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredSprints.length}
-            />
-
+        <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+            <Table headers={headers} rows={rows} currentPage={page} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} totalItems={filteredSprints.length} />
         </div>
     );
 });

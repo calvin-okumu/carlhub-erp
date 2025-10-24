@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import Card from '@/components/ui/Card';
+import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useProfile } from '@/hooks/useProfile';
-import { User, Briefcase, Languages } from 'lucide-react';
-import Loader from '@/components/shared/Loader';
+import { Briefcase, Languages, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function PersonalInformationCard() {
     const { profile, loading, error, updateProfile } = useProfile();
@@ -21,7 +21,7 @@ export default function PersonalInformationCard() {
             setFirstName(profile.first_name || '');
             setLastName(profile.last_name || '');
             setJobTitle(profile.job_title || '');
-            setLanguage('English'); // Default, can be extended
+            setLanguage('English');
         }
     }, [profile]);
 
@@ -145,17 +145,17 @@ export default function PersonalInformationCard() {
                 </div>
             </div>
 
-             {isEditing && (
-                 <div className="flex space-x-2 mt-4">
-                     <Button onClick={handleSave}>Save Changes</Button>
-                     <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-                 </div>
-             )}
-             {successMessage && (
-                 <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
-                     {successMessage}
-                 </div>
-             )}
+            {isEditing && (
+                <div className="flex space-x-2 mt-4">
+                    <Button onClick={handleSave}>Save Changes</Button>
+                    <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
+                    {successMessage}
+                </div>
+            )}
         </Card>
     );
 }

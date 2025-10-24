@@ -40,11 +40,11 @@ export default function Table({ headers, rows, className = '', currentPage, tota
             ))}
           </tbody>
        </table>
-       {currentPage && totalPages && onPageChange && itemsPerPage && totalItems && (
-         <div className="mt-4">
-           <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} itemsPerPage={itemsPerPage} totalItems={totalItems} />
-         </div>
-       )}
+        {currentPage && totalPages && onPageChange && (
+          <div className="mt-4">
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} itemsPerPage={itemsPerPage || 10} totalItems={totalItems || 0} />
+          </div>
+        )}
      </div>
    );
 }

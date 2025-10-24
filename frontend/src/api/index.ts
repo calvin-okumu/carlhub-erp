@@ -4,6 +4,7 @@ export type {
   CreateClientData,
   LoginResponse,
   Milestone,
+  PaginatedResponse,
   Project,
   SignupResponse,
   Sprint,

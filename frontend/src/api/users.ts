@@ -88,56 +88,77 @@ export async function getCurrentUser(token: string): Promise<User> {
 }
 
 export async function getUserProfile(token: string, id: number): Promise<UserProfile> {
-  // Since /user-profiles/ doesn't exist, fetch from /members/ and transform
-  const users = await getUsers(token);
-  const user = users.find(u => u.id === id);
-  if (!user) {
-    throw new Error(`User with id ${id} not found`);
+  const url = `${API_BASE}/accounts/profile/`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}`);
   }
-  // Transform User to UserProfile with empty profile fields
+
+  const data = await response.json();
+  // Transform backend data to match UserProfile type
   return {
-    id: user.id,
-    user: user.id,
-    job_title: user.job || '',
-    phone: '',
-    linkedin_profile: '',
-    employee_id: '',
-    employee_number: '',
-    tax_number: '',
-    hire_date: '',
-    street_address: '',
-    city: '',
-    state_province: '',
-    postal_code: '',
-    country: '',
-    emergency_contact: '',
-    emergency_phone: '',
-    medical_aid_provider: '',
-    medical_aid_plan: '',
-    medical_aid_number: '',
-    medical_conditions: '',
-    allergies: '',
-    medications: '',
-    bank_name: '',
-    account_number: '',
-    branch_code: '',
-    account_type: '',
-    routing_number: '',
-    swift_code: '',
-    created_at: '',
-    updated_at: '',
-    first_name: user.first_name || '',
-    last_name: user.last_name || '',
-    email: user.email || '',
-    is_active: user.is_active,
-    date_joined: user.date_joined || '',
-    organization: user.organization || '',
+    id: data.id,
+    user: data.user,
+    job_title: data.job_title || '',
+    phone: data.phone || '',
+    linkedin_profile: data.linkedin_profile || '',
+    employee_id: data.employee_id || '',
+    employee_number: data.employee_number || '',
+    tax_number: data.tax_number || '',
+    hire_date: data.hire_date || '',
+    street_address: data.street_address || '',
+    city: data.city || '',
+    state_province: data.state_province || '',
+    postal_code: data.postal_code || '',
+    country: data.country || '',
+    emergency_contact: data.emergency_contact || '',
+    emergency_phone: data.emergency_phone || '',
+    medical_aid_provider: data.medical_aid_provider || '',
+    medical_aid_plan: data.medical_aid_plan || '',
+    medical_aid_number: data.medical_aid_number || '',
+    medical_conditions: data.medical_conditions || '',
+    allergies: data.allergies || '',
+    medications: data.medications || '',
+    bank_name: data.bank_name || '',
+    account_number: data.account_number || '',
+    branch_code: data.branch_code || '',
+    account_type: data.account_type || '',
+    routing_number: data.routing_number || '',
+    swift_code: data.swift_code || '',
+    created_at: data.created_at || '',
+    updated_at: data.updated_at || '',
+    first_name: data.user_first_name || '',
+    last_name: data.user_last_name || '',
+    email: data.user_email || '',
+    is_active: true,
+    date_joined: data.user_date_joined || '',
+    organization: data.tenant_name || '',
   };
 }
 
 export async function updateUserProfile(token: string, id: number, profileData: Partial<UserProfile>): Promise<UserProfile> {
-  // Since /user-profiles/ doesn't exist, for now, just return the current profile
-  // TODO: Implement update when backend endpoint is available
-  const currentProfile = await getUserProfile(token, id);
-  return { ...currentProfile, ...profileData };
+  const url = `${API_BASE}/accounts/profile/`;
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(profileData),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to update profile: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  // Return the updated profile
+  return await getUserProfile(token, id);
 }

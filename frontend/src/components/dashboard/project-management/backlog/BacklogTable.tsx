@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import Table from '@/components/ui/Table';
-import Pagination from '@/components/shared/Pagination';
 import Loader from '@/components/shared/Loader';
 import type { Task } from '@/api/types';
 import { Edit, Trash2, AlertCircle } from 'lucide-react';
@@ -119,14 +118,7 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
 
     return (
         <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-            <Table headers={headers} rows={rows} />
-            <Pagination
-                currentPage={page}
-                totalPages={totalPages}
-                onPageChange={setPage}
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredTasks.length}
-            />
+            <Table headers={headers} rows={rows} currentPage={page} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} totalItems={filteredTasks.length} />
         </div>
     );
 });

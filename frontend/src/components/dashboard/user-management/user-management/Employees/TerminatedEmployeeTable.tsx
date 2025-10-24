@@ -19,14 +19,17 @@ interface TerminatedEmployeeTableProps {
     entriesPerPage: number;
     currentPage: number;
     employees?: Employee[];
+    onPageChange: (page: number) => void;
 }
 
-export default function TerminatedEmployeeTable({ searchTerm, entriesPerPage, currentPage, employees = [] }: TerminatedEmployeeTableProps) {
+export default function TerminatedEmployeeTable({ searchTerm, entriesPerPage, currentPage, employees = [], onPageChange }: TerminatedEmployeeTableProps) {
     const filteredEmployees = employees.filter(emp =>
         emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         emp.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const totalItems = filteredEmployees.length;
+    const totalPages = Math.ceil(totalItems / entriesPerPage);
     const startIndex = (currentPage - 1) * entriesPerPage;
     const paginatedEmployees = filteredEmployees.slice(startIndex, startIndex + entriesPerPage);
 
@@ -51,5 +54,5 @@ export default function TerminatedEmployeeTable({ searchTerm, entriesPerPage, cu
         ],
     }));
 
-    return <Table headers={headers} rows={rows} />;
+    return <Table headers={headers} rows={rows} currentPage={currentPage} totalPages={totalPages} onPageChange={onPageChange} itemsPerPage={entriesPerPage} totalItems={totalItems} />;
 }

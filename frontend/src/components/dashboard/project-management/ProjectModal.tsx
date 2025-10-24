@@ -16,7 +16,7 @@ interface ProjectModalProps {
 }
 
 export default function ProjectModal({ isOpen, onClose, mode, project, onSave }: ProjectModalProps) {
-    const { clients } = useClients();
+    const { clients, refetch } = useClients();
     const [formData, setFormData] = useState({
         name: '',
         client: 0,
@@ -26,6 +26,13 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
         end_date: '',
         budget: '',
     });
+
+    useEffect(() => {
+        if (isOpen) {
+            // Fetch clients when modal opens
+            refetch();
+        }
+    }, [isOpen, refetch]);
 
     useEffect(() => {
         if (mode === 'edit' && project) {

@@ -4,9 +4,12 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import { useProfile } from '@/hooks/useProfile';
+import { User, Phone, Building, Hash, FileText } from 'lucide-react';
+import Loader from '@/components/shared/Loader';
 
 export default function MedicalInformationCard() {
-    const { profile, updateProfile } = useProfile();
+    const { profile, loading, error, updateProfile } = useProfile();
+    const [isEditing, setIsEditing] = useState(false);
     const [emergencyContact, setEmergencyContact] = useState('');
     const [emergencyPhone, setEmergencyPhone] = useState('');
     const [medicalAid, setMedicalAid] = useState('');
@@ -42,6 +45,7 @@ export default function MedicalInformationCard() {
                 allergies: allergies,
                 medications: medications,
             });
+            setIsEditing(false);
             setSuccessMessage('Medical information updated successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
@@ -49,28 +53,187 @@ export default function MedicalInformationCard() {
         }
     };
 
+    const handleCancel = () => {
+        if (profile) {
+            setEmergencyContact(profile.emergency_contact || '');
+            setEmergencyPhone(profile.emergency_phone || '');
+            setMedicalAid(profile.medical_aid_provider || '');
+            setPlan(profile.medical_aid_plan || '');
+            setNumber(profile.medical_aid_number || '');
+            setConditions(profile.medical_conditions || '');
+            setAllergies(profile.allergies || '');
+            setMedications(profile.medications || '');
+        }
+        setIsEditing(false);
+    };
+
+    if (loading) {
+        return (
+            <Card className="p-6">
+                <h2 className="text-lg font-semibold mb-4">Emergency & Medical Information</h2>
+                <Loader />
+            </Card>
+        );
+    }
+
+    if (error || !profile) {
+        return (
+            <Card className="p-6">
+                <h2 className="text-lg font-semibold mb-4">Emergency & Medical Information</h2>
+                <div className="text-sm text-red-500">{error || "Unable to load medical information"}</div>
+            </Card>
+        );
+    }
+
     return (
         <Card className="p-6">
-            <h2 className="text-lg font-semibold mb-4">Emergency & Medical Information</h2>
-            <div className="space-y-4">
-                <Input type="text" placeholder="Emergency Contact" value={emergencyContact} onChange={(e) => setEmergencyContact(e.target.value)} />
-                <Input type="tel" placeholder="Emergency Phone" value={emergencyPhone} onChange={(e) => setEmergencyPhone(e.target.value)} />
-                <Input type="text" placeholder="Medical Aid Provider" value={medicalAid} onChange={(e) => setMedicalAid(e.target.value)} />
-                <Input type="text" placeholder="Medical Aid Plan" value={plan} onChange={(e) => setPlan(e.target.value)} />
-                <Input type="text" placeholder="Medical Aid Number" value={number} onChange={(e) => setNumber(e.target.value)} />
-                <Textarea placeholder="Medical Conditions" value={conditions} onChange={(e) => setConditions(e.target.value)} />
-                <Textarea placeholder="Allergies" value={allergies} onChange={(e) => setAllergies(e.target.value)} />
-                <Textarea placeholder="Medications" value={medications} onChange={(e) => setMedications(e.target.value)} />
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Emergency & Medical Information</h2>
+                {!isEditing && (
+                    <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                        Edit
+                    </Button>
+                )}
             </div>
-             <div className="flex space-x-2 mt-4">
-                 <Button onClick={handleSave}>Save changes</Button>
-                 <Button variant="outline" onClick={() => {}}>Cancel</Button>
-             </div>
-             {successMessage && (
-                 <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
-                     {successMessage}
-                 </div>
-             )}
+
+            <div className="space-y-4">
+                {/* Emergency Contact */}
+                <div className="flex items-center space-x-3">
+                    <User className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="text"
+                            placeholder="Emergency Contact"
+                            value={emergencyContact}
+                            onChange={(e) => setEmergencyContact(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{emergencyContact || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* Emergency Phone */}
+                <div className="flex items-center space-x-3">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="tel"
+                            placeholder="Emergency Phone"
+                            value={emergencyPhone}
+                            onChange={(e) => setEmergencyPhone(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{emergencyPhone || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* Medical Aid Provider */}
+                <div className="flex items-center space-x-3">
+                    <Building className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="text"
+                            placeholder="Medical Aid Provider"
+                            value={medicalAid}
+                            onChange={(e) => setMedicalAid(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{medicalAid || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* Medical Aid Plan */}
+                <div className="flex items-center space-x-3">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="text"
+                            placeholder="Medical Aid Plan"
+                            value={plan}
+                            onChange={(e) => setPlan(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{plan || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* Medical Aid Number */}
+                <div className="flex items-center space-x-3">
+                    <Hash className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="text"
+                            placeholder="Medical Aid Number"
+                            value={number}
+                            onChange={(e) => setNumber(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{number || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* Medical Conditions */}
+                <div className="flex items-start space-x-3">
+                    <FileText className="h-4 w-4 text-gray-500 mt-1" />
+                    {isEditing ? (
+                        <Textarea
+                            placeholder="Medical Conditions"
+                            value={conditions}
+                            onChange={(e) => setConditions(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{conditions || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* Allergies */}
+                <div className="flex items-start space-x-3">
+                    <FileText className="h-4 w-4 text-gray-500 mt-1" />
+                    {isEditing ? (
+                        <Textarea
+                            placeholder="Allergies"
+                            value={allergies}
+                            onChange={(e) => setAllergies(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{allergies || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* Medications */}
+                <div className="flex items-start space-x-3">
+                    <FileText className="h-4 w-4 text-gray-500 mt-1" />
+                    {isEditing ? (
+                        <Textarea
+                            placeholder="Medications"
+                            value={medications}
+                            onChange={(e) => setMedications(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{medications || 'Not specified'}</span>
+                    )}
+                </div>
+            </div>
+
+            {isEditing && (
+                <div className="flex space-x-2 mt-4">
+                    <Button onClick={handleSave}>Save Changes</Button>
+                    <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
+                    {successMessage}
+                </div>
+            )}
         </Card>
     );
 }

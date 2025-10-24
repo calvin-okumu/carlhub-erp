@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ClientHeader from './ClientHeader';
 import ClientTable from './ClientTable';
 import ClientModal from './ClientModal';
@@ -8,11 +8,20 @@ import { useClients } from '@/hooks/useClients';
 import type { Client, CreateClientData, UpdateClientData } from '@/api/types';
 
 export default function ClientSection() {
-    const { clients, loading, error, addClient, editClient, removeClient } = useClients();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchValue, setSearchValue] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
-    const [searchValue, setSearchValue] = useState('');
+    const { clients, loading, error, pagination, addClient, editClient, removeClient, refetch } = useClients();
+
+    useEffect(() => {
+        refetch({ page: currentPage, limit: 10, search: searchValue });
+    }, [currentPage, searchValue, refetch]);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
 
     const handleAddClient = () => {
         setModalMode('add');
@@ -49,7 +58,9 @@ export default function ClientSection() {
                 error={error}
                 onEditClient={handleEditClient}
                 onDeleteClient={removeClient}
-                searchValue={searchValue}
+                pagination={pagination}
+                currentPage={currentPage}
+                onPageChange={handlePageChange}
             />
             <ClientModal
                 isOpen={modalOpen}
