@@ -32,7 +32,7 @@ export default function ProfileDetailsCard() {
     const fields = [
         { label: 'Name', value: `${profile.first_name} ${profile.last_name}`, icon: User },
         { label: 'Email', value: profile.email, icon: Mail },
-        { label: 'Job', value: profile.job || 'Not specified', icon: Briefcase },
+        { label: 'Job', value: profile.job_title || 'Not specified', icon: Briefcase },
         { label: 'Organization', value: profile.organization || 'Not specified', icon: Building },
         { label: 'Joined', value: new Date(profile.date_joined).toLocaleDateString(), icon: Calendar },
     ];

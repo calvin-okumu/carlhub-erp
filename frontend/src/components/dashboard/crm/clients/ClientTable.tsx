@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import Table from '@/components/ui/Table';
-import Pagination from '@/components/shared/Pagination';
 import Loader from '@/components/shared/Loader';
 import type { Client } from '@/api/types';
 import { Edit, Trash2 } from 'lucide-react';
@@ -14,20 +13,16 @@ interface ClientTableProps {
     error: string | null;
     onEditClient: (client: Client) => void;
     onDeleteClient: (id: number) => void;
-    searchValue: string;
+    pagination?: {
+        count: number;
+        next: string | null;
+        previous: string | null;
+    } | null;
+    currentPage: number;
+    onPageChange: (page: number) => void;
 }
 
-export default function ClientTable({ clients, loading, error, onEditClient, onDeleteClient, searchValue }: ClientTableProps) {
-    const [page, setPage] = useState(1);
-
-    const filteredClients = clients.filter(client =>
-        client.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchValue.toLowerCase())
-    );
-
-    const itemsPerPage = 10;
-    const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
-    const visibleClients = filteredClients.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+export default function ClientTable({ clients, loading, error, onEditClient, onDeleteClient, pagination, currentPage, onPageChange }: ClientTableProps) {
 
     const handleEdit = (client: Client) => {
         onEditClient(client);
@@ -41,7 +36,7 @@ export default function ClientTable({ clients, loading, error, onEditClient, onD
 
     const headers = ["Name", "Email", "Phone", "Status", "Created", "Actions"];
 
-    const rows = visibleClients.map(client => ({
+    const rows = clients.map(client => ({
         key: client.id,
         data: [
         client.name,
@@ -79,15 +74,18 @@ export default function ClientTable({ clients, loading, error, onEditClient, onD
         return <div className="text-red-500">{error}</div>;
     }
 
+    const totalPages = pagination ? Math.ceil(pagination.count / 10) : 1;
+
     return (
         <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-            <Table headers={headers} rows={rows} />
-            <Pagination
-                currentPage={page}
+            <Table
+                headers={headers}
+                rows={rows}
+                currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={setPage}
-                itemsPerPage={itemsPerPage}
-                totalItems={filteredClients.length}
+                onPageChange={onPageChange}
+                itemsPerPage={10}
+                totalItems={pagination?.count || clients.length}
             />
         </div>
     );

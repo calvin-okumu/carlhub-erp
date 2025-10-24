@@ -1,7 +1,8 @@
 import { Client, CreateClientData, UpdateClientData, UserTenant } from './types';
 import { API_BASE } from './index';
+import { PaginatedResponse } from './types';
 
-export async function getClients(token: string, params?: { search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[]> {
+export async function getClients(token: string, params?: { search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[] | PaginatedResponse<Client>> {
   const query = new URLSearchParams();
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
@@ -24,6 +25,12 @@ export async function getClients(token: string, params?: { search?: string; orde
     throw new Error(data.error || "Failed to fetch clients");
   }
 
+  // If pagination params are provided, return paginated response
+  if (params?.page || params?.limit) {
+    return data as PaginatedResponse<Client>;
+  }
+
+  // Otherwise, return just the results array
   return data.results || data;
 }
 

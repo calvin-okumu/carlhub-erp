@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useCallback } from 'react';
 import Table from '@/components/ui/Table';
-import Pagination from '@/components/shared/Pagination';
 import Loader from '@/components/shared/Loader';
 import type { Project } from '@/api/types';
 import type { ProjectFormData } from '@/types/project';
@@ -147,14 +146,7 @@ export default function ProjectTable({ projects, loading, error, onAddProject, o
                         New Project
                     </Button>
                 </div>
-                <Table headers={headers} rows={rows} />
-                <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    onPageChange={setPage}
-                    itemsPerPage={itemsPerPage}
-                    totalItems={filteredProjects.length}
-                />
+                <Table headers={headers} rows={rows} currentPage={page} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} totalItems={filteredProjects.length} />
             </div>
             <ProjectModal
                 isOpen={modalOpen}

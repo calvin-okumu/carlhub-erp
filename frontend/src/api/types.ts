@@ -57,6 +57,46 @@ export interface User {
   job?: string;
 }
 
+export interface UserProfile {
+  id: number;
+  user: number;
+  job_title: string;
+  phone: string;
+  linkedin_profile: string;
+  employee_id: string;
+  employee_number: string;
+  tax_number: string;
+  hire_date: string;
+  street_address: string;
+  city: string;
+  state_province: string;
+  postal_code: string;
+  country: string;
+  emergency_contact: string;
+  emergency_phone: string;
+  medical_aid_provider: string;
+  medical_aid_plan: string;
+  medical_aid_number: string;
+  medical_conditions: string;
+  allergies: string;
+  medications: string;
+  bank_name: string;
+  account_number: string;
+  branch_code: string;
+  account_type: string;
+  routing_number: string;
+  swift_code: string;
+  created_at: string;
+  updated_at: string;
+  // User fields
+  first_name: string;
+  last_name: string;
+  email: string;
+  is_active: boolean;
+  date_joined: string;
+  organization: string;
+}
+
 export interface UserTenant {
   id: number;
   user: number;
@@ -136,4 +176,11 @@ export interface Task {
   progress: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
 }

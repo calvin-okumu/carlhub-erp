@@ -9,6 +9,7 @@ import {
     getUserTenants,
     updateClient,
     UserTenant,
+    PaginatedResponse,
 } from "../api";
 
 function getToken(): string | null {
@@ -20,8 +21,9 @@ export function useClients() {
   const [currentTenant, setCurrentTenant] = useState<UserTenant | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<{ count: number; next: string | null; previous: string | null } | null>(null);
 
-  const fetchClients = useCallback(async () => {
+  const fetchClients = useCallback(async (params?: { page?: number; limit?: number; search?: string; ordering?: string; status?: string }) => {
     const token = getToken();
     if (!token) return;
 
@@ -31,8 +33,21 @@ export function useClients() {
       const ownerTenant = Array.isArray(tenants) ? tenants.find((t) => t.is_owner) || tenants[0] : tenants;
       setCurrentTenant(ownerTenant || null);
 
-      const data = await getClients(token, { ordering: '-created_at' });
-      setClients(data);
+      const data = await getClients(token, { ordering: '-created_at', ...params });
+      if (params?.page || params?.limit) {
+        // Paginated response
+        const paginatedData = data as PaginatedResponse<Client>;
+        setClients(paginatedData.results);
+        setPagination({
+          count: paginatedData.count,
+          next: paginatedData.next,
+          previous: paginatedData.previous,
+        });
+      } else {
+        // Non-paginated response
+        setClients(data as Client[]);
+        setPagination(null);
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to load data. Please try again.");
@@ -41,9 +56,10 @@ export function useClients() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+  // Remove initial fetch - let components handle their own data loading
+  // useEffect(() => {
+  //   fetchClients();
+  // }, [fetchClients]);
 
   const addClient = async (data: CreateClientData) => {
     const token = getToken();
@@ -125,6 +141,7 @@ export function useClients() {
     currentTenant,
     loading,
     error,
+    pagination,
     addClient,
     editClient,
     removeClient,

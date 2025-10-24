@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { Bell, Building, LogOut, Menu, Search, User, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Bell, Menu, Search, User, LogOut, Building, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Header() {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -90,7 +90,7 @@ export default function Header() {
                                             Organization List
                                         </a>
                                         <a
-                                            href="/user-management"
+                                            href="/dashboard/user-management/user-management"
                                             className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                         >
                                             <Users className="mr-3 h-4 w-4" />

@@ -1,9 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap");
+
 @import "tailwindcss";
 
 .h1-title {
-  font-style: italic;
+  font-family: "Exo 2", sans-serif;
   font-size: 1.875rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #3b3b4f; /* adjust to match screenshot */
 }

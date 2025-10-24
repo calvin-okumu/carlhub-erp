@@ -1,39 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import Card from '@/components/ui/Card';
+import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useProfile } from '@/hooks/useProfile';
-import { User, Briefcase, Languages } from 'lucide-react';
-import Loader from '@/components/shared/Loader';
+import { Briefcase, Languages, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function PersonalInformationCard() {
-    const { profile, loading, error } = useProfile();
+    const { profile, loading, error, updateProfile } = useProfile();
     const [isEditing, setIsEditing] = useState(false);
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [jobTitle, setJobTitle] = useState('');
     const [language, setLanguage] = useState('English');
+    const [successMessage, setSuccessMessage] = useState('');
 
     useEffect(() => {
         if (profile) {
             setFirstName(profile.first_name || '');
             setLastName(profile.last_name || '');
-            setJobTitle(profile.job || '');
-            setLanguage('English'); // Default, can be extended
+            setJobTitle(profile.job_title || '');
+            setLanguage('English');
         }
     }, [profile]);
 
-    const handleSave = () => {
-        // TODO: API call to update personal info
-        setIsEditing(false);
+    const handleSave = async () => {
+        try {
+            await updateProfile({
+                first_name: firstName,
+                last_name: lastName,
+                job_title: jobTitle,
+            });
+            setIsEditing(false);
+            setSuccessMessage('Personal information updated successfully');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (err) {
+            alert(err instanceof Error ? err.message : 'Failed to update personal information');
+        }
     };
 
     const handleCancel = () => {
         if (profile) {
             setFirstName(profile.first_name || '');
             setLastName(profile.last_name || '');
-            setJobTitle(profile.job || '');
+            setJobTitle(profile.job_title || '');
         }
         setIsEditing(false);
     };
@@ -138,6 +149,11 @@ export default function PersonalInformationCard() {
                 <div className="flex space-x-2 mt-4">
                     <Button onClick={handleSave}>Save Changes</Button>
                     <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
+                    {successMessage}
                 </div>
             )}
         </Card>
