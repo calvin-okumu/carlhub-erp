@@ -876,6 +876,7 @@ class UserTenantViewSet(viewsets.ModelViewSet):
     filterset_fields = ["tenant", "is_owner", "is_approved", "role"]
     search_fields = ["user__email", "user__first_name", "user__last_name"]
     ordering_fields = ["role"]
+    ordering = ['role']
 
     def get_queryset(self):
         queryset = super().get_queryset()
