@@ -19,6 +19,7 @@ export default function MedicalInformationCard() {
     const [allergies, setAllergies] = useState('');
     const [medications, setMedications] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (profile) {
@@ -49,7 +50,8 @@ export default function MedicalInformationCard() {
             setSuccessMessage('Medical information updated successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to update medical information');
+            setErrorMessage('Unable to update medical information. Please try again.');
+            setTimeout(() => setErrorMessage(''), 5000);
         }
     };
 
@@ -232,6 +234,11 @@ export default function MedicalInformationCard() {
             {successMessage && (
                 <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
                     {successMessage}
+                </div>
+            )}
+            {errorMessage && (
+                <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
+                    {errorMessage}
                 </div>
             )}
         </Card>

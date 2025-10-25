@@ -17,6 +17,7 @@ export default function BankingInformationCard() {
     const [routingNumber, setRoutingNumber] = useState('');
     const [swiftCode, setSwiftCode] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (profile) {
@@ -43,7 +44,8 @@ export default function BankingInformationCard() {
             setSuccessMessage('Banking information updated successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to update banking information');
+            setErrorMessage('Unable to update banking information. Please try again.');
+            setTimeout(() => setErrorMessage(''), 5000);
         }
     };
 
@@ -196,6 +198,11 @@ export default function BankingInformationCard() {
             {successMessage && (
                 <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
                     {successMessage}
+                </div>
+            )}
+            {errorMessage && (
+                <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
+                    {errorMessage}
                 </div>
             )}
         </Card>

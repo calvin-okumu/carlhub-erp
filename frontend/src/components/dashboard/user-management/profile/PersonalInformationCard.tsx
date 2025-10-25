@@ -2,9 +2,8 @@ import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import { useProfile } from '@/hooks/useProfile';
-import { Briefcase, Languages, User } from 'lucide-react';
+import { Briefcase, Link, Phone, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function PersonalInformationCard() {
@@ -13,15 +12,18 @@ export default function PersonalInformationCard() {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [jobTitle, setJobTitle] = useState('');
-    const [language, setLanguage] = useState('English');
+    const [phone, setPhone] = useState('');
+    const [linkedin, setLinkedin] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (profile) {
             setFirstName(profile.first_name || '');
             setLastName(profile.last_name || '');
             setJobTitle(profile.job_title || '');
-            setLanguage('English');
+            setPhone(profile.phone || '');
+            setLinkedin(profile.linkedin_profile || '');
         }
     }, [profile]);
 
@@ -31,12 +33,15 @@ export default function PersonalInformationCard() {
                 first_name: firstName,
                 last_name: lastName,
                 job_title: jobTitle,
+                phone: phone,
+                linkedin_profile: linkedin,
             });
             setIsEditing(false);
             setSuccessMessage('Personal information updated successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to update personal information');
+            setErrorMessage('Unable to update personal information. Please try again.');
+            setTimeout(() => setErrorMessage(''), 5000);
         }
     };
 
@@ -45,6 +50,8 @@ export default function PersonalInformationCard() {
             setFirstName(profile.first_name || '');
             setLastName(profile.last_name || '');
             setJobTitle(profile.job_title || '');
+            setPhone(profile.phone || '');
+            setLinkedin(profile.linkedin_profile || '');
         }
         setIsEditing(false);
     };
@@ -127,20 +134,35 @@ export default function PersonalInformationCard() {
                     )}
                 </div>
 
-                {/* Language */}
+                {/* Phone Number */}
                 <div className="flex items-center space-x-3">
-                    <Languages className="h-4 w-4 text-gray-500" />
+                    <Phone className="h-4 w-4 text-gray-500" />
                     {isEditing ? (
-                        <Select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
+                        <Input
+                            type="tel"
+                            placeholder="Phone Number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
                             className="flex-1"
-                        >
-                            <option value="English">English</option>
-                            <option value="Spanish">Spanish</option>
-                        </Select>
+                        />
                     ) : (
-                        <span className="flex-1">{language}</span>
+                        <span className="flex-1">{phone || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* LinkedIn Profile */}
+                <div className="flex items-center space-x-3">
+                    <Link className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="url"
+                            placeholder="LinkedIn Profile"
+                            value={linkedin}
+                            onChange={(e) => setLinkedin(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{linkedin ? <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{linkedin}</a> : 'Not specified'}</span>
                     )}
                 </div>
             </div>
@@ -154,6 +176,11 @@ export default function PersonalInformationCard() {
             {successMessage && (
                 <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
                     {successMessage}
+                </div>
+            )}
+            {errorMessage && (
+                <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
+                    {errorMessage}
                 </div>
             )}
         </Card>
