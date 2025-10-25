@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+
 import { useProfile } from '@/hooks/useProfile';
 import { MapPin, Building, Hash, Globe } from 'lucide-react';
 import Loader from '@/components/shared/Loader';
@@ -16,6 +16,7 @@ export default function AddressInformationCard() {
     const [postalCode, setPostalCode] = useState('');
     const [country, setCountry] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
 
     useEffect(() => {
         if (profile) {
@@ -40,7 +41,8 @@ export default function AddressInformationCard() {
             setSuccessMessage('Address information updated successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
-            alert(err instanceof Error ? err.message : 'Failed to update address information');
+            setErrorMessage('Unable to update address information. Please try again.');
+            setTimeout(() => setErrorMessage(''), 5000);
         }
     };
 
@@ -153,14 +155,13 @@ export default function AddressInformationCard() {
                 <div className="flex items-center space-x-3">
                     <Globe className="h-4 w-4 text-gray-500" />
                     {isEditing ? (
-                        <Select
+                        <Input
+                            type="text"
+                            placeholder="Country"
                             value={country}
                             onChange={(e) => setCountry(e.target.value)}
                             className="flex-1"
-                        >
-                            <option value="USA">USA</option>
-                            <option value="Canada">Canada</option>
-                        </Select>
+                        />
                     ) : (
                         <span className="flex-1">{country || 'Not specified'}</span>
                     )}
@@ -176,6 +177,11 @@ export default function AddressInformationCard() {
             {successMessage && (
                 <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
                     {successMessage}
+                </div>
+            )}
+            {errorMessage && (
+                <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
+                    {errorMessage}
                 </div>
             )}
         </Card>

@@ -98,7 +98,7 @@ export async function getUserProfile(token: string, id: number): Promise<UserPro
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch profile: ${response.status} ${response.statusText}`);
+    throw new Error('Failed to fetch profile');
   }
 
   const data = await response.json();
@@ -155,7 +155,7 @@ export async function updateUserProfile(token: string, id: number, profileData: 
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to update profile: ${response.status} ${response.statusText}`);
+    throw new Error('Failed to update profile');
   }
 
   const data = await response.json();
