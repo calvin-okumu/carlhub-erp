@@ -179,6 +179,70 @@ class Invitation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
+    email_confirmed = models.BooleanField(default=False)  # Track if invitation email has been confirmed
 
     def __str__(self):
         return f"Invite {self.email} to {self.tenant.name}"
+
+
+class AuditLog(models.Model):
+    """
+    Comprehensive audit logging for user lifecycle and security events.
+    """
+    ACTION_CHOICES = [
+        ('user_signup', 'User Signup'),
+        ('user_login', 'User Login'),
+        ('user_logout', 'User Logout'),
+        ('user_profile_update', 'Profile Update'),
+        ('user_password_change', 'Password Change'),
+        ('invitation_sent', 'Invitation Sent'),
+        ('invitation_confirmed', 'Invitation Confirmed'),
+        ('invitation_used', 'Invitation Used'),
+        ('invitation_cancelled', 'Invitation Cancelled'),
+        ('invitation_expired', 'Invitation Expired'),
+        ('member_approved', 'Member Approved'),
+        ('member_rejected', 'Member Rejected'),
+        ('role_created', 'Role Created'),
+        ('role_updated', 'Role Updated'),
+        ('role_assigned', 'Role Assigned'),
+        ('bulk_invitation_started', 'Bulk Invitation Started'),
+        ('bulk_invitation_completed', 'Bulk Invitation Completed'),
+        ('security_failed_login', 'Failed Login Attempt'),
+        ('security_token_misuse', 'Token Misuse'),
+        ('admin_user_suspended', 'User Suspended'),
+        ('admin_user_activated', 'User Activated'),
+    ]
+
+    RESOURCE_TYPE_CHOICES = [
+        ('user', 'User'),
+        ('invitation', 'Invitation'),
+        ('role', 'Role'),
+        ('tenant', 'Tenant'),
+        ('profile', 'User Profile'),
+        ('bulk_invitation', 'Bulk Invitation'),
+    ]
+
+    tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPE_CHOICES)
+    resource_id = models.CharField(max_length=255, null=True, blank=True)  # String reference to resource (UUID or other identifier)
+    old_values = models.JSONField(null=True, blank=True)  # Previous state
+    new_values = models.JSONField(null=True, blank=True)  # New state
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(null=True, blank=True)  # Additional context
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['tenant', 'timestamp']),
+            models.Index(fields=['user']),
+            models.Index(fields=['action']),
+            models.Index(fields=['resource_type', 'resource_id']),
+        ]
+
+    def __str__(self):
+        user_info = f" by {self.user.email}" if self.user else ""
+        return f"{self.get_action_display()} on {self.get_resource_type_display()}{user_info} at {self.timestamp}"

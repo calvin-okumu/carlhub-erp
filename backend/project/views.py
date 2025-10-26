@@ -16,6 +16,7 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 
 from accounts.models import CustomUser, Invitation, Tenant, UserTenant
+from accounts.audit import AuditLogger, get_client_ip
 
 from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
 from .permissions import CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments, CanManageProjects, CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner
@@ -1048,6 +1049,26 @@ def login_view(request):
     user = authenticate(username=email, password=password)
     if user and user.is_active:
         token, created = Token.objects.get_or_create(user=user)
+
+        # Log successful login
+        tenant = None
+        try:
+            user_tenant = UserTenant.objects.filter(user=user, is_approved=True).first()
+            if user_tenant:
+                tenant = user_tenant.tenant
+        except:
+            pass  # Ignore if tenant lookup fails
+
+        AuditLogger.log_event(
+            action='user_login',
+            resource_type='user',
+            tenant=tenant,
+            user=user,
+            resource_id=str(user.id),
+            ip_address=get_client_ip(request),
+            metadata={'login_method': 'traditional'}
+        )
+
         return Response({
             'token': token.key,
             'user_id': user.id,
@@ -1132,6 +1153,8 @@ def signup_view(request):
     if invitation_token:
         try:
             invitation = Invitation.objects.get(token=invitation_token, is_used=False, expires_at__gt=timezone.now())
+            if not invitation.email_confirmed:
+                return Response({'error': 'Please confirm your invitation by clicking the link in your email before signing up'}, status=status.HTTP_400_BAD_REQUEST)
             tenant = invitation.tenant
             role = invitation.role
             invitation.is_used = True
@@ -1147,6 +1170,7 @@ def signup_view(request):
         # Basic validation for optional fields
         from django.core.exceptions import ValidationError
         from django.core.validators import URLValidator
+
         if website:
             validate = URLValidator()
             try:
@@ -1154,6 +1178,12 @@ def signup_view(request):
             except ValidationError:
                 return Response({'error': 'Invalid website URL'}, status=status.HTTP_400_BAD_REQUEST)
 
+    user = CustomUser.objects.create_user(email=email, password=password)
+
+    if invitation_token:
+        tenant = invitation.tenant
+        role = invitation.role
+    else:
         tenant = Tenant.objects.create(
             name=company_name,
             domain=domain,
@@ -1165,12 +1195,11 @@ def signup_view(request):
             created_by=user
         )
         role = 'Tenant Owner'
-
-    user = CustomUser.objects.create_user(email=email, password=password)
     user.first_name = first_name
     user.last_name = last_name
     user.save()
-    is_approved = True if role == 'Tenant Owner' else False
+    # Approve users who are tenant owners OR have confirmed invitations
+    is_approved = True if role == 'Tenant Owner' or invitation_token else False
     UserTenant.objects.create(user=user, tenant=tenant, is_owner=(role == 'Tenant Owner'), is_approved=is_approved, role=role)
 
     # Assign group only if approved
@@ -1191,6 +1220,15 @@ def signup_view(request):
             user.groups.add(group)
 
     token, _ = Token.objects.get_or_create(user=user)
+
+    # Log successful signup
+    AuditLogger.log_user_signup(
+        user=user,
+        tenant=tenant,
+        invitation_used=invitation_token is not None,
+        ip_address=get_client_ip(request)
+    )
+
     return Response({
         'token': token.key,
         'user_id': user.id,
@@ -1271,6 +1309,9 @@ def approve_member_view(request):
         group, created = Group.objects.get_or_create(name=group_name)
         member_user_tenant.user.groups.add(group)
 
+    # Log member approval
+    AuditLogger.log_member_approved(member_user_tenant, request.user, ip_address=get_client_ip(request))
+
     return Response({'message': 'Member approved and added to group'})
 
 
@@ -1343,19 +1384,25 @@ def invite_member_view(request):
         expires_at=expires_at
     )
 
+    # Log invitation creation
+    AuditLogger.log_invitation_sent(invitation, ip_address=get_client_ip(request))
+
     # Send invitation email
     from django.conf import settings
     from django.core.mail import send_mail
     from django.urls import reverse
 
     subject = f"Invitation to join {tenant.name}"
-    invitation_url = f"{settings.SITE_URL or 'http://127.0.0.1:8000'}/api/signup/?token={token}"
+    confirmation_url = f"{settings.SITE_URL or 'http://127.0.0.1:8000'}/api/confirm-invitation/?token={token}"
+    signup_url = f"{settings.SITE_URL or 'http://127.0.0.1:8000'}/api/signup/?token={token}"
     message = f"""
     You have been invited to join {tenant.name} as a {role}.
 
-    Click the link below to accept the invitation and create your account:
+    Step 1: Click the link below to confirm your email address:
+    {confirmation_url}
 
-    {invitation_url}
+    Step 2: After confirming your email, click here to create your account:
+    {signup_url}
 
     This invitation expires on {expires_at.date()}.
 
@@ -1372,7 +1419,150 @@ def invite_member_view(request):
         )
         return Response({'message': 'Invitation sent successfully', 'token': token})
     except Exception as e:
-        return Response({'error': f'Failed to send invitation email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to send invitation email to {email}: {str(e)}")
+
+        # Provide user-friendly error message
+        error_message = 'Unable to send invitation email. Please check your email configuration or try again later.'
+        if 'SMTP' in str(e).upper():
+            error_message = 'Email service temporarily unavailable. Please try again in a few minutes.'
+        elif 'connection' in str(e).lower():
+            error_message = 'Unable to connect to email service. Please check your internet connection.'
+
+        return Response({'error': error_message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.AllowAny])
+def confirm_invitation_view(request):
+    """
+    Confirm invitation email by marking the invitation as email_confirmed.
+    This endpoint is called when a user clicks the confirmation link in their email.
+    Accepts both GET (for email links) and POST requests.
+    """
+    if request.method == 'GET':
+        token = request.GET.get('token')
+    else:
+        token = request.data.get('token')
+
+    if not token:
+        return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        invitation = Invitation.objects.get(token=token, is_used=False, expires_at__gt=timezone.now())
+    except Invitation.DoesNotExist:
+        return Response({'error': 'Invalid or expired invitation token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if invitation.email_confirmed:
+        return Response({'message': 'Invitation already confirmed', 'invitation': {
+            'email': invitation.email,
+            'tenant_name': invitation.tenant.name,
+            'role': invitation.role
+        }})
+
+    invitation.email_confirmed = True
+    invitation.save()
+
+    # Log invitation confirmation
+    AuditLogger.log_event(
+        action='invitation_confirmed',
+        resource_type='invitation',
+        tenant=invitation.tenant,
+        resource_id=str(invitation.id),
+        old_values={'email_confirmed': False},
+        new_values={'email_confirmed': True},
+        metadata={'confirmed_via': 'email_link'}
+    )
+
+    return Response({
+        'message': 'Invitation confirmed successfully',
+        'invitation': {
+            'email': invitation.email,
+            'tenant_name': invitation.tenant.name,
+            'role': invitation.role,
+            'expires_at': invitation.expires_at
+        }
+    })
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def resend_invitation_view(request):
+    """
+    Resend invitation email for an existing invitation token.
+    This allows users to request a new invitation email if they didn't receive the original.
+    """
+    token = request.data.get('token')
+
+    if not token:
+        return Response({'error': 'Token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        invitation = Invitation.objects.get(token=token, is_used=False, expires_at__gt=timezone.now())
+    except Invitation.DoesNotExist:
+        return Response({'error': 'Invalid or expired invitation token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if invitation is already confirmed
+    if invitation.email_confirmed:
+        return Response({'error': 'Invitation already confirmed. Please proceed to signup.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Resend the invitation email
+    from django.conf import settings
+    from django.core.mail import send_mail
+    from django.urls import reverse
+
+    subject = f"Invitation to join {invitation.tenant.name} (Resent)"
+    confirmation_url = f"{settings.SITE_URL or 'http://127.0.0.1:8000'}/api/confirm-invitation/?token={token}"
+    signup_url = f"{settings.SITE_URL or 'http://127.0.0.1:8000'}/api/signup/?token={token}"
+    message = f"""
+    You have been invited to join {invitation.tenant.name} as a {invitation.role}.
+
+    Step 1: Click the link below to confirm your email address:
+    {confirmation_url}
+
+    Step 2: After confirming your email, click here to create your account:
+    {signup_url}
+
+    This invitation expires on {invitation.expires_at.date()}.
+
+    If you did not expect this invitation, please ignore this email.
+    """
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[invitation.email],
+            fail_silently=False,
+        )
+
+        # Log resend action
+        AuditLogger.log_event(
+            action='invitation_resent',
+            resource_type='invitation',
+            tenant=invitation.tenant,
+            resource_id=str(invitation.id),
+            metadata={'resent_at': timezone.now().isoformat()}
+        )
+
+        return Response({'message': 'Invitation email resent successfully'})
+    except Exception as e:
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to resend invitation email to {invitation.email}: {str(e)}")
+
+        # Provide user-friendly error message
+        error_message = 'Unable to resend invitation email. Please check your email configuration or try again later.'
+        if 'SMTP' in str(e).upper():
+            error_message = 'Email service temporarily unavailable. Please try again in a few minutes.'
+        elif 'connection' in str(e).lower():
+            error_message = 'Unable to connect to email service. Please check your internet connection.'
+
+        return Response({'error': error_message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @extend_schema(

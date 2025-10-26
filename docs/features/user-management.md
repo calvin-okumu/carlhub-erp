@@ -98,7 +98,7 @@ curl -X PUT http://localhost:8000/api/users/123/ \
 
 ### Inviting Members
 
-Tenant owners can invite new members:
+Tenant owners can invite new members via email:
 
 ```bash
 curl -X POST http://localhost:8000/api/invite-member/ \
@@ -110,9 +110,60 @@ curl -X POST http://localhost:8000/api/invite-member/ \
   }'
 ```
 
+**Invitation Process:**
+1. **Email Sent**: An invitation email is sent to the specified address
+2. **Email Confirmation**: User must click confirmation link in email
+3. **Account Creation**: After confirmation, user can create their account
+4. **Approval**: Tenant owner must approve the new member
+
+**Email Content:**
+The invitation email includes:
+- Confirmation link to verify email address
+- Signup link to create account (after confirmation)
+- Invitation details (tenant name, role, expiration date)
+
+### Resending Invitations
+
+If users don't receive their invitation email, they can request a new one:
+
+```bash
+curl -X POST http://localhost:8000/api/resend-invitation/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "token": "invitation-token-here"
+  }'
+```
+
+**Resend Conditions:**
+- Token must be valid and not expired
+- Invitation must not already be confirmed
+- New email is sent with updated "Resent" subject line
+
+### Email Confirmation
+
+Users confirm their email by clicking the link in the invitation:
+
+```bash
+# This is handled automatically when user clicks email link
+curl http://localhost:8000/api/confirm-invitation/?token=invitation-token
+```
+
+**Confirmation Response:**
+```json
+{
+  "message": "Invitation confirmed successfully",
+  "invitation": {
+    "email": "user@example.com",
+    "tenant_name": "Company Name",
+    "role": "Employee",
+    "expires_at": "2025-11-01T00:00:00Z"
+  }
+}
+```
+
 ### Approving Members
 
-Pending members need approval from tenant owners:
+Pending members need approval from tenant owners before they can access the system:
 
 ```bash
 curl -X POST http://localhost:8000/api/approve-member/ \
@@ -120,6 +171,16 @@ curl -X POST http://localhost:8000/api/approve-member/ \
   -H "Content-Type: application/json" \
   -d '{"user_id": 123}'
 ```
+
+**Approval Process:**
+1. **Invitation Sent**: User receives email invitation
+2. **Email Confirmed**: User clicks confirmation link
+3. **Account Created**: User completes signup form
+4. **Approval Required**: Tenant owner must approve the new member
+5. **Access Granted**: User can now log in and access the system
+
+**Automatic Approval for Confirmed Invitations:**
+Users who complete the email confirmation process are automatically approved and can immediately access the system.
 
 ### Member Management
 
@@ -139,14 +200,38 @@ curl -X PUT http://localhost:8000/api/members/456/ \
 
 ### Profile Information
 
+Each user has an associated profile that contains additional information:
+
 - **Email**: Unique identifier and login credential
 - **Name**: First and last name
 - **Status**: Active/inactive account status
 - **Join Date**: When the user account was created
+- **Phone**: Contact phone number (optional)
+- **Bio**: User biography or description (optional)
+- **Avatar**: Profile picture (optional)
+
+### Profile Creation
+
+User profiles are automatically created when:
+- A user signs up for a new account
+- An invited user completes the signup process
+- A tenant owner creates a user account
 
 ### Profile Updates
 
-Users can update their own profiles, while administrators can manage all profiles.
+Users can update their own profiles, while administrators can manage all profiles:
+
+```bash
+# Update current user's profile
+curl -X PUT http://localhost:8000/api/users/me/ \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Updated Name",
+    "phone": "+1-555-0123",
+    "bio": "Project manager with 5+ years experience"
+  }'
+```
 
 ## Authentication Methods
 
@@ -194,7 +279,33 @@ Response:
 - **Password Requirements**: Secure password policies
 - **Account Locking**: Protection against brute force attacks
 - **Session Management**: Automatic token expiration
-- **Audit Logging**: Track user actions and changes
+- **Audit Logging**: Comprehensive tracking of user lifecycle events
+
+## Audit Logging
+
+DjangoCRM maintains detailed audit logs for all user management activities:
+
+### Logged Events
+
+- **User Registration**: New user signup events
+- **User Login/Logout**: Authentication attempts and sessions
+- **Invitation Sent**: When team member invitations are sent
+- **Invitation Confirmed**: Email confirmation events
+- **Invitation Resent**: When users request new invitation emails
+- **Member Approval**: When tenant owners approve new members
+- **Profile Updates**: Changes to user profile information
+- **Role Changes**: Updates to user roles and permissions
+
+### Audit Log Access
+
+Audit logs are available to tenant owners and administrators for compliance and security monitoring. Logs include:
+
+- **Timestamp**: When the event occurred
+- **User**: Who performed the action
+- **Action**: Type of event (create, update, delete, etc.)
+- **Resource**: What was affected (user, invitation, profile, etc.)
+- **IP Address**: Client IP for security tracking
+- **Details**: Before/after values for change tracking
 
 ## User Groups
 

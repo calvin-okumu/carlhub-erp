@@ -59,6 +59,149 @@ curl -H "Authorization: Token abc123def456..." \
   http://localhost:8000/api/projects/
 ```
 
+## 👥 User Invitations
+
+### Inviting Team Members
+
+Tenant owners can invite new team members via email:
+
+**Endpoint:** `POST /api/invite-member/`
+
+**Request Body:**
+```json
+{
+  "email": "newmember@example.com",
+  "role": "Employee"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Invitation sent successfully",
+  "token": "invitation-token-here"
+}
+```
+
+**Example:**
+```bash
+curl -X POST \
+  http://localhost:8000/api/invite-member/ \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "john@example.com", "role": "Employee"}'
+```
+
+### Email Confirmation
+
+Users must confirm their email before creating an account:
+
+**Endpoint:** `GET /api/confirm-invitation/?token=<token>`
+
+**Response:**
+```json
+{
+  "message": "Invitation confirmed successfully",
+  "invitation": {
+    "email": "user@example.com",
+    "tenant_name": "Company Name",
+    "role": "Employee",
+    "expires_at": "2025-11-01T00:00:00Z"
+  }
+}
+```
+
+### Resending Invitations
+
+If users don't receive their invitation email, they can request a new one:
+
+**Endpoint:** `POST /api/resend-invitation/`
+
+**Request Body:**
+```json
+{
+  "token": "original-invitation-token"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Invitation email resent successfully"
+}
+```
+
+**Example:**
+```bash
+curl -X POST \
+  http://localhost:8000/api/resend-invitation/ \
+  -H "Content-Type: application/json" \
+  -d '{"token": "abc123..."}'
+```
+
+### Approving Team Members
+
+Tenant owners must approve new members before they can access the system:
+
+**Endpoint:** `POST /api/approve-member/`
+
+**Request Body:**
+```json
+{
+  "user_id": 123
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Member approved successfully"
+}
+```
+
+**Example:**
+```bash
+curl -X POST \
+  http://localhost:8000/api/approve-member/ \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"user_id": 123}'
+```
+
+### User Signup
+
+After email confirmation, users can create their account:
+
+**Endpoint:** `POST /api/signup/`
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "securepassword123",
+  "first_name": "John",
+  "last_name": "Doe",
+  "invitation_token": "invitation-token-here"
+}
+```
+
+**Response:**
+```json
+{
+  "token": "user-auth-token",
+  "user": {
+    "id": 123,
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe"
+  },
+  "tenant": {
+    "id": 456,
+    "name": "Company Name"
+  }
+}
+```
+
 ### Session Authentication
 
 For web interface access, DjangoCRM also supports session-based authentication through the Django admin and frontend application.

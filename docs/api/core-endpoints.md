@@ -243,6 +243,56 @@ User and team management.
 ### List User Tenants
 **GET** `/api/members/`
 
+### User Invitations
+
+#### Invite Team Member
+**POST** `/api/invite-member/`
+
+**Request Body:**
+```json
+{
+  "email": "newmember@example.com",
+  "role": "Employee"
+}
+```
+
+#### Confirm Invitation
+**GET** `/api/confirm-invitation/?token=<token>`
+
+#### Resend Invitation
+**POST** `/api/resend-invitation/`
+
+**Request Body:**
+```json
+{
+  "token": "invitation-token"
+}
+```
+
+#### Approve Member
+**POST** `/api/approve-member/`
+
+**Request Body:**
+```json
+{
+  "user_id": 123
+}
+```
+
+#### User Signup
+**POST** `/api/signup/`
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "first_name": "John",
+  "last_name": "Doe",
+  "invitation_token": "optional-token"
+}
+```
+
 ## 🏢 Tenants
 
 Multi-tenant organization management.

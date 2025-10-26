@@ -138,12 +138,14 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 # Database Configuration
 DATABASE_URL=postgresql://user:password@localhost:5432/djangocrm
 
-# Email Configuration (optional)
+# Email Configuration (required for user invitations)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend  # Development: prints to console
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your-email@gmail.com
 EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=noreply@example.com
 
 # OAuth Configuration (optional)
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -233,6 +235,84 @@ GRANT ALL PRIVILEGES ON DATABASE djangocrm TO djangocrm;
 -- Exit
 \q
 ```
+
+## 📧 Email Configuration
+
+### Development Email Setup
+
+For development, DjangoCRM uses console email backend that prints emails to the terminal:
+
+```bash
+# In backend/.env
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=
+EMAIL_HOST_PASSWORD=
+DEFAULT_FROM_EMAIL=noreply@example.com
+```
+
+**Testing Email Functionality:**
+```bash
+# Start Django server
+cd backend && python manage.py runserver
+
+# In another terminal, test invitation
+curl -X POST http://localhost:8000/api/invite-member/ \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com", "role": "Employee"}'
+
+# Check console output for email content
+```
+
+### Production Email Setup
+
+For production, configure SMTP settings:
+
+```bash
+# SMTP Configuration
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com  # or your SMTP provider
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@domain.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+
+# For Gmail, use App Passwords:
+# 1. Enable 2FA on Gmail account
+# 2. Generate App Password: https://myaccount.google.com/apppasswords
+# 3. Use App Password as EMAIL_HOST_PASSWORD
+```
+
+### Email Service Providers
+
+**Recommended Providers:**
+- **SendGrid**: Professional email delivery
+- **Mailgun**: Developer-friendly SMTP
+- **Amazon SES**: AWS integrated solution
+- **Gmail**: Free for low volume (use App Passwords)
+
+**Example SendGrid Configuration:**
+```bash
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.sendgrid.net
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=apikey
+EMAIL_HOST_PASSWORD=your-sendgrid-api-key
+DEFAULT_FROM_EMAIL=noreply@yourdomain.com
+```
+
+### Email Features
+
+DjangoCRM supports:
+- ✅ **User Invitations**: Email-based team member invitations
+- ✅ **Email Confirmation**: Secure email verification process
+- ✅ **Resend Invitations**: Allow users to request new invitation emails
+- ✅ **Error Handling**: User-friendly error messages for email failures
 
 ## 🏃 Running the Application
 

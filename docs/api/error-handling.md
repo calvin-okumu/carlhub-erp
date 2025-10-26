@@ -107,6 +107,32 @@ All error responses follow a consistent JSON structure:
 }
 ```
 
+### Email Operation Errors
+
+**SMTP Connection Failed:**
+```json
+{
+  "error": "Email service temporarily unavailable. Please try again in a few minutes.",
+  "code": "EMAIL_ERROR",
+  "details": {
+    "operation": "invitation_send",
+    "retry_after": 300
+  }
+}
+```
+
+**Email Service Unavailable:**
+```json
+{
+  "error": "Unable to connect to email service. Please check your internet connection.",
+  "code": "EMAIL_ERROR",
+  "details": {
+    "operation": "invitation_resend",
+    "error_type": "connection_error"
+  }
+}
+```
+
 ### Validation Errors
 
 **Required Field Missing:**
