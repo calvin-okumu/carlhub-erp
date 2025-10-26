@@ -60,6 +60,8 @@ class CustomUser(AbstractUser):
 
 
 class Tenant(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     name = models.CharField(max_length=255, unique=True)
     domain = models.CharField(max_length=255, unique=True, default='')
     address = models.TextField(blank=True)
@@ -82,16 +84,42 @@ class Tenant(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.name)
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Tenant.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
 
 class UserTenant(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE)
     is_owner = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)  # Default True for owners, False for invited members
     role = models.CharField(max_length=100, default='Employee')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(f"member-{self.user.email}-{self.tenant.name}")
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while UserTenant.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user.email} - {self.tenant.name}"

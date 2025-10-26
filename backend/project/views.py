@@ -38,6 +38,7 @@ class TenantViewSet(viewsets.ModelViewSet):
     search_fields = ["name"]
     ordering_fields = ["name", "created_at"]
     ordering = ['name']
+    lookup_field = 'slug'
 
 
 
@@ -691,6 +692,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     search_fields = ["client__name"]
     ordering_fields = ["issued_at"]
     ordering = ['issued_at']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         if self.request.tenant:
@@ -785,6 +787,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     search_fields = ["invoice__id"]
     ordering_fields = ["paid_at"]
     ordering = ['paid_at']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         if self.request.tenant:
@@ -874,6 +877,7 @@ class UserTenantViewSet(viewsets.ModelViewSet):
     search_fields = ["user__email", "user__first_name", "user__last_name"]
     ordering_fields = ["role"]
     ordering = ['role']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         queryset = super().get_queryset()
