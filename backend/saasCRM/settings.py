@@ -249,12 +249,37 @@ SOCIALACCOUNT_PROVIDERS = {
 EMAIL_BACKEND = os.getenv(
     "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
 )
+
+# SMTP Configuration (for Gmail, Outlook, etc.)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", 587))
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() == "true"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() == "true"
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+
+# SendGrid Configuration
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+
+# Mailgun Configuration
+MAILGUN_API_KEY = os.getenv("MAILGUN_API_KEY", "")
+MAILGUN_DOMAIN = os.getenv("MAILGUN_DOMAIN", "")
+
+# Email settings
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@example.com")
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+
+# Configure email backend based on provider
+if SENDGRID_API_KEY:
+    EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+    SENDGRID_SANDBOX_MODE_IN_DEBUG = os.getenv("SENDGRID_SANDBOX_MODE", "False").lower() == "true"
+elif MAILGUN_API_KEY and MAILGUN_DOMAIN:
+    EMAIL_BACKEND = "django_mailgun.MailgunBackend"
+    MAILGUN_ACCESS_KEY = MAILGUN_API_KEY
+    MAILGUN_SERVER_NAME = MAILGUN_DOMAIN
+else:
+    # Use SMTP or console backend as configured
+    pass
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

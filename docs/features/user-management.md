@@ -46,6 +46,19 @@ curl -X POST http://localhost:8000/api/signup/ \
   }'
 ```
 
+**Response (201 Created):**
+```json
+{
+  "token": "abc123...",
+  "user_id": 1,
+  "email": "newuser@example.com",
+  "first_name": "Jane",
+  "last_name": "Smith",
+  "tenant": "New Company Inc",
+  "message": "Signup successful"
+}
+```
+
 ## User Roles and Permissions
 
 ### Roles

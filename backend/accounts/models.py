@@ -184,6 +184,11 @@ class Invitation(models.Model):
     def __str__(self):
         return f"Invite {self.email} to {self.tenant.name}"
 
+    def is_expired(self):
+        """Check if the invitation has expired."""
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+
 
 class AuditLog(models.Model):
     """
@@ -205,6 +210,7 @@ class AuditLog(models.Model):
         ('role_created', 'Role Created'),
         ('role_updated', 'Role Updated'),
         ('role_assigned', 'Role Assigned'),
+        ('project_created', 'Project Created'),
         ('bulk_invitation_started', 'Bulk Invitation Started'),
         ('bulk_invitation_completed', 'Bulk Invitation Completed'),
         ('security_failed_login', 'Failed Login Attempt'),

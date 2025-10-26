@@ -1237,7 +1237,7 @@ def signup_view(request):
         'last_name': user.last_name,
         'tenant': tenant.name,
         'message': 'Signup successful'
-    })
+    }, status=status.HTTP_201_CREATED)
 
 
 @extend_schema(

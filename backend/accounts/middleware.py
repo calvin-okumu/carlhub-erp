@@ -87,7 +87,7 @@ class AuditMiddleware(MiddlewareMixin):
                 resource_type=self._determine_resource_type(request),
                 tenant=tenant,
                 user=user,
-                resource_id=self._extract_resource_id(request, view_kwargs),
+                resource_id=self._extract_resource_id(request),
                 ip_address=metadata.get('ip_address'),
                 user_agent=metadata.get('user_agent'),
                 metadata=metadata
@@ -159,24 +159,17 @@ class AuditMiddleware(MiddlewareMixin):
 
         return 'unknown'
 
-    def _extract_resource_id(self, request, view_kwargs) -> str:
-        """Extract resource ID from URL kwargs or path."""
-        # Try to get UUID from URL kwargs (Django REST framework pattern)
-        for key, value in view_kwargs.items():
-            if key.endswith('_id') or key in ['pk', 'id']:
-                return str(value)
-
-        # Try to extract from path for slug-based URLs
+    def _extract_resource_id(self, request) -> str:
+        """Extract resource ID from URL path."""
+        # Try to extract from path for UUID-based URLs
         path_parts = request.path.strip('/').split('/')
         for part in reversed(path_parts):
             # Check if it looks like a UUID
             if len(part) == 36 and part.count('-') == 4:
                 return part
-            # Or if it's a slug (alphanumeric with dashes)
-            if part and part.replace('-', '').replace('_', '').isalnum():
-                # This could be a slug, but we can't reliably distinguish
-                # from other path components, so we'll skip for now
-                pass
+            # Check if it looks like an integer ID
+            if part.isdigit():
+                return part
 
         return None
 
