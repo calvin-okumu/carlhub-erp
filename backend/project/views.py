@@ -8,7 +8,8 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema, extend_schema_view
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 from rest_framework import permissions, status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action, api_view, permission_classes
@@ -392,6 +393,17 @@ class MilestoneViewSet(viewsets.ModelViewSet):
         description="Remove a task from this sprint."
     ),
 )
+@extend_schema(
+    parameters=[
+        OpenApiParameter(
+            name='project_slug',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.PATH,
+            description='Project slug for filtering sprints within a specific project',
+            required=False
+        )
+    ]
+)
 class SprintViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing agile sprints.
@@ -414,9 +426,9 @@ class SprintViewSet(viewsets.ModelViewSet):
         queryset = Sprint.objects.select_related('milestone').prefetch_related('tasks')
 
         # Handle nested routing for project-specific sprints
-        project_pk = self.kwargs.get('project_pk')
-        if project_pk:
-            queryset = queryset.filter(milestone__project_id=project_pk)
+        project_slug = self.kwargs.get('project_slug')
+        if project_slug:
+            queryset = queryset.filter(milestone__project__slug=project_slug)
 
         # Apply tenant filtering
         if self.request.tenant:
