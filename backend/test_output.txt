@@ -1,0 +1,390 @@
+Creating test database for alias 'default'...
+...................FF...EEEEEEEEEE.........FFFFF..FF
+======================================================================
+ERROR: test_client_creation (project.tests.ModelTests.test_client_creation)
+Test client model creation and relationships
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_invoice_creation (project.tests.ModelTests.test_invoice_creation)
+Test invoice model creation
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_milestone_creation (project.tests.ModelTests.test_milestone_creation)
+Test milestone model creation and validation
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_organization_creation (project.tests.ModelTests.test_organization_creation)
+Test organization model creation
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_payment_creation (project.tests.ModelTests.test_payment_creation)
+Test payment model creation
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_project_creation (project.tests.ModelTests.test_project_creation)
+Test project model creation and relationships
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_relationships (project.tests.ModelTests.test_relationships)
+Test all model relationships
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_sprint_creation (project.tests.ModelTests.test_sprint_creation)
+Test sprint model creation
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_task_creation (project.tests.ModelTests.test_task_creation)
+Test task model creation
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+ERROR: test_unique_constraints (project.tests.ModelTests.test_unique_constraints)
+Test unique constraints
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 42, in setUp
+    self.sprint = Sprint.objects.create(
+                  ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 663, in create
+    obj.save(force_insert=True, using=self.db)
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/base.py", line 988, in save_base
+    pre_save.send(
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/dispatch/dispatcher.py", line 189, in send
+    response = receiver(signal=self, sender=sender, **named)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/signals.py", line 67, in notify_sprint_status_change
+    old_instance = Sprint.objects.get(pk=instance.pk)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/venv/lib/python3.11/site-packages/django/db/models/query.py", line 633, in get
+    raise self.model.DoesNotExist(
+project.models.Sprint.DoesNotExist: Sprint matching query does not exist.
+
+======================================================================
+FAIL: test_default_groups_created (project.tests.GroupTests.test_default_groups_created)
+Test that default groups are created
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 711, in test_default_groups_created
+    self.assertTrue(Group.objects.filter(name=group_name).exists())
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_user_group_assignment_on_signup (project.tests.GroupTests.test_user_group_assignment_on_signup)
+Test that users are assigned to appropriate groups during signup
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 718, in test_user_group_assignment_on_signup
+    self.assertTrue(Group.objects.filter(name='Tenant Owners').exists())
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_create_invoice (project.tests.SprintAPITests.test_create_invoice)
+Test creating invoice
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 523, in test_create_invoice
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+AssertionError: 403 != 201
+
+======================================================================
+FAIL: test_invoice_filtering (project.tests.SprintAPITests.test_invoice_filtering)
+Test invoice filtering
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 529, in test_invoice_filtering
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+AssertionError: 403 != 200
+
+======================================================================
+FAIL: test_list_invoices (project.tests.SprintAPITests.test_list_invoices)
+Test listing invoices
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 511, in test_list_invoices
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+AssertionError: 403 != 200
+
+======================================================================
+FAIL: test_create_tenant (project.tests.TenantAPITests.test_create_tenant)
+Test creating tenant
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 245, in test_create_tenant
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+AssertionError: 403 != 201
+
+======================================================================
+FAIL: test_delete_tenant (project.tests.TenantAPITests.test_delete_tenant)
+Test deleting tenant
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 264, in test_delete_tenant
+    self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+AssertionError: 403 != 204
+
+======================================================================
+FAIL: test_tenant_filtering (project.tests.TenantAPITests.test_tenant_filtering)
+Test tenant filtering and searching
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 275, in test_tenant_filtering
+    self.assertEqual(len(response.data), 1)
+AssertionError: 6 != 1
+
+======================================================================
+FAIL: test_update_tenant (project.tests.TenantAPITests.test_update_tenant)
+Test updating tenant
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/xorb/Project/Django_projects/Carlhub_react/DjangoCRM/backend/project/tests.py", line 258, in test_update_tenant
+    self.assertEqual(response.status_code, status.HTTP_200_OK)
+AssertionError: 403 != 200
+
+----------------------------------------------------------------------
+Ran 52 tests in 109.524s
+
+FAILED (failures=9, errors=10)
+Destroying test database for alias 'default'...
+Found 52 test(s).
+System check identified no issues (0 silenced).

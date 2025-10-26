@@ -286,7 +286,7 @@ class ClientAPITests(APITestCase):
         # Create user with proper permissions
         self.user = CustomUser.objects.create_user(email='testuser@example.com', password='testpass')
         # Assign Tenant Owners group which has all permissions
-        self.group = Group.objects.get(name='Tenant Owners')
+        self.group, created = Group.objects.get_or_create(name='Tenant Owners')
         self.user.groups.add(self.group)
         # Also assign permissions directly for test
         from django.contrib.auth.models import Permission
@@ -357,7 +357,7 @@ class ProjectAPITests(APITestCase):
     def setUp(self):
         self.user = CustomUser.objects.create_user(email='testuser@example.com', password='testpass')
         # Assign Tenant Owners group which has all permissions
-        self.group = Group.objects.get(name='Tenant Owners')
+        self.group, created = Group.objects.get_or_create(name='Tenant Owners')
         self.user.groups.add(self.group)
         # Also assign permissions directly for test
         from django.contrib.auth.models import Permission
@@ -593,8 +593,8 @@ class PermissionTests(APITestCase):
         from django.contrib.contenttypes.models import ContentType
         from project.models import Client, Project, Invoice
 
-        tenant_owners_group = Group.objects.get(name='Tenant Owners')
-        project_managers_group = Group.objects.get(name='Project Managers')
+        tenant_owners_group, _ = Group.objects.get_or_create(name='Tenant Owners')
+        project_managers_group, _ = Group.objects.get_or_create(name='Project Managers')
 
         # Manually assign permissions to groups for testing
         # Client permissions
@@ -701,6 +701,10 @@ class PermissionTests(APITestCase):
 
 class GroupTests(TestCase):
     """Test default groups and group assignment"""
+
+    def setUp(self):
+        from django.core.management import call_command
+        call_command('setup_groups')
 
     def test_default_groups_created(self):
         """Test that default groups are created"""

@@ -26,7 +26,7 @@ class ClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['id', 'name', 'email', 'phone', 'status', 'tenant', 'tenant_name', 'projects_count', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'slug', 'email', 'phone', 'status', 'tenant', 'tenant_name', 'projects_count', 'created_at', 'updated_at']
         help_texts = {
             'name': 'Full name of the client',
             'email': 'Primary contact email address (must be unique)',
@@ -40,14 +40,9 @@ class ClientSerializer(serializers.ModelSerializer):
         return obj.projects.count()
 
 class ProjectSerializer(serializers.ModelSerializer):
-    id = serializers.SerializerMethodField(help_text='Obfuscated project ID')
     client_name = serializers.CharField(source='client.name', read_only=True, help_text='Name of the associated client')
     milestones_count = serializers.SerializerMethodField(help_text='Number of milestones in this project')
     progress = serializers.SerializerMethodField(help_text='Overall project progress percentage (0-100)')
-
-    def get_id(self, obj):
-        from saasCRM.utils import encode_id
-        return encode_id(obj.pk)
 
     def validate_budget(self, value):
         if value is not None:
@@ -70,7 +65,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ['id', 'name', 'client', 'client_name', 'status', 'priority', 'start_date', 'end_date', 'budget', 'description', 'tags', 'team_members', 'access_groups', 'milestones_count', 'progress', 'created_at']
+        fields = ['id', 'name', 'slug', 'client', 'client_name', 'status', 'priority', 'start_date', 'end_date', 'budget', 'description', 'tags', 'team_members', 'access_groups', 'milestones_count', 'progress', 'created_at']
         help_texts = {
             'name': 'Project title or name',
             'client': 'Client this project is for',

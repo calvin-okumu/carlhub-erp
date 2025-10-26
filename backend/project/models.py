@@ -1,3 +1,4 @@
+import uuid
 from decimal import Decimal
 
 from decimal import Decimal
@@ -12,15 +13,18 @@ from django.core.validators import (
     URLValidator,
 )
 from django.db import models
+from django.utils.text import slugify
 
 
 class Client(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("active", "Active"),
         ("inactive", "Inactive"),
         ("prospect", "Prospect"),
     ]
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True, validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')])
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="prospect", db_index=True)
@@ -33,11 +37,23 @@ class Client(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Client.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
 
 class Project(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("planning", "Planning"),
         ("active", "Active"),
@@ -51,6 +67,7 @@ class Project(models.Model):
         ("high", "High"),
     ]
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="projects", null=True, blank=True, db_index=True
     )
@@ -87,11 +104,23 @@ class Project(models.Model):
         result = self.milestones.aggregate(avg_progress=Avg('progress'))
         return int(result['avg_progress'] or 0)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Project.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
 
 class Milestone(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("planning", "Planning"),
         ("active", "Active"),
@@ -150,6 +179,7 @@ class Milestone(models.Model):
 
 
 class Sprint(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("planned", "Planned"),
         ("active", "Active"),
@@ -209,6 +239,7 @@ class Sprint(models.Model):
 
 
 class Task(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("to_do", "To Do"),
         ("in_progress", "In Progress"),
@@ -263,6 +294,7 @@ class Task(models.Model):
 
 # Financial models
 class Invoice(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="invoices", null=True, blank=True, db_index=True
     )
@@ -283,6 +315,7 @@ class Invoice(models.Model):
 
 
 class Payment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="payments", null=True, blank=True, db_index=True
     )

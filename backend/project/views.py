@@ -17,27 +17,12 @@ from rest_framework.response import Response
 
 from accounts.models import CustomUser, Invitation, Tenant, UserTenant
 
-from saasCRM.utils import decode_id
-
 from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
 from .permissions import CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments, CanManageProjects, CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner
 from .serializers import ClientSerializer, CustomUserSerializer, InvitationSerializer, InvoiceSerializer, MilestoneSerializer, PaymentSerializer, ProjectSerializer, SprintSerializer, TaskSerializer, TenantSerializer, UserTenantSerializer
 
 
-class ObfuscatedIDMixin:
-    """
-    Mixin for ViewSets that use obfuscated IDs.
-    Decodes obfuscated PKs in URLs.
-    """
-    def get_object(self):
-        pk = decode_id(self.kwargs['pk'])
-        if pk is None:
-            raise Http404
-        self.kwargs['pk'] = pk
-        return super().get_object()
-
-
-class TenantViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
+class TenantViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing tenant organizations.
 
@@ -53,13 +38,7 @@ class TenantViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
     ordering = ['name']
 
-    def get_object(self):
-        from saasCRM.utils import decode_id
-        pk = decode_id(self.kwargs['pk'])
-        if pk is None:
-            raise Http404
-        self.kwargs['pk'] = pk
-        return super().get_object()
+
 
     def get_queryset(self):
         if self.request.tenant:
@@ -142,6 +121,7 @@ class ClientViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "email"]
     ordering_fields = ["name", "created_at", "status"]
     ordering = ['name']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         if self.request.tenant:
@@ -225,6 +205,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "description"]
     ordering_fields = ["name", "created_at"]
     ordering = ['name']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         if self.request.tenant:
@@ -239,7 +220,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         else:
             return Project.objects.none()  # Unauthenticated, no access
 
-    @method_decorator(cache_page(60*15))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -335,7 +315,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         description="Delete a milestone and all associated sprints and tasks."
     ),
 )
-class MilestoneViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
+class MilestoneViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing project milestones.
 
@@ -411,7 +391,7 @@ class MilestoneViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
         description="Remove a task from this sprint."
     ),
 )
-class SprintViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
+class SprintViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing agile sprints.
 
@@ -565,7 +545,7 @@ class SprintViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
         description="Delete a task."
     ),
 )
-class TaskViewSet(ObfuscatedIDMixin, viewsets.ModelViewSet):
+class TaskViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing individual tasks.
 
