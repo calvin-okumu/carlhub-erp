@@ -239,7 +239,8 @@ class InvitationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invitation
-        fields = ['id', 'email', 'tenant', 'tenant_name', 'token', 'role', 'invited_by', 'invited_by_email', 'created_at', 'expires_at', 'is_used']
+        fields = ['id', 'slug', 'email', 'tenant', 'tenant_name', 'token', 'role', 'invited_by', 'invited_by_email', 'created_at', 'expires_at', 'is_used', 'email_confirmed']
+        read_only_fields = ['id', 'slug', 'token', 'created_at', 'invited_by']
         help_texts = {
             'email': 'Email address of the invited user',
             'tenant': 'Tenant organization sending the invitation',

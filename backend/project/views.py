@@ -929,6 +929,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
     search_fields = ["email", "tenant__name"]
     ordering_fields = ["created_at"]
     ordering = ['created_at']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -1470,7 +1471,7 @@ def confirm_invitation_view(request):
         action='invitation_confirmed',
         resource_type='invitation',
         tenant=invitation.tenant,
-        resource_id=str(invitation.id),
+        resource_id=str(invitation.slug),
         old_values={'email_confirmed': False},
         new_values={'email_confirmed': True},
         metadata={'confirmed_via': 'email_link'}
@@ -1544,7 +1545,7 @@ def resend_invitation_view(request):
             action='invitation_resent',
             resource_type='invitation',
             tenant=invitation.tenant,
-            resource_id=str(invitation.id),
+            resource_id=str(invitation.slug),
             metadata={'resent_at': timezone.now().isoformat()}
         )
 

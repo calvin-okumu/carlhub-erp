@@ -171,6 +171,8 @@ class EmployeeDocument(models.Model):
 
 
 class Invitation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     email = models.EmailField()
     tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE)
     token = models.CharField(max_length=64, unique=True)
@@ -180,6 +182,18 @@ class Invitation(models.Model):
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)  # Track if invitation email has been confirmed
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(f"invite-{self.email}")
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Invitation.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Invite {self.email} to {self.tenant.name}"

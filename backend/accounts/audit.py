@@ -108,7 +108,7 @@ class AuditLogger:
             resource_type='invitation',
             tenant=invitation.tenant,
             user=invitation.invited_by,
-            resource_id=str(invitation.id),
+            resource_id=str(invitation.slug),
             new_values={
                 'email': invitation.email,
                 'role': invitation.role,
