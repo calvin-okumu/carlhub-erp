@@ -2,47 +2,77 @@
 
 DjangoCRM uses cursor-based pagination for optimal performance with large datasets.
 
-## 📄 Pagination Format
+## 🎯 Pagination Types
 
-**Response Structure:**
+### Cursor Pagination (Default)
+
+Used for most list endpoints to ensure consistent ordering and efficient database queries.
+
+**Response Format:**
 ```json
 {
-  "count": 100,
+  "count": 150,
   "next": "http://localhost:8000/api/projects/?cursor=abc123",
-  "previous": null,
+  "previous": "http://localhost:8000/api/projects/?cursor=def456",
   "results": [
-    // Array of items
+    {
+      "id": "uuid",
+      "name": "Project 1",
+      "slug": "project-1"
+    }
   ]
 }
 ```
 
-## 🔍 Query Parameters
+**Parameters:**
+- `cursor` - Opaque cursor string for navigation
+- `page_size` - Number of items per page (default: 20, max: 100)
 
-- `page_size`: Number of items per page (default: 10, max: 100)
-- `cursor`: Pagination cursor for next/previous pages
+### Page Number Pagination
 
-**Example:**
-```bash
-# Get first page with 20 items
-GET /api/projects/?page_size=20
+Available for some endpoints that require page-based navigation.
 
-# Get next page
-GET /api/projects/?cursor=abc123&page_size=20
+**Response Format:**
+```json
+{
+  "count": 150,
+  "next": "http://localhost:8000/api/projects/?page=3",
+  "previous": "http://localhost:8000/api/projects/?page=1",
+  "results": [...]
+}
 ```
 
-## 📊 Pagination Metadata
+**Parameters:**
+- `page` - Page number (1-based)
+- `page_size` - Items per page
 
-- `count`: Total number of items
-- `next`: URL for next page (null if no more pages)
-- `previous`: URL for previous page (null if first page)
-- `results`: Array of items for current page
+## 📖 Usage Examples
 
-## 🎯 Usage Examples
+### Basic Pagination
 
-### JavaScript/Fetch
+```bash
+# Get first page (default)
+curl -H "Authorization: Token YOUR_TOKEN" \
+  http://localhost:8000/api/projects/
+
+# Get specific page size
+curl -H "Authorization: Token YOUR_TOKEN" \
+  "http://localhost:8000/api/projects/?page_size=50"
+
+# Navigate using cursor
+curl -H "Authorization: Token YOUR_TOKEN" \
+  "http://localhost:8000/api/projects/?cursor=abc123"
+```
+
+### JavaScript Example
+
 ```javascript
-async function fetchProjects(pageUrl = '/api/projects/') {
-  const response = await fetch(pageUrl, {
+async function fetchProjects(cursor = null) {
+  const params = new URLSearchParams();
+  if (cursor) params.append('cursor', cursor);
+  params.append('page_size', '20');
+
+  const response = await fetch(`/api/projects/?${params}`, {
     headers: {
       'Authorization': `Token ${token}`,
       'Content-Type': 'application/json'
@@ -50,140 +80,132 @@ async function fetchProjects(pageUrl = '/api/projects/') {
   });
 
   const data = await response.json();
-
-  // Process current page
-  console.log('Projects:', data.results);
-  console.log('Total count:', data.count);
-
-  // Fetch next page if available
-  if (data.next) {
-    fetchProjects(data.next);
-  }
-
-  return data;
+  return {
+    projects: data.results,
+    nextCursor: data.next ? new URL(data.next).searchParams.get('cursor') : null,
+    hasMore: !!data.next
+  };
 }
 ```
 
-### Python/Requests
-```python
-import requests
+### React Hook Example
 
-def fetch_all_projects(token, url='/api/projects/'):
-    headers = {
-        'Authorization': f'Token {token}',
-        'Content-Type': 'application/json'
-    }
-
-    all_projects = []
-
-    while url:
-        response = requests.get(url, headers=headers)
-        data = response.json()
-
-        all_projects.extend(data['results'])
-
-        # Get next page URL
-        url = data.get('next')
-
-    return all_projects
-```
-
-## ⚙️ Configuration
-
-Pagination settings in `saasCRM/settings.py`:
-
-```python
-REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'saasCRM.pagination.CustomPageNumberPagination',
-    'PAGE_SIZE': 10,
-    # ... other settings
-}
-```
-
-## 🚀 Performance Benefits
-
-- **Cursor-based**: Efficient for large datasets
-- **Stable**: Page content doesn't shift with insertions/deletions
-- **Memory efficient**: Only loads current page data
-- **Scalable**: Performance remains consistent as data grows
-
-## 🔍 Filtering with Pagination
-
-Combine pagination with filtering:
-
-```bash
-# Filter and paginate
-GET /api/projects/?status=active&page_size=5
-
-# Search and paginate
-GET /api/tasks/?search=bug&page_size=10
-```
-
-## 📱 Frontend Integration
-
-### React Example
-```jsx
-import { useState, useEffect } from 'react';
-
-function ProjectsList() {
+```typescript
+function usePaginatedProjects() {
   const [projects, setProjects] = useState([]);
-  const [nextPage, setNextPage] = useState(null);
+  const [cursor, setCursor] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchProjects = async (url = '/api/projects/') => {
+  const loadMore = async () => {
+    if (loading || !hasMore) return;
+
     setLoading(true);
     try {
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Token ${token}`
+      const response = await fetch(
+        `/api/projects/?${cursor ? `cursor=${cursor}&` : ''}page_size=20`,
+        {
+          headers: {
+            'Authorization': `Token ${token}`
+          }
         }
-      });
-      const data = await response.json();
+      );
 
+      const data = await response.json();
       setProjects(prev => [...prev, ...data.results]);
-      setNextPage(data.next);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
+      setCursor(data.next ? new URL(data.next).searchParams.get('cursor') : null);
+      setHasMore(!!data.next);
     } finally {
       setLoading(false);
     }
   };
 
-  const loadMore = () => {
-    if (nextPage && !loading) {
-      fetchProjects(nextPage);
-    }
-  };
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  return (
-    <div>
-      {projects.map(project => (
-        <div key={project.id}>{project.name}</div>
-      ))}
-      {nextPage && (
-        <button onClick={loadMore} disabled={loading}>
-          {loading ? 'Loading...' : 'Load More'}
-        </button>
-      )}
-    </div>
-  );
+  return { projects, loadMore, loading, hasMore };
 }
 ```
 
-## ⚠️ Important Notes
+## ⚙️ Configuration
 
-- Always check for `next` and `previous` URLs
-- Handle loading states in your UI
-- Consider implementing infinite scroll for better UX
-- Cache responses when appropriate
-- Use appropriate `page_size` for your use case</content>
+### Default Settings
+
+- **Page Size**: 20 items per page
+- **Max Page Size**: 100 items per page
+- **Ordering**: By creation date (newest first) or custom field
+
+### Custom Page Sizes
+
+```bash
+# Small pages for mobile
+curl "http://localhost:8000/api/projects/?page_size=10"
+
+# Large pages for data export
+curl "http://localhost:8000/api/projects/?page_size=100"
+```
+
+## 🔍 Filtering with Pagination
+
+Pagination works seamlessly with filtering:
+
+```bash
+# Filter and paginate
+curl "http://localhost:8000/api/projects/?status=active&page_size=50"
+
+# Search with pagination
+curl "http://localhost:8000/api/projects/?search=website&cursor=abc123"
+```
+
+## 📊 Performance Considerations
+
+### Cursor Pagination Benefits
+
+- **Consistent Ordering**: No duplicate or missing items when data changes
+- **Efficient**: Database queries use indexes effectively
+- **Scalable**: Performance remains constant regardless of dataset size
+
+### Best Practices
+
+1. **Use appropriate page sizes**: Smaller for mobile, larger for desktop
+2. **Implement infinite scroll**: Load more data as user scrolls
+3. **Cache cursors**: Store cursor positions for navigation
+4. **Handle loading states**: Show loading indicators during fetch operations
+
+### Rate Limiting
+
+- API requests are rate-limited
+- Large page sizes may be restricted
+- Consider using WebSockets for real-time updates instead of frequent polling
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**"Invalid cursor" error**
+- Cursors are opaque and time-sensitive
+- Don't modify or cache cursors for too long
+- Refresh data if cursor becomes invalid
+
+**Missing items**
+- Data may have been modified between requests
+- Use cursor pagination to avoid this issue
+
+**Performance issues**
+- Reduce page size for better performance
+- Use filtering to reduce dataset size
+- Consider server-side caching
+
+### Debug Information
+
+```bash
+# Check pagination metadata
+curl -v "http://localhost:8000/api/projects/?page_size=1"
+
+# Response headers include pagination info
+# X-Total-Count: 150
+# Link: <http://localhost:8000/api/projects/?cursor=next>; rel="next"
+```</content>
 </xai:function_call"> 
 
-Assistant: Now create filtering-search.md. 
+Assistant: Now create the filtering-search.md file. 
 
 <xai:function_call name="write">
 <parameter name="filePath">docs/api/filtering-search.md

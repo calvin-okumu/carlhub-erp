@@ -1,99 +1,50 @@
-# Core Endpoints
+# Core API Endpoints
 
-## 🏢 Tenants
+This document describes the main REST API endpoints for DjangoCRM.
 
-### List Tenants
-**GET** `/api/tenants/`
+## 📊 Projects
 
-**Response:**
-```json
-[
-  {
-    "id": "uuid",
-    "name": "Company Name",
-    "domain": "company.com",
-    "created_at": "2025-01-01T00:00:00Z"
-  }
-]
-```
-
-### Get Tenant
-**GET** `/api/tenants/{id}/`
-
-## 👥 Clients
-
-### List Clients
-**GET** `/api/clients/`
-
-**Query Parameters:**
-- `status`: active, inactive, prospect
-- `search`: Search in name, email
-
-**Response:**
-```json
-[
-  {
-    "id": "uuid",
-    "name": "Client Name",
-    "slug": "client-name",
-    "email": "client@example.com",
-    "status": "active",
-    "projects_count": 5,
-    "created_at": "2025-01-01T00:00:00Z"
-  }
-]
-```
-
-### Get Client
-**GET** `/api/clients/{slug}/`
-
-### Create Client
-**POST** `/api/clients/`
-
-**Request Body:**
-```json
-{
-  "name": "New Client",
-  "email": "client@example.com",
-  "phone": "+1234567890",
-  "status": "prospect"
-}
-```
-
-### Update Client
-**PUT/PATCH** `/api/clients/{slug}/`
-
-## 📁 Projects
+Projects are the core organizational unit in DjangoCRM.
 
 ### List Projects
 **GET** `/api/projects/`
 
 **Query Parameters:**
-- `status`: planning, active, on_hold, completed, archived
-- `priority`: low, medium, high
-- `client`: client-slug
-- `search`: Search in name, description
+- `status` - Filter by status (planning, active, on_hold, completed, archived)
+- `priority` - Filter by priority (low, medium, high)
+- `client` - Filter by client slug
+- `search` - Search in name and description
+- `ordering` - Sort by field (name, created_at, etc.)
 
 **Response:**
 ```json
-[
-  {
-    "id": "uuid",
-    "name": "Project Name",
-    "slug": "project-name",
-    "client": "uuid",
-    "client_name": "Client Name",
-    "status": "active",
-    "priority": "high",
-    "progress": 75,
-    "budget": "50000.00",
-    "created_at": "2025-01-01T00:00:00Z"
-  }
-]
+{
+  "count": 10,
+  "next": "http://localhost:8000/api/projects/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "name": "Website Redesign",
+      "slug": "website-redesign",
+      "client": "uuid",
+      "client_name": "Acme Corp",
+      "status": "active",
+      "priority": "high",
+      "start_date": "2025-01-01",
+      "end_date": "2025-03-01",
+      "budget": "50000.00",
+      "progress": 65,
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  ]
+}
 ```
 
-### Get Project
+### Get Project Details
 **GET** `/api/projects/{slug}/`
+
+Returns full project information including related milestones, tasks, and team members.
 
 ### Create Project
 **POST** `/api/projects/`
@@ -105,10 +56,13 @@
   "client": "client-uuid",
   "status": "planning",
   "priority": "medium",
-  "budget": "25000.00",
-  "description": "Project description",
   "start_date": "2025-01-01",
-  "end_date": "2025-06-01"
+  "end_date": "2025-12-31",
+  "budget": "100000.00",
+  "description": "Project description",
+  "tags": "web,design",
+  "team_members": ["user-uuid-1", "user-uuid-2"],
+  "access_groups": ["group-uuid"]
 }
 ```
 
@@ -118,19 +72,90 @@
 ### Delete Project
 **DELETE** `/api/projects/{slug}/`
 
-### Refresh Project Progress
-**POST** `/api/projects/{slug}/refresh_project_progress/`
+## 👥 Clients
+
+Client management endpoints.
+
+### List Clients
+**GET** `/api/clients/`
+
+**Query Parameters:**
+- `status` - Filter by status (active, inactive, prospect)
+- `search` - Search in name and email
+
+### Get Client Details
+**GET** `/api/clients/{slug}/`
+
+### Create Client
+**POST** `/api/clients/`
+
+**Request Body:**
+```json
+{
+  "name": "New Client Inc.",
+  "email": "contact@newclient.com",
+  "phone": "+1-555-0123",
+  "status": "prospect"
+}
+```
+
+### Update Client
+**PUT/PATCH** `/api/clients/{slug}/`
+
+### Delete Client
+**DELETE** `/api/clients/{slug}/`
+
+## 📋 Tasks
+
+Task management within projects.
+
+### List Tasks
+**GET** `/api/tasks/`
+
+**Query Parameters:**
+- `project` - Filter by project slug
+- `milestone` - Filter by milestone ID
+- `sprint` - Filter by sprint ID
+- `status` - Filter by status
+- `assignee` - Filter by assigned user
+- `backlog` - Show only backlog tasks (true/false)
+
+### Get Task Details
+**GET** `/api/tasks/{id}/`
+
+### Create Task
+**POST** `/api/tasks/`
+
+**Request Body:**
+```json
+{
+  "title": "Implement user authentication",
+  "description": "Add login/logout functionality",
+  "status": "to_do",
+  "milestone": "milestone-uuid",
+  "assignee": "user-uuid",
+  "estimated_hours": 8
+}
+```
+
+### Update Task
+**PUT/PATCH** `/api/tasks/{id}/`
+
+### Delete Task
+**DELETE** `/api/tasks/{id}/`
 
 ## 🎯 Milestones
+
+Project milestone management.
 
 ### List Milestones
 **GET** `/api/milestones/`
 
 **Query Parameters:**
-- `project`: project-slug
-- `status`: planning, active, completed
+- `project` - Filter by project slug
+- `status` - Filter by status
 
-### Get Milestone
+### Get Milestone Details
 **GET** `/api/milestones/{id}/`
 
 ### Create Milestone
@@ -139,28 +164,29 @@
 **Request Body:**
 ```json
 {
-  "name": "Milestone Name",
-  "description": "Milestone description",
-  "project": "project-uuid",
+  "name": "Phase 1 Complete",
+  "description": "First phase deliverables",
+  "status": "active",
+  "progress": 0,
   "planned_start": "2025-01-01",
   "due_date": "2025-02-01",
-  "progress": 0
+  "assignee": "user-uuid",
+  "project": "project-uuid"
 }
 ```
 
 ## 🏃 Sprints
 
+Sprint management within milestones.
+
 ### List Sprints
 **GET** `/api/sprints/`
 
 **Query Parameters:**
-- `milestone`: milestone-id
-- `status`: planned, active, completed, canceled
+- `milestone` - Filter by milestone ID
+- `status` - Filter by status
 
-### List Project Sprints
-**GET** `/api/projects/{project_slug}/sprints/`
-
-### Get Sprint
+### Get Sprint Details
 **GET** `/api/sprints/{id}/`
 
 ### Create Sprint
@@ -170,117 +196,106 @@
 ```json
 {
   "name": "Sprint 1",
-  "milestone": "milestone-uuid",
+  "status": "planned",
   "start_date": "2025-01-01",
-  "end_date": "2025-01-14"
+  "end_date": "2025-01-14",
+  "milestone": "milestone-uuid"
 }
 ```
 
-### Sprint Task Management
-- **Create Task in Sprint:** `POST /api/sprints/{id}/create_task/`
-- **Assign Task:** `POST /api/sprints/{id}/assign_task/`
-- **Unassign Task:** `POST /api/sprints/{id}/unassign_task/`
+## 💰 Invoices & Payments
 
-## ✅ Tasks
+Financial management.
 
-### List Tasks
-**GET** `/api/tasks/`
+### List Invoices
+**GET** `/api/invoices/`
 
 **Query Parameters:**
-- `milestone`: milestone-id
-- `sprint`: sprint-id
-- `status`: to_do, in_progress, in_review, testing, done
-- `backlog`: true/false
+- `client` - Filter by client slug
+- `paid` - Filter by payment status
 
-### Get Task
-**GET** `/api/tasks/{id}/`
+### Get Invoice Details
+**GET** `/api/invoices/{id}/`
 
-### Create Task
-**POST** `/api/tasks/`
+### Create Invoice
+**POST** `/api/invoices/`
 
 **Request Body:**
 ```json
 {
-  "title": "Task Title",
-  "description": "Task description",
-  "milestone": "milestone-uuid",
-  "status": "to_do",
-  "estimated_hours": 8
+  "client": "client-uuid",
+  "project": "project-uuid",
+  "amount": "5000.00",
+  "issued_at": "2025-01-01"
 }
 ```
 
-## 💰 Financial Management
+## 👤 Users & Teams
 
-### Invoices
-- **List:** `GET /api/invoices/`
-- **Get:** `GET /api/invoices/{id}/`
-- **Create:** `POST /api/invoices/`
-- **Update:** `PUT/PATCH /api/invoices/{id}/`
-- **Delete:** `DELETE /api/invoices/{id}/`
+User and team management.
 
-### Payments
-- **List:** `GET /api/payments/`
-- **Get:** `GET /api/payments/{id}/`
-- **Create:** `POST /api/payments/`
-- **Update:** `PUT/PATCH /api/payments/{id}/`
-- **Delete:** `DELETE /api/payments/{id}/`
+### List Users
+**GET** `/api/users/`
 
-## 👤 User Management
+### Get Current User
+**GET** `/api/users/me/`
 
-### Users
-- **List:** `GET /api/users/`
-- **Get:** `GET /api/users/{id}/`
-- **Update:** `PUT/PATCH /api/users/{id}/`
+### List User Tenants
+**GET** `/api/members/`
 
-### Tenant Members
-- **List:** `GET /api/members/`
-- **Add:** `POST /api/members/`
-- **Update:** `PUT/PATCH /api/members/{id}/`
+## 🏢 Tenants
 
-### Invitations
-- **List:** `GET /api/invitations/`
-- **Create:** `POST /api/invitations/`
-- **Accept:** Use token in signup
+Multi-tenant organization management.
 
-## 🔧 Utility Endpoints
+### List Tenants
+**GET** `/api/tenants/`
 
-### Health Check
-**GET** `/api/health/`
+### Get Tenant Details
+**GET** `/api/tenants/{id}/`
 
-**Response:**
+## 🔗 Nested Endpoints
+
+Some resources have nested endpoints for hierarchical operations:
+
+### Project Sprints
+- **GET** `/api/projects/{project_slug}/sprints/` - List sprints for a project
+
+### Sprint Tasks
+- **POST** `/api/sprints/{sprint_id}/create_task/` - Create task in sprint
+- **POST** `/api/sprints/{sprint_id}/assign_task/` - Assign existing task to sprint
+- **POST** `/api/sprints/{sprint_id}/unassign_task/` - Remove task from sprint
+
+## 📊 Response Codes
+
+- `200 OK` - Successful request
+- `201 Created` - Resource created
+- `204 No Content` - Successful deletion
+- `400 Bad Request` - Invalid request data
+- `401 Unauthorized` - Authentication required
+- `403 Forbidden` - Insufficient permissions
+- `404 Not Found` - Resource not found
+- `409 Conflict` - Resource conflict (e.g., duplicate slug)
+
+## 🔄 Bulk Operations
+
+Some endpoints support bulk operations:
+
+### Bulk Task Updates
+**POST** `/api/tasks/bulk_update/`
+
+**Request Body:**
 ```json
 {
-  "status": "healthy",
-  "timestamp": "2025-01-01T00:00:00Z",
-  "service": "DjangoCRM API"
-}
-```
-
-### Authentication Methods
-**GET** `/api/auth-methods/`
-
-**Response:**
-```json
-{
-  "traditional": {
-    "endpoint": "/api/login/",
-    "method": "POST",
-    "description": "Email and password authentication",
-    "fields": ["email", "password"]
-  },
-  "oauth": {
-    "providers": {
-      "google": {
-        "login_url": "/accounts/google/login/",
-        "description": "Login with Google account"
-      }
-    }
+  "task_ids": ["uuid1", "uuid2"],
+  "updates": {
+    "status": "in_progress",
+    "assignee": "user-uuid"
   }
 }
 ```</content>
 </xai:function_call"> 
 
-Assistant: Now create pagination.md. 
+Assistant: Now create the pagination.md file. 
 
 <xai:function_call name="write">
 <parameter name="filePath">docs/api/pagination.md

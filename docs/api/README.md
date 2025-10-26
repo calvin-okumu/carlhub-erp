@@ -20,55 +20,80 @@ http://localhost:8000/api
 
 All API requests require authentication using Token Authentication:
 
-```
+```bash
 Authorization: Token <your-token>
 ```
 
-Get a token by logging in via `/login/` endpoint.
+### Getting a Token
+
+1. **Login via API:**
+   ```bash
+   POST /api/login/
+   {
+     "email": "user@example.com",
+     "password": "password"
+   }
+   ```
+
+2. **Use token in subsequent requests:**
+   ```bash
+   GET /api/projects/
+   Headers: Authorization: Token abc123...
+   ```
 
 ## 📊 Response Format
 
-All responses are in JSON format:
+All responses follow a consistent JSON structure:
 
 ```json
 {
-  "success": true,
-  "data": { ... },
-  "message": "Operation successful"
+  "id": "uuid",
+  "name": "Example Name",
+  "slug": "example-name",
+  "created_at": "2025-10-19T10:00:00Z",
+  "updated_at": "2025-10-19T10:00:00Z"
 }
 ```
 
-## 🚀 Quick Start
+## 🏷️ URL Structure
 
+- **Projects**: `/api/projects/{slug}/` (slug-based URLs)
+- **Clients**: `/api/clients/{slug}/` (slug-based URLs)
+- **Other entities**: `/api/{resource}/{id}/` (ID-based URLs)
+
+Slugs are auto-generated from names but can be customized for better readability.
+
+## 📖 Interactive Documentation
+
+- **Swagger UI**: http://localhost:8000/api/schema/swagger-ui/
+- **ReDoc**: http://localhost:8000/api/schema/redoc/
+- **OpenAPI Schema**: http://localhost:8000/api/schema/
+
+## 🚀 Quick Examples
+
+### List Projects
 ```bash
-# 1. Get authentication token
-curl -X POST http://localhost:8000/api/login/ \
-  -H "Content-Type: application/json" \
-  -d '{"email": "admin@example.com", "password": "admin123"}'
-
-# 2. Use token for authenticated requests
-curl -H "Authorization: Token YOUR_TOKEN_HERE" \
+curl -H "Authorization: Token YOUR_TOKEN" \
   http://localhost:8000/api/projects/
 ```
 
-## 📚 Interactive Documentation
+### Get Project Details
+```bash
+curl -H "Authorization: Token YOUR_TOKEN" \
+  http://localhost:8000/api/projects/my-project-slug/
+```
 
-For detailed API exploration, visit:
-- **Swagger UI**: http://localhost:8000/api/schema/swagger-ui/
-- **ReDoc**: http://localhost:8000/api/schema/redoc/
-
-## 🏗️ Architecture
-
-The API follows REST principles with the following key features:
-
-- **Multi-tenant**: Automatic data isolation by tenant
-- **Role-based permissions**: Access control based on user roles
-- **Slug-based URLs**: Human-readable identifiers for resources
-- **Comprehensive filtering**: Advanced query capabilities
-- **Progress tracking**: Automated project progress calculation</content>
+### Create a Project
+```bash
+curl -X POST \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "New Project", "client": "client-uuid"}' \
+  http://localhost:8000/api/projects/
+```</content>
 </xai:function_call"> 
 
-Assistant: Now create the authentication.md file. 
+Assistant: Now create the authentication.md file. I need to check how authentication works in the backend. From earlier, it's TokenAuthentication. Let me create the file. 
 
 <xai:function_call name="write">
 <parameter name="filePath">docs/api/authentication.md

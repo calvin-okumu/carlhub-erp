@@ -1,16 +1,14 @@
 # Authentication
 
-DjangoCRM uses token-based authentication for API access.
+DjangoCRM uses Token-based authentication for API access. All API requests require a valid authentication token.
 
-## 🔑 Token Authentication
+## 🔐 Authentication Methods
 
-Include the token in the `Authorization` header:
+### Token Authentication
 
-```
-Authorization: Token <your-token>
-```
+DjangoCRM uses Django REST Framework's Token Authentication system.
 
-## 📝 Login
+#### Getting a Token
 
 **Endpoint:** `POST /api/login/`
 
@@ -18,7 +16,7 @@ Authorization: Token <your-token>
 ```json
 {
   "email": "user@example.com",
-  "password": "password123"
+  "password": "userpassword"
 }
 ```
 
@@ -26,89 +24,148 @@ Authorization: Token <your-token>
 ```json
 {
   "token": "abc123def456...",
-  "user_id": 1,
-  "email": "user@example.com",
-  "first_name": "John",
-  "last_name": "Doe",
-  "message": "Login successful"
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe"
+  },
+  "tenant": {
+    "id": "uuid",
+    "name": "Company Name"
+  }
 }
 ```
 
 **Example:**
 ```bash
-curl -X POST http://localhost:8000/api/login/ \
+curl -X POST \
+  http://localhost:8000/api/login/ \
   -H "Content-Type: application/json" \
   -d '{"email": "admin@example.com", "password": "admin123"}'
 ```
 
-## 👤 Signup
+#### Using the Token
 
-**Endpoint:** `POST /api/signup/`
+Include the token in the `Authorization` header for all subsequent requests:
 
-**Request Body:**
-```json
-{
-  "email": "newuser@example.com",
-  "password": "securepassword",
-  "first_name": "John",
-  "last_name": "Doe",
-  "company_name": "My Company"
-}
 ```
+Authorization: Token abc123def456...
+```
+
+**Example:**
+```bash
+curl -H "Authorization: Token abc123def456..." \
+  http://localhost:8000/api/projects/
+```
+
+### Session Authentication
+
+For web interface access, DjangoCRM also supports session-based authentication through the Django admin and frontend application.
+
+## 👥 User Roles & Permissions
+
+DjangoCRM implements role-based access control with the following roles:
+
+- **Tenant Owner**: Full access to all tenant resources
+- **Manager**: Can manage projects, clients, and team members
+- **Employee**: Can view and update assigned tasks and projects
+- **Client**: Limited access to their own projects and invoices
+
+### Permission Matrix
+
+| Resource | Tenant Owner | Manager | Employee | Client |
+|----------|-------------|---------|----------|--------|
+| Projects | CRUD | CRUD | R/Update | Read (own) |
+| Clients | CRUD | CRUD | Read | Read (own) |
+| Tasks | CRUD | CRUD | CRUD (assigned) | Read (own projects) |
+| Invoices | CRUD | CRUD | Read | Read (own) |
+| Users | CRUD | Manage team | Read | None |
+
+## 🔒 Security Features
+
+### Multi-Tenant Isolation
+- Complete data isolation between tenants
+- Row-level security on all database queries
+- Tenant context enforced on all operations
+
+### Token Security
+- Tokens are cryptographically secure random strings
+- Tokens can be revoked individually
+- Automatic token expiration (configurable)
+
+### Request Security
+- CSRF protection on state-changing operations
+- Rate limiting on authentication endpoints
+- Input validation and sanitization
+
+## 🚪 Logout
+
+To logout and invalidate a token:
+
+**Endpoint:** `POST /api/logout/`
+
+**Headers:** `Authorization: Token <token>`
+
+**Response:** `204 No Content`
+
+Note: Token-based authentication doesn't have true "logout" - simply discard the token on the client side. The `/api/logout/` endpoint is provided for consistency with session-based auth.
+
+## 🔄 Token Management
+
+### Check Token Validity
+
+**Endpoint:** `GET /api/auth-methods/`
 
 **Response:**
 ```json
 {
-  "token": "abc123def456...",
-  "user_id": 2,
-  "email": "newuser@example.com",
-  "first_name": "John",
-  "last_name": "Doe",
-  "tenant": "My Company",
-  "message": "Signup successful"
+  "token_auth": true,
+  "session_auth": true,
+  "oauth_providers": ["google", "github"]
 }
 ```
 
-## 🔄 Token Management
+### Refresh Token (if implemented)
 
-Tokens are long-lived and don't expire automatically. For security:
+Some deployments may include token refresh functionality. Check with your specific installation.
 
-- Store tokens securely (localStorage, secure cookies)
-- Implement token refresh if needed
-- Clear tokens on logout
+## 🐛 Troubleshooting Authentication
 
-## 🛡️ Security Best Practices
+### Common Issues
 
-1. **HTTPS Only**: Always use HTTPS in production
-2. **Token Storage**: Use secure storage mechanisms
-3. **Logout**: Clear tokens from client storage
-4. **Validation**: Validate tokens on each request
+**"Authentication credentials were not provided"**
+- Missing `Authorization` header
+- Incorrect header format (must be `Token <token>`)
 
-## 🚨 Error Responses
+**"Invalid token"**
+- Token has expired
+- Token was revoked
+- User account was deactivated
 
-**Invalid Credentials:**
-```json
-{
-  "error": "Invalid credentials"
-}
+**"Permission denied"**
+- User lacks required permissions for the operation
+- Attempting to access resources from another tenant
+
+### Debug Authentication
+
+```bash
+# Test token validity
+curl -H "Authorization: Token YOUR_TOKEN" \
+  http://localhost:8000/api/health/
+
+# Check user permissions
+curl -H "Authorization: Token YOUR_TOKEN" \
+  http://localhost:8000/api/users/me/
 ```
 
-**Missing Token:**
-```json
-{
-  "detail": "Authentication credentials were not provided."
-}
-```
+## 📚 Related Documentation
 
-**Invalid Token:**
-```json
-{
-  "detail": "Invalid token."
-}
-```</content>
+- [Core Endpoints](./core-endpoints.md) - Main API resources
+- [Error Handling](./error-handling.md) - Authentication error responses</content>
 </xai:function_call"> 
 
-Assistant: Now create core-endpoints.md. 
+Assistant: Now create the core-endpoints.md file. This should document the main API endpoints. 
 
 <xai:function_call name="write">
 <parameter name="filePath">docs/api/core-endpoints.md

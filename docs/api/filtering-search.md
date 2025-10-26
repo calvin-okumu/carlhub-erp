@@ -1,315 +1,274 @@
 # Filtering & Search
 
-DjangoCRM provides comprehensive filtering and search capabilities across all endpoints.
+DjangoCRM provides comprehensive filtering and search capabilities across all major resources.
 
 ## 🔍 Search
 
-### Global Search
-Use the `search` parameter to search across multiple fields:
+Full-text search across relevant fields.
+
+### Projects Search
+**GET** `/api/projects/?search=term`
+
+Searches in:
+- Project name
+- Project description
+- Client name
+- Tags
 
 ```bash
-# Search projects by name or description
-GET /api/projects/?search=website
-
-# Search clients by name or email
-GET /api/clients/?search=john
-
-# Search tasks by title or description
-GET /api/tasks/?search=bug
+# Search for projects containing "website"
+curl "http://localhost:8000/api/projects/?search=website"
 ```
 
-### Search Fields by Endpoint
+### Clients Search
+**GET** `/api/clients/?search=term`
 
-| Endpoint | Search Fields |
-|----------|---------------|
-| Projects | name, description |
-| Clients | name, email |
-| Milestones | name, description |
-| Sprints | name |
-| Tasks | title, description |
-| Users | email, first_name, last_name |
+Searches in:
+- Client name
+- Client email
+
+### Tasks Search
+**GET** `/api/tasks/?search=term`
+
+Searches in:
+- Task title
+- Task description
 
 ## 🎯 Filtering
 
-### Projects
+### Projects Filtering
+
+**Available Filters:**
+- `status` - Project status
+- `priority` - Project priority
+- `client` - Client slug
+- `start_date` - Start date range
+- `end_date` - End date range
+
 ```bash
 # Filter by status
-GET /api/projects/?status=active
+curl "http://localhost:8000/api/projects/?status=active"
 
 # Filter by priority
-GET /api/projects/?priority=high
+curl "http://localhost:8000/api/projects/?priority=high"
 
 # Filter by client
-GET /api/projects/?client=client-slug
+curl "http://localhost:8000/api/projects/?client=acme-corp"
 
-# Combine filters
-GET /api/projects/?status=active&priority=high&client=client-slug
+# Date range filtering
+curl "http://localhost:8000/api/projects/?start_date=2025-01-01&end_date=2025-12-31"
 ```
 
-**Available Filters:**
-- `status`: planning, active, on_hold, completed, archived
-- `priority`: low, medium, high
-- `client`: client slug or UUID
+### Clients Filtering
 
-### Clients
+**Available Filters:**
+- `status` - Client status (active, inactive, prospect)
+
 ```bash
-# Filter by status
-GET /api/clients/?status=active
+curl "http://localhost:8000/api/clients/?status=active"
 ```
 
-**Available Filters:**
-- `status`: active, inactive, prospect
-
-### Milestones
-```bash
-# Filter by status
-GET /api/milestones/?status=active
-
-# Filter by project
-GET /api/milestones/?project=project-slug
-```
+### Tasks Filtering
 
 **Available Filters:**
-- `status`: planning, active, completed
-- `project`: project slug or UUID
+- `status` - Task status
+- `milestone` - Milestone ID
+- `sprint` - Sprint ID
+- `assignee` - Assigned user ID
+- `project` - Project slug
+- `backlog` - Show only backlog tasks (true/false)
 
-### Sprints
 ```bash
-# Filter by status
-GET /api/sprints/?status=active
+# Tasks by status
+curl "http://localhost:8000/api/tasks/?status=in_progress"
 
-# Filter by milestone
-GET /api/sprints/?milestone=milestone-uuid
-
-# Filter by project (nested)
-GET /api/sprints/?milestone__project=project-slug
-```
-
-**Available Filters:**
-- `status`: planned, active, completed, canceled
-- `milestone`: milestone UUID
-- `milestone__project`: project slug/UUID
-
-### Tasks
-```bash
-# Filter by status
-GET /api/tasks/?status=in_progress
-
-# Filter by milestone
-GET /api/tasks/?milestone=milestone-uuid
-
-# Filter by sprint
-GET /api/tasks/?sprint=sprint-uuid
-
-# Filter by assignee
-GET /api/tasks/?assignee=user-uuid
-
-# Filter by project (nested)
-GET /api/tasks/?milestone__project=project-slug
+# Tasks by assignee
+curl "http://localhost:8000/api/tasks/?assignee=user-uuid"
 
 # Backlog tasks only
-GET /api/tasks/?backlog=true
+curl "http://localhost:8000/api/tasks/?backlog=true"
 
-# Assigned tasks only
-GET /api/tasks/?backlog=false
+# Tasks in specific project
+curl "http://localhost:8000/api/tasks/?project=my-project"
 ```
+
+### Milestones Filtering
 
 **Available Filters:**
-- `status`: to_do, in_progress, in_review, testing, done
-- `milestone`: milestone UUID
-- `sprint`: sprint UUID
-- `assignee`: user UUID
-- `backlog`: true/false
+- `status` - Milestone status
+- `project` - Project slug
+- `assignee` - Assigned user ID
 
-### Invoices
-```bash
-# Filter by payment status
-GET /api/invoices/?paid=true
-
-# Filter by client
-GET /api/invoices/?client=client-slug
-
-# Filter by project
-GET /api/invoices/?project=project-slug
-```
+### Sprints Filtering
 
 **Available Filters:**
-- `paid`: true/false
-- `client`: client slug/UUID
-- `project`: project slug/UUID
+- `status` - Sprint status
+- `milestone` - Milestone ID
 
-### Users
-```bash
-# Filter by active status
-GET /api/users/?is_active=true
-```
+### Invoices Filtering
 
 **Available Filters:**
-- `is_active`: true/false
+- `client` - Client slug
+- `paid` - Payment status (true/false)
+- `issued_at` - Issue date range
 
-## 📅 Date Filtering
+## 📊 Ordering
 
-For date fields, use ISO 8601 format:
+Sort results by any field.
 
-```bash
-# Projects by date range
-GET /api/projects/?start_date__gte=2025-01-01&end_date__lte=2025-12-31
-
-# Tasks by creation date
-GET /api/tasks/?created_at__gte=2025-01-01
-
-# Milestones by due date
-GET /api/milestones/?due_date__lte=2025-06-01
-```
-
-**Date Operators:**
-- `__gte`: Greater than or equal
-- `__lte`: Less than or equal
-- `__gt`: Greater than
-- `__lt`: Less than
-- `__date`: Date part only
-
-## 🔢 Ordering
-
-Control result ordering with the `ordering` parameter:
+### Projects Ordering
+- `name` - Project name
+- `created_at` - Creation date
+- `start_date` - Start date
+- `end_date` - End date
+- `priority` - Priority level
 
 ```bash
-# Order projects by name (ascending)
-GET /api/projects/?ordering=name
+# Order by name ascending
+curl "http://localhost:8000/api/projects/?ordering=name"
 
-# Order by creation date (newest first)
-GET /api/projects/?ordering=-created_at
+# Order by creation date descending
+curl "http://localhost:8000/api/projects/?ordering=-created_at"
 
 # Multiple ordering
-GET /api/projects/?ordering=status,-created_at
+curl "http://localhost:8000/api/projects/?ordering=priority,-created_at"
 ```
 
-**Ordering Fields by Endpoint:**
-
-| Endpoint | Available Ordering |
-|----------|-------------------|
-| Projects | name, created_at, status, priority |
-| Clients | name, created_at, status |
-| Milestones | name, due_date, created_at |
-| Sprints | name, start_date, created_at |
-| Tasks | title, created_at, status |
-| Invoices | issued_at, amount |
-| Payments | paid_at, amount |
-
-Use `-` prefix for descending order.
+### Tasks Ordering
+- `title` - Task title
+- `created_at` - Creation date
+- `start_date` - Start date
+- `end_date` - End date
+- `status` - Status
+- `priority` - Priority (if implemented)
 
 ## 🔗 Combining Filters
 
-Combine multiple filters with search and ordering:
+Combine multiple filters for precise queries:
 
 ```bash
-GET /api/projects/?status=active&priority=high&search=website&ordering=-created_at&page_size=20
+# Active high-priority projects for specific client
+curl "http://localhost:8000/api/projects/?status=active&priority=high&client=acme-corp"
+
+# In-progress tasks assigned to user in specific project
+curl "http://localhost:8000/api/tasks/?status=in_progress&assignee=user-uuid&project=my-project"
+
+# Recent invoices for client
+curl "http://localhost:8000/api/invoices/?client=acme-corp&issued_at__gte=2025-01-01"
 ```
 
-## 📊 Advanced Filtering Examples
+## 📅 Date Range Filtering
 
-### Complex Task Queries
+Use date range operators:
+
+- `__gte` - Greater than or equal
+- `__lte` - Less than or equal
+- `__gt` - Greater than
+- `__lt` - Less than
+
 ```bash
-# High priority tasks in active projects
-GET /api/tasks/?status=in_progress&milestone__project__status=active&milestone__project__priority=high
+# Projects starting in Q1 2025
+curl "http://localhost:8000/api/projects/?start_date__gte=2025-01-01&start_date__lte=2025-03-31"
+
+# Tasks due this month
+curl "http://localhost:8000/api/tasks/?end_date__gte=2025-10-01&end_date__lte=2025-10-31"
 
 # Overdue tasks
-GET /api/tasks/?end_date__lt=2025-01-15&status__in=to_do,in_progress
-
-# Tasks assigned to specific user
-GET /api/tasks/?assignee=user-uuid&status__in=in_progress,in_review
+curl "http://localhost:8000/api/tasks/?end_date__lt=2025-10-19&status__in=to_do,in_progress"
 ```
 
-### Financial Queries
+## 🏷️ Tag-Based Filtering
+
+Projects support tag-based filtering:
+
 ```bash
-# Unpaid invoices over $1000
-GET /api/invoices/?paid=false&amount__gt=1000
+# Projects with specific tag
+curl "http://localhost:8000/api/projects/?tags__icontains=web"
 
-# Recent payments
-GET /api/payments/?paid_at__gte=2025-01-01
+# Projects with multiple tags (comma-separated in description)
+curl "http://localhost:8000/api/projects/?description__icontains=urgent,important"
 ```
 
-### Project Management Queries
+## 👤 User-Based Filtering
+
+Filter by user relationships:
+
 ```bash
-# Active projects with high priority
-GET /api/projects/?status=active&priority=high
+# Projects where user is team member
+curl "http://localhost:8000/api/projects/?team_members=user-uuid"
 
-# Projects ending this month
-GET /api/projects/?end_date__month=1&end_date__year=2025
+# Tasks assigned to user
+curl "http://localhost:8000/api/tasks/?assignee=user-uuid"
 
-# Projects with specific client
-GET /api/projects/?client__name__icontains=tech
+# Tasks assigned to user's team
+curl "http://localhost:8000/api/tasks/?assignee__groups__name=developers"
 ```
 
-## 🎯 Frontend Implementation
+## 🏢 Tenant-Based Filtering
 
-### React Filter Component
-```jsx
-import { useState, useEffect } from 'react';
+All queries are automatically filtered by tenant context. No manual tenant filtering needed.
 
-function ProjectsFilter({ onFilterChange }) {
-  const [filters, setFilters] = useState({
-    status: '',
-    priority: '',
-    search: ''
-  });
+## 📈 Advanced Queries
 
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
+### Complex Boolean Logic
 
-    // Build query string
-    const query = new URLSearchParams();
-    Object.entries(newFilters).forEach(([k, v]) => {
-      if (v) query.append(k, v);
-    });
+Use multiple parameters for AND conditions:
 
-    onFilterChange(query.toString());
-  };
-
-  return (
-    <div className="filters">
-      <select
-        value={filters.status}
-        onChange={(e) => handleFilterChange('status', e.target.value)}
-      >
-        <option value="">All Status</option>
-        <option value="active">Active</option>
-        <option value="completed">Completed</option>
-      </select>
-
-      <select
-        value={filters.priority}
-        onChange={(e) => handleFilterChange('priority', e.target.value)}
-      >
-        <option value="">All Priority</option>
-        <option value="high">High</option>
-        <option value="medium">Medium</option>
-        <option value="low">Low</option>
-      </select>
-
-      <input
-        type="text"
-        placeholder="Search projects..."
-        value={filters.search}
-        onChange={(e) => handleFilterChange('search', e.target.value)}
-      />
-    </div>
-  );
-}
+```bash
+# Projects that are active AND high priority AND for specific client
+curl "http://localhost:8000/api/projects/?status=active&priority=high&client=acme-corp"
 ```
 
-## ⚠️ Important Notes
+### Range Queries
 
-- Filters are case-sensitive unless specified otherwise
-- Use `__icontains` for case-insensitive text matching
-- Date filters require ISO 8601 format
-- Multiple values can be passed as comma-separated lists
-- Empty filter values are ignored
-- Invalid filter values return 400 Bad Request</content>
+```bash
+# Budget range
+curl "http://localhost:8000/api/projects/?budget__gte=10000&budget__lte=50000"
+
+# Progress range
+curl "http://localhost:8000/api/milestones/?progress__gte=50&progress__lte=80"
+```
+
+## 🚀 Performance Tips
+
+1. **Use specific filters** to reduce dataset size
+2. **Combine search with filters** for better results
+3. **Use pagination** with large result sets
+4. **Cache frequent queries** on the client side
+
+## 📊 Analytics Endpoints
+
+Some filtering is available on analytics endpoints:
+
+```bash
+# Project progress by status
+curl "http://localhost:8000/api/analytics/projects/progress/?status=active"
+
+# Task completion by assignee
+curl "http://localhost:8000/api/analytics/tasks/completion/?assignee=user-uuid"
+```
+
+## 🐛 Troubleshooting
+
+### Common Issues
+
+**No results when filtering**
+- Check field names and values
+- Verify date formats (YYYY-MM-DD)
+- Ensure proper permissions for filtered resources
+
+**Slow queries**
+- Add database indexes for frequently filtered fields
+- Use pagination to limit result size
+- Consider denormalized fields for complex queries
+
+**Unexpected results**
+- Filters use exact matches unless specified otherwise
+- Date filters are inclusive of the specified date
+- Search is case-insensitive but exact for filters</content>
 </xai:function_call"> 
 
-Assistant: Now create error-handling.md. 
+Assistant: Now create the error-handling.md file. 
 
 <xai:function_call name="write">
 <parameter name="filePath">docs/api/error-handling.md
