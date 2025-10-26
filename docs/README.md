@@ -20,6 +20,21 @@ This comprehensive documentation provides detailed information about the DjangoC
 - [Filtering & Search](./api/filtering-search.md)
 - [Error Handling](./api/error-handling.md)
 
+### [✨ Features](./features/README.md)
+- [Client Management](./features/client-management.md)
+- [Project Management](./features/project-management.md)
+- [Task Management](./features/task-management.md)
+- [User Management](./features/user-management.md)
+- [Progress Tracking](./features/progress-tracking.md)
+- [Multi-Tenancy](./features/multi-tenancy.md)
+
+### [🏢 Applications](./applications/README.md)
+- [CRM Core](./applications/crm-core.md)
+- [Project Tracker](./applications/project-tracker.md)
+- [Task Board](./applications/task-board.md)
+- [Financial Suite](./applications/financial-suite.md)
+- [Admin Panel](./applications/admin-panel.md)
+
 ## 🚀 Quick Reference
 
 ### Default Credentials
