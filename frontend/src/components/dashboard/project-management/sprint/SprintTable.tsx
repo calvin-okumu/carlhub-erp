@@ -1,35 +1,36 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from 'react';
-import Link from 'next/link';
-import Table from '@/components/ui/Table';
-import Loader from '@/components/shared/Loader';
 import type { Sprint } from '@/api/types';
-import { Edit, Trash2, AlertCircle, Columns } from 'lucide-react';
+import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import Table from '@/components/ui/Table';
+import { AlertCircle, Columns, Edit, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React, { useCallback, useMemo, useState } from 'react';
 
 interface SprintTableProps {
-      sprints: Sprint[];
-      loading: boolean;
-      error: string | null;
-      onEditSprint: (sprint: Sprint) => void;
-      onDeleteSprint: (id: number) => void;
-      onAddSprint: () => void;
-      projectId: number;
-      searchValue: string;
-      statusFilter: string;
-  }
+    sprints: Sprint[];
+    loading: boolean;
+    error: string | null;
+    onEditSprint: (sprint: Sprint) => void;
+    onDeleteSprint: (id: number) => void;
+    onAddSprint: () => void;
+    projectSlug: string;
+    searchValue: string;
+    statusFilter: string;
+}
 
-const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectId, searchValue, statusFilter }: SprintTableProps) {
+const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectSlug, searchValue, statusFilter }: SprintTableProps) {
+    const router = useRouter();
     const [page, setPage] = useState(1);
 
-     const filteredSprints = useMemo(() =>
-         sprints.filter(sprint =>
-             sprint.name.toLowerCase().includes(searchValue.toLowerCase()) &&
-             (statusFilter === 'all' || sprint.status === statusFilter)
-         ),
-         [sprints, searchValue, statusFilter]
-     );
+    const filteredSprints = useMemo(() =>
+        sprints.filter(sprint =>
+            sprint.name.toLowerCase().includes(searchValue.toLowerCase()) &&
+            (statusFilter === 'all' || sprint.status === statusFilter)
+        ),
+        [sprints, searchValue, statusFilter]
+    );
 
     const itemsPerPage = 10;
     const totalPages = useMemo(() =>
@@ -76,12 +77,14 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
             sprint.tasks_count,
             `${sprint.progress}%`,
             <div key={sprint.id + '-actions'} className="flex gap-2">
-                <Link href={`/dashboard/project-management/${projectId}/sprint/${sprint.id}/kanban`}>
-                    <Button variant="outline" size="sm">
-                        <Columns className="h-4 w-4 mr-2" />
-                        Open Kanban
-                    </Button>
-                </Link>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => router.push(`/dashboard/project-management/${projectSlug}/sprint/${sprint.id}/kanban`)}
+                >
+                    <Columns className="h-4 w-4 mr-2" />
+                    Open Kanban
+                </Button>
                 <Button onClick={() => handleEdit(sprint)} variant="outline" size="sm">
                     <Edit className="h-4 w-4 mr-2" />
                     Edit

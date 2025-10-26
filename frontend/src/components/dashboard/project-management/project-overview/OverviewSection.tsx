@@ -20,29 +20,29 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
              const token = localStorage.getItem('access_token');
              if (!token) return;
 
-              try {
-                  const sprints = await getSprints(token, { projectId: project.id });
-                  setSprintsCount(sprints.results.length);
-              } catch (err) {
-                  console.error('Failed to fetch sprints count:', err);
-              }
-         };
+               try {
+                   const sprints = await getSprints(token, { projectSlug: project.slug });
+                   setSprintsCount(sprints.results.length);
+               } catch (err) {
+                   console.error('Failed to fetch sprints count:', err);
+               }
+          };
 
-         const fetchTasksCount = async () => {
-             const token = localStorage.getItem('access_token');
-             if (!token) return;
+          const fetchTasksCount = async () => {
+              const token = localStorage.getItem('access_token');
+              if (!token) return;
 
-              try {
-                  const tasks = await getTasks(token, { projectId: project.id });
-                  setTasksCount(tasks.results.length);
-              } catch (err) {
-                  console.error('Failed to fetch tasks count:', err);
-              }
-         };
+               try {
+                   const tasks = await getTasks(token, { projectSlug: project.slug });
+                   setTasksCount(tasks.results.length);
+               } catch (err) {
+                   console.error('Failed to fetch tasks count:', err);
+               }
+          };
 
-         fetchSprintsCount();
-         fetchTasksCount();
-     }, [project.id]);
+          fetchSprintsCount();
+          fetchTasksCount();
+      }, [project.slug]);
 
     return (
         <div className="space-y-6">

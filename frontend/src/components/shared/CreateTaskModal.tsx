@@ -84,7 +84,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             milestoneId = parseInt(data.milestone);
         } else {
             if (data.sprint) {
-                const sprint = sprints.find(s => s.id === parseInt(data.sprint));
+                const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === parseInt(data.sprint)) : null;
                 if (!sprint) return;
                 milestoneId = sprint.milestone;
             } else {
@@ -119,7 +119,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             setValue('start_date', task.start_date || '');
             setValue('end_date', task.end_date || '');
             setValue('estimated_hours', task.estimated_hours?.toString() || '');
-            const sprint = sprints.find(s => s.id === task.sprint);
+            const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === task.sprint) : null;
             if (sprint) {
                 setMinDate(sprint.start_date || '');
                 setMaxDate(sprint.end_date || '');

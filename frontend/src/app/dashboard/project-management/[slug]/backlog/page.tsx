@@ -8,5 +8,5 @@ export default function BacklogPage() {
 
     if (!project) return null;
 
-    return <BacklogSection projectId={project.id} />;
+    return <BacklogSection projectSlug={project.slug} />;
 }

@@ -14,12 +14,12 @@ import ViewTaskModal from './ViewTaskModal';
 import CreateTaskModal from '@/components/shared/CreateTaskModal';
 
 interface KanbanSectionProps {
-    projectId: number;
-    sprintId: number;
+    projectSlug: string;
+    sprintId: string;
     onBack?: () => void;
 }
 
-export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSectionProps) {
+export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanSectionProps) {
     const router = useRouter();
     const [sprint, setSprint] = useState<Sprint | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -51,11 +51,13 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
         }
 
         try {
-            const [sprintData, tasksData] = await Promise.all([
-                getSprint(token, sprintId),
-                getTasks(token, { sprintId })
-            ]);
-            setSprint(sprintData);
+            // Fetch the sprint directly by ID
+            const sprint = await getSprint(token, sprintId);
+
+            // Fetch tasks for this sprint
+            const tasksData = await getTasks(token, { sprintId: parseInt(sprintId) });
+
+            setSprint(sprint);
             setTasks(tasksData.results);
         } catch (err) {
             console.error('Fetch error:', err);
@@ -77,29 +79,29 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
             if (!token) return;
             try {
                 const [sprintsData, milestonesData, usersData, backlogData] = await Promise.all([
-                    getSprints(token, { projectId }),
-                    getMilestones(token, { projectId }),
+                    getSprints(token, { projectSlug }),
+                    getMilestones(token, { projectSlug }),
                     getUserTenants(token),
-                    getTasks(token, { projectId, backlog: true }) // backlog=true
+                    getTasks(token, { projectSlug, backlog: true }) // backlog=true
                 ]);
                 setSprints(sprintsData.results);
                 setMilestones(milestonesData.results);
                 setUsers(usersData);
                 // Filter out tasks that are already in this sprint (safety check)
-                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprintId);
+                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.id);
                 setBacklogTasks(filteredBacklog);
             } catch (err) {
                 console.error('Failed to fetch modal data:', err);
             }
         };
         fetchModalData();
-    }, [projectId, sprintId]);
+    }, [projectSlug, sprintId, sprint]);
 
     const handleBack = () => {
         if (onBack) {
             onBack();
         } else {
-            router.push(`/dashboard/project-management/${projectId}/sprint`);
+            router.push(`/dashboard/project-management/${projectSlug}/sprint`);
         }
     };
 
@@ -243,8 +245,6 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
                                 setError(null);
                                 setLoading(true);
                                 setSprint(null);
-
-
                                 fetchData();
                             }}
                             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -277,15 +277,15 @@ export default function KanbanSection({ projectId, sprintId, onBack }: KanbanSec
                     <Button onClick={handleCreateTask}>Create Task</Button>
                 </div>
                 <KanbanBoard tasks={tasks} onTaskClick={handleTaskClick} onStatusChange={handleStatusChange} />
-                  {selectedTask && (
-                      <ViewTaskModal
-                          isOpen={isModalOpen}
-                          onClose={handleCloseModal}
-                          task={selectedTask}
-                          onStatusChange={handleStatusChange}
-                          onDelete={handleDeleteTask}
-                      />
-                  )}
+                {selectedTask && (
+                    <ViewTaskModal
+                        isOpen={isModalOpen}
+                        onClose={handleCloseModal}
+                        task={selectedTask}
+                        onStatusChange={handleStatusChange}
+                        onDelete={handleDeleteTask}
+                    />
+                )}
                 <CreateTaskModal
                     isOpen={createModalOpen}
                     onClose={() => setCreateModalOpen(false)}

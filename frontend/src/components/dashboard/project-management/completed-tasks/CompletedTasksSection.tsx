@@ -10,10 +10,10 @@ import Card from '@/components/ui/Card';
 import { Trash2 } from 'lucide-react';
 
 interface CompletedTasksSectionProps {
-    projectId: number;
+    projectSlug: string;
 }
 
-export default function CompletedTasksSection({ projectId }: CompletedTasksSectionProps) {
+export default function CompletedTasksSection({ projectSlug }: CompletedTasksSectionProps) {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export default function CompletedTasksSection({ projectId }: CompletedTasksSecti
 
             try {
                 // Get all tasks for the project and filter for completed status
-                const allTasks = await getTasks(token, { projectId });
+                const allTasks = await getTasks(token, { projectSlug });
                 const completedTasks = allTasks.results.filter(task => task.status === 'done');
                 setTasks(completedTasks);
             } catch (err) {
@@ -41,7 +41,7 @@ export default function CompletedTasksSection({ projectId }: CompletedTasksSecti
         };
 
         fetchCompletedTasks();
-    }, [projectId]);
+    }, [projectSlug]);
 
     const handleDeleteTask = async (taskId: number) => {
         if (!confirm('Are you sure you want to delete this completed task?')) return;

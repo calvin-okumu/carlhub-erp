@@ -113,6 +113,7 @@ export interface UserTenant {
 export interface Project {
   id: number;
   name: string;
+  slug: string;
   client: number;
   client_name: string;
   status: string;
