@@ -250,3 +250,12 @@ class InvitationSerializer(serializers.ModelSerializer):
             'expires_at': 'Date and time the invitation expires',
             'is_used': 'Whether the invitation has been used',
         }
+
+
+class HealthCheckSerializer(serializers.Serializer):
+    """
+    Serializer for health check endpoint response
+    """
+    status = serializers.CharField(help_text='Service health status')
+    timestamp = serializers.DateTimeField(help_text='Current server timestamp')
+    service = serializers.CharField(help_text='Service name')
