@@ -12,11 +12,11 @@ import type { Task, Milestone, Sprint, UserTenant } from '@/api/types';
 import { Plus } from 'lucide-react';
 
 interface BacklogSectionProps {
-    projectId: number;
+    projectSlug: string;
 }
 
-export default function BacklogSection({ projectId }: BacklogSectionProps) {
-    const { tasks, loading, error, addTask, editTask, removeTask } = useTasks(projectId, true);
+export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
+    const { tasks, loading, error, addTask, editTask, removeTask } = useTasks(projectSlug, true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -32,12 +32,12 @@ export default function BacklogSection({ projectId }: BacklogSectionProps) {
 
             try {
                 const [milestonesData, sprintsData, usersData] = await Promise.all([
-                    getMilestones(token, { projectId }),
-                    getSprints(token, { projectId }),
+                    getMilestones(token, { projectSlug }),
+                    getSprints(token, { projectSlug }),
                     getUserTenants(token)
                 ]);
-                setMilestones(milestonesData);
-                setSprints(sprintsData);
+                setMilestones(milestonesData.results);
+                setSprints(sprintsData.results);
                 setUsers(usersData);
             } catch (err) {
                 console.error('Failed to fetch data:', err);
@@ -45,7 +45,7 @@ export default function BacklogSection({ projectId }: BacklogSectionProps) {
         };
 
         fetchData();
-    }, [projectId]);
+    }, [projectSlug]);
 
     const handleAddTask = () => {
         setModalMode('add');

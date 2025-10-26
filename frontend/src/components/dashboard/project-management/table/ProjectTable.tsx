@@ -89,7 +89,7 @@ export default function ProjectTable({
     const rows = filteredProjects.map(p => ({
         key: p.id,
         data: [
-        <Link key={p.id + '-name'} href={`/dashboard/project-management/${p.id}`} className="text-blue-600 hover:text-blue-800 hover:underline">
+        <Link key={p.id + '-name'} href={`/dashboard/project-management/${p.slug}`} className="text-blue-600 hover:text-blue-800 hover:underline">
             {p.name}
         </Link>,
         p.client_name,

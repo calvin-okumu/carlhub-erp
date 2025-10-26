@@ -18,7 +18,7 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export function ProjectProvider({ children, activeTab, onTabChange }: { children: React.ReactNode, activeTab: string, onTabChange: (tab: string) => void }) {
     const params = useParams();
-    const id = params.id as string;
+    const id = params.slug as string;
     const [project, setProject] = useState<Project | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -32,7 +32,7 @@ export function ProjectProvider({ children, activeTab, onTabChange }: { children
         }
 
         try {
-            const data = await getProject(token, parseInt(id));
+            const data = await getProject(token, id);
             setProject(data);
         } catch (err) {
             console.error('Error loading project:', err);

@@ -11,11 +11,11 @@ import type { Sprint, Milestone } from '@/api/types';
 import { Plus } from 'lucide-react';
 
 interface SprintSectionProps {
-    projectId: number;
+    projectSlug: string;
 }
 
-export default function SprintSection({ projectId }: SprintSectionProps) {
-    const { sprints, loading, error, addSprint, editSprint, removeSprint } = useSprints(projectId);
+export default function SprintSection({ projectSlug }: SprintSectionProps) {
+    const { sprints, loading, error, addSprint, editSprint, removeSprint } = useSprints(projectSlug);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
@@ -28,16 +28,16 @@ export default function SprintSection({ projectId }: SprintSectionProps) {
              const token = localStorage.getItem('access_token');
              if (!token) return;
 
-             try {
-                 const data = await getMilestones(token, { projectId });
-                 setMilestones(data);
+               try {
+                   const data = await getMilestones(token, { projectSlug });
+                   setMilestones(data.results);
              } catch (err) {
                  console.error('Failed to fetch milestones:', err);
              }
          };
 
-         fetchMilestones();
-     }, [projectId]);
+          fetchMilestones();
+      }, [projectSlug]);
 
     const handleAddSprint = () => {
         setModalMode('add');
@@ -114,18 +114,10 @@ export default function SprintSection({ projectId }: SprintSectionProps) {
                   onEditSprint={handleEditSprint}
                   onDeleteSprint={handleDelete}
                   onAddSprint={handleAddSprint}
-                  projectId={projectId}
+                   projectSlug={projectSlug}
                   searchValue={searchValue}
                   statusFilter={statusFilter}
               />
-             <SprintModal
-                 isOpen={modalOpen}
-                 onClose={() => setModalOpen(false)}
-                 mode={modalMode}
-                 sprint={selectedSprint || undefined}
-                 milestones={milestones}
-                 onSave={handleSaveSprint}
-             />
             <SprintModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}

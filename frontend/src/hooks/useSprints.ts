@@ -11,7 +11,7 @@ function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
-export function useSprints(projectId: number) {
+export function useSprints(projectSlug: string) {
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export function useSprints(projectId: number) {
 
     setLoading(true);
     try {
-      const data = await getSprints(token, { projectId, ordering: '-created_at' });
+      const data = await getSprints(token, { projectSlug, ordering: '-created_at' });
       setSprints(data.results);
     } catch (err) {
       console.error(err);
@@ -30,7 +30,7 @@ export function useSprints(projectId: number) {
     } finally {
       setLoading(false);
     }
-  }, [projectId]);
+  }, [projectSlug]);
 
   useEffect(() => {
     fetchSprints();

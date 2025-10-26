@@ -17,10 +17,7 @@ import CompletedTasksSection from '@/components/dashboard/project-management/com
      const [activeTab, setActiveTab] = useState('overview');
      const pathname = usePathname();
 
-     // Skip project loading for kanban pages
-     if (pathname.includes('/kanban')) {
-         return <>{children}</>;
-     }
+
 
      if (loading) return <Loader />;
      if (error) return <div>{error}</div>;
@@ -30,16 +27,16 @@ import CompletedTasksSection from '@/components/dashboard/project-management/com
          switch (activeTab) {
               case 'overview':
                   return <OverviewSection project={project} />;
-             case 'milestones':
-                 return <MilestoneSection projectId={project.id} />;
-             case 'backlog':
-                 return <BacklogSection projectId={project.id} />;
-             case 'sprints':
-                 return <SprintSection projectId={project.id} />;
-             case 'documents':
-                 return <div className="p-6 text-center text-gray-500">Documents section coming soon.</div>;
-              case 'completed-tasks':
-                  return <CompletedTasksSection projectId={project.id} />;
+              case 'milestones':
+                  return <MilestoneSection projectSlug={project.slug} />;
+                case 'backlog':
+                    return <BacklogSection projectSlug={project.slug} />;
+              case 'sprints':
+                  return <SprintSection projectSlug={project.slug} />;
+              case 'documents':
+                  return <div className="p-6 text-center text-gray-500">Documents section coming soon.</div>;
+                 case 'completed-tasks':
+                     return <CompletedTasksSection projectSlug={project.slug} />;
               default:
                   return <OverviewSection project={project} />;
          }

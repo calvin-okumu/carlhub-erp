@@ -12,14 +12,14 @@ import type { Milestone, UserTenant } from '@/api/types';
 import { Plus } from 'lucide-react';
 
  interface MilestoneSectionProps {
-     projectId: number;
-     tenant?: number;
- }
+      projectSlug: string;
+      tenant?: number;
+  }
 
- export default function MilestoneSection({ projectId, tenant }: MilestoneSectionProps) {
-     const { project } = useProject();
-     const tenantId = tenant || parseInt(localStorage.getItem('tenant') || '1');
-     const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(projectId, tenantId);
+  export default function MilestoneSection({ projectSlug, tenant }: MilestoneSectionProps) {
+      const { project } = useProject();
+      const tenantId = tenant || parseInt(localStorage.getItem('tenant') || '1');
+      const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(projectSlug, tenantId);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
@@ -105,7 +105,7 @@ import { Plus } from 'lucide-react';
                 onClose={() => setModalOpen(false)}
                 mode={modalMode}
                 milestone={selectedMilestone || undefined}
-                projectId={projectId}
+                projectId={project?.id}
                  tenant={tenantId}
                 assignees={users}
                 projectStart={project?.start_date}
