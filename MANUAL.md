@@ -271,14 +271,23 @@ curl -H "Authorization: Token YOUR_TOKEN" \
   http://localhost:8000/api/clients/
 ```
 
+### URL Structure
+- **Projects**: Use slug-based URLs (e.g., `/api/projects/my-project-name/`)
+- **Clients**: Use slug-based URLs (e.g., `/api/clients/client-name/`)
+- **Other entities**: Use ID-based URLs (e.g., `/api/tasks/123/`)
+
+Slugs are auto-generated from names but can be customized for better readability.
+
 ### Key Endpoints
 | Endpoint | Methods | Description |
 |----------|---------|-------------|
 | /api/login/ | POST | Authentication |
 | /api/signup/ | POST | User registration |
 | /api/tenants/ | GET, POST | Tenant management |
-| /api/clients/ | GET, POST, PUT, DELETE | Client CRUD |
-| /api/projects/ | GET, POST, PUT, DELETE | Project management |
+| /api/clients/{slug}/ | GET, PUT, DELETE | Client detail (slug-based) |
+| /api/clients/ | GET, POST | Client list |
+| /api/projects/{slug}/ | GET, PUT, DELETE | Project detail (slug-based) |
+| /api/projects/ | GET, POST | Project list |
 | /api/tasks/ | GET, POST, PUT, DELETE | Task management |
 | /api/invoices/ | GET, POST, PUT, DELETE | Invoice processing |
 

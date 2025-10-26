@@ -102,7 +102,7 @@ class TaskFactory(factory.django.DjangoModelFactory):
         model = Task
     title = factory.LazyFunction(lambda: fake.sentence(nb_words=4)[:255])
     description = factory.LazyFunction(lambda: fake.text(max_nb_chars=200))
-    status = factory.Iterator(['backlog', 'to_do', 'in_progress', 'in_review', 'done'])
+    status = factory.Iterator(['to_do', 'in_progress', 'in_review', 'testing', 'done'])
     milestone = factory.Iterator(Milestone.objects.all())
     tenant = factory.SelfAttribute('milestone.tenant')
     sprint = None  # Optional, can be assigned later

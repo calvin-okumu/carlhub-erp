@@ -12,6 +12,25 @@ import os
 from pathlib import Path
 
 
+class PrependingRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    """
+    Custom RotatingFileHandler that prepends new log entries to the top of the file.
+    This ensures the latest logs appear first.
+    """
+    def emit(self, record):
+        if self.shouldRollover(record):
+            self.doRollover()
+        msg = self.format(record) + '\n'
+        try:
+            with open(self.baseFilename, 'r+') as f:
+                existing_content = f.read()
+                f.seek(0)
+                f.write(msg + existing_content)
+                f.truncate()
+        except Exception:
+            self.handleError(record)
+
+
 def setup_logging(base_dir: Path) -> dict:
     """
     Sets up comprehensive logging configuration for DjangoCRM.
@@ -69,7 +88,7 @@ def setup_logging(base_dir: Path) -> dict:
         },
         'info_file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'saasCRM.logging.PrependingRotatingFileHandler',
             'filename': logs_dir / 'info.log',
             'formatter': 'verbose',
             'filters': ['info_only'],
@@ -78,7 +97,7 @@ def setup_logging(base_dir: Path) -> dict:
         },
         'warning_file': {
             'level': 'WARNING',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'saasCRM.logging.PrependingRotatingFileHandler',
             'filename': logs_dir / 'warning.log',
             'formatter': 'verbose',
             'filters': ['warning_only'],
@@ -87,7 +106,7 @@ def setup_logging(base_dir: Path) -> dict:
         },
         'error_file': {
             'level': 'ERROR',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'saasCRM.logging.PrependingRotatingFileHandler',
             'filename': logs_dir / 'error.log',
             'formatter': 'verbose',
             'filters': ['error_only'],
@@ -127,8 +146,8 @@ def setup_logging(base_dir: Path) -> dict:
 
         # Django REST Framework loggers
         'rest_framework': {
-            'handlers': ['info_file'],
-            'level': 'INFO',
+            'handlers': ['info_file', 'warning_file', 'error_file'],
+            'level': 'WARNING',
             'propagate': False,
         },
         'rest_framework.request': {
@@ -139,12 +158,12 @@ def setup_logging(base_dir: Path) -> dict:
 
         # Application-specific loggers
         'accounts': {
-            'handlers': ['info_file'],
+            'handlers': ['info_file', 'warning_file', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },
         'project': {
-            'handlers': ['info_file'],
+            'handlers': ['info_file', 'warning_file', 'error_file'],
             'level': 'INFO',
             'propagate': False,
         },

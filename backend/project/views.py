@@ -2,8 +2,11 @@ import uuid
 from datetime import timedelta
 
 from django.contrib.auth import authenticate
+from django.http import Http404
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import permissions, status, viewsets
@@ -11,70 +14,14 @@ from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 
-from accounts.models import (
-    CustomUser,
-    Invitation,
-    Tenant,
-    UserTenant,
-)
+from accounts.models import CustomUser, Invitation, Tenant, UserTenant
 
-from .models import (
-    Client,
-    Invoice,
-    Milestone,
-    Payment,
-    Project,
-    Sprint,
-    Task,
-)
-from .permissions import (
-    CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments,
-    CanManageProjects, CanManageSprints, CanManageTasks, IsTenantOwner, IsTenantCreator
-)
-from .serializers import (
-    ClientSerializer,
-    CustomUserSerializer,
-    InvitationSerializer,
-    InvoiceSerializer,
-    MilestoneSerializer,
-    PaymentSerializer,
-    ProjectSerializer,
-    SprintSerializer,
-    TaskSerializer,
-    TenantSerializer,
-    UserTenantSerializer,
-)
+from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
+from .permissions import CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments, CanManageProjects, CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner
+from .serializers import ClientSerializer, CustomUserSerializer, InvitationSerializer, InvoiceSerializer, MilestoneSerializer, PaymentSerializer, ProjectSerializer, SprintSerializer, TaskSerializer, TenantSerializer, UserTenantSerializer
 
 
-@extend_schema_view(
-    list=extend_schema(
-        summary="List tenants",
-        description="Retrieve a list of all tenants. In multi-tenant mode, returns only the current user's tenant."
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve tenant",
-        description="Retrieve details of a specific tenant."
-    ),
-    create=extend_schema(
-        summary="Create tenant",
-        description="Create a new tenant organization."
-    ),
-    update=extend_schema(
-        summary="Update tenant",
-        description="Update an existing tenant's information."
-    ),
-    partial_update=extend_schema(
-        summary="Partially update tenant",
-        description="Partially update a tenant's information."
-    ),
-    destroy=extend_schema(
-        summary="Delete tenant",
-        description="Delete a tenant organization."
-    ),
-)
 class TenantViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing tenant organizations.
@@ -89,6 +36,49 @@ class TenantViewSet(viewsets.ModelViewSet):
     filterset_fields = ["name"]
     search_fields = ["name"]
     ordering_fields = ["name", "created_at"]
+    ordering = ['name']
+
+
+
+    def get_queryset(self):
+        if self.request.tenant:
+            return Tenant.objects.filter(id=self.request.tenant.id)
+        elif self.request.user.is_authenticated:
+            # In dev mode, filter by user's tenants
+            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
+            if user_tenants:
+                return Tenant.objects.filter(id__in=user_tenants)
+            else:
+                return Tenant.objects.none()  # No tenants, no access
+        else:
+            return Tenant.objects.none()  # Unauthenticated, no access
+
+    def perform_create(self, serializer):
+        # Determine the tenant
+        if hasattr(self.request, 'tenant') and self.request.tenant:
+            tenant = self.request.tenant
+        else:
+            # Development/Test mode: try to get tenant from user or create default
+            from accounts.models import Tenant, UserTenant
+            try:
+                user_tenant = UserTenant.objects.filter(user=self.request.user, is_owner=True).first()
+                if user_tenant:
+                    tenant = user_tenant.tenant
+                else:
+                    # Create a default tenant for testing
+                    tenant, created = Tenant.objects.get_or_create(
+                        name="Default Test Tenant",
+                        defaults={'domain': 'test.com'}
+                    )
+            except Exception as e:
+                # Fallback for any issues
+                tenant, created = Tenant.objects.get_or_create(
+                    name="Default Test Tenant",
+                    defaults={'domain': 'test.com'}
+                )
+                tenant = tenant
+
+        serializer.save(tenant=tenant)
 
 
 @extend_schema_view(
@@ -98,7 +88,7 @@ class TenantViewSet(viewsets.ModelViewSet):
     ),
     retrieve=extend_schema(
         summary="Retrieve client",
-        description="Retrieve details of a specific client including project count."
+        description="Retrieve details of a specific client."
     ),
     create=extend_schema(
         summary="Create client",
@@ -114,7 +104,7 @@ class TenantViewSet(viewsets.ModelViewSet):
     ),
     destroy=extend_schema(
         summary="Delete client",
-        description="Delete a client and all associated projects."
+        description="Delete a client."
     ),
 )
 class ClientViewSet(viewsets.ModelViewSet):
@@ -122,15 +112,16 @@ class ClientViewSet(viewsets.ModelViewSet):
     ViewSet for managing clients.
 
     Provides CRUD operations for client management with tenant isolation.
-    Includes filtering by status, searching by name/email, and ordering capabilities.
     """
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageClients]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "tenant"]
+    filterset_fields = ["status"]
     search_fields = ["name", "email"]
-    ordering_fields = ["name", "created_at"]
+    ordering_fields = ["name", "created_at", "status"]
+    ordering = ['name']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         if self.request.tenant:
@@ -151,7 +142,6 @@ class ClientViewSet(viewsets.ModelViewSet):
             tenant = self.request.tenant
         else:
             # Development/Test mode: try to get tenant from user or create default
-            from accounts.models import Tenant, UserTenant
             try:
                 user_tenant = UserTenant.objects.filter(user=self.request.user, is_owner=True).first()
                 if user_tenant:
@@ -214,6 +204,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "priority", "client"]
     search_fields = ["name", "description"]
     ordering_fields = ["name", "created_at"]
+    ordering = ['name']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         if self.request.tenant:
@@ -228,7 +220,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         else:
             return Project.objects.none()  # Unauthenticated, no access
 
-    @method_decorator(cache_page(60*15))
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
@@ -334,11 +325,12 @@ class MilestoneViewSet(viewsets.ModelViewSet):
     """
     queryset = Milestone.objects.all()
     serializer_class = MilestoneSerializer
-    permission_classes = [permissions.IsAuthenticated, CanManageTasks]
+    permission_classes = [permissions.IsAuthenticated, CanManageMilestones]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["status", "project"]
     search_fields = ["name", "description"]
     ordering_fields = ["name", "due_date"]
+    ordering = ['name']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -414,6 +406,7 @@ class SprintViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "milestone", "milestone__project"]
     search_fields = ["name"]
     ordering_fields = ["name", "start_date"]
+    ordering = ['start_date']
 
     def get_queryset(self):
         queryset = Sprint.objects.select_related('milestone').prefetch_related('tasks')
@@ -566,6 +559,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     filterset_fields = ["status", "milestone", "sprint", "assignee", "milestone__project"]
     search_fields = ["title", "description"]
     ordering_fields = ["title", "created_at"]
+    ordering = ['created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -695,6 +689,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     filterset_fields = ["paid", "client", "project"]
     search_fields = ["client__name"]
     ordering_fields = ["issued_at"]
+    ordering = ['issued_at']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -788,6 +783,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
     filterset_fields = ["invoice"]
     search_fields = ["invoice__id"]
     ordering_fields = ["paid_at"]
+    ordering = ['paid_at']
 
     def get_queryset(self):
         if self.request.tenant:
@@ -876,6 +872,7 @@ class UserTenantViewSet(viewsets.ModelViewSet):
     filterset_fields = ["tenant", "is_owner", "is_approved", "role"]
     search_fields = ["user__email", "user__first_name", "user__last_name"]
     ordering_fields = ["role"]
+    ordering = ['role']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -930,6 +927,7 @@ class InvitationViewSet(viewsets.ModelViewSet):
     filterset_fields = ["tenant", "is_used", "role"]
     search_fields = ["email", "tenant__name"]
     ordering_fields = ["created_at"]
+    ordering = ['created_at']
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -984,6 +982,7 @@ class UserViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_active"]
     search_fields = ["email", "first_name", "last_name"]
     ordering_fields = ["email", "date_joined"]
+    ordering = ['email']
 
     def get_queryset(self):
         # Users can only see their own profile unless they have admin permissions
@@ -1309,12 +1308,20 @@ def approve_member_view(request):
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def invite_member_view(request):
-    if not hasattr(request, 'tenant') or not request.tenant:
-        return Response({'error': 'Tenant context required'}, status=status.HTTP_400_BAD_REQUEST)
+    # Handle tenant context
+    if hasattr(request, 'tenant') and request.tenant:
+        tenant = request.tenant
+    else:
+        # Dev mode: get tenant from user's ownership
+        try:
+            user_tenant = UserTenant.objects.get(user=request.user, is_owner=True)
+            tenant = user_tenant.tenant
+        except UserTenant.DoesNotExist:
+            return Response({'error': 'No tenant ownership found'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Check if user is owner
     try:
-        user_tenant = UserTenant.objects.get(user=request.user, tenant=request.tenant, is_owner=True)
+        user_tenant = UserTenant.objects.get(user=request.user, tenant=tenant, is_owner=True)
     except UserTenant.DoesNotExist:
         return Response({'error': 'Only owners can invite members'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -1329,7 +1336,7 @@ def invite_member_view(request):
 
     invitation = Invitation.objects.create(
         email=email,
-        tenant=request.tenant,
+        tenant=tenant,
         token=token,
         role=role,
         invited_by=request.user,
@@ -1341,10 +1348,10 @@ def invite_member_view(request):
     from django.core.mail import send_mail
     from django.urls import reverse
 
-    subject = f"Invitation to join {request.tenant.name}"
+    subject = f"Invitation to join {tenant.name}"
     invitation_url = f"{settings.SITE_URL or 'http://127.0.0.1:8000'}/api/signup/?token={token}"
     message = f"""
-    You have been invited to join {request.tenant.name} as a {role}.
+    You have been invited to join {tenant.name} as a {role}.
 
     Click the link below to accept the invitation and create your account:
 

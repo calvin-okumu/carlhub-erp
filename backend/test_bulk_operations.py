@@ -6,7 +6,7 @@ import json
 
 import requests
 
-BASE_URL = "http://127.0.0.1:8000"
+BASE_URL = "http://127.0.0.1:8001"
 
 def get_token():
     response = requests.post(
@@ -24,7 +24,8 @@ def get_sprints(token):
         headers={"Authorization": f"Token {token}"}
     )
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        return data.get('results', data) if isinstance(data, dict) else data
     return []
 
 def get_tasks(token):
@@ -33,7 +34,8 @@ def get_tasks(token):
         headers={"Authorization": f"Token {token}"}
     )
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        return data.get('results', data) if isinstance(data, dict) else data
     return []
 
 def get_projects(token):
@@ -42,7 +44,8 @@ def get_projects(token):
         headers={"Authorization": f"Token {token}"}
     )
     if response.status_code == 200:
-        return response.json()
+        data = response.json()
+        return data.get('results', data) if isinstance(data, dict) else data
     return []
 
 def test_bulk_update_sprints(token):

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
@@ -131,30 +132,8 @@ class Command(BaseCommand):
                 self.stdout.write(f'Profile already exists for {user.email}')
         self.stdout.write('User profiles created')
 
-        # Create sample employee documents
-        self.stdout.write('Creating sample employee documents...')
-        sample_documents = [
-            ('Employee Handbook', 'Company policies and procedures', 'handbook.pdf'),
-            ('Benefits Package', 'Health and retirement benefits information', 'benefits.pdf'),
-            ('Tax Forms', 'W-2 and tax-related documents', 'tax_forms.pdf'),
-            ('Performance Review', 'Annual performance evaluation', 'review.pdf'),
-        ]
-
-        for user in users:
-            for title, description, filename in sample_documents:
-                doc, created = EmployeeDocument.objects.get_or_create(
-                    user=user,
-                    title=title,
-                    defaults={
-                        'description': description,
-                        'document_file': f'employee_documents/sample_{filename}',
-                        'file_size': 1024000,  # 1MB sample size
-                        'file_type': 'pdf'
-                    }
-                )
-                if created:
-                    self.stdout.write(f'Created document "{title}" for {user.email}')
-        self.stdout.write('Sample employee documents created')
+        # Skip creating sample employee documents (requires actual files)
+        self.stdout.write('Skipping sample employee documents (files not available)')
 
         # Create clients if not exist
         if Client.objects.count() < 6:
