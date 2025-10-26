@@ -20,6 +20,7 @@ from accounts.models import CustomUser, Invitation, Tenant, UserTenant
 
 from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
 from .permissions import CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments, CanManageProjects, CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner
+from .serializers import HealthCheckSerializer
 from .serializers import ClientSerializer, CustomUserSerializer, InvitationSerializer, InvoiceSerializer, MilestoneSerializer, PaymentSerializer, ProjectSerializer, SprintSerializer, TaskSerializer, TenantSerializer, UserTenantSerializer
 
 
@@ -1464,6 +1465,9 @@ def auth_methods_view(request):
     return Response(auth_methods)
 
 
+@extend_schema(
+    responses={200: HealthCheckSerializer}
+)
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def health_check(request):
