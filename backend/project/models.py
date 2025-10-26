@@ -127,6 +127,7 @@ class Milestone(models.Model):
         ("completed", "Completed"),
     ]
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="planning")
     planned_start = models.DateField(null=True, blank=True)
@@ -174,6 +175,17 @@ class Milestone(models.Model):
 
         return 0 if total == 0 else int((completed / total) * 100)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Milestone.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name} ({self.project.name})"
 
@@ -187,6 +199,7 @@ class Sprint(models.Model):
         ("canceled", "Canceled"),
     ]
     name = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="planned", db_index=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
@@ -234,6 +247,17 @@ class Sprint(models.Model):
                     f"Invalid status transition from '{old_instance.status}' to '{self.status}'"
                 )
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Sprint.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.name} ({self.milestone.name})"
 
@@ -248,6 +272,7 @@ class Task(models.Model):
         ("done", "Done"),
     ]
     title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="to_do", db_index=True)
     tenant = models.ForeignKey(
@@ -287,6 +312,17 @@ class Task(models.Model):
             'done': 100
         }
         return status_weights.get(self.status, 0)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.title)
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Task.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title

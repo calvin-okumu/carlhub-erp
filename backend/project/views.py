@@ -331,6 +331,7 @@ class MilestoneViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "description"]
     ordering_fields = ["name", "due_date"]
     ordering = ['name']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         if self.request.tenant:
@@ -407,6 +408,7 @@ class SprintViewSet(viewsets.ModelViewSet):
     search_fields = ["name"]
     ordering_fields = ["name", "start_date"]
     ordering = ['start_date']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         queryset = Sprint.objects.select_related('milestone').prefetch_related('tasks')
@@ -560,6 +562,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     search_fields = ["title", "description"]
     ordering_fields = ["title", "created_at"]
     ordering = ['created_at']
+    lookup_field = 'slug'
 
     def get_queryset(self):
         queryset = super().get_queryset()
