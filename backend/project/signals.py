@@ -63,7 +63,7 @@ def notify_sprint_status_change(sender, instance, **kwargs):
     """
     Send notification when sprint status changes to 'completed'.
     """
-    if instance.pk:  # Existing instance
+    if instance.pk and Sprint.objects.filter(pk=instance.pk).exists():  # Existing instance in DB
         old_instance = Sprint.objects.get(pk=instance.pk)
         if old_instance.status != 'completed' and instance.status == 'completed':
             # Send email notification (if email configured)

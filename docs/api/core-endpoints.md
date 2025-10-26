@@ -121,7 +121,7 @@ Task management within projects.
 - `backlog` - Show only backlog tasks (true/false)
 
 ### Get Task Details
-**GET** `/api/tasks/{id}/`
+**GET** `/api/tasks/{slug}/`
 
 ### Create Task
 **POST** `/api/tasks/`
@@ -139,10 +139,10 @@ Task management within projects.
 ```
 
 ### Update Task
-**PUT/PATCH** `/api/tasks/{id}/`
+**PUT/PATCH** `/api/tasks/{slug}/`
 
 ### Delete Task
-**DELETE** `/api/tasks/{id}/`
+**DELETE** `/api/tasks/{slug}/`
 
 ## 🎯 Milestones
 
@@ -156,7 +156,7 @@ Project milestone management.
 - `status` - Filter by status
 
 ### Get Milestone Details
-**GET** `/api/milestones/{id}/`
+**GET** `/api/milestones/{slug}/`
 
 ### Create Milestone
 **POST** `/api/milestones/`
@@ -187,7 +187,7 @@ Sprint management within milestones.
 - `status` - Filter by status
 
 ### Get Sprint Details
-**GET** `/api/sprints/{id}/`
+**GET** `/api/sprints/{slug}/`
 
 ### Create Sprint
 **POST** `/api/sprints/`
@@ -261,9 +261,9 @@ Some resources have nested endpoints for hierarchical operations:
 - **GET** `/api/projects/{project_slug}/sprints/` - List sprints for a project
 
 ### Sprint Tasks
-- **POST** `/api/sprints/{sprint_id}/create_task/` - Create task in sprint
-- **POST** `/api/sprints/{sprint_id}/assign_task/` - Assign existing task to sprint
-- **POST** `/api/sprints/{sprint_id}/unassign_task/` - Remove task from sprint
+- **POST** `/api/sprints/{sprint_slug}/create_task/` - Create task in sprint
+- **POST** `/api/sprints/{sprint_slug}/assign_task/` - Assign existing task to sprint
+- **POST** `/api/sprints/{sprint_slug}/unassign_task/` - Remove task from sprint
 
 ## 📊 Response Codes
 

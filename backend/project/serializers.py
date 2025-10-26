@@ -100,7 +100,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Milestone
-        fields = ['id', 'name', 'description', 'status', 'planned_start', 'actual_start', 'due_date', 'assignee', 'progress', 'project', 'project_name', 'sprints_count', 'created_at']
+        fields = ['id', 'name', 'slug', 'description', 'status', 'planned_start', 'actual_start', 'due_date', 'assignee', 'progress', 'project', 'project_name', 'sprints_count', 'created_at']
         help_texts = {
             'name': 'Milestone title',
             'description': 'Detailed milestone description',
@@ -127,7 +127,7 @@ class SprintSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Sprint
-        fields = ['id', 'name', 'status', 'start_date', 'end_date', 'milestone', 'milestone_name', 'tasks_count', 'progress', 'created_at']
+        fields = ['id', 'name', 'slug', 'status', 'start_date', 'end_date', 'milestone', 'milestone_name', 'tasks_count', 'progress', 'created_at']
         help_texts = {
             'name': 'Sprint name or title',
             'status': 'Current sprint status (Planned, Active, Completed, Canceled)',
@@ -155,7 +155,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ['id', 'title', 'description', 'status', 'milestone', 'milestone_name', 'sprint', 'sprint_name', 'assignee', 'start_date', 'end_date', 'estimated_hours', 'tenant', 'progress', 'is_assigned', 'created_at', 'updated_at']
+        fields = ['id', 'title', 'slug', 'description', 'status', 'milestone', 'milestone_name', 'sprint', 'sprint_name', 'assignee', 'start_date', 'end_date', 'estimated_hours', 'tenant', 'progress', 'is_assigned', 'created_at', 'updated_at']
         read_only_fields = ['progress']
 
     @extend_schema_field(serializers.BooleanField)
