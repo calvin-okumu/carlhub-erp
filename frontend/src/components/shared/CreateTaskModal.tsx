@@ -17,18 +17,18 @@ interface CreateTaskModalProps {
      sprints: Sprint[];
      assignees: UserTenant[];
      milestones: Milestone[];
-     onSave: (data: {
-         title: string;
-         description?: string;
-         status: string;
-         milestone: number;
-         sprint?: number;
-         assignee?: number;
-         start_date?: string;
-         end_date?: string;
-         estimated_hours?: number;
-     }) => void;
-     defaultSprintId?: number; // For pre-filling sprint in Kanban
+       onSave: (data: {
+           title: string;
+           description?: string;
+           status: string;
+           milestone: number;
+           sprint?: string;
+           assignee?: number;
+           start_date?: string;
+           end_date?: string;
+           estimated_hours?: number;
+       }) => void;
+     defaultSprintId?: string; // For pre-filling sprint in Kanban
      isBacklog?: boolean; // To simplify fields for backlog
  }
 
@@ -79,12 +79,12 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
     }, [watchedSprint, sprints]);
 
     const onSubmit = (data: FormData) => {
-        let milestoneId: number;
+        let milestoneId: string;
         if (isBacklog) {
-            milestoneId = parseInt(data.milestone);
+            milestoneId = data.milestone;
         } else {
             if (data.sprint) {
-                const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === parseInt(data.sprint)) : null;
+                const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === data.sprint) : null;
                 if (!sprint) return;
                 milestoneId = sprint.milestone;
             } else {
@@ -98,7 +98,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             description: data.description || undefined,
             status: data.status,
             milestone: milestoneId,
-            sprint: data.sprint ? parseInt(data.sprint) : undefined,
+            sprint: data.sprint || undefined,
             assignee: data.assignee ? parseInt(data.assignee) : undefined,
             start_date: data.start_date || undefined,
             end_date: data.end_date || undefined,
@@ -114,7 +114,8 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             setValue('description', task.description || '');
             setValue('status', task.status);
             setValue('priority', task.priority || 'medium');
-            setValue('sprint', task.sprint?.toString() || '');
+            setValue('milestone', task.milestone || '');
+            setValue('sprint', task.sprint || '');
             setValue('assignee', task.assignee?.toString() || '');
             setValue('start_date', task.start_date || '');
             setValue('end_date', task.end_date || '');
@@ -128,6 +129,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             setValue('title', '');
             setValue('description', '');
             setValue('status', 'to_do');
+            setValue('milestone', '');
             setValue('priority', 'medium');
             setValue('sprint', defaultSprintId?.toString() || '');
             setValue('assignee', '');

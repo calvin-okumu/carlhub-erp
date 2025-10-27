@@ -6,7 +6,7 @@ import type { Task } from '@/api/types';
 interface KanbanTaskCardProps {
     task: Task;
     onClick: () => void;
-    onStatusChange: (taskId: number, newStatus: string) => void;
+    onStatusChange: (taskSlug: string, newStatus: string) => void;
 }
 
 const PriorityBadge = ({ priority }: { priority: string }) => {
@@ -81,13 +81,13 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
                 {nextStatuses.length > 0 && (
                     <div className="flex gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
                         {nextStatuses.map(status => (
-                            <Button
-                                key={status}
-                                onClick={() => onStatusChange(task.id, status)}
-                                variant="outline"
-                                size="sm"
-                                className={`text-xs px-2 py-1 ${getButtonColor(status)}`}
-                            >
+                             <Button
+                                 key={status}
+                                 onClick={() => onStatusChange(task.slug, status)}
+                                 variant="outline"
+                                 size="sm"
+                                 className={`text-xs px-2 py-1 ${getButtonColor(status)}`}
+                             >
                                 {getButtonText(status)}
                             </Button>
                         ))}

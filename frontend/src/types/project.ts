@@ -1,6 +1,6 @@
 export interface ProjectFormData {
     name: string;
-    client: number;
+    client: string;
     status: 'active' | 'completed' | 'on-hold';
     priority: 'high' | 'medium' | 'low';
     start_date: string;

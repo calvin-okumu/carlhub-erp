@@ -19,8 +19,8 @@ interface BacklogModalProps {
         title: string;
         description?: string;
         status: string;
-        milestone: number;
-        sprint?: number;
+        milestone: string;
+        sprint?: string;
         assignee?: number;
         start_date?: string;
         end_date?: string;
@@ -138,9 +138,9 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
 
         if (Object.keys(errors).length > 0) return;
 
-        let milestoneId: number;
+        let milestoneId: string;
         if (formData.sprint) {
-            const sprint = sprints.find(s => s.id === parseInt(formData.sprint));
+            const sprint = sprints.find(s => s.id === formData.sprint);
             if (!sprint) return;
             milestoneId = sprint.milestone;
         } else {
@@ -155,7 +155,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
             description: formData.description || undefined,
             status: formData.status,
             milestone: milestoneId,
-            sprint: formData.sprint ? parseInt(formData.sprint) : undefined,
+            sprint: formData.sprint || undefined,
             assignee: formData.assignee ? parseInt(formData.assignee) : undefined,
             start_date: formData.start_date || undefined,
             end_date: formData.end_date || undefined,

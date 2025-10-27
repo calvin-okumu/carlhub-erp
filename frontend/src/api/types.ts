@@ -18,7 +18,8 @@ export interface SignupResponse {
 }
 
 export interface Client {
-  id: number;
+  id: string;
+  slug: string;
   name: string;
   email: string;
   phone: string;
@@ -111,10 +112,10 @@ export interface UserTenant {
 }
 
 export interface Project {
-  id: number;
+  id: string;
   name: string;
   slug: string;
-  client: number;
+  client: string;
   client_name: string;
   status: string;
   priority: string;
@@ -132,7 +133,8 @@ export interface Project {
 }
 
 export interface Milestone {
-  id: number;
+  id: string;
+  slug: string;
   name: string;
   description?: string;
   status: string;
@@ -141,19 +143,20 @@ export interface Milestone {
   due_date?: string;
   assignee?: number;
   progress: number;
-  project: number;
+  project: string;
   project_name: string;
   sprints_count: number;
   created_at: string;
 }
 
 export interface Sprint {
-  id: number;
+  id: string;
+  slug: string;
   name: string;
   status: string;
   start_date?: string;
   end_date?: string;
-  milestone: number;
+  milestone: string;
   milestone_name?: string;
   tasks_count: number;
   progress: number;
@@ -161,14 +164,15 @@ export interface Sprint {
 }
 
 export interface Task {
-  id: number;
+  id: string;
+  slug: string;
   title: string;
   description: string;
   status: string;
   priority: string;
-  milestone: number;
+  milestone: string;
   milestone_name: string;
-  sprint?: number;
+  sprint?: string;
   sprint_name?: string;
   assignee?: number;
   start_date?: string;

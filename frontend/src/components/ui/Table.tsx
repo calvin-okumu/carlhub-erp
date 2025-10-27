@@ -31,11 +31,16 @@ export default function Table({ headers, rows, className = '', currentPage, tota
           <tbody className="bg-white divide-y divide-gray-200">
             {rows.map((row) => (
               <tr key={row.key} className="hover:bg-gray-50">
-                {row.data.map((cell, cellIndex) => (
-                   <td key={cellIndex} className="px-4 py-4 truncate max-w-xs text-sm text-gray-900">
-                    {cell}
-                  </td>
-                ))}
+                {row.data.map((cell, cellIndex) => {
+                  if (React.isValidElement(cell) && cell.type === 'td') {
+                    return React.cloneElement(cell, { key: cellIndex });
+                  }
+                  return (
+                    <td key={cellIndex} className="px-4 py-4 truncate max-w-xs text-sm text-gray-900">
+                      {cell}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

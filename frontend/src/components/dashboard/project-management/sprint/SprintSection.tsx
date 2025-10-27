@@ -53,9 +53,9 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
         setModalOpen(true);
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (slug: string) => {
         if (confirm("Are you sure you want to delete this sprint?")) {
-            await removeSprint(id);
+            await removeSprint(slug);
         }
     };
 
@@ -70,8 +70,8 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
             if (modalMode === 'add') {
                 await addSprint(data);
             } else if (selectedSprint) {
-                await editSprint(selectedSprint.id, data);
-            }
+                 await editSprint(selectedSprint.slug, data);
+             }
             setModalOpen(false);
         } catch (error) {
             console.error('Error saving sprint:', error);

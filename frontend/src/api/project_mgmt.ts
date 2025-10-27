@@ -82,7 +82,7 @@ export async function createProject(token: string, projectData: {
   return data;
 }
 
-export async function updateProject(token: string, id: number, projectData: Partial<{
+export async function updateProject(token: string, slug: string, projectData: Partial<{
   name: string;
   client: number;
   status: string;
@@ -94,7 +94,7 @@ export async function updateProject(token: string, id: number, projectData: Part
   team_members?: number[];
   access_groups?: number[];
 }>): Promise<Project> {
-  const response = await fetch(`${API_BASE}/projects/${id}/`, {
+  const response = await fetch(`${API_BASE}/projects/${slug}/`, {
     method: "PUT",
     headers: {
       Authorization: `Token ${token}`,
@@ -112,8 +112,8 @@ export async function updateProject(token: string, id: number, projectData: Part
   return data;
 }
 
-export async function deleteProject(token: string, id: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/projects/${id}/`, {
+export async function deleteProject(token: string, slug: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/projects/${slug}/`, {
     method: "DELETE",
     headers: {
       Authorization: `Token ${token}`,
@@ -205,7 +205,7 @@ export async function createMilestone(token: string, milestoneData: {
   return data;
 }
 
-export async function updateMilestone(token: string, id: number, milestoneData: Partial<{
+export async function updateMilestone(token: string, slug: string, milestoneData: Partial<{
   name: string;
   description: string;
   status: string;
@@ -216,8 +216,8 @@ export async function updateMilestone(token: string, id: number, milestoneData: 
   assignee: number;
   project: number;
 }>): Promise<Milestone> {
-  const response = await fetch(`${API_BASE}/milestones/${id}/`, {
-    method: "PATCH",
+  const response = await fetch(`${API_BASE}/milestones/${slug}/`, {
+    method: "PUT",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
@@ -234,8 +234,8 @@ export async function updateMilestone(token: string, id: number, milestoneData: 
   return data;
 }
 
-export async function deleteMilestone(token: string, id: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/milestones/${id}/`, {
+export async function deleteMilestone(token: string, slug: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/milestones/${slug}/`, {
     method: "DELETE",
     headers: {
       Authorization: `Token ${token}`,
@@ -301,7 +301,7 @@ export async function createSprint(token: string, sprintData: {
   status: string;
   start_date?: string;
   end_date?: string;
-  milestone: number;
+  milestone: string;
 }): Promise<Sprint> {
   const response = await fetch(`${API_BASE}/sprints/`, {
     method: "POST",
@@ -321,15 +321,15 @@ export async function createSprint(token: string, sprintData: {
   return data;
 }
 
-export async function updateSprint(token: string, id: number, sprintData: Partial<{
+export async function updateSprint(token: string, slug: string, sprintData: Partial<{
   name: string;
   status: string;
   start_date: string;
   end_date: string;
-  milestone: number;
+  milestone: string;
 }>): Promise<Sprint> {
-  const response = await fetch(`${API_BASE}/sprints/${id}/`, {
-    method: "PATCH",
+  const response = await fetch(`${API_BASE}/sprints/${slug}/`, {
+    method: "PUT",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
@@ -346,8 +346,8 @@ export async function updateSprint(token: string, id: number, sprintData: Partia
   return data;
 }
 
-export async function deleteSprint(token: string, id: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/sprints/${id}/`, {
+export async function deleteSprint(token: string, slug: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/sprints/${slug}/`, {
     method: "DELETE",
     headers: {
       Authorization: `Token ${token}`,
@@ -361,17 +361,17 @@ export async function deleteSprint(token: string, id: number): Promise<void> {
 }
 
 // Sprint task management
-export async function createTaskInSprint(token: string, sprintId: number, taskData: {
+export async function createTaskInSprint(token: string, sprintSlug: string, taskData: {
   title: string;
   description?: string;
   status: string;
-  milestone: number;
+  milestone: string;
   assignee?: number;
   start_date?: string;
   end_date?: string;
   estimated_hours?: number;
 }): Promise<Task> {
-  const response = await fetch(`${API_BASE}/sprints/${sprintId}/create_task/`, {
+  const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/create_task/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
@@ -389,14 +389,14 @@ export async function createTaskInSprint(token: string, sprintId: number, taskDa
   return data;
 }
 
-export async function assignTaskToSprint(token: string, sprintId: number, taskId: number): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/sprints/${sprintId}/assign_task/`, {
+export async function assignTaskToSprint(token: string, sprintSlug: string, taskSlug: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/assign_task/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ task_id: taskId }),
+    body: JSON.stringify({ task_slug: taskSlug }),
   });
 
   const data = await response.json();
@@ -408,14 +408,14 @@ export async function assignTaskToSprint(token: string, sprintId: number, taskId
   return data;
 }
 
-export async function unassignTaskFromSprint(token: string, sprintId: number, taskId: number): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/sprints/${sprintId}/unassign_task/`, {
+export async function unassignTaskFromSprint(token: string, sprintSlug: string, taskSlug: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/unassign_task/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ task_id: taskId }),
+    body: JSON.stringify({ task_slug: taskSlug }),
   });
 
   const data = await response.json();
@@ -428,12 +428,12 @@ export async function unassignTaskFromSprint(token: string, sprintId: number, ta
 }
 
 // Task API functions
-export async function getTasks(token: string, params?: { milestoneId?: number; sprintId?: number; projectSlug?: string; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Task>> {
+export async function getTasks(token: string, params?: { milestoneSlug?: string; sprintSlug?: string; projectSlug?: string; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Task>> {
   let url = `${API_BASE}/tasks/`;
   const query = new URLSearchParams();
 
-  if (params?.milestoneId) query.append('milestone', params.milestoneId.toString());
-  if (params?.sprintId) query.append('sprint', params.sprintId.toString());
+  if (params?.milestoneSlug) query.append('milestone', params.milestoneSlug);
+  if (params?.sprintSlug) query.append('sprint_slug', params.sprintSlug);
   if (params?.projectSlug) query.append('project_slug', params.projectSlug);
   if (params?.backlog !== undefined) query.append('backlog', params.backlog.toString());
   if (params?.search) query.append('search', params.search);
@@ -464,8 +464,8 @@ export async function getTasks(token: string, params?: { milestoneId?: number; s
   return data;
 }
 
-export async function getTask(token: string, id: number): Promise<Task> {
-  const response = await fetch(`${API_BASE}/tasks/${id}/`, {
+export async function getTask(token: string, slug: string): Promise<Task> {
+  const response = await fetch(`${API_BASE}/tasks/${slug}/`, {
     method: "GET",
     headers: {
       Authorization: `Token ${token}`,
@@ -486,8 +486,9 @@ export async function createTask(token: string, taskData: {
   title: string;
   description?: string;
   status: string;
-  milestone: number;
-  sprint?: number;
+  milestone: string;
+  sprint?: string;
+  project: string;
   assignee?: number;
   start_date?: string;
   end_date?: string;
@@ -511,19 +512,19 @@ export async function createTask(token: string, taskData: {
   return data;
 }
 
-export async function updateTask(token: string, id: number, taskData: Partial<{
+export async function updateTask(token: string, slug: string, taskData: Partial<{
   title: string;
   description: string;
   status: string;
   progress: number;
-  milestone: number;
-  sprint: number;
+  milestone: string;
+  sprint: string;
   assignee: number;
   start_date: string;
   end_date: string;
   estimated_hours: number;
 }>): Promise<Task> {
-  const response = await fetch(`${API_BASE}/tasks/${id}/`, {
+  const response = await fetch(`${API_BASE}/tasks/${slug}/`, {
     method: "PATCH",
     headers: {
       Authorization: `Token ${token}`,
@@ -541,8 +542,8 @@ export async function updateTask(token: string, id: number, taskData: Partial<{
   return data;
 }
 
-export async function deleteTask(token: string, id: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/tasks/${id}/`, {
+export async function deleteTask(token: string, slug: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/tasks/${slug}/`, {
     method: "DELETE",
     headers: {
       Authorization: `Token ${token}`,

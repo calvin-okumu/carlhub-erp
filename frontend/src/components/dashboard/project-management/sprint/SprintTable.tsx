@@ -5,15 +5,15 @@ import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { AlertCircle, Columns, Edit, Trash2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import React, { useCallback, useMemo, useState } from 'react';
+import KanbanSection from '@/components/dashboard/project-management/sprint/kanban/KanbanSection';
 
 interface SprintTableProps {
     sprints: Sprint[];
     loading: boolean;
     error: string | null;
     onEditSprint: (sprint: Sprint) => void;
-    onDeleteSprint: (id: number) => void;
+    onDeleteSprint: (slug: string) => void;
     onAddSprint: () => void;
     projectSlug: string;
     searchValue: string;
@@ -21,8 +21,8 @@ interface SprintTableProps {
 }
 
 const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectSlug, searchValue, statusFilter }: SprintTableProps) {
-    const router = useRouter();
     const [page, setPage] = useState(1);
+    const [expandedSprintId, setExpandedSprintId] = useState<string | null>(null);
 
     const filteredSprints = useMemo(() =>
         sprints.filter(sprint =>
@@ -46,56 +46,71 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
         onEditSprint(sprint);
     }, [onEditSprint]);
 
-    const handleDelete = useCallback((id: number) => {
+    const handleDelete = useCallback((slug: string) => {
         if (confirm("Are you sure you want to delete this sprint?")) {
-            onDeleteSprint(id);
+            onDeleteSprint(slug);
         }
     }, [onDeleteSprint]);
 
     const headers = ["Name", "Status", "Start Date", "End Date", "Milestone", "Tasks", "Progress", "Actions"];
 
-    const rows = visibleSprints.map(sprint => ({
-        key: sprint.id,
-        data: [
-            sprint.name,
-            <span
-                key={sprint.id + '-status'}
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${sprint.status === 'completed'
-                    ? 'bg-green-100 text-green-800'
-                    : sprint.status === 'active'
-                        ? 'bg-blue-100 text-blue-800'
-                        : sprint.status === 'planned'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                    }`}
-            >
-                {sprint.status}
-            </span>,
-            sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : "-",
-            sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : "-",
-            sprint.milestone_name || "-",
-            sprint.tasks_count,
-            `${sprint.progress}%`,
-            <div key={sprint.id + '-actions'} className="flex gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => router.push(`/dashboard/project-management/${projectSlug}/sprint/${sprint.id}/kanban`)}
+    const rows: { key: string; data: (string | number | React.ReactNode)[] }[] = [];
+
+    visibleSprints.forEach(sprint => {
+        rows.push({
+            key: sprint.id,
+            data: [
+                sprint.name,
+                <span
+                    key={sprint.id + '-status'}
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${sprint.status === 'completed'
+                        ? 'bg-green-100 text-green-800'
+                        : sprint.status === 'active'
+                            ? 'bg-blue-100 text-blue-800'
+                            : sprint.status === 'planned'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                        }`}
                 >
-                    <Columns className="h-4 w-4 mr-2" />
-                    Open Kanban
-                </Button>
-                <Button onClick={() => handleEdit(sprint)} variant="outline" size="sm">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit
-                </Button>
-                <Button onClick={() => handleDelete(sprint.id)} variant="danger" size="sm">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete
-                </Button>
-            </div>
-        ]
-    }));
+                    {sprint.status}
+                </span>,
+                sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : "-",
+                sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : "-",
+                sprint.milestone_name || "-",
+                sprint.tasks_count,
+                `${sprint.progress}%`,
+                <div key={sprint.slug + '-actions'} className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setExpandedSprintId(expandedSprintId === sprint.id ? null : sprint.id)}
+                    >
+                        <Columns className="h-4 w-4 mr-2" />
+                        Open Kanban
+                    </Button>
+                    <Button onClick={() => handleEdit(sprint)} variant="outline" size="sm">
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                    </Button>
+                    <Button onClick={() => handleDelete(sprint.slug)} variant="danger" size="sm">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                    </Button>
+                </div>
+            ]
+        });
+
+        if (expandedSprintId === sprint.id) {
+            rows.push({
+                key: sprint.id + '-kanban',
+                data: [
+                    <td key={sprint.id + '-kanban-td'} colSpan={headers.length} className="p-4 bg-gray-50 border-t">
+                        <KanbanSection projectSlug={projectSlug} sprintSlug={sprint.slug} onBack={() => setExpandedSprintId(null)} />
+                    </td>
+                ]
+            });
+        }
+    });
 
     if (loading) {
         return <Loader />;

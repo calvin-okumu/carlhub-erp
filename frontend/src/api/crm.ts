@@ -53,8 +53,8 @@ export async function createClient(token: string, clientData: CreateClientData):
   return data;
 }
 
-export async function updateClient(token: string, clientId: number, clientData: UpdateClientData): Promise<Client> {
-  const response = await fetch(`${API_BASE}/clients/${clientId}/`, {
+export async function updateClient(token: string, clientSlug: string, clientData: UpdateClientData): Promise<Client> {
+  const response = await fetch(`${API_BASE}/clients/${clientSlug}/`, {
     method: "PUT",
     headers: {
       Authorization: `Token ${token}`,
@@ -72,8 +72,8 @@ export async function updateClient(token: string, clientId: number, clientData: 
   return data;
 }
 
-export async function deleteClient(token: string, clientId: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/clients/${clientId}/`, {
+export async function deleteClient(token: string, clientSlug: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/clients/${clientSlug}/`, {
     method: "DELETE",
     headers: {
       Authorization: `Token ${token}`,

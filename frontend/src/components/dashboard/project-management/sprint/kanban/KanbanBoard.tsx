@@ -5,7 +5,7 @@ import type { Task } from '@/api/types';
 interface KanbanBoardProps {
     tasks: Task[];
     onTaskClick: (task: Task) => void;
-    onStatusChange: (taskId: number, newStatus: string) => void;
+    onStatusChange: (taskSlug: string, newStatus: string) => void;
 }
 
 export default function KanbanBoard({ tasks, onTaskClick, onStatusChange }: KanbanBoardProps) {

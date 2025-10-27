@@ -15,11 +15,11 @@ import CreateTaskModal from '@/components/shared/CreateTaskModal';
 
 interface KanbanSectionProps {
     projectSlug: string;
-    sprintId: string;
+    sprintSlug: string;
     onBack?: () => void;
 }
 
-export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanSectionProps) {
+export default function KanbanSection({ projectSlug, sprintSlug, onBack }: KanbanSectionProps) {
     const router = useRouter();
     const [sprint, setSprint] = useState<Sprint | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -32,7 +32,7 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
     const [createSelectedTask, setCreateSelectedTask] = useState<Task | null>(null);
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [backlogTasks, setBacklogTasks] = useState<Task[]>([]);
-    const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
+    const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
     const [sprints, setSprints] = useState<Sprint[]>([]);
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [users, setUsers] = useState<UserTenant[]>([]);
@@ -41,6 +41,7 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('access_token');
         console.log('Token:', token ? 'present' : 'missing');
+        console.log('KanbanSection fetchData called with projectSlug:', projectSlug, 'sprintSlug:', sprintSlug);
         if (!token) {
             setError('No access token found. Redirecting to login...');
             setLoading(false);
@@ -52,11 +53,13 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
 
         try {
             // Fetch the sprint directly by ID
-            const sprint = await getSprint(token, sprintId);
+            console.log('Fetching sprint with slug:', sprintSlug);
+            const sprint = await getSprint(token, sprintSlug);
 
-            // Fetch tasks for this sprint
-            const tasksData = await getTasks(token, { sprintId: parseInt(sprintId) });
+             // Fetch tasks for this sprint
+             const tasksData = await getTasks(token, { sprintSlug: sprintSlug });
 
+            console.log('Fetched sprint:', sprint);
             setSprint(sprint);
             setTasks(tasksData.results);
         } catch (err) {
@@ -65,13 +68,13 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
         } finally {
             setLoading(false);
         }
-    }, [sprintId, router]);
+    }, [sprintSlug, router]);
 
     useEffect(() => {
-        if (sprintId) {
+        if (sprintSlug) {
             fetchData();
         }
-    }, [sprintId, fetchData]);
+    }, [sprintSlug, fetchData]);
 
     useEffect(() => {
         const fetchModalData = async () => {
@@ -88,14 +91,14 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
                 setMilestones(milestonesData.results);
                 setUsers(usersData);
                 // Filter out tasks that are already in this sprint (safety check)
-                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.id);
+                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
                 setBacklogTasks(filteredBacklog);
             } catch (err) {
                 console.error('Failed to fetch modal data:', err);
             }
         };
         fetchModalData();
-    }, [projectSlug, sprintId, sprint]);
+    }, [projectSlug, sprintSlug, sprint]);
 
     const handleBack = () => {
         if (onBack) {
@@ -127,7 +130,7 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
         return progressMap[status as keyof typeof progressMap] ?? 0;
     };
 
-    const handleStatusChange = async (taskId: number, newStatus: string) => {
+    const handleStatusChange = async (taskSlug: string, newStatus: string) => {
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
@@ -135,7 +138,7 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
             // Calculate progress based on new status
             const newProgress = getProgressForStatus(newStatus);
 
-            await updateTask(token, taskId, {
+            await updateTask(token, taskSlug, {
                 status: newStatus,
                 progress: newProgress
             });
@@ -147,14 +150,14 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
         }
     };
 
-    const handleDeleteTask = async (taskId: number) => {
+    const handleDeleteTask = async (taskSlug: string) => {
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
         if (!confirm('Are you sure you want to delete this task?')) return;
 
         try {
-            await deleteTask(token, taskId);
+            await deleteTask(token, taskSlug);
             // Refetch tasks
             fetchData();
         } catch (error) {
@@ -175,7 +178,7 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
         setAddModalOpen(true);
     };
 
-    const handleTaskSelection = (taskId: number, checked: boolean) => {
+    const handleTaskSelection = (taskId: string, checked: boolean) => {
         if (checked) {
             setSelectedTasks(prev => [...prev, taskId]);
         } else {
@@ -189,9 +192,9 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
 
         setAddError(null);
         try {
-            await Promise.all(
-                selectedTasks.map(taskId => assignTaskToSprint(token, sprintId, taskId))
-            );
+             await Promise.all(
+                 selectedTasks.map(taskId => assignTaskToSprint(token, sprintSlug, taskId))
+             );
             setAddModalOpen(false);
             setSelectedTasks([]);
             // Refetch tasks
@@ -217,8 +220,8 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
         if (!token) return;
 
         try {
-            // Ensure sprint is set to current sprintId
-            const taskData = { ...data, sprint: sprintId };
+             // Ensure sprint is set to current sprintSlug
+             const taskData = { ...data, sprint: sprintSlug };
             await createTask(token, taskData);
             setCreateModalOpen(false);
             // Refetch tasks
@@ -295,7 +298,7 @@ export default function KanbanSection({ projectSlug, sprintId, onBack }: KanbanS
                     milestones={milestones}
                     assignees={users}
                     onSave={handleSaveTask}
-                    defaultSprintId={sprintId}
+                     defaultSprintId={sprintSlug}
                 />
                 {addModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center">

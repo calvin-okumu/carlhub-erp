@@ -19,6 +19,10 @@ export default function ClientSection() {
         refetch({ page: currentPage, limit: 10, search: searchValue });
     }, [currentPage, searchValue, refetch]);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchValue]);
+
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
@@ -40,7 +44,7 @@ export default function ClientSection() {
             if (modalMode === 'add') {
                 await addClient(data as CreateClientData);
             } else if (selectedClient) {
-                await editClient(selectedClient.id, data as UpdateClientData);
+                await editClient(selectedClient.slug, data as UpdateClientData);
             }
             setModalOpen(false);
         } catch (error) {

@@ -19,7 +19,7 @@ interface SprintModalProps {
         status: string;
         start_date?: string;
         end_date?: string;
-        milestone: number;
+        milestone: string;
     }) => void;
 }
 
@@ -42,7 +42,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                 status: sprint.status,
                 start_date: sprint.start_date || '',
                 end_date: sprint.end_date || '',
-                milestone: sprint.milestone?.toString() || '',
+                milestone: sprint.milestone || '',
             });
             const milestone = milestones.find(m => m.id === sprint.milestone);
             if (milestone) {
@@ -67,7 +67,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         if (name === 'milestone') {
-            const milestone = milestones.find(m => m.id.toString() === value);
+            const milestone = milestones.find(m => m.id === value);
             if (milestone) {
                 setMinDate(milestone.planned_start || '');
                 setMaxDate(milestone.due_date || '');
@@ -122,7 +122,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
             status: formData.status,
             start_date: formData.start_date || undefined,
             end_date: formData.end_date || undefined,
-            milestone: parseInt(formData.milestone),
+            milestone: formData.milestone,
         };
 
         onSave(data);
