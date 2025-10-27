@@ -162,6 +162,11 @@ def setup_logging(base_dir: Path) -> dict:
             'level': 'INFO',
             'propagate': False,
         },
+        'accounts.email_service': {
+            'handlers': ['info_file', 'warning_file', 'error_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'project': {
             'handlers': ['info_file', 'warning_file', 'error_file'],
             'level': 'INFO',
