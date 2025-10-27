@@ -40,15 +40,15 @@ services:
       timeout: 5s
       retries: 5
 
-  backend:
-    image: your-dockerhub-username/saascrm-backend:latest
+   backend:
+    image: ghcr.io/calvin-okumu/carlhub-erp/backend:latest
     restart: unless-stopped
     environment:
       - DJANGO_ENV=production
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - SECRET_KEY=${SECRET_KEY}
       - RUN_SETUP=false
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn saasCRM.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - static_prod:/app/static
     ports:
@@ -73,8 +73,8 @@ services:
       timeout: 10s
       retries: 3
 
-  frontend:
-    image: your-dockerhub-username/saascrm-frontend:latest
+   frontend:
+    image: ghcr.io/calvin-okumu/carlhub-erp/frontend:latest
     restart: unless-stopped
     environment:
       - NODE_ENV=production

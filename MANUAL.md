@@ -1,32 +1,73 @@
 # DjangoCRM Manual
 
-A comprehensive guide to setting up, developing, and deploying the DjangoCRM multi-tenant Customer Relationship Management system.
+A concise guide to getting started with DjangoCRM. For detailed documentation, see the `docs/` directory.
 
-## Table of Contents
+## Quick Start
 
-- [Overview](#overview)
-- [Quick Start](#quick-start)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [Development](#development)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [API Usage](#api-usage)
-- [Progress Tracking](#progress-tracking)
-- [Troubleshooting](#troubleshooting)
+```bash
+# Clone and setup
+git clone <repository-url>
+cd DjangoCRM
+./setup.sh
 
-## Overview
+# Start development
+make dev
 
-DjangoCRM is a multi-tenant Customer Relationship Management system built with Django REST Framework and Next.js. It provides complete tenant isolation, user management, project lifecycle tracking, and financial management in a SaaS environment.
+# Access points
+# API: http://localhost:8000/api
+# Admin: http://localhost:8000/admin
+# Frontend: http://localhost:3000
+```
 
-Key features:
-- Multi-tenant architecture with subdomain-based access
-- Role-based access control with 5 default user groups
-- Client and project management
-- Agile task tracking with automated progress calculation
-- Invoice and payment processing
-- RESTful API with comprehensive documentation
+## Key Features
+
+- ✅ **Multi-tenant architecture** with complete data isolation
+- ✅ **Comprehensive user management** with role-based permissions
+- ✅ **Project lifecycle management** with automated progress tracking
+- ✅ **RESTful API** with interactive documentation (Swagger UI)
+- ✅ **Modern frontend** built with Next.js and TypeScript
+- ✅ **Complete audit logging** for security and compliance
+- ✅ **Slug-based URLs** for all resources (users, projects, clients)
+- ✅ **Financial management** with invoices and payments
+
+## Documentation Structure
+
+- **`docs/README.md`** - Complete documentation index
+- **`docs/setup/`** - Installation and configuration guides
+- **`docs/api/`** - API reference and examples
+- **`docs/features/`** - Feature documentation
+- **`docs/applications/`** - Application-specific guides
+
+## Development Commands
+
+```bash
+# Backend development
+cd backend && python manage.py runserver
+
+# Frontend development
+cd frontend && npm run dev
+
+# Run tests
+make test
+
+# Generate API schema
+cd backend && python manage.py spectacular --file schema.yml
+
+# Load sample data
+cd backend && python manage.py generate_sample_data
+```
+
+## Default Credentials
+
+- **Superuser**: `admin@example.com` / `admin123`
+- **Database**: `saascrm_user` / `saascrm_password`
+- **API Base**: `http://localhost:8000/api`
+
+## Support
+
+- 📖 **Documentation**: `docs/` directory
+- 🐛 **Issues**: GitHub Issues
+- 📧 **API Docs**: http://localhost:8000/api/schema/swagger-ui/
 
 ## Quick Start
 
@@ -274,6 +315,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 ### URL Structure
 - **Projects**: Use slug-based URLs (e.g., `/api/projects/my-project-name/`)
 - **Clients**: Use slug-based URLs (e.g., `/api/clients/client-name/`)
+- **Users**: Use slug-based URLs (e.g., `/api/users/john-doe/`)
 - **Other entities**: Use ID-based URLs (e.g., `/api/tasks/123/`)
 
 Slugs are auto-generated from names but can be customized for better readability.
@@ -284,12 +326,14 @@ Slugs are auto-generated from names but can be customized for better readability
 | /api/login/ | POST | Authentication |
 | /api/signup/ | POST | User registration |
 | /api/tenants/ | GET, POST | Tenant management |
+| /api/users/{slug}/ | GET, PUT, DELETE | User detail (slug-based) |
 | /api/clients/{slug}/ | GET, PUT, DELETE | Client detail (slug-based) |
 | /api/clients/ | GET, POST | Client list |
 | /api/projects/{slug}/ | GET, PUT, DELETE | Project detail (slug-based) |
 | /api/projects/ | GET, POST | Project list |
 | /api/tasks/ | GET, POST, PUT, DELETE | Task management |
 | /api/invoices/ | GET, POST, PUT, DELETE | Invoice processing |
+| /api/accounts/audit-logs/ | GET | Audit log access (admin only) |
 
 ### Documentation
 - Interactive API Docs: http://localhost:8000/docs/
