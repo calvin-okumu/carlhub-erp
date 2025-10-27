@@ -89,13 +89,70 @@ Flexible notification system for system events and alerts. Includes:
 
 ### EmailService Class
 
-Located in `backend/accounts/email_service.py`, provides static methods for all email operations.
+Located in `backend/accounts/email_service.py`, provides static methods for all email operations with comprehensive error handling and configuration validation.
+
+#### Error Handling
+
+The EmailService includes robust error handling with intelligent error classification:
+
+##### EmailError Exception
+
+Custom exception class for email-related errors with enhanced information:
+
+```python
+class EmailError(Exception):
+    def __init__(self, message, category='unknown', user_message=None, status_code=500, retryable=True):
+        # category: authentication, connection, tls_ssl, rate_limit, mailbox, server_error, template_error
+        # user_message: User-friendly error message
+        # status_code: HTTP status code for API responses
+        # retryable: Whether the operation can be retried
+```
+
+##### Error Classification
+
+Automatic categorization of SMTP errors with appropriate user messages and status codes:
+
+- **authentication**: SMTP login/credential failures
+- **connection**: Network/SMTP server connectivity issues
+- **tls_ssl**: Encryption/certificate problems
+- **rate_limit**: Provider quota/throttling issues
+- **mailbox**: Recipient delivery problems
+- **server_error**: SMTP server internal errors
+- **template_error**: Email template rendering failures
+
+##### Configuration Validation
+
+Pre-flight validation of email settings:
+
+```python
+validation = EmailService.validate_email_configuration()
+# Returns: {'errors': [...], 'warnings': [...]}
+```
+
+Validates EMAIL_BACKEND, SMTP settings, Gmail App Password format, TLS/SSL configuration, and DEFAULT_FROM_EMAIL.
 
 #### Methods
 
+##### `validate_email_configuration()`
+
+Validate email configuration and return detailed error/warning information.
+
+**Returns:**
+- `dict`: Dictionary with 'errors' and 'warnings' lists containing validation issues and solutions
+
+##### `classify_email_error(error)`
+
+Classify email errors and return appropriate user/admin messages.
+
+**Parameters:**
+- `error`: Exception object from email sending
+
+**Returns:**
+- `dict`: Error classification with user_message, admin_message, category, status_code, and retryable flag
+
 ##### `send_invitation_email(email, tenant, role, token, expires_at, is_resend=False)`
 
-Send invitation email to new team members.
+Send invitation email to new team members with comprehensive error handling.
 
 **Parameters:**
 - `email` (str): Recipient email address
@@ -105,25 +162,34 @@ Send invitation email to new team members.
 - `expires_at`: Expiration datetime
 - `is_resend` (bool): Whether this is a resent invitation
 
+**Raises:**
+- `EmailError`: Enhanced error information for API responses
+
 ##### `send_welcome_email(user, tenant)`
 
-Send welcome email to newly registered users.
+Send welcome email to newly registered users (fail_silently=True).
 
 **Parameters:**
 - `user`: User instance
 - `tenant`: Tenant instance
 
+**Returns:**
+- `bool`: Success status (used for logging, doesn't break signup on failure)
+
 ##### `send_password_reset_email(user, reset_url)`
 
-Send password reset email.
+Send password reset email (fail_silently=True).
 
 **Parameters:**
 - `user`: User instance
 - `reset_url` (str): Password reset URL
 
+**Returns:**
+- `bool`: Success status (used for logging, doesn't break password reset on failure)
+
 ##### `send_notification_email(recipients, subject, message, tenant=None, **kwargs)`
 
-Send customizable system notification emails.
+Send customizable system notification emails with error handling.
 
 **Parameters:**
 - `recipients` (list): List of User instances or email strings
@@ -134,6 +200,9 @@ Send customizable system notification emails.
 - `action_url` (str): Action button URL
 - `action_text` (str): Action button text
 - `additional_info` (str): Extra information
+
+**Returns:**
+- `int`: Number of successfully sent emails
 
 ## Configuration
 
@@ -247,55 +316,106 @@ Modify templates in `backend/templates/emails/`:
 
 **Emails not sending:**
 - Check EMAIL_BACKEND settings
-- Verify SMTP credentials
-- Check network connectivity
-- Review Django logs for errors
+- Verify SMTP credentials and configuration
+- Run `EmailService.validate_email_configuration()` to check settings
+- Review email-specific logs in `logs/backend/` directory
+- Check for categorized error responses in API calls
+
+**Configuration validation errors:**
+- Run email configuration validation: `EmailService.validate_email_configuration()`
+- Check for missing EMAIL_HOST, EMAIL_PORT, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD
+- Verify DEFAULT_FROM_EMAIL is set
+- For Gmail: Ensure App Password is used (16 characters) instead of regular password
+
+**Authentication failures:**
+- Verify EMAIL_HOST_USER and EMAIL_HOST_PASSWORD
+- Check if SMTP server requires App Passwords (Gmail, Outlook)
+- Confirm EMAIL_HOST and EMAIL_PORT are correct
+- Check firewall/network restrictions
+
+**Connection issues:**
+- Verify EMAIL_HOST is reachable
+- Check EMAIL_PORT (587 for TLS, 465 for SSL, 25 for unencrypted)
+- Confirm EMAIL_USE_TLS or EMAIL_USE_SSL is set appropriately
+- Test network connectivity to SMTP server
 
 **Templates not rendering:**
-- Verify template file paths
-- Check context variable names
+- Verify template file paths in `backend/templates/emails/`
+- Check context variable names match template expectations
 - Test with `test_email_templates.py`
-- Check Django template syntax
+- Check Django template syntax and debug template rendering
+- Review template_error category in error responses
 
 **Styling issues:**
-- Test in email clients (Gmail, Outlook, etc.)
+- Test in email clients (Gmail, Outlook, Apple Mail, etc.)
 - Use inline CSS for better compatibility
-- Avoid complex CSS selectors
-- Test on mobile devices
+- Avoid complex CSS selectors and modern CSS features
+- Test on mobile devices and various screen sizes
 
 ### Debug Mode
 
-Enable debug logging for email issues:
+Enable comprehensive email logging for debugging:
 
 ```python
-# In settings.py
+# Email-specific logging is configured in saasCRM/logging.py
+# Logs are written to logs/backend/ directory with rotation
+
 LOGGING = {
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler',
-        }
-    },
     'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
+        'accounts.email_service': {
+            'level': 'DEBUG',  # Detailed SMTP debugging
+            'handlers': ['info_file', 'warning_file', 'error_file'],
         },
     }
 }
 ```
 
-## Integration Points
+**Log Files:**
+- `logs/backend/info.log`: General email operations
+- `logs/backend/warning.log`: Email warnings and configuration issues
+- `logs/backend/error.log`: Email failures with categorized error information
 
-### API Endpoints
+**Debug Commands:**
+```bash
+# Test email configuration validation
+python manage.py shell -c "from accounts.email_service import EmailService; print(EmailService.validate_email_configuration())"
 
-Email functionality integrates with these API endpoints:
+# Test error classification
+python manage.py shell -c "from accounts.email_service import EmailService; print(EmailService.classify_email_error(Exception('SMTP authentication failed')))"
+```
 
-- `POST /api/invite-member/` - Triggers invitation emails
-- `POST /api/signup/` - Triggers welcome emails
-- `POST /api/password-reset/` - Triggers password reset emails
-- `POST /api/resend-invitation/` - Resends invitation emails
+## API Error Responses
+
+Email-related API endpoints now provide enhanced error responses with categorized error information:
+
+### Error Response Format
+
+```json
+{
+  "error": "Email authentication failed. Please check your email credentials.",
+  "error_category": "authentication",
+  "retryable": false
+}
+```
+
+**Error Categories:**
+- `authentication`: SMTP credential issues
+- `connection`: Network/SMTP connectivity problems
+- `tls_ssl`: Security configuration issues
+- `rate_limit`: Email provider limits exceeded
+- `mailbox`: Recipient delivery problems
+- `server_error`: Email service temporarily unavailable
+- `template_error`: Email template rendering issues
+- `unknown`: Unclassified errors
+
+### Enhanced Endpoints
+
+Email functionality integrates with these API endpoints with improved error handling:
+
+- `POST /api/invite-member/` - Triggers invitation emails with categorized error responses
+- `POST /api/signup/` - Triggers welcome emails (failures don't break signup)
+- `POST /api/password-reset/` - Triggers password reset emails (failures don't break reset)
+- `POST /api/resend-invitation/` - Resends invitation emails with enhanced error handling
 
 ### Signals and Hooks
 
@@ -314,9 +434,16 @@ post_save.connect(send_welcome_on_user_creation, sender=User)
 
 ## Future Enhancements
 
+### Recently Implemented
+- ✅ **Enhanced Error Handling**: Comprehensive error classification and user-friendly messages
+- ✅ **Configuration Validation**: Pre-flight email settings validation
+- ✅ **Email-Specific Logging**: Detailed SMTP debugging and error tracking
+
 ### Planned Features
 - **Email Analytics**: Delivery tracking and open rates
 - **Template Editor**: Admin interface for template customization
 - **Multi-language Support**: Localized email templates
 - **Email Campaigns**: Marketing and newsletter functionality
 - **Attachment Support**: File attachments for notifications
+- **Email Health Checks**: API endpoint for email service monitoring
+- **Retry Logic**: Automatic retry for temporary email failures
