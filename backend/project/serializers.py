@@ -179,7 +179,7 @@ class InvoiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invoice
-        fields = ['id', 'client', 'client_name', 'project', 'amount', 'issued_at', 'paid']
+        fields = ['id', 'slug', 'client', 'client_name', 'project', 'amount', 'issued_at', 'paid']
         help_texts = {
             'client': 'Client being invoiced',
             'project': 'Project this invoice is for (optional)',
@@ -193,7 +193,7 @@ class PaymentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = ['id', 'invoice', 'invoice_id', 'amount', 'paid_at']
+        fields = ['id', 'slug', 'invoice', 'invoice_id', 'amount', 'paid_at']
         help_texts = {
             'invoice': 'Invoice this payment is for',
             'amount': 'Payment amount in currency units',
@@ -223,7 +223,7 @@ class UserTenantSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserTenant
-        fields = ['id', 'user', 'user_email', 'user_first_name', 'user_last_name', 'tenant', 'tenant_name', 'is_owner', 'is_approved', 'role']
+        fields = ['id', 'slug', 'user', 'user_email', 'user_first_name', 'user_last_name', 'tenant', 'tenant_name', 'is_owner', 'is_approved', 'role']
         help_texts = {
             'user': 'User account',
             'tenant': 'Tenant organization',
@@ -239,7 +239,8 @@ class InvitationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Invitation
-        fields = ['id', 'email', 'tenant', 'tenant_name', 'token', 'role', 'invited_by', 'invited_by_email', 'created_at', 'expires_at', 'is_used']
+        fields = ['id', 'slug', 'email', 'tenant', 'tenant_name', 'token', 'role', 'invited_by', 'invited_by_email', 'created_at', 'expires_at', 'is_used', 'email_confirmed']
+        read_only_fields = ['id', 'slug', 'token', 'created_at', 'invited_by']
         help_texts = {
             'email': 'Email address of the invited user',
             'tenant': 'Tenant organization sending the invitation',

@@ -26,6 +26,7 @@ This comprehensive documentation provides detailed information about the DjangoC
 - [Task Management](./features/task-management.md)
 - [User Management](./features/user-management.md)
 - [Progress Tracking](./features/progress-tracking.md)
+- [Audit Logging](./features/audit-logging.md)
 - [Multi-Tenancy](./features/multi-tenancy.md)
 
 ### [🏢 Applications](./applications/README.md)
@@ -65,6 +66,7 @@ make db-reset     # Reset database
 - ✅ Multi-tenant architecture with complete data isolation
 - ✅ Comprehensive user management with role-based permissions
 - ✅ Full project lifecycle management with automated progress tracking
+- ✅ Complete audit logging for security and compliance
 - ✅ RESTful API with interactive documentation (Swagger UI)
 - ✅ Modern Next.js frontend with TypeScript
 - ✅ Docker containerization for easy deployment

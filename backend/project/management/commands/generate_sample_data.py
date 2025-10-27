@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 
-from accounts.models import CustomUser, Tenant, UserProfile, EmployeeDocument
+from accounts.models import CustomUser, Tenant, UserProfile, EmployeeDocument, Invitation, AuditLog
 from project.factories import (
     ClientFactory,
     InvoiceFactory,
@@ -183,5 +183,57 @@ class Command(BaseCommand):
             self.stdout.write(f'Created {len(payments)} payments')
         else:
             self.stdout.write('Payments already exist')
+
+        # Create sample invitations
+        from django.utils import timezone
+        from datetime import timedelta
+        import uuid
+
+        if Invitation.objects.count() < 5:
+            invitations = []
+            for i in range(5 - Invitation.objects.count()):
+                # Create invitation for a user that doesn't exist yet
+                email = f'invited{i+1}@example.com'
+                tenant = tenants[i % len(tenants)]
+                invited_by = users[i % len(users)]
+
+                invitation = Invitation.objects.create(
+                    email=email,
+                    tenant=tenant,
+                    invited_by=invited_by,
+                    role='Employee',
+                    token=str(uuid.uuid4()),
+                    expires_at=timezone.now() + timedelta(days=7),
+                    email_confirmed=(i % 2 == 0)  # Alternate confirmed/unconfirmed
+                )
+                invitations.append(invitation)
+            self.stdout.write(f'Created {len(invitations)} sample invitations')
+        else:
+            self.stdout.write('Invitations already exist')
+
+        # Create sample audit logs
+        if AuditLog.objects.count() < 10:
+            audit_logs = []
+            actions = ['user_login', 'user_logout', 'invitation_sent', 'invitation_confirmed', 'project_created', 'task_updated']
+            resources = ['user', 'invitation', 'project', 'task', 'client']
+
+            for i in range(10 - AuditLog.objects.count()):
+                user = users[i % len(users)]
+                tenant = tenants[i % len(tenants)]
+
+                audit_log = AuditLog.objects.create(
+                    user=user,
+                    tenant=tenant,
+                    action=actions[i % len(actions)],
+                    resource_type=resources[i % len(resources)],
+                    resource_id=str(uuid.uuid4()),
+                    ip_address=f'192.168.1.{i+1}',
+                    user_agent='DjangoCRM/1.0 (Sample Data)',
+                    metadata={'sample': True, 'generated_at': timezone.now().isoformat()}
+                )
+                audit_logs.append(audit_log)
+            self.stdout.write(f'Created {len(audit_logs)} sample audit logs')
+        else:
+            self.stdout.write('Audit logs already exist')
 
         self.stdout.write(self.style.SUCCESS('Sample data generated successfully!'))

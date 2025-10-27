@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CustomUser, Invitation, Tenant, UserTenant
+from .models import AuditLog, CustomUser, Invitation, Tenant, UserTenant
 
 
 @admin.register(CustomUser)
@@ -48,3 +48,12 @@ class InvitationAdmin(admin.ModelAdmin):
         return obj.expires_at if obj.expires_at else "Never"
     get_expires_at.short_description = "Expires At"
     get_expires_at.admin_order_field = "expires_at"
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ('timestamp', 'action', 'resource_type', 'user', 'tenant', 'ip_address')
+    list_filter = ('action', 'resource_type', 'tenant', 'timestamp')
+    search_fields = ('user__email', 'resource_id', 'ip_address')
+    readonly_fields = ('timestamp', 'old_values', 'new_values', 'metadata')
+    ordering = ('-timestamp',)

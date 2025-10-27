@@ -36,6 +36,12 @@ DjangoCRM provides a comprehensive set of features for managing client relations
 - Milestone and sprint completion tracking
 - Project completion metrics and reporting
 
+### [Audit Logging](./audit-logging.md)
+- Comprehensive event tracking for security and compliance
+- Detailed logging of user actions and system events
+- Admin interface and API access for audit logs
+- Tenant-isolated audit trails with proper access controls
+
 ### [Multi-Tenancy](./multi-tenancy.md)
 - Complete data isolation between organizations
 - Tenant-specific user management and permissions

@@ -60,6 +60,8 @@ class CustomUser(AbstractUser):
 
 
 class Tenant(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     name = models.CharField(max_length=255, unique=True)
     domain = models.CharField(max_length=255, unique=True, default='')
     address = models.TextField(blank=True)
@@ -82,16 +84,42 @@ class Tenant(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(self.name)
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Tenant.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
 
 class UserTenant(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE)
     is_owner = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)  # Default True for owners, False for invited members
     role = models.CharField(max_length=100, default='Employee')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(f"member-{self.user.email}-{self.tenant.name}")
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while UserTenant.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user.email} - {self.tenant.name}"
@@ -171,6 +199,8 @@ class EmployeeDocument(models.Model):
 
 
 class Invitation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     email = models.EmailField()
     tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE)
     token = models.CharField(max_length=64, unique=True)
@@ -179,6 +209,88 @@ class Invitation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
+    email_confirmed = models.BooleanField(default=False)  # Track if invitation email has been confirmed
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(f"invite-{self.email}")
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Invitation.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Invite {self.email} to {self.tenant.name}"
+
+    def is_expired(self):
+        """Check if the invitation has expired."""
+        from django.utils import timezone
+        return timezone.now() > self.expires_at
+
+
+class AuditLog(models.Model):
+    """
+    Comprehensive audit logging for user lifecycle and security events.
+    """
+    ACTION_CHOICES = [
+        ('user_signup', 'User Signup'),
+        ('user_login', 'User Login'),
+        ('user_logout', 'User Logout'),
+        ('user_profile_update', 'Profile Update'),
+        ('user_password_change', 'Password Change'),
+        ('invitation_sent', 'Invitation Sent'),
+        ('invitation_confirmed', 'Invitation Confirmed'),
+        ('invitation_used', 'Invitation Used'),
+        ('invitation_cancelled', 'Invitation Cancelled'),
+        ('invitation_expired', 'Invitation Expired'),
+        ('member_approved', 'Member Approved'),
+        ('member_rejected', 'Member Rejected'),
+        ('role_created', 'Role Created'),
+        ('role_updated', 'Role Updated'),
+        ('role_assigned', 'Role Assigned'),
+        ('project_created', 'Project Created'),
+        ('bulk_invitation_started', 'Bulk Invitation Started'),
+        ('bulk_invitation_completed', 'Bulk Invitation Completed'),
+        ('security_failed_login', 'Failed Login Attempt'),
+        ('security_token_misuse', 'Token Misuse'),
+        ('admin_user_suspended', 'User Suspended'),
+        ('admin_user_activated', 'User Activated'),
+    ]
+
+    RESOURCE_TYPE_CHOICES = [
+        ('user', 'User'),
+        ('invitation', 'Invitation'),
+        ('role', 'Role'),
+        ('tenant', 'Tenant'),
+        ('profile', 'User Profile'),
+        ('bulk_invitation', 'Bulk Invitation'),
+    ]
+
+    tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)
+    resource_type = models.CharField(max_length=20, choices=RESOURCE_TYPE_CHOICES)
+    resource_id = models.CharField(max_length=255, null=True, blank=True)  # String reference to resource (UUID or other identifier)
+    old_values = models.JSONField(null=True, blank=True)  # Previous state
+    new_values = models.JSONField(null=True, blank=True)  # New state
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(null=True, blank=True)  # Additional context
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['tenant', 'timestamp']),
+            models.Index(fields=['user']),
+            models.Index(fields=['action']),
+            models.Index(fields=['resource_type', 'resource_id']),
+        ]
+
+    def __str__(self):
+        user_info = f" by {self.user.email}" if self.user else ""
+        return f"{self.get_action_display()} on {self.get_resource_type_display()}{user_info} at {self.timestamp}"

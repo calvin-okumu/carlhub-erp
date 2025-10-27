@@ -331,6 +331,7 @@ class Task(models.Model):
 # Financial models
 class Invoice(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="invoices", null=True, blank=True, db_index=True
     )
@@ -346,12 +347,25 @@ class Invoice(models.Model):
     issued_at = models.DateTimeField(auto_now_add=True)
     paid = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(f"invoice-{self.client.name}-{self.amount}")
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Invoice.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Invoice {self.id or 'Unsaved'} - {self.client.name}"
 
 
 class Payment(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="payments", null=True, blank=True, db_index=True
     )
@@ -362,6 +376,18 @@ class Payment(models.Model):
         max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0'))]
     )
     paid_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            self.slug = slugify(f"payment-{self.invoice.id}-{self.amount}")
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Payment.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Payment {self.id or 'Unsaved'} for Invoice {self.invoice.id or 'Unsaved'}"

@@ -28,6 +28,8 @@ urlpatterns = [
     path('signup/', views.signup_view, name='signup'),
     path('approve-member/', views.approve_member_view, name='approve_member'),
     path('invite-member/', views.invite_member_view, name='invite_member'),
+    path('confirm-invitation/', views.confirm_invitation_view, name='confirm_invitation'),
+    path('resend-invitation/', views.resend_invitation_view, name='resend_invitation'),
     path('auth-methods/', views.auth_methods_view, name='auth_methods'),
     path('health/', views.health_check, name='health_check'),
 ]

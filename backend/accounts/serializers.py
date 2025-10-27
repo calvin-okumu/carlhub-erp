@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import UserProfile, EmployeeDocument, CustomUser
+from .models import AuditLog, UserProfile, EmployeeDocument, CustomUser
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -21,3 +21,17 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'email', 'first_name', 'last_name', 'is_active',
                  'date_joined', 'profile']
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    tenant_name = serializers.CharField(source='tenant.name', read_only=True)
+
+    class Meta:
+        model = AuditLog
+        fields = [
+            'id', 'action', 'resource_type', 'resource_id',
+            'old_values', 'new_values', 'ip_address', 'user_agent',
+            'timestamp', 'metadata', 'user_email', 'tenant_name'
+        ]
+        read_only_fields = ['id', 'timestamp']
