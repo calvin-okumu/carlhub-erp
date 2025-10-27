@@ -14,6 +14,7 @@ A comprehensive multi-tenant Customer Relationship Management system with a mode
 - **Date Validation**: Hierarchical date constraints ensuring logical timelines across all entities
 - **Financial Management**: Complete invoice and payment processing with client billing
 - **Audit Logging**: Comprehensive security and compliance logging with admin interface and API access
+- **Professional Email System**: Mobile-responsive HTML templates for invitations, welcome messages, and notifications
 - **Slug-Based URLs**: Human-readable URLs for all resources (projects, clients, users)
 
 ### User Management & Security

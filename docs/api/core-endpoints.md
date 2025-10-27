@@ -87,7 +87,7 @@ Tenant owners approve pending team member requests.
 ### Invite Member
 **POST** `/api/invite-member/`
 
-Send email invitations to join the tenant.
+Send professional HTML email invitations to join the tenant. Uses mobile-responsive templates with step-by-step onboarding instructions.
 
 **Request:**
 ```json

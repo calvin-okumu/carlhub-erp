@@ -172,14 +172,17 @@ This ensures:
 **Email Service Unavailable:**
 ```json
 {
-  "error": "Unable to connect to email service. Please check your internet connection.",
+  "error": "Unable to send email. The invitation was created but email delivery failed.",
   "code": "EMAIL_ERROR",
   "details": {
-    "operation": "invitation_resend",
-    "error_type": "connection_error"
+    "operation": "invitation_send",
+    "error_type": "smtp_connection_error",
+    "fallback": "manual_invitation_url"
   }
 }
 ```
+
+**Note:** Email failures are handled gracefully - user accounts are still created and invitations remain valid even if email delivery fails.
 
 ### Validation Errors
 
