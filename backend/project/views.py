@@ -1455,6 +1455,50 @@ def invite_member_view(request):
         return Response({'error': error_message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@extend_schema(
+    summary="Confirm invitation email",
+    description="Confirm invitation email by marking the invitation as email_confirmed. This endpoint is called when a user clicks the confirmation link in their email.",
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'token': {'type': 'string', 'description': 'Invitation token'}
+            },
+            'required': ['token']
+        }
+    },
+    parameters=[
+        OpenApiParameter(
+            name='token',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description='Invitation token (for GET requests)'
+        )
+    ],
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string'},
+                'invitation': {
+                    'type': 'object',
+                    'properties': {
+                        'email': {'type': 'string'},
+                        'tenant_name': {'type': 'string'},
+                        'role': {'type': 'string'},
+                        'expires_at': {'type': 'string', 'format': 'date-time'}
+                    }
+                }
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
 @api_view(['GET', 'POST'])
 @permission_classes([permissions.AllowAny])
 def confirm_invitation_view(request):
@@ -1508,6 +1552,48 @@ def confirm_invitation_view(request):
     })
 
 
+@extend_schema(
+    summary="Resend invitation email",
+    description="Resend invitation email for an existing invitation token. This allows users to request a new invitation email if they didn't receive the original.",
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'token': {'type': 'string', 'description': 'Invitation token'}
+            },
+            'required': ['token']
+        }
+    },
+    responses={
+        200: {
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string'},
+                'invitation': {
+                    'type': 'object',
+                    'properties': {
+                        'email': {'type': 'string'},
+                        'tenant_name': {'type': 'string'},
+                        'role': {'type': 'string'},
+                        'expires_at': {'type': 'string', 'format': 'date-time'}
+                    }
+                }
+            }
+        },
+        400: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        500: {
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def resend_invitation_view(request):
