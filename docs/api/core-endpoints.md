@@ -214,8 +214,29 @@ Financial management.
 - `client` - Filter by client slug
 - `paid` - Filter by payment status
 
+**Response:**
+```json
+{
+  "count": 5,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "invoice-acme-corp-5000-00",
+      "client": "uuid",
+      "client_name": "Acme Corp",
+      "project": "uuid",
+      "amount": "5000.00",
+      "issued_at": "2025-01-01T00:00:00Z",
+      "paid": false
+    }
+  ]
+}
+```
+
 ### Get Invoice Details
-**GET** `/api/invoices/{id}/`
+**GET** `/api/invoices/{slug}/`
 
 ### Create Invoice
 **POST** `/api/invoices/`
@@ -230,6 +251,34 @@ Financial management.
 }
 ```
 
+### List Payments
+**GET** `/api/payments/`
+
+**Query Parameters:**
+- `invoice` - Filter by invoice slug
+
+**Response:**
+```json
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "payment-invoice-uuid-2500-00",
+      "invoice": "uuid",
+      "invoice_id": "INV-001",
+      "amount": "2500.00",
+      "paid_at": "2025-01-15T00:00:00Z"
+    }
+  ]
+}
+```
+
+### Get Payment Details
+**GET** `/api/payments/{slug}/`
+
 ## 👤 Users & Teams
 
 User and team management.
@@ -242,6 +291,33 @@ User and team management.
 
 ### List User Tenants
 **GET** `/api/members/`
+
+**Response:**
+```json
+{
+  "count": 5,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "member-john-doe-acme-corp",
+      "user": "uuid",
+      "user_email": "john.doe@acme.com",
+      "user_first_name": "John",
+      "user_last_name": "Doe",
+      "tenant": "uuid",
+      "tenant_name": "Acme Corp",
+      "is_owner": false,
+      "is_approved": true,
+      "role": "Employee"
+    }
+  ]
+}
+```
+
+### Get Member Details
+**GET** `/api/members/{slug}/`
 
 ### User Invitations
 
@@ -300,8 +376,108 @@ Multi-tenant organization management.
 ### List Tenants
 **GET** `/api/tenants/`
 
+**Response:**
+```json
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "acme-corp",
+      "name": "Acme Corp",
+      "domain": "acme.com",
+      "address": "123 Main St",
+      "phone": "+1-555-0123",
+      "website": "https://acme.com",
+      "industry": "Technology",
+      "company_size": "51-200",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
 ### Get Tenant Details
-**GET** `/api/tenants/{id}/`
+**GET** `/api/tenants/{slug}/`
+
+## 📋 Audit Logs
+
+Comprehensive audit logging for user actions and system events.
+
+### List Audit Logs
+**GET** `/api/accounts/audit-logs/`
+
+**Permissions:** Tenant admins, owners, or superusers only
+
+**Query Parameters:**
+- `action` - Filter by action type (user_signup, user_login, etc.)
+- `resource_type` - Filter by resource type (user, invitation, etc.)
+- `tenant` - Filter by tenant ID (superusers only)
+- `user` - Filter by user ID
+- `ordering` - Sort by field (timestamp, action, etc.)
+
+**Response:**
+```json
+{
+  "count": 25,
+  "next": "http://localhost:8000/api/accounts/audit-logs/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": 1,
+      "action": "user_login",
+      "resource_type": "user",
+      "resource_id": "user-uuid",
+      "old_values": null,
+      "new_values": null,
+      "ip_address": "192.168.1.100",
+      "user_agent": "Mozilla/5.0...",
+      "timestamp": "2025-01-15T10:30:00Z",
+      "metadata": null,
+      "user_email": "john.doe@example.com",
+      "tenant_name": "Acme Corp"
+    },
+    {
+      "id": 2,
+      "action": "user_profile_update",
+      "resource_type": "user_profile",
+      "resource_id": "user-uuid",
+      "old_values": {"first_name": "John"},
+      "new_values": {"first_name": "Johnny"},
+      "ip_address": "192.168.1.100",
+      "user_agent": "Mozilla/5.0...",
+      "timestamp": "2025-01-15T10:35:00Z",
+      "metadata": null,
+      "user_email": "john.doe@example.com",
+      "tenant_name": "Acme Corp"
+    }
+  ]
+}
+```
+
+### Available Actions
+- `user_signup` - User registration
+- `user_login` - User login
+- `user_logout` - User logout
+- `user_profile_update` - Profile changes
+- `user_password_change` - Password changes
+- `invitation_sent` - Invitation sent
+- `invitation_used` - Invitation accepted
+- `invitation_cancelled` - Invitation cancelled
+- `member_approved` - Member approval
+- `project_created` - Project creation
+- `bulk_invitation_started` - Bulk invitation initiated
+- `security_failed_login` - Failed login attempt
+
+### Available Resource Types
+- `user` - User accounts
+- `invitation` - User invitations
+- `user_profile` - User profiles
+- `role` - User roles
+- `tenant` - Organizations
+- `bulk_invitation` - Bulk invitations
 
 ## 🔗 Nested Endpoints
 

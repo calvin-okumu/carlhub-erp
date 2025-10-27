@@ -1,8 +1,11 @@
 from django.shortcuts import render
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from .models import UserProfile, EmployeeDocument
-from .serializers import UserProfileSerializer, EmployeeDocumentSerializer
+from rest_framework.filters import OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import AuditLog, UserProfile, EmployeeDocument
+from .serializers import AuditLogSerializer, UserProfileSerializer, EmployeeDocumentSerializer
+from .permissions import IsTenantAdmin
 from .audit import AuditLogger, get_client_ip
 
 # Create your views here.
@@ -156,3 +159,28 @@ class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
         )
 
         super().perform_destroy(instance)
+
+
+class AuditLogListView(generics.ListAPIView):
+    serializer_class = AuditLogSerializer
+    permission_classes = [IsAuthenticated, IsTenantAdmin]
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['action', 'resource_type', 'tenant', 'user']
+    ordering_fields = ['timestamp', 'action', 'resource_type']
+    ordering = ['-timestamp']
+
+    def get_queryset(self):
+        user = self.request.user
+        # Superusers can see all logs
+        if user.is_superuser:
+            return AuditLog.objects.all()
+
+        # Filter logs based on user's tenant access
+        try:
+            user_tenant = user.usertenant
+            if user_tenant.is_approved:
+                return AuditLog.objects.filter(tenant=user_tenant.tenant)
+        except:
+            pass
+
+        return AuditLog.objects.none()
