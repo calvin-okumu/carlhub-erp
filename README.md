@@ -13,6 +13,8 @@ A comprehensive multi-tenant Customer Relationship Management system with a mode
 - **Automated Progress Tracking**: Real-time progress calculation from individual tasks up to project level
 - **Date Validation**: Hierarchical date constraints ensuring logical timelines across all entities
 - **Financial Management**: Complete invoice and payment processing with client billing
+- **Audit Logging**: Comprehensive security and compliance logging with admin interface and API access
+- **Slug-Based URLs**: Human-readable URLs for all resources (projects, clients, users)
 
 ### User Management & Security
 - **Default User Groups**: 5 pre-configured groups with automatic assignment:
@@ -35,10 +37,10 @@ A comprehensive multi-tenant Customer Relationship Management system with a mode
 
 - **Backend**: Django 5.2, Django REST Framework, PostgreSQL
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Database**: PostgreSQL with multi-tenant data isolation
+- **Database**: PostgreSQL with UUID primary keys and multi-tenant data isolation
 - **Authentication**: Token-based authentication + OAuth (Google, GitHub)
 - **Multi-Tenancy**: Subdomain-based tenant isolation
-- **API Documentation**: Comprehensive endpoint documentation
+- **API Documentation**: Comprehensive endpoint documentation with OpenAPI/Swagger
 - **Deployment**: Docker + Docker Compose for containerized deployment
 
 ## 📋 Prerequisites
@@ -240,7 +242,7 @@ curl -X POST http://localhost:8000/api/projects/{id}/refresh_project_progress/ \
   -H "Authorization: Token YOUR_TOKEN"
 ```
 
-For detailed technical documentation, see `MANUAL.md` and `backend/API_DOCUMENTATION.md`.
+For detailed technical documentation, see the `docs/` directory.
 
 ## 🐳 Docker Deployment
 
@@ -273,8 +275,8 @@ make test-frontend
 ## 📖 API Documentation
 
 Complete API documentation is available at:
-- **Swagger UI**: http://localhost:8000/docs/ (when running)
-- **API Documentation**: `backend/API_DOCUMENTATION.md`
+- **Swagger UI**: http://localhost:8000/api/schema/swagger-ui/ (when running)
+- **API Documentation**: `docs/api/` directory
 
 ### Sample API Usage
 ```bash
@@ -289,8 +291,8 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 # Get project with progress
 curl -H "Authorization: Token YOUR_TOKEN" \
-  http://localhost:8000/api/projects/1/
-# Returns: {"id": 1, "name": "Project Alpha", "progress": 75, ...}
+  http://localhost:8000/api/projects/project-alpha/
+# Returns: {"id": "uuid", "name": "Project Alpha", "slug": "project-alpha", "progress": 75, ...}
 
 # Health check (no auth required)
 curl http://localhost:8000/api/health/
@@ -299,7 +301,7 @@ curl http://localhost:8000/api/health/
 
 ## 📊 Sample Data
 
-Run `python manage.py generate_sample_data` to create realistic test data including tenants, clients, projects, milestones, sprints, tasks, and users.
+Run `python manage.py generate_sample_data` to create realistic test data including tenants, clients, projects, milestones, sprints, tasks, users, and audit logs.
 
 **Note**: Sample data generation is automatically disabled in production environments (when `DEBUG=False`) to prevent accidental data pollution.
 
@@ -376,8 +378,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ### Getting Help
 - **Issues**: Open an issue on GitHub with error logs
-- **Documentation**: See `MANUAL.md` for detailed setup and usage
-- **API Docs**: Available at http://localhost:8000/docs/ when running
+- **Documentation**: See `docs/` directory for detailed setup and usage
+- **API Docs**: Available at http://localhost:8000/api/schema/swagger-ui/ when running
 
 ---
 
