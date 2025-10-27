@@ -67,7 +67,8 @@ export function useClients() {
 
     // Temporary client for optimistic update
     const tempClient: Client = {
-      id: Date.now(), // temporary id
+      id: Date.now().toString(), // temporary id
+      slug: '', // will be set by backend
       name: data.name,
       email: data.email,
       phone: data.phone || '',
@@ -93,41 +94,41 @@ export function useClients() {
     }
   };
 
-  const editClient = async (id: number, data: UpdateClientData) => {
+  const editClient = async (slug: string, data: UpdateClientData) => {
     const token = getToken();
     if (!token) return;
 
-    const originalClient = clients.find(c => c.id === id);
+    const originalClient = clients.find(c => c.slug === slug);
     if (!originalClient) return;
 
     // Optimistic update
-    setClients(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+    setClients(prev => prev.map(c => c.slug === slug ? { ...c, ...data } : c));
 
     setLoading(true);
     try {
-      const updatedClient = await updateClient(token, id, data);
-      setClients(prev => prev.map(c => c.id === id ? updatedClient : c));
+      const updatedClient = await updateClient(token, slug, data);
+      setClients(prev => prev.map(c => c.slug === slug ? updatedClient : c));
     } catch (err) {
       // Revert on error
-      setClients(prev => prev.map(c => c.id === id ? originalClient : c));
+      setClients(prev => prev.map(c => c.slug === slug ? originalClient : c));
       setError(err instanceof Error ? err.message : "Failed to update client.");
     } finally {
       setLoading(false);
     }
   };
 
-  const removeClient = async (id: number) => {
+  const removeClient = async (slug: string) => {
     const token = getToken();
     if (!token) return;
 
-    const clientToRemove = clients.find(c => c.id === id);
+    const clientToRemove = clients.find(c => c.slug === slug);
     if (!clientToRemove) return;
 
-    setClients((prev) => prev.filter((c) => c.id !== id));
+    setClients((prev) => prev.filter((c) => c.slug !== slug));
 
     setLoading(true);
     try {
-      await deleteClient(token, id);
+      await deleteClient(token, slug);
     } catch (err) {
       setClients((prev) => [...prev, clientToRemove]);
       setError(err instanceof Error ? err.message : "Failed to delete client.");

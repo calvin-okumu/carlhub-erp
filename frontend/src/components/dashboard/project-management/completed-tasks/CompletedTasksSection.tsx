@@ -43,14 +43,14 @@ export default function CompletedTasksSection({ projectSlug }: CompletedTasksSec
         fetchCompletedTasks();
     }, [projectSlug]);
 
-    const handleDeleteTask = async (taskId: number) => {
+    const handleDeleteTask = async (taskSlug: string) => {
         if (!confirm('Are you sure you want to delete this completed task?')) return;
 
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskId}/`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskSlug}/`, {
                 method: 'DELETE',
                 headers: {
                     Authorization: `Token ${token}`,
@@ -62,7 +62,7 @@ export default function CompletedTasksSection({ projectSlug }: CompletedTasksSec
             }
 
             // Remove from local state
-            setTasks(tasks.filter(task => task.id !== taskId));
+            setTasks(tasks.filter(task => task.slug !== taskSlug));
         } catch (err) {
             console.error('Failed to delete task:', err);
             alert('Failed to delete task');
@@ -94,11 +94,11 @@ export default function CompletedTasksSection({ projectSlug }: CompletedTasksSec
                         data: [
                             task.title,
                             <span key="desc" className="max-w-xs truncate block">{task.description || 'No description'}</span>,
-                            task.sprint_name || 'N/A',
+                            task.sprint_name || task.sprint || 'N/A',
                             task.updated_at ? new Date(task.updated_at).toLocaleDateString() : 'N/A',
                             <Button
                                 key="delete"
-                                onClick={() => handleDeleteTask(task.id)}
+                                onClick={() => handleDeleteTask(task.slug)}
                                 variant="outline"
                                 size="sm"
                                 className="text-red-600 hover:text-red-800"

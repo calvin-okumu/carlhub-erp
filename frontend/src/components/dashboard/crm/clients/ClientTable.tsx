@@ -12,7 +12,7 @@ interface ClientTableProps {
     loading: boolean;
     error: string | null;
     onEditClient: (client: Client) => void;
-    onDeleteClient: (id: number) => void;
+    onDeleteClient: (slug: string) => void;
     pagination?: {
         count: number;
         next: string | null;
@@ -29,9 +29,9 @@ export default function ClientTable({ clients, loading, error, onEditClient, onD
         onEditClient(client);
     };
 
-    const handleDelete = (id: number) => {
+    const handleDelete = (slug: string) => {
         if (confirm("Are you sure you want to delete this client?")) {
-            onDeleteClient(id);
+            onDeleteClient(slug);
         }
     };
 
@@ -60,7 +60,7 @@ export default function ClientTable({ clients, loading, error, onEditClient, onD
             <Button onClick={() => handleEdit(client)} variant="outline" size="sm">
                 <Edit className="h-4 w-4" />
             </Button>
-            <Button onClick={() => handleDelete(client.id)} variant="danger" size="sm">
+            <Button onClick={() => handleDelete(client.slug)} variant="danger" size="sm">
                 <Trash2 className="h-4 w-4" />
             </Button>
         </div>

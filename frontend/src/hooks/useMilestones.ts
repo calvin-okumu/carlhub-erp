@@ -44,7 +44,7 @@ export function useMilestones(projectSlug: string, tenant?: number) {
     actual_start?: string;
     due_date?: string;
     assignee?: number;
-    project: number;
+    project: string;
     tenant: number;
   }) => {
     const token = getToken();
@@ -90,7 +90,7 @@ export function useMilestones(projectSlug: string, tenant?: number) {
   };
 
   const editMilestone = async (
-    id: number,
+    slug: string,
     data: Partial<{
       name: string;
       description: string;
@@ -99,30 +99,30 @@ export function useMilestones(projectSlug: string, tenant?: number) {
       actual_start: string;
       due_date: string;
       assignee: number;
-      project: number;
+      project: string;
     }>,
   ) => {
     const token = getToken();
     if (!token) return;
 
-    const originalMilestone = milestones.find((m) => m.id === id);
+    const originalMilestone = milestones.find((m) => m.slug === slug);
     if (!originalMilestone) return;
 
     // Optimistic update
     setMilestones((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, ...data } : m)),
+      prev.map((m) => (m.slug === slug ? { ...m, ...data } : m)),
     );
 
     setLoading(true);
     try {
-      const updatedMilestone = await updateMilestone(token, id, data);
+      const updatedMilestone = await updateMilestone(token, slug, data);
       setMilestones((prev) =>
-        prev.map((m) => (m.id === id ? updatedMilestone : m)),
+        prev.map((m) => (m.slug === slug ? updatedMilestone : m)),
       );
     } catch (err) {
       // Revert on error
       setMilestones((prev) =>
-        prev.map((m) => (m.id === id ? originalMilestone : m)),
+        prev.map((m) => (m.slug === slug ? originalMilestone : m)),
       );
       setError(
         err instanceof Error ? err.message : "Failed to update milestone.",
@@ -132,18 +132,18 @@ export function useMilestones(projectSlug: string, tenant?: number) {
     }
   };
 
-  const removeMilestone = async (id: number) => {
+  const removeMilestone = async (slug: string) => {
     const token = getToken();
     if (!token) return;
 
-    const milestoneToRemove = milestones.find((m) => m.id === id);
+    const milestoneToRemove = milestones.find((m) => m.slug === slug);
     if (!milestoneToRemove) return;
 
-    setMilestones((prev) => prev.filter((m) => m.id !== id));
+    setMilestones((prev) => prev.filter((m) => m.slug !== slug));
 
     setLoading(true);
     try {
-      await deleteMilestone(token, id);
+      await deleteMilestone(token, slug);
     } catch (err) {
       setMilestones((prev) => [...prev, milestoneToRemove]);
       setError(

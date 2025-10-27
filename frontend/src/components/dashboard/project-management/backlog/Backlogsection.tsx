@@ -63,8 +63,8 @@ export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
         title: string;
         description?: string;
         status: string;
-        milestone: number;
-        sprint?: number;
+        milestone: string;
+        sprint?: string;
         assignee?: number;
         start_date?: string;
         end_date?: string;

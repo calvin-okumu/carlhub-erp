@@ -40,7 +40,7 @@ export default function ClientSection() {
             if (modalMode === 'add') {
                 await addClient(data as CreateClientData);
             } else if (selectedClient) {
-                await editClient(selectedClient.id, data as UpdateClientData);
+                await editClient(selectedClient.slug, data as UpdateClientData);
             }
             setModalOpen(false);
         } catch (error) {

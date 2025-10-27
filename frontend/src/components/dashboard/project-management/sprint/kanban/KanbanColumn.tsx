@@ -7,7 +7,7 @@ interface KanbanColumnProps {
     tasks: Task[];
     color: string;
     onTaskClick: (task: Task) => void;
-    onStatusChange: (taskId: number, newStatus: string) => void;
+    onStatusChange: (taskSlug: string, newStatus: string) => void;
 }
 
 export default function KanbanColumn({ title, tasks, color, onTaskClick, onStatusChange }: KanbanColumnProps) {

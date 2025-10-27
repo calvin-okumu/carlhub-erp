@@ -62,15 +62,15 @@ import { Plus } from 'lucide-react';
         actual_start?: string;
         due_date?: string;
         assignee?: number;
-        project: number;
+        project: string;
         tenant: number;
     }) => {
         try {
             if (modalMode === 'add') {
                 await addMilestone(data);
             } else if (selectedMilestone) {
-                await editMilestone(selectedMilestone.id, data);
-            }
+                 await editMilestone(selectedMilestone.slug, data);
+             }
             setModalOpen(false);
         } catch (error) {
             console.error('Error saving milestone:', error);
@@ -105,7 +105,7 @@ import { Plus } from 'lucide-react';
                 onClose={() => setModalOpen(false)}
                 mode={modalMode}
                 milestone={selectedMilestone || undefined}
-                projectId={project?.id}
+                projectId={project?.id || ''}
                  tenant={tenantId}
                 assignees={users}
                 projectStart={project?.start_date}

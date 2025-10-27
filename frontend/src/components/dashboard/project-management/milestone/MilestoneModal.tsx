@@ -13,7 +13,7 @@ interface MilestoneModalProps {
     onClose: () => void;
     mode: 'add' | 'edit';
     milestone?: Milestone;
-    projectId: number;
+    projectId: string;
     tenant: number;
     assignees: UserTenant[];
     projectStart?: string;
@@ -26,7 +26,7 @@ interface MilestoneModalProps {
         actual_start?: string;
         due_date?: string;
         assignee?: number;
-        project: number;
+        project: string;
         tenant: number;
     }) => void;
 }

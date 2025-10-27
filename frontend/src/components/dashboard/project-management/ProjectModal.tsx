@@ -19,7 +19,7 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
     const { clients, refetch } = useClients();
     const [formData, setFormData] = useState({
         name: '',
-        client: 0,
+        client: '',
         status: 'active' as 'active' | 'completed' | 'on-hold',
         priority: 'medium' as 'high' | 'medium' | 'low',
         start_date: '',
@@ -48,7 +48,7 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
         } else {
             setFormData({
                 name: '',
-                client: clients.length > 0 ? clients[0].id : 0,
+                client: clients.length > 0 ? clients[0].id : '',
                 status: 'active',
                 priority: 'medium',
                 start_date: '',

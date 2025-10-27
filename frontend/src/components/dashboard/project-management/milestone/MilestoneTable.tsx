@@ -12,7 +12,7 @@ interface MilestoneTableProps {
     loading: boolean;
     error: string | null;
     onEditMilestone: (milestone: Milestone) => void;
-    onDeleteMilestone: (id: number) => void;
+    onDeleteMilestone: (slug: string) => void;
     onAddMilestone: () => void;
     searchValue: string;
 }
@@ -42,9 +42,9 @@ const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading,
         onEditMilestone(milestone);
     }, [onEditMilestone]);
 
-    const handleDelete = useCallback((id: number) => {
+    const handleDelete = useCallback((slug: string) => {
         if (confirm("Are you sure you want to delete this milestone?")) {
-            onDeleteMilestone(id);
+            onDeleteMilestone(slug);
         }
     }, [onDeleteMilestone]);
 
@@ -75,7 +75,7 @@ const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading,
                 <Button onClick={() => handleEdit(milestone)} variant="outline" size="sm">
                     <Edit className="h-4 w-4" />
                 </Button>
-                <Button onClick={() => handleDelete(milestone.id)} variant="danger" size="sm">
+                <Button onClick={() => handleDelete(milestone.slug)} variant="danger" size="sm">
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>

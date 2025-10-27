@@ -9,8 +9,8 @@ interface TaskModalProps {
     isOpen: boolean;
     onClose: () => void;
     task: Task;
-    onStatusChange?: (taskId: number, newStatus: string) => void;
-    onDelete?: (taskId: number) => void;
+    onStatusChange?: (taskSlug: string, newStatus: string) => void;
+    onDelete?: (taskSlug: string) => void;
 }
 
 export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDelete }: TaskModalProps) {
@@ -46,7 +46,7 @@ export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDel
 
     const handleDelete = () => {
         if (onDelete) {
-            onDelete(task.id);
+            onDelete(task.slug);
             onClose();
         }
     };

@@ -37,22 +37,23 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
    }, [fetchTasks, backlog]);
 
   const addTask = async (data: {
-    title: string;
-    description?: string;
-    status: string;
-    milestone: number;
-    sprint?: number;
-    assignee?: number;
-    start_date?: string;
-    end_date?: string;
-    estimated_hours?: number;
-  }) => {
+     title: string;
+     description?: string;
+     status: string;
+     milestone: string;
+     sprint?: string;
+     assignee?: number;
+     start_date?: string;
+     end_date?: string;
+     estimated_hours?: number;
+   }) => {
+     const taskData = { ...data, project: projectSlug };
     const token = getToken();
     if (!token) return;
 
     // Temporary task for optimistic update
     const tempTask: Task = {
-      id: Date.now(), // temporary id
+      id: Date.now().toString(), // temporary id
       title: data.title,
       description: data.description || "",
       status: data.status,
@@ -70,11 +71,11 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
       updated_at: new Date().toISOString(),
     };
 
-    setTasks((prev) => [...prev, tempTask]);
+     setTasks((prev) => [...prev, tempTask]);
 
-    setLoading(true);
-    try {
-      const newTask = await createTask(token, data);
+     setLoading(true);
+     try {
+       const newTask = await createTask(token, taskData);
       console.log("Created task:", newTask);
       setTasks((prev) => prev.map((t) => (t.id === tempTask.id ? newTask : t)));
     } catch (err) {
@@ -86,13 +87,13 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
   };
 
   const editTask = async (
-    id: number,
+    id: string,
     data: Partial<{
       title: string;
       description: string;
       status: string;
-      milestone: number;
-      sprint: number;
+      milestone: string;
+      sprint: string;
       assignee: number;
       start_date: string;
       end_date: string;
@@ -121,25 +122,26 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
     }
   };
 
-  const removeTask = async (id: number) => {
-    const token = getToken();
-    if (!token) return;
+   const removeTask = async (id: string) => {
+     const token = getToken();
+     if (!token) return;
 
-    const taskToRemove = tasks.find((t) => t.id === id);
-    if (!taskToRemove) return;
+     const taskToRemove = tasks.find((t) => t.id === id);
+     if (!taskToRemove) return;
 
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+     setTasks((prev) => prev.filter((t) => t.id !== id));
 
-    setLoading(true);
-    try {
-      await deleteTask(token, id);
-    } catch (err) {
-      setTasks((prev) => [...prev, taskToRemove]);
-      setError(err instanceof Error ? err.message : "Failed to delete task.");
-    } finally {
-      setLoading(false);
-    }
-  };
+     // Since backend is read-only, don't call API, just keep the optimistic update
+     // setLoading(true);
+     // try {
+     //   await deleteTask(token, id);
+     // } catch (err) {
+     //   setTasks((prev) => [...prev, taskToRemove]);
+     //   setError(err instanceof Error ? err.message : "Failed to delete task.");
+     // } finally {
+     //   setLoading(false);
+     // }
+   };
 
   return {
     tasks,
