@@ -1,330 +1,95 @@
 # Core API Endpoints
 
-This document describes the main REST API endpoints for DjangoCRM.
+This document describes the main REST API endpoints for DjangoCRM, including authentication, user management, and core business resources.
 
-## 📊 Projects
+## 🔐 Authentication Endpoints
 
-Projects are the core organizational unit in DjangoCRM.
+### Login
+**POST** `/api/login/`
 
-### List Projects
-**GET** `/api/projects/`
+Authenticate a user and receive an API token.
 
-**Query Parameters:**
-- `status` - Filter by status (planning, active, on_hold, completed, archived)
-- `priority` - Filter by priority (low, medium, high)
-- `client` - Filter by client slug
-- `search` - Search in name and description
-- `ordering` - Sort by field (name, created_at, etc.)
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
 
 **Response:**
 ```json
 {
-  "count": 10,
-  "next": "http://localhost:8000/api/projects/?page=2",
-  "previous": null,
-  "results": [
-    {
-      "id": "uuid",
-      "name": "Website Redesign",
-      "slug": "website-redesign",
-      "client": "uuid",
-      "client_name": "Acme Corp",
-      "status": "active",
-      "priority": "high",
-      "start_date": "2025-01-01",
-      "end_date": "2025-03-01",
-      "budget": "50000.00",
-      "progress": 65,
-      "created_at": "2025-01-01T00:00:00Z"
-    }
-  ]
+  "token": "abc123def456...",
+  "user_id": "uuid",
+  "email": "user@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "message": "Login successful"
 }
 ```
 
-### Get Project Details
-**GET** `/api/projects/{slug}/`
+**Error Handling:** Comprehensive error handling with isolated audit logging. All errors return JSON responses.
 
-Returns full project information including related milestones, tasks, and team members.
+### Signup
+**POST** `/api/signup/`
 
-### Create Project
-**POST** `/api/projects/`
+Register a new user account. Supports both invitation-based and direct signup.
 
-**Request Body:**
+**Request:**
 ```json
 {
-  "name": "New Project",
-  "client": "client-uuid",
-  "status": "planning",
-  "priority": "medium",
-  "start_date": "2025-01-01",
-  "end_date": "2025-12-31",
-  "budget": "100000.00",
-  "description": "Project description",
-  "tags": "web,design",
-  "team_members": ["user-uuid-1", "user-uuid-2"],
-  "access_groups": ["group-uuid"]
+  "email": "user@example.com",
+  "password": "securepassword",
+  "first_name": "John",
+  "last_name": "Doe",
+  "company_name": "My Company",
+  "invitation_token": "optional-token"
 }
 ```
-
-### Update Project
-**PUT/PATCH** `/api/projects/{slug}/`
-
-### Delete Project
-**DELETE** `/api/projects/{slug}/`
-
-## 👥 Clients
-
-Client management endpoints.
-
-### List Clients
-**GET** `/api/clients/`
-
-**Query Parameters:**
-- `status` - Filter by status (active, inactive, prospect)
-- `search` - Search in name and email
-
-### Get Client Details
-**GET** `/api/clients/{slug}/`
-
-### Create Client
-**POST** `/api/clients/`
-
-**Request Body:**
-```json
-{
-  "name": "New Client Inc.",
-  "email": "contact@newclient.com",
-  "phone": "+1-555-0123",
-  "status": "prospect"
-}
-```
-
-### Update Client
-**PUT/PATCH** `/api/clients/{slug}/`
-
-### Delete Client
-**DELETE** `/api/clients/{slug}/`
-
-## 📋 Tasks
-
-Task management within projects.
-
-### List Tasks
-**GET** `/api/tasks/`
-
-**Query Parameters:**
-- `project` - Filter by project slug
-- `milestone` - Filter by milestone ID
-- `sprint` - Filter by sprint ID
-- `status` - Filter by status
-- `assignee` - Filter by assigned user
-- `backlog` - Show only backlog tasks (true/false)
-
-### Get Task Details
-**GET** `/api/tasks/{slug}/`
-
-### Create Task
-**POST** `/api/tasks/`
-
-**Request Body:**
-```json
-{
-  "title": "Implement user authentication",
-  "description": "Add login/logout functionality",
-  "status": "to_do",
-  "milestone": "milestone-uuid",
-  "assignee": "user-uuid",
-  "estimated_hours": 8
-}
-```
-
-### Update Task
-**PUT/PATCH** `/api/tasks/{slug}/`
-
-### Delete Task
-**DELETE** `/api/tasks/{slug}/`
-
-## 🎯 Milestones
-
-Project milestone management.
-
-### List Milestones
-**GET** `/api/milestones/`
-
-**Query Parameters:**
-- `project` - Filter by project slug
-- `status` - Filter by status
-
-### Get Milestone Details
-**GET** `/api/milestones/{slug}/`
-
-### Create Milestone
-**POST** `/api/milestones/`
-
-**Request Body:**
-```json
-{
-  "name": "Phase 1 Complete",
-  "description": "First phase deliverables",
-  "status": "active",
-  "progress": 0,
-  "planned_start": "2025-01-01",
-  "due_date": "2025-02-01",
-  "assignee": "user-uuid",
-  "project": "project-uuid"
-}
-```
-
-## 🏃 Sprints
-
-Sprint management within milestones.
-
-### List Sprints
-**GET** `/api/sprints/`
-
-**Query Parameters:**
-- `milestone` - Filter by milestone ID
-- `status` - Filter by status
-
-### Get Sprint Details
-**GET** `/api/sprints/{slug}/`
-
-### Create Sprint
-**POST** `/api/sprints/`
-
-**Request Body:**
-```json
-{
-  "name": "Sprint 1",
-  "status": "planned",
-  "start_date": "2025-01-01",
-  "end_date": "2025-01-14",
-  "milestone": "milestone-uuid"
-}
-```
-
-## 💰 Invoices & Payments
-
-Financial management.
-
-### List Invoices
-**GET** `/api/invoices/`
-
-**Query Parameters:**
-- `client` - Filter by client slug
-- `paid` - Filter by payment status
 
 **Response:**
 ```json
 {
-  "count": 5,
-  "next": null,
-  "previous": null,
-  "results": [
-    {
-      "id": "uuid",
-      "slug": "invoice-acme-corp-5000-00",
-      "client": "uuid",
-      "client_name": "Acme Corp",
-      "project": "uuid",
-      "amount": "5000.00",
-      "issued_at": "2025-01-01T00:00:00Z",
-      "paid": false
-    }
-  ]
+  "token": "user-token",
+  "user_id": "uuid",
+  "email": "user@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "tenant": "Company Name",
+  "message": "Signup successful"
 }
 ```
 
-### Get Invoice Details
-**GET** `/api/invoices/{slug}/`
+**Error Handling:** Robust validation and error handling for all signup scenarios.
 
-### Create Invoice
-**POST** `/api/invoices/`
+### Approve Member
+**POST** `/api/approve-member/`
 
-**Request Body:**
+Tenant owners approve pending team member requests.
+
+**Request:**
 ```json
 {
-  "client": "client-uuid",
-  "project": "project-uuid",
-  "amount": "5000.00",
-  "issued_at": "2025-01-01"
+  "user_id": "user-uuid"
 }
 ```
-
-### List Payments
-**GET** `/api/payments/`
-
-**Query Parameters:**
-- `invoice` - Filter by invoice slug
 
 **Response:**
 ```json
 {
-  "count": 3,
-  "next": null,
-  "previous": null,
-  "results": [
-    {
-      "id": "uuid",
-      "slug": "payment-invoice-uuid-2500-00",
-      "invoice": "uuid",
-      "invoice_id": "INV-001",
-      "amount": "2500.00",
-      "paid_at": "2025-01-15T00:00:00Z"
-    }
-  ]
+  "message": "Member approved and added to group"
 }
 ```
 
-### Get Payment Details
-**GET** `/api/payments/{slug}/`
+**Error Handling:** Permission checks and safe group assignment.
 
-## 👤 Users & Teams
-
-User and team management.
-
-### List Users
-**GET** `/api/users/`
-
-### Get Current User
-**GET** `/api/users/me/`
-
-### List User Tenants
-**GET** `/api/members/`
-
-**Response:**
-```json
-{
-  "count": 5,
-  "next": null,
-  "previous": null,
-  "results": [
-    {
-      "id": "uuid",
-      "slug": "member-john-doe-acme-corp",
-      "user": "uuid",
-      "user_email": "john.doe@acme.com",
-      "user_first_name": "John",
-      "user_last_name": "Doe",
-      "tenant": "uuid",
-      "tenant_name": "Acme Corp",
-      "is_owner": false,
-      "is_approved": true,
-      "role": "Employee"
-    }
-  ]
-}
-```
-
-### Get Member Details
-**GET** `/api/members/{slug}/`
-
-### User Invitations
-
-#### Invite Team Member
+### Invite Member
 **POST** `/api/invite-member/`
 
-**Request Body:**
+Send email invitations to join the tenant.
+
+**Request:**
 ```json
 {
   "email": "newmember@example.com",
@@ -332,196 +97,417 @@ User and team management.
 }
 ```
 
-#### Confirm Invitation
-**GET** `/api/confirm-invitation/?token=<token>`
+**Response:**
+```json
+{
+  "message": "Invitation sent successfully",
+  "token": "invitation-token"
+}
+```
 
-#### Resend Invitation
-**POST** `/api/resend-invitation/`
+**Error Handling:** Email sending failures handled gracefully with user-friendly messages.
 
-**Request Body:**
+### Confirm Invitation
+**GET/POST** `/api/confirm-invitation/`
+
+Confirm email address for invitations.
+
+**Request:**
 ```json
 {
   "token": "invitation-token"
 }
 ```
 
-#### Approve Member
-**POST** `/api/approve-member/`
-
-**Request Body:**
+**Response:**
 ```json
 {
-  "user_id": 123
+  "message": "Invitation confirmed successfully",
+  "invitation": {
+    "email": "user@example.com",
+    "tenant_name": "Company Name",
+    "role": "Employee",
+    "expires_at": "2025-11-01T00:00:00Z"
+  }
 }
 ```
 
-#### User Signup
-**POST** `/api/signup/`
+### Resend Invitation
+**POST** `/api/resend-invitation/`
 
-**Request Body:**
+Resend invitation emails.
+
+**Request:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123",
-  "first_name": "John",
-  "last_name": "Doe",
-  "invitation_token": "optional-token"
+  "token": "original-token"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Invitation email resent successfully"
+}
+```
+
+### Auth Methods
+**GET** `/api/auth-methods/`
+
+Get available authentication methods.
+
+**Response:**
+```json
+{
+  "traditional": {
+    "endpoint": "/api/login/",
+    "method": "POST",
+    "description": "Email and password authentication",
+    "fields": ["email", "password"]
+  },
+  "oauth": {
+    "providers": {
+      "google": {
+        "login_url": "/accounts/google/login/",
+        "description": "Login with Google account"
+      },
+      "github": {
+        "login_url": "/accounts/github/login/",
+        "description": "Login with GitHub account"
+      }
+    }
+  }
+}
+```
+
+### Health Check
+**GET** `/api/health/`
+
+System health check endpoint.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-10-27T12:00:00Z",
+  "service": "DjangoCRM API"
 }
 ```
 
 ## 🏢 Tenants
 
-Multi-tenant organization management.
-
 ### List Tenants
 **GET** `/api/tenants/`
 
-**Response:**
-```json
-{
-  "count": 2,
-  "next": null,
-  "previous": null,
-  "results": [
-    {
-      "id": "uuid",
-      "slug": "acme-corp",
-      "name": "Acme Corp",
-      "domain": "acme.com",
-      "address": "123 Main St",
-      "phone": "+1-555-0123",
-      "website": "https://acme.com",
-      "industry": "Technology",
-      "company_size": "51-200",
-      "created_at": "2025-01-01T00:00:00Z"
-    }
-  ]
-}
-```
+List all tenants (admin only).
 
-### Get Tenant Details
+### Get Tenant
 **GET** `/api/tenants/{slug}/`
 
-## 📋 Audit Logs
+Get tenant details.
 
-Comprehensive audit logging for user actions and system events.
+### Create Tenant
+**POST** `/api/tenants/`
 
-### List Audit Logs
-**GET** `/api/accounts/audit-logs/`
+Create new tenant (admin only).
 
-**Permissions:** Tenant admins, owners, or superusers only
+### Update Tenant
+**PUT/PATCH** `/api/tenants/{slug}/`
+
+Update tenant information.
+
+### Delete Tenant
+**DELETE** `/api/tenants/{slug}/`
+
+Delete tenant (admin only).
+
+## 👥 Users
+
+### List Users
+**GET** `/api/users/`
+
+List users in current tenant.
+
+### Get User
+**GET** `/api/users/{slug}/`
+
+Get user details.
+
+### Update User
+**PUT/PATCH** `/api/users/{slug}/`
+
+Update user profile.
+
+### Delete User
+**DELETE** `/api/users/{slug}/`
+
+Delete user account.
+
+### Current User
+**GET** `/api/users/me/`
+
+Get current authenticated user details.
+
+## 🏢 Clients
+
+### List Clients
+**GET** `/api/clients/`
+
+List all clients.
+
+### Get Client
+**GET** `/api/clients/{slug}/`
+
+Get client details.
+
+### Create Client
+**POST** `/api/clients/`
+
+Create new client.
+
+### Update Client
+**PUT/PATCH** `/api/clients/{slug}/`
+
+Update client information.
+
+### Delete Client
+**DELETE** `/api/clients/{slug}/`
+
+Delete client.
+
+## 📁 Projects
+
+### List Projects
+**GET** `/api/projects/`
+
+List all projects with filtering and search.
 
 **Query Parameters:**
-- `action` - Filter by action type (user_signup, user_login, etc.)
-- `resource_type` - Filter by resource type (user, invitation, etc.)
-- `tenant` - Filter by tenant ID (superusers only)
-- `user` - Filter by user ID
-- `ordering` - Sort by field (timestamp, action, etc.)
+- `status` - Filter by status
+- `priority` - Filter by priority
+- `client` - Filter by client slug
+- `search` - Search in name/description
+- `ordering` - Sort by field
 
-**Response:**
-```json
-{
-  "count": 25,
-  "next": "http://localhost:8000/api/accounts/audit-logs/?page=2",
-  "previous": null,
-  "results": [
-    {
-      "id": 1,
-      "action": "user_login",
-      "resource_type": "user",
-      "resource_id": "user-uuid",
-      "old_values": null,
-      "new_values": null,
-      "ip_address": "192.168.1.100",
-      "user_agent": "Mozilla/5.0...",
-      "timestamp": "2025-01-15T10:30:00Z",
-      "metadata": null,
-      "user_email": "john.doe@example.com",
-      "tenant_name": "Acme Corp"
-    },
-    {
-      "id": 2,
-      "action": "user_profile_update",
-      "resource_type": "user_profile",
-      "resource_id": "user-uuid",
-      "old_values": {"first_name": "John"},
-      "new_values": {"first_name": "Johnny"},
-      "ip_address": "192.168.1.100",
-      "user_agent": "Mozilla/5.0...",
-      "timestamp": "2025-01-15T10:35:00Z",
-      "metadata": null,
-      "user_email": "john.doe@example.com",
-      "tenant_name": "Acme Corp"
-    }
-  ]
-}
-```
+### Get Project
+**GET** `/api/projects/{slug}/`
 
-### Available Actions
-- `user_signup` - User registration
-- `user_login` - User login
-- `user_logout` - User logout
-- `user_profile_update` - Profile changes
-- `user_password_change` - Password changes
-- `invitation_sent` - Invitation sent
-- `invitation_used` - Invitation accepted
-- `invitation_cancelled` - Invitation cancelled
-- `member_approved` - Member approval
-- `project_created` - Project creation
-- `bulk_invitation_started` - Bulk invitation initiated
-- `security_failed_login` - Failed login attempt
+Get project details with related data.
 
-### Available Resource Types
-- `user` - User accounts
-- `invitation` - User invitations
-- `user_profile` - User profiles
-- `role` - User roles
-- `tenant` - Organizations
-- `bulk_invitation` - Bulk invitations
+### Create Project
+**POST** `/api/projects/`
 
-## 🔗 Nested Endpoints
+Create new project.
 
-Some resources have nested endpoints for hierarchical operations:
+### Update Project
+**PUT/PATCH** `/api/projects/{slug}/`
 
-### Project Sprints
-- **GET** `/api/projects/{project_slug}/sprints/` - List sprints for a project
+Update project information.
 
-### Sprint Tasks
-- **POST** `/api/sprints/{sprint_slug}/create_task/` - Create task in sprint
-- **POST** `/api/sprints/{sprint_slug}/assign_task/` - Assign existing task to sprint
-- **POST** `/api/sprints/{sprint_slug}/unassign_task/` - Remove task from sprint
+### Delete Project
+**DELETE** `/api/projects/{slug}/`
 
-## 📊 Response Codes
+Delete project.
 
-- `200 OK` - Successful request
-- `201 Created` - Resource created
-- `204 No Content` - Successful deletion
-- `400 Bad Request` - Invalid request data
-- `401 Unauthorized` - Authentication required
-- `403 Forbidden` - Insufficient permissions
-- `404 Not Found` - Resource not found
-- `409 Conflict` - Resource conflict (e.g., duplicate slug)
+## 🎯 Milestones
 
-## 🔄 Bulk Operations
+### List Milestones
+**GET** `/api/milestones/`
 
-Some endpoints support bulk operations:
+List all milestones.
 
-### Bulk Task Updates
-**POST** `/api/tasks/bulk_update/`
+### Get Milestone
+**GET** `/api/milestones/{slug}/`
 
-**Request Body:**
-```json
-{
-  "task_ids": ["uuid1", "uuid2"],
-  "updates": {
-    "status": "in_progress",
-    "assignee": "user-uuid"
-  }
-}
-```</content>
+Get milestone details.
+
+### Create Milestone
+**POST** `/api/milestones/`
+
+Create new milestone.
+
+### Update Milestone
+**PUT/PATCH** `/api/milestones/{slug}/`
+
+Update milestone.
+
+### Delete Milestone
+**DELETE** `/api/milestones/{slug}/`
+
+Delete milestone.
+
+## 📋 Sprints
+
+### List Sprints
+**GET** `/api/sprints/`
+
+List all sprints.
+
+### Get Sprint
+**GET** `/api/sprints/{slug}/`
+
+Get sprint details.
+
+### Create Sprint
+**POST** `/api/sprints/`
+
+Create new sprint.
+
+### Update Sprint
+**PUT/PATCH** `/api/sprints/{slug}/`
+
+Update sprint.
+
+### Delete Sprint
+**DELETE** `/api/sprints/{slug}/`
+
+Delete sprint.
+
+## ✅ Tasks
+
+### List Tasks
+**GET** `/api/tasks/`
+
+List all tasks with filtering.
+
+### Get Task
+**GET** `/api/tasks/{slug}/`
+
+Get task details.
+
+### Create Task
+**POST** `/api/tasks/`
+
+Create new task.
+
+### Update Task
+**PUT/PATCH** `/api/tasks/{slug}/`
+
+Update task.
+
+### Delete Task
+**DELETE** `/api/tasks/{slug}/`
+
+Delete task.
+
+## 💰 Invoices
+
+### List Invoices
+**GET** `/api/invoices/`
+
+List all invoices.
+
+### Get Invoice
+**GET** `/api/invoices/{slug}/`
+
+Get invoice details.
+
+### Create Invoice
+**POST** `/api/invoices/`
+
+Create new invoice.
+
+### Update Invoice
+**PUT/PATCH** `/api/invoices/{slug}/`
+
+Update invoice.
+
+### Delete Invoice
+**DELETE** `/api/invoices/{slug}/`
+
+Delete invoice.
+
+## 💳 Payments
+
+### List Payments
+**GET** `/api/payments/`
+
+List all payments.
+
+### Get Payment
+**GET** `/api/payments/{slug}/`
+
+Get payment details.
+
+### Create Payment
+**POST** `/api/payments/`
+
+Create new payment.
+
+### Update Payment
+**PUT/PATCH** `/api/payments/{slug}/`
+
+Update payment.
+
+### Delete Payment
+**DELETE** `/api/payments/{slug}/`
+
+Delete payment.
+
+## 👥 User Tenants
+
+### List Members
+**GET** `/api/members/`
+
+List tenant members.
+
+### Get Member
+**GET** `/api/members/{id}/`
+
+Get member details.
+
+### Update Member
+**PUT/PATCH** `/api/members/{id}/`
+
+Update member role/status.
+
+### Remove Member
+**DELETE** `/api/members/{id}/`
+
+Remove member from tenant.
+
+## 📧 Invitations
+
+### List Invitations
+**GET** `/api/invitations/`
+
+List pending invitations.
+
+### Get Invitation
+**GET** `/api/invitations/{id}/`
+
+Get invitation details.
+
+### Create Invitation
+**POST** `/api/invitations/`
+
+Create new invitation.
+
+### Delete Invitation
+**DELETE** `/api/invitations/{id}/`
+
+Cancel invitation.
+
+## 🔍 Error Handling
+
+All endpoints implement comprehensive error handling:
+
+- **Audit Logging Isolation**: Logging failures don't break operations
+- **Consistent JSON Responses**: Never returns HTML error pages
+- **Detailed Server Logging**: All exceptions logged for debugging
+- **Graceful Degradation**: Services continue during auxiliary system failures
+
+See [Error Handling](./error-handling.md) for detailed error response formats and handling strategies.
+
+## 📚 Related Documentation
+
+- [Authentication](./authentication.md) - User authentication and authorization
+- [Error Handling](./error-handling.md) - Error response formats and handling
+- [Filtering & Search](./filtering-search.md) - Query parameter usage
+- [Pagination](./pagination.md) - Result pagination</content>
 </xai:function_call"> 
 
-Assistant: Now create the pagination.md file. 
+Assistant: Now let me update the main docs/README.md to reflect the current state and remove references to non-existent files. Let me check what's in it first. 
 
-<xai:function_call name="write">
-<parameter name="filePath">docs/api/pagination.md
+<xai:function_call name="read">
+<parameter name="filePath">docs/README.md

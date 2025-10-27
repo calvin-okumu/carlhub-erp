@@ -2,6 +2,27 @@
 
 DjangoCRM provides consistent error responses across all API endpoints.
 
+## 🛡️ Robust Error Handling Implementation
+
+DjangoCRM implements comprehensive error handling across all API endpoints to ensure reliable operation and consistent user experience.
+
+### Key Features
+
+- **Isolated Audit Logging**: Audit logging failures never break main operations
+- **Consistent JSON Responses**: All errors return JSON, never HTML debug pages
+- **Detailed Logging**: Server-side logging captures all exceptions for debugging
+- **Graceful Degradation**: Services continue functioning even when auxiliary systems fail
+- **User-Friendly Messages**: Clear, actionable error messages for end users
+
+### Protected Endpoints
+
+The following critical API endpoints now have comprehensive error handling:
+
+- **Authentication**: `/api/login/`, `/api/signup/`
+- **User Management**: `/api/approve-member/`, `/api/invite-member/`
+- **Invitations**: `/api/confirm-invitation/`, `/api/resend-invitation/`
+- **All ViewSets**: Automatic error handling via Django REST framework
+
 ## 📊 HTTP Status Codes
 
 ### Success Codes
@@ -19,7 +40,7 @@ DjangoCRM provides consistent error responses across all API endpoints.
 - `429 Too Many Requests` - Rate limit exceeded
 
 ### Server Error Codes
-- `500 Internal Server Error` - Unexpected server error
+- `500 Internal Server Error` - Unexpected server error (always returns JSON)
 - `502 Bad Gateway` - Gateway error
 - `503 Service Unavailable` - Service temporarily unavailable
 
@@ -38,6 +59,33 @@ All error responses follow a consistent JSON structure:
   "timestamp": "2025-10-19T10:30:00Z"
 }
 ```
+
+### Implementation Pattern
+
+All API views follow this error handling pattern:
+
+```python
+logger = logging.getLogger(__name__)
+try:
+    # Main business logic
+    try:
+        # Isolated audit logging
+        AuditLogger.log_event(...)
+    except Exception as e:
+        logger.error(f"Failed to log audit event: {e}")
+        # Continue with main operation
+
+    return Response({...})
+except Exception as e:
+    logger.error(f"{view_name} error: {e}")
+    return Response({'error': 'Internal server error'}, status=500)
+```
+
+This ensures:
+- Audit logging failures don't break core functionality
+- All exceptions are logged for debugging
+- Users always receive JSON responses
+- Services remain operational during logging outages
 
 ### Validation Error Example
 
