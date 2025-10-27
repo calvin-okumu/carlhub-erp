@@ -20,8 +20,8 @@ interface ProjectTableProps {
     itemsPerPage: number;
     onPageChange: (page: number) => void;
     onAddProject: (data: ProjectFormData) => void;
-    onEditProject: (id: number, data: ProjectFormData) => void;
-    onDeleteProject: (id: number) => void;
+    onEditProject: (slug: string, data: ProjectFormData) => void;
+    onDeleteProject: (slug: string) => void;
 }
 
 export default function ProjectTable({
@@ -69,7 +69,7 @@ export default function ProjectTable({
              if (modalMode === 'add') {
                  await onAddProject(data);
              } else if (selectedProject) {
-                 await onEditProject(selectedProject.id, data);
+                 await onEditProject(selectedProject.slug, data);
              }
              setModalOpen(false);
          } catch (error) {
@@ -78,9 +78,9 @@ export default function ProjectTable({
          }
      }, [modalMode, selectedProject, onAddProject, onEditProject]);
 
-     const handleDelete = useCallback((id: number) => {
+     const handleDelete = useCallback((slug: string) => {
          if (confirm("Are you sure you want to delete this project?")) {
-             onDeleteProject(id);
+             onDeleteProject(slug);
          }
      }, [onDeleteProject]);
 
@@ -126,7 +126,7 @@ export default function ProjectTable({
             <Button onClick={() => handleEdit(p)} variant="outline" size="sm">
                 <Edit className="h-4 w-4" />
             </Button>
-            <Button onClick={() => handleDelete(p.id)} variant="danger" size="sm">
+            <Button onClick={() => handleDelete(p.slug)} variant="danger" size="sm">
                 <Trash2 className="h-4 w-4" />
             </Button>
         </div>

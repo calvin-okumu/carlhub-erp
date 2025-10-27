@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import { useClients } from '@/hooks/useClients';
 import type { Project } from '@/api/types';
 import type { ProjectFormData } from '@/types/project';
@@ -100,97 +102,97 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name *</label>
-                    <input
+                    <Input
                         type="text"
                         id="name"
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1"
                     />
                 </div>
                 <div>
                     <label htmlFor="client" className="block text-sm font-medium text-gray-700">Client *</label>
-                    <select
+                    <Select
                         id="client"
                         name="client"
                         value={formData.client.toString()}
                         onChange={handleChange}
                         required
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1"
                     >
                         {clients.map(client => (
                             <option key={client.id} value={client.id}>{client.name}</option>
                         ))}
-                    </select>
+                    </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                        <select
+                        <Select
                             id="status"
                             name="status"
                             value={formData.status}
                             onChange={handleChange}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1"
                         >
                             <option value="active">Active</option>
                             <option value="completed">Completed</option>
                             <option value="on-hold">On Hold</option>
-                        </select>
+                        </Select>
                     </div>
                     <div>
                         <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
-                        <select
+                        <Select
                             id="priority"
                             name="priority"
                             value={formData.priority}
                             onChange={handleChange}
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1"
                         >
                             <option value="high">High</option>
                             <option value="medium">Medium</option>
                             <option value="low">Low</option>
-                        </select>
+                        </Select>
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date *</label>
-                        <input
+                        <Input
                             type="date"
                             id="start_date"
                             name="start_date"
                             value={formData.start_date}
                             onChange={handleChange}
                             required
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1"
                         />
                     </div>
                     <div>
                         <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">End Date *</label>
-                        <input
+                        <Input
                             type="date"
                             id="end_date"
                             name="end_date"
                             value={formData.end_date}
                             onChange={handleChange}
                             required
-                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            className="mt-1"
                         />
                     </div>
                 </div>
                 <div>
                     <label htmlFor="budget" className="block text-sm font-medium text-gray-700">Budget</label>
-                    <input
+                    <Input
                         type="text"
                         id="budget"
                         name="budget"
                         value={formData.budget}
                         onChange={handleChange}
                         placeholder="e.g., 50000"
-                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        className="mt-1"
                     />
                 </div>
 

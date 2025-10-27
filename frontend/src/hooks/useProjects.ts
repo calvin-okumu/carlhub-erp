@@ -85,7 +85,7 @@ export function useProjects() {
     }
   };
 
-  const editProject = async (id: number, data: Partial<{
+  const editProject = async (slug: string, data: Partial<{
     name: string;
     client: string;
     status: string;
@@ -100,37 +100,37 @@ export function useProjects() {
     const token = getToken();
     if (!token) return;
 
-    const originalProject = projects.find(p => p.id === id);
+    const originalProject = projects.find(p => p.slug === slug);
     if (!originalProject) return;
 
     // Optimistic update
-    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...data } : p));
+    setProjects(prev => prev.map(p => p.slug === slug ? { ...p, ...data } : p));
 
     setLoading(true);
     try {
-      const updatedProject = await updateProject(token, id, data);
-      setProjects(prev => prev.map(p => p.id === id ? updatedProject : p));
+      const updatedProject = await updateProject(token, slug, data);
+      setProjects(prev => prev.map(p => p.slug === slug ? updatedProject : p));
     } catch (err) {
       // Revert on error
-      setProjects(prev => prev.map(p => p.id === id ? originalProject : p));
+      setProjects(prev => prev.map(p => p.slug === slug ? originalProject : p));
       setError(err instanceof Error ? err.message : "Failed to update project.");
     } finally {
       setLoading(false);
     }
   };
 
-  const removeProject = async (id: number) => {
+  const removeProject = async (slug: string) => {
     const token = getToken();
     if (!token) return;
 
-    const projectToRemove = projects.find(p => p.id === id);
+    const projectToRemove = projects.find(p => p.slug === slug);
     if (!projectToRemove) return;
 
-    setProjects((prev) => prev.filter((p) => p.id !== id));
+    setProjects((prev) => prev.filter((p) => p.slug !== slug));
 
     setLoading(true);
     try {
-      await deleteProject(token, id);
+      await deleteProject(token, slug);
     } catch (err) {
       setProjects((prev) => [...prev, projectToRemove]);
       setError(err instanceof Error ? err.message : "Failed to delete project.");

@@ -82,7 +82,7 @@ export async function createProject(token: string, projectData: {
   return data;
 }
 
-export async function updateProject(token: string, id: number, projectData: Partial<{
+export async function updateProject(token: string, slug: string, projectData: Partial<{
   name: string;
   client: number;
   status: string;
@@ -94,7 +94,7 @@ export async function updateProject(token: string, id: number, projectData: Part
   team_members?: number[];
   access_groups?: number[];
 }>): Promise<Project> {
-  const response = await fetch(`${API_BASE}/projects/${id}/`, {
+  const response = await fetch(`${API_BASE}/projects/${slug}/`, {
     method: "PUT",
     headers: {
       Authorization: `Token ${token}`,
@@ -112,8 +112,8 @@ export async function updateProject(token: string, id: number, projectData: Part
   return data;
 }
 
-export async function deleteProject(token: string, id: number): Promise<void> {
-  const response = await fetch(`${API_BASE}/projects/${id}/`, {
+export async function deleteProject(token: string, slug: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/projects/${slug}/`, {
     method: "DELETE",
     headers: {
       Authorization: `Token ${token}`,
