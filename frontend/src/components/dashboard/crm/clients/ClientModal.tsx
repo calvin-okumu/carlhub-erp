@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import type { Client, CreateClientData, UpdateClientData } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import Select from '@/components/ui/Select';
-import type { Client, CreateClientData, UpdateClientData } from '@/api/types';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 interface ClientModalProps {
@@ -103,10 +103,10 @@ export default function ClientModal({ isOpen, onClose, mode, client, onSave }: C
                     </Select>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" onClick={onClose} variant="outline">
+                    <Button type="button" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary">
+                    <Button type="submit">
                         {mode === 'add' ? 'Add Client' : 'Update Client'}
                     </Button>
                 </div>

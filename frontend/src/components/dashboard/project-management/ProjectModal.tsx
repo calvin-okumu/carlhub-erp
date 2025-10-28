@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import type { Project } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import Select from '@/components/ui/Select';
 import { useClients } from '@/hooks/useClients';
-import type { Project } from '@/api/types';
 import type { ProjectFormData } from '@/types/project';
+import React, { useEffect, useState } from 'react';
 
 interface ProjectModalProps {
     isOpen: boolean;
@@ -197,10 +197,10 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" onClick={onClose} variant="outline">
+                    <Button onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary">
+                    <Button>
                         {mode === 'add' ? 'Add Project' : 'Update Project'}
                     </Button>
                 </div>

@@ -11,15 +11,15 @@ import { useProject } from '@/context/ProjectContext';
 import type { Milestone, UserTenant } from '@/api/types';
 import { Plus } from 'lucide-react';
 
- interface MilestoneSectionProps {
-      projectSlug: string;
-      tenant?: number;
-  }
+interface MilestoneSectionProps {
+    projectSlug: string;
+    tenant?: number;
+}
 
-  export default function MilestoneSection({ projectSlug, tenant }: MilestoneSectionProps) {
-      const { project } = useProject();
-      const tenantId = tenant || parseInt(localStorage.getItem('tenant') || '1');
-      const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(projectSlug, tenantId);
+export default function MilestoneSection({ projectSlug, tenant }: MilestoneSectionProps) {
+    const { project } = useProject();
+    const tenantId = tenant || parseInt(localStorage.getItem('tenant') || '1');
+    const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(projectSlug, tenantId);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
@@ -69,8 +69,8 @@ import { Plus } from 'lucide-react';
             if (modalMode === 'add') {
                 await addMilestone(data);
             } else if (selectedMilestone) {
-                 await editMilestone(selectedMilestone.slug, data);
-             }
+                await editMilestone(selectedMilestone.slug, data);
+            }
             setModalOpen(false);
         } catch (error) {
             console.error('Error saving milestone:', error);
@@ -86,7 +86,7 @@ import { Plus } from 'lucide-react';
                     onChange={setSearchValue}
                     placeholder="Search milestones..."
                 />
-                <Button onClick={handleAddMilestone} variant="primary" className="flex items-center">
+                <Button onClick={handleAddMilestone} >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Milestone
                 </Button>
@@ -106,7 +106,7 @@ import { Plus } from 'lucide-react';
                 mode={modalMode}
                 milestone={selectedMilestone || undefined}
                 projectId={project?.id || ''}
-                 tenant={tenantId}
+                tenant={tenantId}
                 assignees={users}
                 projectStart={project?.start_date}
                 projectEnd={project?.end_date}
