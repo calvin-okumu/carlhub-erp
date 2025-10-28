@@ -57,15 +57,14 @@ const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading,
             milestone.description || "-",
             <span
                 key={milestone.id + '-status'}
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                    milestone.status === 'completed'
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${milestone.status === 'completed'
                         ? 'bg-green-100 text-green-800'
                         : milestone.status === 'in_progress'
-                        ? 'bg-blue-100 text-blue-800'
-                        : milestone.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-gray-100 text-gray-800'
-                }`}
+                            ? 'bg-blue-100 text-blue-800'
+                            : milestone.status === 'pending'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-gray-100 text-gray-800'
+                    }`}
             >
                 {milestone.status.replace('_', ' ')}
             </span>,
@@ -95,7 +94,7 @@ const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading,
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
                 <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-500 mb-4">No milestones found</p>
-                <Button onClick={onAddMilestone} variant="primary">
+                <Button onClick={onAddMilestone} >
                     Create Your First Milestone
                 </Button>
             </div>

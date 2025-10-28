@@ -91,7 +91,7 @@ export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
                     onChange={setSearchValue}
                     placeholder="Search tasks..."
                 />
-                <Button onClick={handleAddTask} variant="primary" className="flex items-center">
+                <Button onClick={handleAddTask}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task
                 </Button>
@@ -105,17 +105,17 @@ export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
                 onAddTask={handleAddTask}
                 searchValue={searchValue}
             />
-             <CreateTaskModal
-                 isOpen={modalOpen}
-                 onClose={() => setModalOpen(false)}
-                 mode={modalMode}
-                 task={selectedTask || undefined}
-                 sprints={sprints}
-                 assignees={users}
-                 milestones={milestones}
-                 onSave={handleSaveTask}
-                 isBacklog={true}
-             />
+            <CreateTaskModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                mode={modalMode}
+                task={selectedTask || undefined}
+                sprints={sprints}
+                assignees={users}
+                milestones={milestones}
+                onSave={handleSaveTask}
+                isBacklog={true}
+            />
         </div>
     );
 };

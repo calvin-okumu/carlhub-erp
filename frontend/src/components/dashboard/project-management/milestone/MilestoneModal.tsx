@@ -41,7 +41,7 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
         due_date: '',
         assignee: '',
     });
-    const [errors, setErrors] = useState<{[key: string]: string}>({});
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
         if (mode === 'edit' && milestone) {
@@ -60,7 +60,7 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
                 description: '',
                 status: 'planning',
                 planned_start: '',
-       
+
                 due_date: '',
                 assignee: '',
             });
@@ -152,35 +152,35 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
                         <option value="completed">Completed</option>
                     </Select>
                 </div>
-                 <div>
-                     <label htmlFor="planned_start" className="block text-sm font-medium text-gray-700">Planned Start</label>
-                     <Input
-                         type="date"
-                         id="planned_start"
-                         name="planned_start"
-                         value={formData.planned_start}
-                         onChange={handleChange}
-                         min={projectStart}
-                         max={projectEnd}
-                         className={errors.planned_start ? 'border-red-500' : ''}
-                     />
-                     {errors.planned_start && <p className="text-red-500 text-sm mt-1">{errors.planned_start}</p>}
-                 </div>
+                <div>
+                    <label htmlFor="planned_start" className="block text-sm font-medium text-gray-700">Planned Start</label>
+                    <Input
+                        type="date"
+                        id="planned_start"
+                        name="planned_start"
+                        value={formData.planned_start}
+                        onChange={handleChange}
+                        min={projectStart}
+                        max={projectEnd}
+                        className={errors.planned_start ? 'border-red-500' : ''}
+                    />
+                    {errors.planned_start && <p className="text-red-500 text-sm mt-1">{errors.planned_start}</p>}
+                </div>
 
-                 <div>
-                     <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">Due Date</label>
-                     <Input
-                         type="date"
-                         id="due_date"
-                         name="due_date"
-                         value={formData.due_date}
-                         onChange={handleChange}
-                         min={projectStart}
-                         max={projectEnd}
-                         className={errors.due_date ? 'border-red-500' : ''}
-                     />
-                     {errors.due_date && <p className="text-red-500 text-sm mt-1">{errors.due_date}</p>}
-                 </div>
+                <div>
+                    <label htmlFor="due_date" className="block text-sm font-medium text-gray-700">Due Date</label>
+                    <Input
+                        type="date"
+                        id="due_date"
+                        name="due_date"
+                        value={formData.due_date}
+                        onChange={handleChange}
+                        min={projectStart}
+                        max={projectEnd}
+                        className={errors.due_date ? 'border-red-500' : ''}
+                    />
+                    {errors.due_date && <p className="text-red-500 text-sm mt-1">{errors.due_date}</p>}
+                </div>
                 <div>
                     <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
                     <Select
@@ -198,10 +198,10 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
                     </Select>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" onClick={onClose} variant="outline">
+                    <Button type="button" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary">
+                    <Button type="submit">
                         {mode === 'add' ? 'Add Milestone' : 'Update Milestone'}
                     </Button>
                 </div>

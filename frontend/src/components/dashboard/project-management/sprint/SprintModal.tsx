@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import type { Milestone, Sprint } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import Select from '@/components/ui/Select';
-import type { Sprint, Milestone } from '@/api/types';
+import React, { useEffect, useState } from 'react';
 
 interface SprintModalProps {
     isOpen: boolean;
@@ -203,10 +203,10 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                     {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" onClick={onClose} variant="outline">
+                    <Button type="button" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary">
+                    <Button type="submit">
                         {mode === 'add' ? 'Add Sprint' : 'Update Sprint'}
                     </Button>
                 </div>

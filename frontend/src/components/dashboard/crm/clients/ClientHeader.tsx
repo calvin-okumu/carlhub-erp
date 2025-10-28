@@ -94,7 +94,7 @@ export default function ClientHeader({ onAddClient, searchValue, onSearchChange 
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="max-w-xs"
                 />
-                <Button onClick={handleAddClient} variant="primary" size="sm">
+                <Button onClick={handleAddClient}>
                     + Add Client
                 </Button>
             </div>

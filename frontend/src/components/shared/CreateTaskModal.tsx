@@ -1,65 +1,65 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import type { Milestone, Sprint, Task, UserTenant } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
+import Modal from '@/components/ui/Modal';
 import Select from '@/components/ui/Select';
-import type { Task, Sprint, UserTenant, Milestone } from '@/api/types';
+import Textarea from '@/components/ui/Textarea';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 interface CreateTaskModalProps {
-     isOpen: boolean;
-     onClose: () => void;
-     mode: 'add' | 'edit';
-     task?: Task;
-     sprints: Sprint[];
-     assignees: UserTenant[];
-     milestones: Milestone[];
-       onSave: (data: {
-           title: string;
-           description?: string;
-           status: string;
-           milestone: number;
-           sprint?: string;
-           assignee?: number;
-           start_date?: string;
-           end_date?: string;
-           estimated_hours?: number;
-       }) => void;
-     defaultSprintId?: string; // For pre-filling sprint in Kanban
-     isBacklog?: boolean; // To simplify fields for backlog
- }
+    isOpen: boolean;
+    onClose: () => void;
+    mode: 'add' | 'edit';
+    task?: Task;
+    sprints: Sprint[];
+    assignees: UserTenant[];
+    milestones: Milestone[];
+    onSave: (data: {
+        title: string;
+        description?: string;
+        status: string;
+        milestone: number;
+        sprint?: string;
+        assignee?: number;
+        start_date?: string;
+        end_date?: string;
+        estimated_hours?: number;
+    }) => void;
+    defaultSprintId?: string; // For pre-filling sprint in Kanban
+    isBacklog?: boolean; // To simplify fields for backlog
+}
 
 type FormData = {
-     title: string;
-     description: string;
-     status: string;
-     priority: string;
-     sprint: string;
-     assignee: string;
-     milestone: string;
-     start_date: string;
-     end_date: string;
-     estimated_hours: string;
- };
+    title: string;
+    description: string;
+    status: string;
+    priority: string;
+    sprint: string;
+    assignee: string;
+    milestone: string;
+    start_date: string;
+    end_date: string;
+    estimated_hours: string;
+};
 
 export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, assignees, milestones, onSave, defaultSprintId, isBacklog = false }: CreateTaskModalProps) {
-     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
-         defaultValues: {
-             title: '',
-             description: '',
-             status: 'to_do',
-             priority: 'medium',
-             sprint: defaultSprintId?.toString() || '',
-             assignee: '',
-             milestone: milestones?.[0]?.id?.toString() || '',
-             start_date: '',
-             end_date: '',
-             estimated_hours: '',
-         }
-     });
+    const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
+        defaultValues: {
+            title: '',
+            description: '',
+            status: 'to_do',
+            priority: 'medium',
+            sprint: defaultSprintId?.toString() || '',
+            assignee: '',
+            milestone: milestones?.[0]?.id?.toString() || '',
+            start_date: '',
+            end_date: '',
+            estimated_hours: '',
+        }
+    });
     const [minDate, setMinDate] = useState('');
     const [maxDate, setMaxDate] = useState('');
 
@@ -165,78 +165,78 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                     />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                            <Select
-                                id="status"
-                                {...register('status')}
-                            >
-                                <option value="to_do">To Do</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="in_review">Review</option>
-                                <option value="testing">Testing</option>
-                            </Select>
-                        </div>
-                        <div>
-                            <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
-                            <Select
-                                id="priority"
-                                {...register('priority')}
-                            >
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </Select>
-                        </div>
-                 </div>
-                  {isBacklog && milestones && Array.isArray(milestones) && (
-                      <div>
-                          <label htmlFor="milestone" className="block text-sm font-medium text-gray-700">Milestone</label>
-                          <Select
-                              id="milestone"
-                              {...register('milestone', { required: 'Milestone is required' })}
-                          >
-                              <option value="">Select Milestone</option>
-                              {Array.isArray(milestones) && milestones.map(milestone => (
-                                  <option key={milestone.id} value={milestone.id}>
-                                      {milestone.name}
-                                  </option>
-                              ))}
-                          </Select>
-                      </div>
-                  )}
-                 {!isBacklog && (
-                      <div>
-                          <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
-                          <Select
-                              id="sprint"
-                              {...register('sprint', { required: 'Sprint is required' })}
-                          >
-                              <option value="">Select Sprint</option>
-                              {Array.isArray(sprints) && sprints.map(sprint => (
-                                  <option key={sprint.id} value={sprint.id}>
-                                      {sprint.name}
-                                  </option>
-                              ))}
-                          </Select>
-                      </div>
-                 )}
-                 {!isBacklog && (
-                      <div>
-                          <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
-                          <Select
-                              id="assignee"
-                              {...register('assignee')}
-                          >
-                              <option value="">Select Assignee</option>
-                              {Array.isArray(assignees) && assignees.map(user => (
-                                  <option key={user.user} value={user.user}>
-                                      {user.user_first_name} {user.user_last_name}
-                                  </option>
-                              ))}
-                          </Select>
-                      </div>
-                 )}
+                    <div>
+                        <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
+                        <Select
+                            id="status"
+                            {...register('status')}
+                        >
+                            <option value="to_do">To Do</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="in_review">Review</option>
+                            <option value="testing">Testing</option>
+                        </Select>
+                    </div>
+                    <div>
+                        <label htmlFor="priority" className="block text-sm font-medium text-gray-700">Priority</label>
+                        <Select
+                            id="priority"
+                            {...register('priority')}
+                        >
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </Select>
+                    </div>
+                </div>
+                {isBacklog && milestones && Array.isArray(milestones) && (
+                    <div>
+                        <label htmlFor="milestone" className="block text-sm font-medium text-gray-700">Milestone</label>
+                        <Select
+                            id="milestone"
+                            {...register('milestone', { required: 'Milestone is required' })}
+                        >
+                            <option value="">Select Milestone</option>
+                            {Array.isArray(milestones) && milestones.map(milestone => (
+                                <option key={milestone.id} value={milestone.id}>
+                                    {milestone.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                )}
+                {!isBacklog && (
+                    <div>
+                        <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
+                        <Select
+                            id="sprint"
+                            {...register('sprint', { required: 'Sprint is required' })}
+                        >
+                            <option value="">Select Sprint</option>
+                            {Array.isArray(sprints) && sprints.map(sprint => (
+                                <option key={sprint.id} value={sprint.id}>
+                                    {sprint.name}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                )}
+                {!isBacklog && (
+                    <div>
+                        <label htmlFor="assignee" className="block text-sm font-medium text-gray-700">Assignee</label>
+                        <Select
+                            id="assignee"
+                            {...register('assignee')}
+                        >
+                            <option value="">Select Assignee</option>
+                            {Array.isArray(assignees) && assignees.map(user => (
+                                <option key={user.user} value={user.user}>
+                                    {user.user_first_name} {user.user_last_name}
+                                </option>
+                            ))}
+                        </Select>
+                    </div>
+                )}
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date</label>
@@ -273,22 +273,22 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                         {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date.message}</p>}
                     </div>
                 </div>
-                 {!isBacklog && (
-                      <div>
-                          <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
-                          <Input
-                              type="number"
-                              id="estimated_hours"
-                              {...register('estimated_hours')}
-                              min="0"
-                          />
-                      </div>
-                 )}
+                {!isBacklog && (
+                    <div>
+                        <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
+                        <Input
+                            type="number"
+                            id="estimated_hours"
+                            {...register('estimated_hours')}
+                            min="0"
+                        />
+                    </div>
+                )}
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" onClick={onClose} variant="outline">
+                    <Button type="button" onClick={onClose}>
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary">
+                    <Button>
                         {mode === 'add' ? 'Add Task' : 'Update Task'}
                     </Button>
                 </div>

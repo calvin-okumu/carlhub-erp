@@ -44,15 +44,6 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
                 </button>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">{title}</h3>
                 {children}
-                <div className="mt-6 flex justify-end">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 focus:outline-none"
-                    >
-                        Close
-                    </button>
-                </div>
             </div>
         </div>
     );

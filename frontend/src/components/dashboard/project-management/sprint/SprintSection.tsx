@@ -19,25 +19,25 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
-     const [searchValue, setSearchValue] = useState('');
-     const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [searchValue, setSearchValue] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string>('all');
     const [milestones, setMilestones] = useState<Milestone[]>([]);
 
-     useEffect(() => {
-         const fetchMilestones = async () => {
-             const token = localStorage.getItem('access_token');
-             if (!token) return;
+    useEffect(() => {
+        const fetchMilestones = async () => {
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
 
-               try {
-                   const data = await getMilestones(token, { projectSlug });
-                   setMilestones(data.results);
-             } catch (err) {
-                 console.error('Failed to fetch milestones:', err);
-             }
-         };
+            try {
+                const data = await getMilestones(token, { projectSlug });
+                setMilestones(data.results);
+            } catch (err) {
+                console.error('Failed to fetch milestones:', err);
+            }
+        };
 
-          fetchMilestones();
-      }, [projectSlug]);
+        fetchMilestones();
+    }, [projectSlug]);
 
     const handleAddSprint = () => {
         setModalMode('add');
@@ -70,8 +70,8 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
             if (modalMode === 'add') {
                 await addSprint(data);
             } else if (selectedSprint) {
-                 await editSprint(selectedSprint.slug, data);
-             }
+                await editSprint(selectedSprint.slug, data);
+            }
             setModalOpen(false);
         } catch (error) {
             console.error('Error saving sprint:', error);
@@ -83,41 +83,41 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
 
     return (
         <div className="space-y-6">
-             <div className="flex justify-between items-center">
-                 <div className="flex items-center space-x-4">
-                     <SearchInput
-                         value={searchValue}
-                         onChange={setSearchValue}
-                         placeholder="Search sprints..."
-                     />
-                     <select
-                         value={statusFilter}
-                         onChange={(e) => setStatusFilter(e.target.value)}
-                         className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                     >
-                         <option value="all">All Statuses</option>
-                         <option value="planned">Planned</option>
-                         <option value="active">Active</option>
-                         <option value="completed">Completed</option>
-                         <option value="cancelled">Cancelled</option>
-                     </select>
-                  </div>
-                 <Button onClick={handleAddSprint} variant="primary" className="flex items-center">
-                     <Plus className="h-4 w-4 mr-2" />
-                     Add Sprint
-                 </Button>
-             </div>
-              <SprintTable
-                  sprints={sprints}
-                  loading={loading}
-                  error={error}
-                  onEditSprint={handleEditSprint}
-                  onDeleteSprint={handleDelete}
-                  onAddSprint={handleAddSprint}
-                   projectSlug={projectSlug}
-                  searchValue={searchValue}
-                  statusFilter={statusFilter}
-              />
+            <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-4">
+                    <SearchInput
+                        value={searchValue}
+                        onChange={setSearchValue}
+                        placeholder="Search sprints..."
+                    />
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="planned">Planned</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <Button onClick={handleAddSprint} >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Sprint
+                </Button>
+            </div>
+            <SprintTable
+                sprints={sprints}
+                loading={loading}
+                error={error}
+                onEditSprint={handleEditSprint}
+                onDeleteSprint={handleDelete}
+                onAddSprint={handleAddSprint}
+                projectSlug={projectSlug}
+                searchValue={searchValue}
+                statusFilter={statusFilter}
+            />
             <SprintModal
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
