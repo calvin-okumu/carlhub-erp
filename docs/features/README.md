@@ -30,6 +30,13 @@ DjangoCRM provides a comprehensive set of features for managing client relations
 - Tenant membership management and invitations
 - Profile management and access control
 
+### [Email System](./email-system.md)
+- Professional HTML email templates with mobile responsiveness
+- Automated invitation, welcome, and password reset emails
+- Customizable system notification emails
+- Centralized email service with consistent branding
+- Comprehensive template testing and validation
+
 ### [Progress Tracking](./progress-tracking.md)
 - Automated progress calculation across all levels
 - Real-time progress updates

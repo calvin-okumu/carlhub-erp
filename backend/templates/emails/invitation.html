@@ -1,0 +1,48 @@
+{% extends "emails/base.html" %}
+{% load static %}
+
+{% block subject %}You're invited to join {{ tenant.name }}{% endblock %}
+
+{% block recipient %}{{ email }}{% endblock %}
+
+{% block content %}
+<h2>Welcome to {{ tenant.name }}!</h2>
+
+<p>You've been invited to join <strong>{{ tenant.name }}</strong> as a <strong>{{ role }}</strong>.</p>
+
+<div style="margin: 30px 0;">
+    <h3>Step 1: Confirm your email</h3>
+    <p>Click the button below to confirm your email address and verify your identity:</p>
+    <a href="{{ confirmation_url }}" class="button">Confirm Email Address</a>
+    <p style="margin-top: 10px; font-size: 14px; color: #666;">
+        This link will expire on {{ expires_at|date:"F j, Y" }}
+    </p>
+</div>
+
+<div style="margin: 30px 0;">
+    <h3>Step 2: Create your account</h3>
+    <p>After confirming your email, click here to set up your account and get started:</p>
+    <a href="{{ signup_url }}" class="button secondary-button">Create Account</a>
+</div>
+
+<div class="warning-text">
+    <strong>Important:</strong> This invitation expires on {{ expires_at|date:"F j, Y" }}.
+    {% if is_resend %}
+    This is a resent invitation. If you've already confirmed your email, you can proceed directly to account creation.
+    {% endif %}
+</div>
+
+<p><strong>What you can do with {{ tenant.name }}:</strong></p>
+<ul style="color: #555; line-height: 1.6;">
+    <li>Manage projects and track progress</li>
+    <li>Collaborate with your team</li>
+    <li>Handle client relationships</li>
+    <li>Generate reports and analytics</li>
+</ul>
+
+<p>If you didn't expect this invitation, please ignore this email. No account will be created.</p>
+
+<p>We look forward to having you on board!</p>
+
+<p>Best regards,<br>The {{ tenant.name }} Team</p>
+{% endblock %}

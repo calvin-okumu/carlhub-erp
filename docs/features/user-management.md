@@ -130,10 +130,20 @@ curl -X POST http://localhost:8000/api/invite-member/ \
 4. **Approval**: Tenant owner must approve the new member
 
 **Email Content:**
-The invitation email includes:
-- Confirmation link to verify email address
-- Signup link to create account (after confirmation)
-- Invitation details (tenant name, role, expiration date)
+DjangoCRM sends professional, mobile-responsive HTML emails with text fallbacks. The invitation email includes:
+
+- **Professional Design**: Mobile-responsive HTML template with consistent branding
+- **Confirmation Link**: Secure email verification with expiration tracking
+- **Signup Link**: Direct account creation after email confirmation
+- **Complete Details**: Tenant name, assigned role, and expiration information
+- **Clear Instructions**: Step-by-step guidance for account setup
+- **Support Information**: Contact details for assistance
+
+**Email Templates Available:**
+- **Invitation Emails**: Professional welcome and onboarding instructions
+- **Welcome Emails**: Post-registration confirmation with getting started guide
+- **Password Reset Emails**: Secure password recovery with expiration warnings
+- **System Notifications**: Customizable alerts for system events and updates
 
 ### Resending Invitations
 
