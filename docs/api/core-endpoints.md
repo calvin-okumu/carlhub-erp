@@ -466,6 +466,294 @@ Update member role/status.
 
 Remove member from tenant.
 
+## 🗓️ Leave Management
+
+### Leave Requests
+
+#### List Leave Requests
+**GET** `/api/leave/requests/`
+
+List leave requests with filtering and search.
+
+**Query Parameters:**
+- `status` - Filter by status (pending, approved, rejected, cancelled)
+- `leave_type` - Filter by leave type (annual_leave, sick_leave, etc.)
+- `employee` - Filter by employee UUID
+- `approved_by` - Filter by approver UUID
+- `start_date` - Filter by start date range
+- `end_date` - Filter by end date range
+
+**Response:**
+```json
+{
+  "count": 25,
+  "next": "http://localhost:8000/api/leave/requests/?page=2",
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "leave-uuid-2024-01-15",
+      "employee": {
+        "id": "uuid",
+        "email": "employee@example.com",
+        "first_name": "John",
+        "last_name": "Doe"
+      },
+      "tenant": "uuid",
+      "leave_type": "annual_leave",
+      "start_date": "2024-01-15",
+      "end_date": "2024-01-19",
+      "days_requested": "5.0",
+      "reason": "Vacation time",
+      "status": "pending",
+      "applied_date": "2024-01-10T09:00:00Z",
+      "approved_by": null,
+      "approved_date": null,
+      "approval_notes": "",
+      "created_at": "2024-01-10T09:00:00Z",
+      "updated_at": "2024-01-10T09:00:00Z"
+    }
+  ]
+}
+```
+
+#### Create Leave Request
+**POST** `/api/leave/requests/`
+
+Create a new leave request.
+
+**Request:**
+```json
+{
+  "leave_type": "annual_leave",
+  "start_date": "2024-01-15",
+  "end_date": "2024-01-19",
+  "reason": "Vacation time"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "slug": "leave-uuid-2024-01-15",
+  "employee": "uuid",
+  "tenant": "uuid",
+  "leave_type": "annual_leave",
+  "start_date": "2024-01-15",
+  "end_date": "2024-01-19",
+  "days_requested": "5.0",
+  "reason": "Vacation time",
+  "status": "pending",
+  "applied_date": "2024-01-10T09:00:00Z",
+  "approved_by": null,
+  "approved_date": null,
+  "approval_notes": "",
+  "created_at": "2024-01-10T09:00:00Z",
+  "updated_at": "2024-01-10T09:00:00Z"
+}
+```
+
+#### Get Leave Request
+**GET** `/api/leave/requests/{id}/`
+
+Get detailed leave request information.
+
+#### Update Leave Request
+**PUT/PATCH** `/api/leave/requests/{id}/`
+
+Update leave request (only by employee, only if pending).
+
+#### Delete Leave Request
+**DELETE** `/api/leave/requests/{id}/`
+
+Delete leave request (only by employee, only if pending).
+
+#### Approve Leave Request
+**POST** `/api/leave/requests/{id}/approve/`
+
+Approve a leave request (managers only).
+
+**Request:**
+```json
+{
+  "notes": "Approved for vacation"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "status": "approved",
+  "approved_by": "uuid",
+  "approved_date": "2024-01-11T10:00:00Z",
+  "approval_notes": "Approved for vacation"
+}
+```
+
+#### Reject Leave Request
+**POST** `/api/leave/requests/{id}/reject/`
+
+Reject a leave request (managers only).
+
+**Request:**
+```json
+{
+  "notes": "Insufficient notice period"
+}
+```
+
+#### Cancel Leave Request
+**POST** `/api/leave/requests/{id}/cancel/`
+
+Cancel a leave request (only by the employee who created it).
+
+### Leave Balances
+
+#### List Leave Balances
+**GET** `/api/leave/balances/`
+
+List leave balances for employees.
+
+**Query Parameters:**
+- `employee` - Filter by employee UUID
+- `leave_type` - Filter by leave type
+- `year` - Filter by year
+
+**Response:**
+```json
+{
+  "count": 10,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "employee": {
+        "id": "uuid",
+        "email": "employee@example.com",
+        "first_name": "John",
+        "last_name": "Doe"
+      },
+      "tenant": "uuid",
+      "leave_type": "annual_leave",
+      "year": 2024,
+      "total_days": "25.0",
+      "used_days": "5.0",
+      "remaining_days": "20.0",
+      "utilization_percentage": 20.0,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-15T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### Get Leave Balance
+**GET** `/api/leave/balances/{id}/`
+
+Get specific leave balance details.
+
+#### Update Leave Balance
+**PUT/PATCH** `/api/leave/balances/{id}/`
+
+Update leave balance (HR/admin only).
+
+#### Create Leave Balance
+**POST** `/api/leave/balances/`
+
+Create new leave balance entry (HR/admin only).
+
+### Leave Policies
+
+#### List Leave Policies
+**GET** `/api/leave/policies/`
+
+List leave policies for the tenant.
+
+**Response:**
+```json
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "tenant": "uuid",
+      "leave_type": "annual_leave",
+      "annual_entitlement": "25.0",
+      "max_consecutive_days": 30,
+      "notice_period_days": 7,
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+#### Get Leave Policy
+**GET** `/api/leave/policies/{id}/`
+
+Get specific leave policy details.
+
+#### Create Leave Policy
+**POST** `/api/leave/policies/`
+
+Create new leave policy (admin only).
+
+**Request:**
+```json
+{
+  "leave_type": "annual_leave",
+  "annual_entitlement": "25.0",
+  "max_consecutive_days": 30,
+  "notice_period_days": 7
+}
+```
+
+#### Update Leave Policy
+**PUT/PATCH** `/api/leave/policies/{id}/`
+
+Update leave policy (admin only).
+
+#### Delete Leave Policy
+**DELETE** `/api/leave/policies/{id}/`
+
+Delete leave policy (admin only).
+
+### Management Commands
+
+#### Initialize Leave Balances
+**Management Command:** `python manage.py initialize_leave_balances`
+
+Initialize annual leave balances for all employees across tenants.
+
+**Options:**
+- `--tenant` - Specific tenant slug
+- `--dry-run` - Preview changes without applying
+
+#### Carry Over Leave Balances
+**Management Command:** `python manage.py carry_over_leave_balances`
+
+Perform year-end carry-over of unused leave days.
+
+**Options:**
+- `--tenant` - Specific tenant slug
+- `--dry-run` - Preview changes without applying
+
+#### Leave Reporting
+**Management Command:** `python manage.py leave_reporting`
+
+Generate HR reports on leave usage and compliance.
+
+**Options:**
+- `--tenant` - Specific tenant slug
+- `--output` - Output file path
+- `--summary` - Summary report only
+
 ## 📧 Invitations
 
 ### List Invitations

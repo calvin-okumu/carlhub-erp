@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "accounts",
     "project",
+    "leave_management",
     "rest_framework",
     "django_filters",
     "rest_framework.authtoken",
@@ -159,13 +160,14 @@ ROOT_URLCONF = "saasCRM.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],  # Add templates directory
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "saasCRM.context_processors.email_context",
             ],
         },
     },

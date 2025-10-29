@@ -481,3 +481,109 @@ class EmailService:
             logger.warning(f"Notification email completed with {len(errors)} errors: {errors}")
 
         return sent_count
+
+    @staticmethod
+    def send_leave_approved_email(leave_request):
+        """
+        Send email notification when a leave request is approved.
+
+        Args:
+            leave_request: LeaveRequest instance
+
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            context = {
+                'leave_request': leave_request,
+                'employee': leave_request.employee,
+                'tenant': leave_request.tenant,
+                'approver': leave_request.approved_by,
+                'leave_details_url': f"{settings.SITE_URL}/api/leave/requests/{leave_request.id}/",
+                'site_name': getattr(settings, 'SITE_NAME', 'DjangoCRM'),
+                'support_email': settings.DEFAULT_FROM_EMAIL,
+            }
+
+            # Render templates with error handling
+            try:
+                html_content = render_to_string('emails/leave_approved.html', context)
+                text_content = render_to_string('emails/leave_approved.txt', context)
+            except Exception as template_error:
+                logger.error(f"Template rendering failed for leave approved email to {leave_request.employee.email}: {template_error}")
+                return False
+
+            subject = f"Your leave request has been approved - {leave_request.tenant.name}"
+
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[leave_request.employee.email]
+            )
+            msg.attach_alternative(html_content, "text/html")
+
+            result = msg.send(fail_silently=True)
+            if result > 0:
+                logger.info(f"Leave approved email sent successfully to {leave_request.employee.email}")
+                return True
+            else:
+                logger.warning(f"Leave approved email failed to send to {leave_request.employee.email}")
+                return False
+
+        except Exception as e:
+            error_info = EmailService.classify_email_error(e)
+            logger.error(f"Failed to send leave approved email to {leave_request.employee.email} - Category: {error_info['category']}, Error: {str(e)}")
+            return False
+
+    @staticmethod
+    def send_leave_rejected_email(leave_request):
+        """
+        Send email notification when a leave request is rejected.
+
+        Args:
+            leave_request: LeaveRequest instance
+
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            context = {
+                'leave_request': leave_request,
+                'employee': leave_request.employee,
+                'tenant': leave_request.tenant,
+                'approver': leave_request.approved_by,
+                'leave_details_url': f"{settings.SITE_URL}/api/leave/requests/{leave_request.id}/",
+                'site_name': getattr(settings, 'SITE_NAME', 'DjangoCRM'),
+                'support_email': settings.DEFAULT_FROM_EMAIL,
+            }
+
+            # Render templates with error handling
+            try:
+                html_content = render_to_string('emails/leave_rejected.html', context)
+                text_content = render_to_string('emails/leave_rejected.txt', context)
+            except Exception as template_error:
+                logger.error(f"Template rendering failed for leave rejected email to {leave_request.employee.email}: {template_error}")
+                return False
+
+            subject = f"Your leave request has been rejected - {leave_request.tenant.name}"
+
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[leave_request.employee.email]
+            )
+            msg.attach_alternative(html_content, "text/html")
+
+            result = msg.send(fail_silently=True)
+            if result > 0:
+                logger.info(f"Leave rejected email sent successfully to {leave_request.employee.email}")
+                return True
+            else:
+                logger.warning(f"Leave rejected email failed to send to {leave_request.employee.email}")
+                return False
+
+        except Exception as e:
+            error_info = EmailService.classify_email_error(e)
+            logger.error(f"Failed to send leave rejected email to {leave_request.employee.email} - Category: {error_info['category']}, Error: {str(e)}")
+            return False

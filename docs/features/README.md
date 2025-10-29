@@ -37,6 +37,14 @@ DjangoCRM provides a comprehensive set of features for managing client relations
 - Centralized email service with consistent branding
 - Comprehensive template testing and validation
 
+### [Leave Management](./leave-management.md)
+- Complete employee leave request and approval workflow
+- Automated leave balance tracking and business day calculations
+- Multi-tenant leave policies with customizable rules
+- Email notifications for approvals, rejections, and updates
+- HR reporting and compliance management tools
+- Year-end leave carry-over and balance initialization
+
 ### [Progress Tracking](./progress-tracking.md)
 - Automated progress calculation across all levels
 - Real-time progress updates
