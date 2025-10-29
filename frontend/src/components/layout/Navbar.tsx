@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 export default function Header() {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
     const router = useRouter();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -24,6 +25,18 @@ export default function Header() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [isProfileMenuOpen]);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchQuery.trim()) {
+                router.push(`/dashboard?search=${encodeURIComponent(searchQuery)}`);
+            } else {
+                router.push('/dashboard');
+            }
+        }, 300); // Debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery, router]);
 
     return (
         <header className="bg-white shadow-lg border-b border-gray-200">
@@ -45,6 +58,8 @@ export default function Header() {
                                     name="search"
                                     type="search"
                                     placeholder="Search apps..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
                                     className="block w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 text-sm bg-gray-50 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 />
                             </div>
@@ -138,6 +153,8 @@ export default function Header() {
                                 id="mobile-search"
                                 type="search"
                                 placeholder="Search apps..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 className="block w-full pl-10 pr-3 py-2 rounded-md border border-gray-300 text-sm bg-gray-50 placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
                         </div>

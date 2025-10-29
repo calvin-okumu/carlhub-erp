@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import Card from '@/components/ui/Card';
+import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import { useProfile } from '@/hooks/useProfile';
-import { IdCard, Hash, Calendar } from 'lucide-react';
-import Loader from '@/components/shared/Loader';
+import { Calendar, Hash, IdCard, Link, Phone } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function EmployeeInformationCard() {
     const { profile, loading, error, updateProfile } = useProfile();
@@ -13,6 +13,8 @@ export default function EmployeeInformationCard() {
     const [employeeNumber, setEmployeeNumber] = useState('');
     const [taxNumber, setTaxNumber] = useState('');
     const [birthday, setBirthday] = useState('');
+    const [phone, setPhone] = useState('');
+    const [linkedin, setLinkedin] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
 
@@ -22,6 +24,8 @@ export default function EmployeeInformationCard() {
             setEmployeeNumber(profile.employee_number || '');
             setTaxNumber(profile.tax_number || '');
             setBirthday(profile.hire_date || '');
+            setPhone(profile.phone || '');
+            setLinkedin(profile.linkedin_profile || '');
         }
     }, [profile]);
 
@@ -32,6 +36,8 @@ export default function EmployeeInformationCard() {
                 employee_number: employeeNumber,
                 tax_number: taxNumber,
                 hire_date: birthday,
+                phone: phone,
+                linkedin_profile: linkedin,
             });
             setIsEditing(false);
             setSuccessMessage('Employee information updated successfully');
@@ -48,6 +54,8 @@ export default function EmployeeInformationCard() {
             setEmployeeNumber(profile.employee_number || '');
             setTaxNumber(profile.tax_number || '');
             setBirthday(profile.hire_date || '');
+            setPhone(profile.phone || '');
+            setLinkedin(profile.linkedin_profile || '');
         }
         setIsEditing(false);
     };
@@ -114,6 +122,7 @@ export default function EmployeeInformationCard() {
                     )}
                 </div>
 
+
                 {/* Tax Number */}
                 <div className="flex items-center space-x-3">
                     <Hash className="h-4 w-4 text-gray-500" />
@@ -130,6 +139,39 @@ export default function EmployeeInformationCard() {
                     )}
                 </div>
 
+
+                {/* Phone Number */}
+                <div className="flex items-center space-x-3">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="tel"
+                            placeholder="Phone Number"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{phone || 'Not specified'}</span>
+                    )}
+                </div>
+
+                {/* LinkedIn Profile */}
+                <div className="flex items-center space-x-3">
+                    <Link className="h-4 w-4 text-gray-500" />
+                    {isEditing ? (
+                        <Input
+                            type="url"
+                            placeholder="LinkedIn Profile"
+                            value={linkedin}
+                            onChange={(e) => setLinkedin(e.target.value)}
+                            className="flex-1"
+                        />
+                    ) : (
+                        <span className="flex-1">{linkedin ? <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{linkedin}</a> : 'Not specified'}</span>
+                    )}
+                 </div>
+
                 {/* Hire Date */}
                 <div className="flex items-center space-x-3">
                     <Calendar className="h-4 w-4 text-gray-500" />
@@ -143,27 +185,25 @@ export default function EmployeeInformationCard() {
                     ) : (
                         <span className="flex-1">{birthday ? new Date(birthday).toLocaleDateString() : 'Not specified'}</span>
                     )}
-                </div>
-
-
+                 </div>
             </div>
 
             {isEditing && (
-                <div className="flex space-x-2 mt-4">
-                    <Button onClick={handleSave}>Save Changes</Button>
-                    <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-                </div>
-            )}
-            {successMessage && (
-                <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
-                    {successMessage}
-                </div>
-            )}
-            {errorMessage && (
-                <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
-                    {errorMessage}
-                </div>
-            )}
+                    <div className="flex space-x-2 mt-4">
+                        <Button onClick={handleSave}>Save Changes</Button>
+                        <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                    </div>
+                )}
+                {successMessage && (
+                    <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
+                        {successMessage}
+                    </div>
+                )}
+                {errorMessage && (
+                    <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
+                        {errorMessage}
+                    </div>
+                )}
         </Card>
     );
 }

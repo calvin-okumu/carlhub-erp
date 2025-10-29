@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import Card from '@/components/ui/Card';
+import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 import { useProfile } from '@/hooks/useProfile';
-import { User, Phone, Building, Hash, FileText } from 'lucide-react';
-import Loader from '@/components/shared/Loader';
+import { Building, FileText, Hash, Phone, User } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function MedicalInformationCard() {
     const { profile, loading, error, updateProfile } = useProfile();
