@@ -203,7 +203,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                     {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" onClick={onClose}>
+                    <Button type="button" onClick={onClose} variant='secondary'>
                         Cancel
                     </Button>
                     <Button type="submit">

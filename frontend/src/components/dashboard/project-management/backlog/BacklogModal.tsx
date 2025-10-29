@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import type { Sprint, Task, UserTenant } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
+import Modal from '@/components/ui/Modal';
 import Select from '@/components/ui/Select';
-import type { Task, Sprint, UserTenant } from '@/api/types';
+import Textarea from '@/components/ui/Textarea';
+import React, { useEffect, useState } from 'react';
 
 interface BacklogModalProps {
     isOpen: boolean;
@@ -32,7 +32,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-                status: 'todo',
+        status: 'todo',
         priority: 'medium',
         sprint: '',
         assignee: '',
@@ -42,7 +42,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
     });
     const [minDate, setMinDate] = useState('');
     const [maxDate, setMaxDate] = useState('');
-    const [errors, setErrors] = useState<{[key: string]: string}>({});
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
     useEffect(() => {
         if (mode === 'edit' && task) {
@@ -66,7 +66,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
             setFormData({
                 title: '',
                 description: '',
-        status: 'todo',
+                status: 'todo',
                 priority: 'medium',
                 sprint: '',
                 assignee: '',
@@ -252,36 +252,36 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                         ))}
                     </Select>
                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                     <div>
-                         <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date</label>
-                         <Input
-                             type="date"
-                             id="start_date"
-                             name="start_date"
-                             value={formData.start_date}
-                             onChange={handleChange}
-                             min={minDate}
-                             max={maxDate}
-                             className={errors.start_date ? 'border-red-500' : ''}
-                         />
-                         {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
-                     </div>
-                     <div>
-                         <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">End Date</label>
-                         <Input
-                             type="date"
-                             id="end_date"
-                             name="end_date"
-                             value={formData.end_date}
-                             onChange={handleChange}
-                             min={minDate}
-                             max={maxDate}
-                             className={errors.end_date ? 'border-red-500' : ''}
-                         />
-                         {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
-                     </div>
-                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="start_date" className="block text-sm font-medium text-gray-700">Start Date</label>
+                        <Input
+                            type="date"
+                            id="start_date"
+                            name="start_date"
+                            value={formData.start_date}
+                            onChange={handleChange}
+                            min={minDate}
+                            max={maxDate}
+                            className={errors.start_date ? 'border-red-500' : ''}
+                        />
+                        {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>}
+                    </div>
+                    <div>
+                        <label htmlFor="end_date" className="block text-sm font-medium text-gray-700">End Date</label>
+                        <Input
+                            type="date"
+                            id="end_date"
+                            name="end_date"
+                            value={formData.end_date}
+                            onChange={handleChange}
+                            min={minDate}
+                            max={maxDate}
+                            className={errors.end_date ? 'border-red-500' : ''}
+                        />
+                        {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>}
+                    </div>
+                </div>
                 <div>
                     <label htmlFor="estimated_hours" className="block text-sm font-medium text-gray-700">Estimated Hours</label>
                     <Input
@@ -294,10 +294,10 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                     />
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button type="button" onClick={onClose} variant="outline">
+                    <Button type="button" onClick={onClose} variant="secondary">
                         Cancel
                     </Button>
-                    <Button type="submit" variant="primary">
+                    <Button type="submit" variant="gradient">
                         {mode === 'add' ? 'Add Task' : 'Update Task'}
                     </Button>
                 </div>

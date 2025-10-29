@@ -1,9 +1,8 @@
 "use client";
 
-import React from 'react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
 import type { Task } from '@/api/types';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
 
 interface TaskModalProps {
     isOpen: boolean;
@@ -86,22 +85,22 @@ export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDel
                     <label className="block text-sm font-medium text-gray-700">Estimated Hours</label>
                     <p className="mt-1 text-sm text-gray-900">{task.estimated_hours || 'Not set'}</p>
                 </div>
-                 <div className="flex justify-end space-x-3 pt-4">
-                     {task.status === 'completed' ? (
-                         <Button onClick={handleDelete} variant="danger">
-                             Delete Task
-                         </Button>
-                     ) : (
-                         getNextStatus(task.status) && (
-                             <Button onClick={handleStatusChange} variant="primary">
-                                 {getButtonText(task.status)}
-                             </Button>
-                         )
-                     )}
-                     <Button onClick={onClose} variant="outline">
-                         Close
-                     </Button>
-                 </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                    {task.status === 'completed' ? (
+                        <Button onClick={handleDelete} variant="danger">
+                            Delete Task
+                        </Button>
+                    ) : (
+                        getNextStatus(task.status) && (
+                            <Button onClick={handleStatusChange} variant='gradient'>
+                                {getButtonText(task.status)}
+                            </Button>
+                        )
+                    )}
+                    <Button onClick={onClose} variant="secondary">
+                        Close
+                    </Button>
+                </div>
             </div>
         </Modal>
     );

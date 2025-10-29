@@ -2,7 +2,6 @@
 
 import AddressInformationCard from './AddressInformationCard';
 import BankingInformationCard from './BankingInformationCard';
-import EmployeeDocumentsCard from './EmployeeDocumentsCard';
 import EmployeeInformationCard from './EmployeeInformationCard';
 import MedicalInformationCard from './MedicalInformationCard';
 import PasswordChangeCard from './PasswordChangeCard';

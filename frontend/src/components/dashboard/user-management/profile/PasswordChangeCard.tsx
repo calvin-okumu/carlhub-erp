@@ -146,7 +146,7 @@ export default function PasswordChangeCard() {
                 <Button onClick={handleChangePassword} className="flex-1">
                     Save Changes
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button variant="secondary" className="flex-1">
                     Cancel
                 </Button>
             </div>

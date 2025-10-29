@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
+import { useEffect, useState } from 'react';
 
-import { useProfile } from '@/hooks/useProfile';
-import { MapPin, Building, Hash, Globe } from 'lucide-react';
 import Loader from '@/components/shared/Loader';
+import { useProfile } from '@/hooks/useProfile';
+import { Building, Globe, Hash, MapPin } from 'lucide-react';
 
 export default function AddressInformationCard() {
     const { profile, loading, error, updateProfile } = useProfile();
@@ -80,7 +80,7 @@ export default function AddressInformationCard() {
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Address Information</h2>
                 {!isEditing && (
-                    <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                    <Button onClick={() => setIsEditing(true)} variant="secondary" size="sm">
                         Edit
                     </Button>
                 )}
@@ -171,7 +171,7 @@ export default function AddressInformationCard() {
             {isEditing && (
                 <div className="flex space-x-2 mt-4">
                     <Button onClick={handleSave}>Save Changes</Button>
-                    <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                    <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
                 </div>
             )}
             {successMessage && (

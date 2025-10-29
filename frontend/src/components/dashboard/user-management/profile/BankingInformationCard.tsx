@@ -84,7 +84,7 @@ export default function BankingInformationCard() {
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Banking Information</h2>
                 {!isEditing && (
-                    <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                    <Button onClick={() => setIsEditing(true)} variant="secondary" size="sm">
                         Edit
                     </Button>
                 )}
@@ -192,7 +192,7 @@ export default function BankingInformationCard() {
             {isEditing && (
                 <div className="flex space-x-2 mt-4">
                     <Button onClick={handleSave}>Save Changes</Button>
-                    <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+                    <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
                 </div>
             )}
             {successMessage && (

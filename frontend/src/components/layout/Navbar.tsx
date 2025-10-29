@@ -90,27 +90,36 @@ export default function Header() {
                             {isProfileMenuOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
                                     <div className="py-1">
-                                        <a
-                                            href="/dashboard/user-management/profile"
-                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            <User className="mr-3 h-4 w-4" />
-                                            Profile
-                                        </a>
-                                        <a
-                                            href="/organizations"
-                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            <Building className="mr-3 h-4 w-4" />
-                                            Organization List
-                                        </a>
-                                        <a
-                                            href="/dashboard/user-management/user-management"
-                                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                        >
-                                            <Users className="mr-3 h-4 w-4" />
-                                            User Management
-                                        </a>
+                                         <button
+                                             onClick={() => {
+                                                 setIsProfileMenuOpen(false);
+                                                 router.push('/dashboard/user-management/profile');
+                                             }}
+                                             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                         >
+                                             <User className="mr-3 h-4 w-4" />
+                                             Profile
+                                         </button>
+                                         <button
+                                             onClick={() => {
+                                                 setIsProfileMenuOpen(false);
+                                                 router.push('/organizations');
+                                             }}
+                                             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                         >
+                                             <Building className="mr-3 h-4 w-4" />
+                                             Organization List
+                                         </button>
+                                         <button
+                                             onClick={() => {
+                                                 setIsProfileMenuOpen(false);
+                                                 router.push('/dashboard/user-management/user-management');
+                                             }}
+                                             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                         >
+                                             <Users className="mr-3 h-4 w-4" />
+                                             User Management
+                                         </button>
                                         <div className="border-t border-gray-100"></div>
                                         <button
                                             onClick={() => {

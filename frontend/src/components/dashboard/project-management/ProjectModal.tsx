@@ -197,7 +197,7 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
-                    <Button onClick={onClose}>
+                    <Button onClick={onClose} variant='secondary'>
                         Cancel
                     </Button>
                     <Button>
