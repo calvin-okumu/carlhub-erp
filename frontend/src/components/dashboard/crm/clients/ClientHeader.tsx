@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Users, UserCheck, UserPlus } from 'lucide-react';
-import StatCard from '@/components/ui/StatCard';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { getClients } from '@/api/crm';
 import type { Client } from '@/api/types';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import StatCard from '@/components/ui/StatCard';
+import { UserCheck, UserPlus, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface ClientHeaderProps {
     onAddClient: () => void;

@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { getUserTenants } from '@/api/crm';
+import { getMilestones, getSprints } from '@/api/project_mgmt';
+import type { Milestone, Sprint, Task, UserTenant } from '@/api/types';
+import CreateTaskModal from '@/components/shared/CreateTaskModal';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
-import BacklogTable from './BacklogTable';
-import CreateTaskModal from '@/components/shared/CreateTaskModal';
 import { useTasks } from '@/hooks/useTasks';
-import { getMilestones, getSprints } from '@/api/project_mgmt';
-import { getUserTenants } from '@/api/crm';
-import type { Task, Milestone, Sprint, UserTenant } from '@/api/types';
 import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import BacklogTable from './BacklogTable';
 
 interface BacklogSectionProps {
     projectSlug: string;

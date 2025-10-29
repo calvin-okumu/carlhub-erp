@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { getUserTenants } from '@/api/crm';
+import type { Milestone, UserTenant } from '@/api/types';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
-import MilestoneTable from './MilestoneTable';
-import MilestoneModal from './MilestoneModal';
-import { useMilestones } from '@/hooks/useMilestones';
-import { getUserTenants } from '@/api/crm';
 import { useProject } from '@/context/ProjectContext';
-import type { Milestone, UserTenant } from '@/api/types';
+import { useMilestones } from '@/hooks/useMilestones';
 import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import MilestoneModal from './MilestoneModal';
+import MilestoneTable from './MilestoneTable';
 
 interface MilestoneSectionProps {
     projectSlug: string;

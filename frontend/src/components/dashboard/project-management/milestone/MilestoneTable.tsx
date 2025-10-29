@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from 'react';
-import Table from '@/components/ui/Table';
-import Loader from '@/components/shared/Loader';
 import type { Milestone } from '@/api/types';
-import { Edit, Trash2, AlertCircle } from 'lucide-react';
+import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import Table from '@/components/ui/Table';
+import { AlertCircle, Edit, Trash2 } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 interface MilestoneTableProps {
     milestones: Milestone[];
@@ -58,12 +58,12 @@ const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading,
             <span
                 key={milestone.id + '-status'}
                 className={`px-2 py-1 text-xs font-semibold rounded-full ${milestone.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
-                        : milestone.status === 'in_progress'
-                            ? 'bg-blue-100 text-blue-800'
-                            : milestone.status === 'pending'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
+                    ? 'bg-green-100 text-green-800'
+                    : milestone.status === 'in_progress'
+                        ? 'bg-blue-100 text-blue-800'
+                        : milestone.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
                     }`}
             >
                 {milestone.status.replace('_', ' ')}

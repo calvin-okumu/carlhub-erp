@@ -40,30 +40,29 @@ export default function ClientTable({ clients, loading, error, onEditClient, onD
     const rows = clients.map(client => ({
         key: client.id,
         data: [
-        client.name,
-        client.email,
-        client.phone || "-",
-        <span
-            key={client.id + '-status'}
-            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                client.status === 'active'
-                    ? 'bg-green-100 text-green-800'
-                    : client.status === 'inactive'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-gray-100 text-gray-800'
-            }`}
-        >
-            {client.status}
-        </span>,
-        new Date(client.created_at).toLocaleDateString(),
-        <div key={client.id + '-actions'} className="flex gap-2">
-            <Button onClick={() => handleEdit(client)} variant="outline" size="sm">
-                <Edit className="h-4 w-4" />
-            </Button>
-            <Button onClick={() => handleDelete(client.slug)} variant="danger" size="sm">
-                <Trash2 className="h-4 w-4" />
-            </Button>
-        </div>
+            client.name,
+            client.email,
+            client.phone || "-",
+            <span
+                key={client.id + '-status'}
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${client.status === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : client.status === 'inactive'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-gray-100 text-gray-800'
+                    }`}
+            >
+                {client.status}
+            </span>,
+            new Date(client.created_at).toLocaleDateString(),
+            <div key={client.id + '-actions'} className="flex gap-2">
+                <Button onClick={() => handleEdit(client)} variant="outline" size="sm">
+                    <Edit className="h-4 w-4" />
+                </Button>
+                <Button onClick={() => handleDelete(client.slug)} variant="danger" size="sm">
+                    <Trash2 className="h-4 w-4" />
+                </Button>
+            </div>
         ]
     }));
 
