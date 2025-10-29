@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import type { Milestone, UserTenant } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
+import Modal from '@/components/ui/Modal';
 import Select from '@/components/ui/Select';
-import type { Milestone, UserTenant } from '@/api/types';
+import Textarea from '@/components/ui/Textarea';
+import React, { useEffect, useState } from 'react';
 
 interface MilestoneModalProps {
     isOpen: boolean;

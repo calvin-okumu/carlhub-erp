@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import { getMilestones } from '@/api/project_mgmt';
+import type { Milestone, Sprint } from '@/api/types';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
-import SprintTable from './SprintTable';
-import SprintModal from './SprintModal';
 import { useSprints } from '@/hooks/useSprints';
-import { getMilestones } from '@/api/project_mgmt';
-import type { Sprint, Milestone } from '@/api/types';
 import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import SprintModal from './SprintModal';
+import SprintTable from './SprintTable';
 
 interface SprintSectionProps {
     projectSlug: string;
