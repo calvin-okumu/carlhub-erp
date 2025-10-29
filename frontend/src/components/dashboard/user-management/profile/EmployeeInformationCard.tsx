@@ -83,7 +83,7 @@ export default function EmployeeInformationCard() {
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Employee Information</h2>
                 {!isEditing && (
-                    <Button onClick={() => setIsEditing(true)} variant="outline" size="sm">
+                    <Button onClick={() => setIsEditing(true)} variant="secondary" size="sm">
                         Edit
                     </Button>
                 )}
@@ -170,7 +170,7 @@ export default function EmployeeInformationCard() {
                     ) : (
                         <span className="flex-1">{linkedin ? <a href={linkedin} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">{linkedin}</a> : 'Not specified'}</span>
                     )}
-                 </div>
+                </div>
 
                 {/* Hire Date */}
                 <div className="flex items-center space-x-3">
@@ -185,25 +185,25 @@ export default function EmployeeInformationCard() {
                     ) : (
                         <span className="flex-1">{birthday ? new Date(birthday).toLocaleDateString() : 'Not specified'}</span>
                     )}
-                 </div>
+                </div>
             </div>
 
             {isEditing && (
-                    <div className="flex space-x-2 mt-4">
-                        <Button onClick={handleSave}>Save Changes</Button>
-                        <Button variant="outline" onClick={handleCancel}>Cancel</Button>
-                    </div>
-                )}
-                {successMessage && (
-                    <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
-                        {successMessage}
-                    </div>
-                )}
-                {errorMessage && (
-                    <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
-                        {errorMessage}
-                    </div>
-                )}
+                <div className="flex space-x-2 mt-4">
+                    <Button onClick={handleSave}>Save Changes</Button>
+                    <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
+                </div>
+            )}
+            {successMessage && (
+                <div className="mt-4 p-2 bg-green-100 text-green-800 rounded">
+                    {successMessage}
+                </div>
+            )}
+            {errorMessage && (
+                <div className="mt-4 p-2 bg-red-100 text-red-800 rounded">
+                    {errorMessage}
+                </div>
+            )}
         </Card>
     );
 }
