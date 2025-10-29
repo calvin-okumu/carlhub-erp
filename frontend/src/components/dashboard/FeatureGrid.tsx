@@ -13,6 +13,7 @@ import {
     Users,
 } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const features = [
     {
@@ -117,10 +118,23 @@ const features = [
 ];
 
 export default function FeatureGrid() {
+    const searchParams = useSearchParams();
+    const query = searchParams.get('search') || '';
+    const filteredFeatures = features.filter(feature =>
+        !query ||
+        feature.title.toLowerCase().includes(query.toLowerCase()) ||
+        feature.subtitle.toLowerCase().includes(query.toLowerCase())
+    );
+
     return (
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
-                {features.map((feature) => (
+            {filteredFeatures.length === 0 ? (
+                <div className="text-center py-20">
+                    <p className="text-gray-500 text-lg">No apps found matching "{query}"</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
+                    {filteredFeatures.map((feature) => (
                     <div
                         key={feature.title}
                         className={`bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 ${feature.hoverColor}`}
@@ -157,7 +171,8 @@ export default function FeatureGrid() {
                         )}
                     </div>
                 ))}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

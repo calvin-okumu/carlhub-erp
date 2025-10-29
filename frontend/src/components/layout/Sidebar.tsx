@@ -99,10 +99,10 @@ export default function Sidebar() {
                         height={32}
                         className="mr-2"
                     />
-                     <h1 className="text-2xl font-bold text-blue-600">Carlhub</h1>
-                 </div>
+                    <h1 className="h1-title  text-2xl font-bold !text-blue-600">Carlhub</h1>
+                </div>
 
-                 {/* Navigation */}
+                {/* Navigation */}
                 <div className="flex-1 overflow-y-auto pt-6">
                     <nav className="px-2 space-y-1">
                         {navigation.map((item) => {
