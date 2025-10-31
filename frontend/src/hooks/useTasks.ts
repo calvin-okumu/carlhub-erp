@@ -74,9 +74,9 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
      setTasks((prev) => [...prev, tempTask]);
 
      setLoading(true);
-     try {
-       const newTask = await createTask(token, taskData);
-      console.log("Created task:", newTask);
+      try {
+        const newTask = await createTask(token, projectSlug, taskData);
+       console.log("Created task:", newTask);
       setTasks((prev) => prev.map((t) => (t.id === tempTask.id ? newTask : t)));
     } catch (err) {
       setTasks((prev) => prev.filter((t) => t.id !== tempTask.id));
