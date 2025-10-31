@@ -56,10 +56,9 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
             console.log('Fetching sprint with slug:', sprintSlug);
             const sprint = await getSprint(token, sprintSlug);
 
-             // Fetch tasks for this sprint
-             const tasksData = await getTasks(token, { sprintSlug: sprintSlug });
+            // Fetch tasks for this sprint
+            const tasksData = await getTasks(token, { projectSlug, sprintSlug: sprintSlug });
 
-            console.log('Fetched sprint:', sprint);
             setSprint(sprint);
             setTasks(tasksData.results);
         } catch (err) {
@@ -192,9 +191,9 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
 
         setAddError(null);
         try {
-             await Promise.all(
-                 selectedTasks.map(taskId => assignTaskToSprint(token, sprintSlug, taskId))
-             );
+            await Promise.all(
+                selectedTasks.map(taskId => assignTaskToSprint(token, sprintSlug, taskId))
+            );
             setAddModalOpen(false);
             setSelectedTasks([]);
             // Refetch tasks
@@ -220,9 +219,9 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         if (!token) return;
 
         try {
-             // Ensure sprint is set to current sprintSlug
-             const taskData = { ...data, sprint: sprintSlug };
-            await createTask(token, taskData);
+            // Ensure sprint is set to current sprintSlug
+            const taskData = { ...data, sprint: sprintSlug };
+            await createTask(token, projectSlug, taskData);
             setCreateModalOpen(false);
             // Refetch tasks
             fetchData();
@@ -298,7 +297,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
                     milestones={milestones}
                     assignees={users}
                     onSave={handleSaveTask}
-                     defaultSprintId={sprintSlug}
+                    defaultSprintId={sprintSlug}
                 />
                 {addModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center">

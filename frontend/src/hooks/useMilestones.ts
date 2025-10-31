@@ -71,7 +71,7 @@ export function useMilestones(projectSlug: string, tenant?: number) {
 
     setLoading(true);
     try {
-      const newMilestone = await createMilestone(token, {
+      const newMilestone = await createMilestone(token, projectSlug, {
         ...data,
         progress: 0,
       });

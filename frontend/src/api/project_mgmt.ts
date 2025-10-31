@@ -128,9 +128,11 @@ export async function deleteProject(token: string, slug: string): Promise<void> 
 
 // Milestone API functions
 export async function getMilestones(token: string, params?: { projectSlug?: string; tenant?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Milestone>> {
-  let url = `${API_BASE}/milestones/`;
+  if (!params?.projectSlug) {
+    throw new Error('projectSlug is required for milestone API calls');
+  }
+  let url = `${API_BASE}/projects/${params.projectSlug}/milestones/`;
   const query = new URLSearchParams();
-  if (params?.projectSlug) query.append('project_slug', params.projectSlug);
   if (params?.tenant) query.append('tenant', params.tenant.toString());
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
@@ -158,7 +160,7 @@ export async function getMilestones(token: string, params?: { projectSlug?: stri
 }
 
 export async function getMilestone(token: string, id: number): Promise<Milestone> {
-  const response = await fetch(`${API_BASE}/milestones/${id}/`, {
+  const response = await fetch(`${API_BASE}/milestones/${id}/`, {  // Keep global for individual milestone access
     method: "GET",
     headers: {
       Authorization: `Token ${token}`,
@@ -175,11 +177,10 @@ export async function getMilestone(token: string, id: number): Promise<Milestone
   return data;
 }
 
-export async function createMilestone(token: string, milestoneData: {
+export async function createMilestone(token: string, projectSlug: string, milestoneData: {
   name: string;
   description?: string;
   status: string;
-  progress: number;
   planned_start?: string;
   actual_start?: string;
   due_date?: string;
@@ -187,7 +188,7 @@ export async function createMilestone(token: string, milestoneData: {
   project: number;
   tenant: number;
 }): Promise<Milestone> {
-  const response = await fetch(`${API_BASE}/milestones/`, {
+  const response = await fetch(`${API_BASE}/projects/${projectSlug}/milestones/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
@@ -250,9 +251,11 @@ export async function deleteMilestone(token: string, slug: string): Promise<void
 
 // Sprint API functions
 export async function getSprints(token: string, params?: { projectSlug?: string; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Sprint>> {
-  let url = `${API_BASE}/sprints/`;
+  if (!params?.projectSlug) {
+    throw new Error('projectSlug is required for sprint API calls');
+  }
+  let url = `${API_BASE}/projects/${params.projectSlug}/sprints/`;
   const query = new URLSearchParams();
-  if (params?.projectSlug) query.append('project_slug', params.projectSlug);
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
   if (params?.status) query.append('status', params.status);
@@ -296,14 +299,14 @@ export async function getSprint(token: string, id: string): Promise<Sprint> {
   return data;
 }
 
-export async function createSprint(token: string, sprintData: {
+export async function createSprint(token: string, projectSlug: string, sprintData: {
   name: string;
   status: string;
   start_date?: string;
   end_date?: string;
   milestone: string;
 }): Promise<Sprint> {
-  const response = await fetch(`${API_BASE}/sprints/`, {
+  const response = await fetch(`${API_BASE}/projects/${projectSlug}/sprints/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
@@ -429,12 +432,14 @@ export async function unassignTaskFromSprint(token: string, sprintSlug: string, 
 
 // Task API functions
 export async function getTasks(token: string, params?: { milestoneSlug?: string; sprintSlug?: string; projectSlug?: string; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Task>> {
-  let url = `${API_BASE}/tasks/`;
+  if (!params?.projectSlug) {
+    throw new Error('projectSlug is required for task API calls');
+  }
+  let url = `${API_BASE}/projects/${params.projectSlug}/tasks/`;
   const query = new URLSearchParams();
 
   if (params?.milestoneSlug) query.append('milestone', params.milestoneSlug);
   if (params?.sprintSlug) query.append('sprint_slug', params.sprintSlug);
-  if (params?.projectSlug) query.append('project_slug', params.projectSlug);
   if (params?.backlog !== undefined) query.append('backlog', params.backlog.toString());
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
@@ -482,7 +487,7 @@ export async function getTask(token: string, slug: string): Promise<Task> {
   return data;
 }
 
-export async function createTask(token: string, taskData: {
+export async function createTask(token: string, projectSlug: string, taskData: {
   title: string;
   description?: string;
   status: string;
@@ -494,7 +499,7 @@ export async function createTask(token: string, taskData: {
   end_date?: string;
   estimated_hours?: number;
 }): Promise<Task> {
-  const response = await fetch(`${API_BASE}/tasks/`, {
+  const response = await fetch(`${API_BASE}/projects/${projectSlug}/tasks/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,

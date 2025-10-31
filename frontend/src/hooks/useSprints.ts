@@ -65,7 +65,7 @@ export function useSprints(projectSlug: string) {
 
     setLoading(true);
     try {
-      const newSprint = await createSprint(token, data);
+      const newSprint = await createSprint(token, projectSlug, data);
       console.log("Created sprint:", newSprint);
       setSprints((prev) =>
         prev.map((s) => (s.id === tempSprint.id ? newSprint : s)),
