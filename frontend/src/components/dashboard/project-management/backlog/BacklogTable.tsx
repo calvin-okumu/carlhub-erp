@@ -53,57 +53,54 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
     const rows = visibleTasks.map(task => ({
         key: task.id,
         data: [
-        task.title,
-        task.description || "-",
-        <span
-            key={task.id + '-status'}
-            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                task.status === 'done'
-                    ? 'bg-green-100 text-green-800'
-                    : task.status === 'in_progress'
-                    ? 'bg-blue-100 text-blue-800'
-                    : task.status === 'in_review'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : task.status === 'testing'
-                    ? 'bg-purple-100 text-purple-800'
-                    : 'bg-gray-100 text-gray-800'
-            }`}
-        >
-            {task.status.replace('_', ' ')}
-        </span>,
-        <span
-            key={task.id + '-priority'}
-            className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                task.priority === 'high'
-                    ? 'bg-red-100 text-red-800'
-                    : task.priority === 'medium'
-                    ? 'bg-yellow-100 text-yellow-800'
-                    : 'bg-green-100 text-green-800'
-            }`}
-        >
-            {task.priority}
-        </span>,
-        <div key={task.id + '-progress'} className="flex items-center gap-2">
-            <span className="text-sm font-medium">{task.progress}%</span>
-            <div className="w-12 h-1 bg-gray-200 rounded">
-                <div
-                    className={`h-1 rounded transition-all duration-300 ${
-                        task.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+            task.title,
+            task.description || "-",
+            <span
+                key={task.id + '-status'}
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${task.status === 'done'
+                        ? 'bg-green-100 text-green-800'
+                        : task.status === 'in_progress'
+                            ? 'bg-blue-100 text-blue-800'
+                            : task.status === 'in_review'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : task.status === 'testing'
+                                    ? 'bg-purple-100 text-purple-800'
+                                    : 'bg-gray-100 text-gray-800'
                     }`}
-                    style={{ width: `${task.progress}%` }}
-                />
+            >
+                {task.status.replace('_', ' ')}
+            </span>,
+            <span
+                key={task.id + '-priority'}
+                className={`px-2 py-1 text-xs font-semibold rounded-full ${task.priority === 'high'
+                        ? 'bg-red-100 text-red-800'
+                        : task.priority === 'medium'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-green-100 text-green-800'
+                    }`}
+            >
+                {task.priority}
+            </span>,
+            <div key={task.id + '-progress'} className="flex items-center gap-2">
+                <span className="text-sm font-medium">{task.progress}%</span>
+                <div className="w-12 h-1 bg-gray-200 rounded">
+                    <div
+                        className={`h-1 rounded transition-all duration-300 ${task.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
+                            }`}
+                        style={{ width: `${task.progress}%` }}
+                    />
+                </div>
+            </div>,
+            task.milestone_name || "-",
+            task.assignee ? "Assigned" : "-", // Placeholder
+            <div key={task.id + '-actions'} className="flex gap-2">
+                <Button onClick={() => handleEdit(task)} variant="outline" size="sm">
+                    <Edit className="h-4 w-4" />
+                </Button>
+                <Button onClick={() => handleDelete(task.id)} variant="danger" size="sm">
+                    <Trash2 className="h-4 w-4" />
+                </Button>
             </div>
-        </div>,
-        task.milestone_name || "-",
-        task.assignee ? "Assigned" : "-", // Placeholder
-        <div key={task.id + '-actions'} className="flex gap-2">
-            <Button onClick={() => handleEdit(task)} variant="outline" size="sm">
-                <Edit className="h-4 w-4" />
-            </Button>
-            <Button onClick={() => handleDelete(task.id)} variant="danger" size="sm">
-                <Trash2 className="h-4 w-4" />
-            </Button>
-        </div>
         ]
     }));
 
@@ -120,7 +117,7 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
                 <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-500 mb-4">No tasks in backlog</p>
-                <Button onClick={onAddTask} variant="primary">
+                <Button className='mx-auto' onClick={onAddTask}>
                     Create Your First Task
                 </Button>
             </div>
