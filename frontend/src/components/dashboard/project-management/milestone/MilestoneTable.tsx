@@ -94,7 +94,7 @@ const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading,
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
                 <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-500 mb-4">No milestones found</p>
-                <Button onClick={onAddMilestone} >
+                <Button className='mx-auto' onClick={onAddMilestone} >
                     Create Your First Milestone
                 </Button>
             </div>

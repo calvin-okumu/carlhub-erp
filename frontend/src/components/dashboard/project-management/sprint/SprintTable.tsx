@@ -125,7 +125,7 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
             <div className="bg-white rounded-lg shadow-lg p-8 text-center">
                 <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-gray-500 mb-4">No sprints found</p>
-                <Button onClick={onAddSprint} variant="primary">
+                <Button onClick={onAddSprint} className='mx-auto'>
                     Create Your First Sprint
                 </Button>
             </div>
