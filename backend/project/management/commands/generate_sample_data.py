@@ -1,7 +1,10 @@
-from django.conf import settings
+import random
+from decimal import Decimal
+
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from accounts.models import CustomUser, Tenant, UserProfile, EmployeeDocument, Invitation, AuditLog
 from project.factories import (
@@ -15,6 +18,7 @@ from project.factories import (
     TenantFactory,
 )
 from project.models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
+from leave_management.models import LeaveBalance, LeavePolicy, LeaveRequest
 
 
 class Command(BaseCommand):
@@ -241,5 +245,105 @@ class Command(BaseCommand):
             self.stdout.write(f'Created {len(audit_logs)} sample audit logs')
         else:
             self.stdout.write('Audit logs already exist')
+
+        # Create leave policies if not exist
+        if LeavePolicy.objects.count() < 6:
+            leave_policies = []
+            leave_types = ['annual_leave', 'sick_leave', 'personal_leave', 'maternity_leave', 'emergency_leave', 'unpaid_leave']
+
+            for i, leave_type in enumerate(leave_types):
+                tenant = tenants[i % len(tenants)]
+
+                # Skip if policy already exists for this tenant and leave type
+                if LeavePolicy.objects.filter(tenant=tenant, leave_type=leave_type).exists():
+                    continue
+
+                policy_data = {
+                    'tenant': tenant,
+                    'leave_type': leave_type,
+                    'annual_entitlement': 25.0 if leave_type == 'annual_leave' else 10.0 if leave_type == 'sick_leave' else 5.0,
+                    'max_consecutive_days': 30 if leave_type in ['annual_leave', 'maternity_leave'] else 5,
+                    'notice_period_days': 7 if leave_type == 'annual_leave' else 1,
+                    'carry_over_allowed': leave_type in ['annual_leave', 'sick_leave'],
+                    'max_carry_over': 5.0 if leave_type == 'annual_leave' else 2.0 if leave_type == 'sick_leave' else None,
+                    'auto_approve_max_days': 3.0 if leave_type in ['annual_leave', 'sick_leave'] else None,
+                    'is_active': True
+                }
+
+                policy = LeavePolicy.objects.create(**policy_data)
+                leave_policies.append(policy)
+
+            self.stdout.write(f'Created {len(leave_policies)} leave policies')
+        else:
+            self.stdout.write('Leave policies already exist')
+
+        # Create leave balances for users if not exist
+        if LeaveBalance.objects.count() < 10:
+            leave_balances = []
+            current_year = timezone.now().year
+
+            for i, user in enumerate(users):
+                tenant = tenants[i % len(tenants)]
+
+                # Create balances for different leave types
+                for leave_type in ['annual_leave', 'sick_leave']:
+                    # Skip if balance already exists
+                    if LeaveBalance.objects.filter(employee=user, leave_type=leave_type, year=current_year).exists():
+                        continue
+
+                    balance_data = {
+                        'employee': user,
+                        'tenant': tenant,
+                        'leave_type': leave_type,
+                        'year': current_year,
+                        'total_days': 25.0 if leave_type == 'annual_leave' else 10.0,
+                        'used_days': float(random.randint(0, 5)),  # Random used days
+                        'carried_over': float(random.randint(0, 2)) if leave_type == 'annual_leave' else 0.0
+                    }
+
+                    balance = LeaveBalance.objects.create(**balance_data)
+                    leave_balances.append(balance)
+
+            self.stdout.write(f'Created {len(leave_balances)} leave balances')
+        else:
+            self.stdout.write('Leave balances already exist')
+
+        # Create sample leave requests if not exist
+        if LeaveRequest.objects.count() < 8:
+            leave_requests = []
+            leave_types = ['annual_leave', 'sick_leave', 'personal_leave']
+            statuses = ['pending', 'approved', 'rejected']
+
+            for i in range(8 - LeaveRequest.objects.count()):
+                employee = users[i % len(users)]
+                tenant = tenants[i % len(tenants)]
+
+                # Get a random future date range
+                start_date = timezone.now().date() + timedelta(days=random.randint(1, 30))
+                end_date = start_date + timedelta(days=random.randint(1, 5))
+
+                request_data = {
+                    'employee': employee,
+                    'tenant': tenant,
+                    'leave_type': random.choice(leave_types),
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'days_requested': float((end_date - start_date).days + 1),
+                    'reason': f'Sample leave request {i+1}',
+                    'status': random.choice(statuses)
+                }
+
+                # If approved, set approval details
+                if request_data['status'] == 'approved':
+                    request_data['approved_by'] = users[(i + 1) % len(users)]
+                    request_data['approved_date'] = timezone.now()
+                    request_data['approval_notes'] = 'Approved for testing'
+
+                request = LeaveRequest.objects.create(**request_data)
+                leave_requests.append(request)
+
+            self.stdout.write(f'Created {len(leave_requests)} sample leave requests')
+        else:
+            self.stdout.write('Leave requests already exist')
 
         self.stdout.write(self.style.SUCCESS('Sample data generated successfully!'))

@@ -88,7 +88,7 @@ if not SECRET_KEY:
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver").split(",")
 # Site URL for generating absolute URLs
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
 

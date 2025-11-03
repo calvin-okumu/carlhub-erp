@@ -120,6 +120,13 @@ curl -X POST http://localhost:8000/api/invite-member/ \
   -d '{
     "email": "newmember@example.com",
     "role": "Employee"
+```
+
+
+
+**Validation:** The system prevents inviting users who are already members of the tenant, returning a 400 Bad Request error with message "User is already a member of this tenant".
+
+
   }'
 ```
 
@@ -179,6 +186,13 @@ curl http://localhost:8000/api/confirm-invitation/?token=invitation-token
     "email": "user@example.com",
     "tenant_name": "Company Name",
     "role": "Employee",
+```
+
+
+
+**Validation:** The system prevents inviting users who are already members of the tenant, returning a 400 Bad Request error with message "User is already a member of this tenant".
+
+
     "expires_at": "2025-11-01T00:00:00Z"
   }
 }
@@ -220,6 +234,143 @@ curl -X PUT http://localhost:8000/api/members/456/ \
 ```
 
 ## User Profiles
+## Employee Documents
+
+
+
+Employees can upload and manage their personal documents such as contracts, certifications, and identification.
+
+
+
+### Document Management
+
+
+
+```bash
+
+# Upload a document
+
+curl -X POST http://localhost:8000/api/accounts/documents/ \
+
+  -H "Authorization: Token YOUR_TOKEN" \
+
+  -F "title=Employment Contract" \
+
+  -F "description=Latest employment contract" \
+
+  -F "document_file=@contract.pdf"
+
+
+
+# List user documents
+
+curl -H "Authorization: Token YOUR_TOKEN" \
+
+  http://localhost:8000/api/accounts/documents/
+
+
+
+# Update document
+
+curl -X PUT http://localhost:8000/api/accounts/documents/123/ \
+
+  -H "Authorization: Token YOUR_TOKEN" \
+
+  -H "Content-Type: application/json" \
+
+  -d '{"title": "Updated Contract Title"}'
+
+
+
+# Delete document
+
+curl -X DELETE http://localhost:8000/api/accounts/documents/123/ \
+
+  -H "Authorization: Token YOUR_TOKEN"
+
+```
+
+
+
+**Document Features:**
+
+- File upload with automatic metadata extraction
+
+- Support for various file types
+
+- File size tracking
+
+- Secure storage with user isolation
+
+
+
+## Audit Logging
+
+
+
+DjangoCRM maintains comprehensive audit logs for all user management activities.
+
+
+
+### Logged Events
+
+
+
+- **User Registration**: New user signup events
+
+- **User Login/Logout**: Authentication attempts and sessions
+
+- **Profile Updates**: Changes to user profile information
+
+- **Document Management**: Document upload, update, and deletion
+
+- **Invitation Management**: Invitation creation, confirmation, and usage
+
+- **Member Approval**: When tenant owners approve new members
+
+- **Role Changes**: Updates to user roles and permissions
+
+- **Security Events**: Failed login attempts and suspicious activities
+
+
+
+### Audit Log Access
+
+
+
+Audit logs are available to tenant administrators for compliance and security monitoring. Logs include:
+
+
+
+- **Timestamp**: When the event occurred
+
+- **User**: Who performed the action
+
+- **Action**: Type of event (create, update, delete, etc.)
+
+- **Resource**: What was affected (user, invitation, profile, etc.)
+
+- **IP Address**: Client IP for security tracking
+
+- **Details**: Before/after values for change tracking
+
+
+
+### Accessing Audit Logs
+
+
+
+```bash
+
+# Get audit logs (admin only)
+
+curl -H "Authorization: Token YOUR_TOKEN" \
+
+  "http://localhost:8000/api/accounts/audit-logs/?action=user_login"
+
+```
+
+
 
 ### Profile Information
 

@@ -25,6 +25,11 @@ This comprehensive documentation provides detailed information about the DjangoC
 - [User Management](./features/user-management.md)
 - [Progress Tracking](./features/progress-tracking.md)
 - [Audit Logging](./features/audit-logging.md) ✅
+- [Leave Management](./leave-management.md)
+
+- [Multi-Tenancy](./features/multi-tenancy.md)
+
+- [Email System](./features/email-system.md)
 - [Multi-Tenancy](./features/multi-tenancy.md)
 
 ### [🏢 Applications](./applications/README.md)

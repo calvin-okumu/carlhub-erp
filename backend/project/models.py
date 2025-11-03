@@ -36,6 +36,9 @@ class Client(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'tenant'], name='unique_client_name_per_tenant')
+        ]
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -117,6 +120,11 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['name', 'client', 'tenant'], name='unique_project_name_per_client_tenant')
+        ]
 
 
 class Milestone(models.Model):
@@ -341,6 +349,25 @@ class Invoice(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="invoices", null=True, blank=True
     )
+    currency = models.CharField(
+        max_length=3,
+        null=True, blank=True,
+        choices=[
+            ('USD', 'US Dollar'),
+            ('EUR', 'Euro'),
+            ('GBP', 'British Pound'),
+            ('JPY', 'Japanese Yen'),
+            ('CAD', 'Canadian Dollar'),
+            ('AUD', 'Australian Dollar'),
+            ('CHF', 'Swiss Franc'),
+            ('CNY', 'Chinese Yuan'),
+            ('INR', 'Indian Rupee'),
+            ('BRL', 'Brazilian Real'),
+            ('ZAR', 'South African Rand'),
+            ('KES', 'Kenyan Shilling'),
+        ],
+        help_text='Currency for this invoice'
+    )
     amount = models.DecimalField(
         max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0'))]
     )
@@ -357,6 +384,12 @@ class Invoice(models.Model):
             while Invoice.objects.filter(slug=self.slug).exists():
                 self.slug = f"{original_slug}-{counter}"
                 counter += 1
+
+        # Set default currency from tenant if not provided
+        if not self.currency:
+            from saasCRM.currency import get_tenant_default_currency
+            self.currency = get_tenant_default_currency(self.tenant)
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -371,6 +404,25 @@ class Payment(models.Model):
     )
     invoice = models.ForeignKey(
         Invoice, on_delete=models.CASCADE, related_name="payments", db_index=True
+    )
+    currency = models.CharField(
+        max_length=3,
+        null=True, blank=True,
+        choices=[
+            ('USD', 'US Dollar'),
+            ('EUR', 'Euro'),
+            ('GBP', 'British Pound'),
+            ('JPY', 'Japanese Yen'),
+            ('CAD', 'Canadian Dollar'),
+            ('AUD', 'Australian Dollar'),
+            ('CHF', 'Swiss Franc'),
+            ('CNY', 'Chinese Yuan'),
+            ('INR', 'Indian Rupee'),
+            ('BRL', 'Brazilian Real'),
+            ('ZAR', 'South African Rand'),
+            ('KES', 'Kenyan Shilling'),
+        ],
+        help_text='Currency for this payment'
     )
     amount = models.DecimalField(
         max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0'))]
@@ -387,6 +439,11 @@ class Payment(models.Model):
             while Payment.objects.filter(slug=self.slug).exists():
                 self.slug = f"{original_slug}-{counter}"
                 counter += 1
+
+        # Set currency from invoice if not provided
+        if not self.currency:
+            self.currency = self.invoice.currency
+
         super().save(*args, **kwargs)
 
     def __str__(self):

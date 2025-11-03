@@ -85,27 +85,64 @@ Tenant owners approve pending team member requests.
 **Error Handling:** Permission checks and safe group assignment.
 
 ### Invite Member
+
 **POST** `/api/invite-member/`
+
+
 
 Send professional HTML email invitations to join the tenant. Uses mobile-responsive templates with step-by-step onboarding instructions.
 
+
+
 **Request:**
+
 ```json
+
 {
+
   "email": "newmember@example.com",
+
   "role": "Employee"
+
 }
+
 ```
+
+
 
 **Response:**
+
 ```json
+
 {
+
   "message": "Invitation sent successfully",
+
   "token": "invitation-token"
+
 }
+
 ```
 
-**Error Handling:** Email sending failures handled gracefully with user-friendly messages.
+
+
+**Error Response (400 Bad Request):**
+
+```json
+
+{
+
+  "error": "User is already a member of this tenant"
+
+}
+
+```
+
+
+
+**Error Handling:** Email sending failures handled gracefully with user-friendly messages. Prevents duplicate invitations for existing tenant members.
+
+
 
 ### Confirm Invitation
 **GET/POST** `/api/confirm-invitation/`
@@ -395,22 +432,75 @@ Delete task.
 ### List Invoices
 **GET** `/api/invoices/`
 
-List all invoices.
+List all invoices with multi-currency support.
+
+**Response Example:**
+```json
+{
+  "count": 10,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "invoice-uuid-1000-00",
+      "tenant": "uuid",
+      "client": {
+        "id": "uuid",
+        "name": "Acme Corp",
+        "email": "billing@acme.com"
+      },
+      "project": null,
+      "currency": "EUR",
+      "amount": "1000.00",
+      "formatted_amount": "€1,000.00",
+      "issued_at": "2025-11-03T10:00:00Z",
+      "paid": false
+    }
+  ]
+}
+```
 
 ### Get Invoice
 **GET** `/api/invoices/{slug}/`
 
-Get invoice details.
+Get invoice details with formatted currency display.
 
 ### Create Invoice
 **POST** `/api/invoices/`
 
-Create new invoice.
+Create new invoice. Currency defaults to tenant's default currency if not specified.
+
+**Request:**
+```json
+{
+  "client": "client-uuid",
+  "project": "project-uuid", // optional
+  "currency": "EUR", // optional, defaults to tenant currency
+  "amount": "1500.00"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "slug": "invoice-uuid-1500-00",
+  "tenant": "uuid",
+  "client": "uuid",
+  "project": "uuid",
+  "currency": "EUR",
+  "amount": "1500.00",
+  "formatted_amount": "€1,500.00",
+  "issued_at": "2025-11-03T10:00:00Z",
+  "paid": false
+}
+```
 
 ### Update Invoice
 **PUT/PATCH** `/api/invoices/{slug}/`
 
-Update invoice.
+Update invoice information.
 
 ### Delete Invoice
 **DELETE** `/api/invoices/{slug}/`
@@ -422,29 +512,479 @@ Delete invoice.
 ### List Payments
 **GET** `/api/payments/`
 
-List all payments.
+List all payments with multi-currency support.
+
+**Response Example:**
+```json
+{
+  "count": 5,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "payment-uuid-500-00",
+      "tenant": "uuid",
+      "invoice": {
+        "id": "uuid",
+        "slug": "invoice-uuid-1000-00",
+        "client": "Acme Corp"
+      },
+      "currency": "EUR",
+      "amount": "500.00",
+      "formatted_amount": "€500.00",
+      "paid_at": "2025-11-03T11:00:00Z"
+    }
+  ]
+}
+```
 
 ### Get Payment
 **GET** `/api/payments/{slug}/`
 
-Get payment details.
+Get payment details with formatted currency display.
 
 ### Create Payment
 **POST** `/api/payments/`
 
-Create new payment.
+Create new payment. Currency defaults to invoice's currency if not specified.
+
+**Request:**
+```json
+{
+  "invoice": "invoice-uuid",
+  "currency": "USD", // optional, defaults to invoice currency
+  "amount": "750.00"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "uuid",
+  "slug": "payment-uuid-750-00",
+  "tenant": "uuid",
+  "invoice": "uuid",
+  "currency": "USD",
+  "amount": "750.00",
+  "formatted_amount": "$750.00",
+  "paid_at": "2025-11-03T11:00:00Z"
+}
+```
 
 ### Update Payment
 **PUT/PATCH** `/api/payments/{slug}/`
 
-Update payment.
+Update payment information.
 
 ### Delete Payment
 **DELETE** `/api/payments/{slug}/`
 
 Delete payment.
 
+## 🔧 System Management
+
+### Database Backup
+**POST** `/api/database-backup/`
+
+Create a timestamped database backup. Only superusers can perform this action.
+
+**Response:**
+```json
+{
+  "message": "Database backup created successfully",
+  "backup_file": "db_backup_20251103_120000.json",
+  "created_at": "2025-11-03T12:00:00Z",
+  "size": "2.45 MB"
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Only superusers can create database backups"
+}
+```
+
+## 📊 Excel Import/Export
+
+### Export Data to Excel
+**GET** `/api/excel-export/`
+
+Export tenant data to Excel format. Supports clients, projects, and tasks.
+
+**Query Parameters:**
+- `model` - Required. One of: `clients`, `projects`, `tasks`
+
+**Response:**
+Returns Excel file (.xlsx) with the requested data.
+
+**Example:**
+```bash
+curl -H "Authorization: Token YOUR_TOKEN" \
+  "http://localhost:8000/api/excel-export/?model=clients" \
+  -o clients.xlsx
+```
+
+**Response Headers:**
+- `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
+- `Content-Disposition: attachment; filename="clients_export.xlsx"`
+
+### Import Data from Excel
+**POST** `/api/excel-import/`
+
+Import data from Excel file. Supports clients and projects.
+
+**Request:**
+- Content-Type: `multipart/form-data`
+- Body: `file` - Excel file (.xlsx)
+
+**Response:**
+```json
+{
+  "message": "Import completed successfully",
+  "imported_count": 5,
+  "errors": []
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Invalid file format. Only .xlsx files are supported",
+  "details": "File must be a valid Excel spreadsheet"
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/excel-import/ \
+  -H "Authorization: Token YOUR_TOKEN" \
+  -F "file=@clients.xlsx"
+```
+
+**Supported Models:**
+- **Clients**: name, email, phone, status, address, notes
+- **Projects**: name, description, client, start_date, end_date, status, priority
+- **Tasks**: title, project_name, milestone_name, assignee_email, status, estimated_hours, start_date, end_date
+
+## Bulk Operations
+
+### Bulk Delete Clients
+**POST** `/api/clients/bulk_delete_clients/`
+
+Delete multiple clients in a single request.
+
+**Request:**
+```json
+{
+  "client_ids": [1, 2, 3]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully deleted 3 clients",
+  "deleted_count": 3
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Cannot delete clients with associated projects",
+  "details": ["Client 1 (Acme Corp) has associated projects"]
+}
+```
+
+### Bulk Delete Projects
+**POST** `/api/projects/bulk_delete_projects/`
+
+Delete multiple projects in a single request.
+
+**Request:**
+```json
+{
+  "project_ids": [1, 2, 3]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully deleted 2 projects",
+  "deleted_count": 2
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Cannot delete projects with associated invoices",
+  "details": ["Project 1 (Project Alpha) has associated invoices"]
+}
+```
+
+### Bulk Delete Tasks
+**POST** `/api/tasks/bulk_delete_tasks/`
+
+Delete multiple tasks in a single request.
+
+**Request:**
+```json
+{
+  "task_ids": [1, 2, 3]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully deleted 3 tasks",
+  "deleted_count": 3
+}
+```
+
+### Bulk Update Sprints
+**POST** `/api/sprints/bulk_update_sprints/`
+
+Update status for multiple sprints.
+
+**Request:**
+```json
+{
+  "sprint_ids": [1, 2, 3],
+  "status": "active"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully updated 3 sprints to status \"active\"",
+  "updated_count": 3
+}
+```
+
+### Bulk Update Tasks
+**POST** `/api/tasks/bulk_update_tasks/`
+
+Update status and/or sprint assignment for multiple tasks.
+
+**Request:**
+```json
+{
+  "task_ids": [1, 2, 3],
+  "status": "in_progress",
+  "sprint_id": 5
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Successfully updated 3 tasks",
+  "updated_count": 3,
+  "updates": {
+    "status": "in_progress",
+    "sprint_id": 5
+  }
+}
+```
+
+**Validation:**
+- Tenant isolation enforced
+- Data validation with detailed error reporting
+- Duplicate detection and handling
+- Audit logging for all import operations
+
 ## 👥 User Tenants
+## 📄 Employee Documents
+
+
+
+### List Employee Documents
+
+**GET** `/api/accounts/documents/`
+
+
+
+List documents uploaded by the current user.
+
+
+
+### Upload Employee Document
+
+**POST** `/api/accounts/documents/`
+
+
+
+Upload a new document.
+
+
+
+**Request:**
+
+- Content-Type: `multipart/form-data`
+
+- Body: `title`, `description`, `document_file`
+
+
+
+### Get Employee Document
+
+**GET** `/api/accounts/documents/{id}/`
+
+
+
+Retrieve a specific document.
+
+
+
+### Update Employee Document
+
+**PUT/PATCH** `/api/accounts/documents/{id}/`
+
+
+
+Update document information.
+
+
+
+### Delete Employee Document
+
+**DELETE** `/api/accounts/documents/{id}/`
+
+
+
+Delete a document.
+
+
+
+## 📊 Audit Logs
+
+
+
+### List Audit Logs
+
+**GET** `/api/accounts/audit-logs/`
+
+
+
+List audit logs for the current tenant (admin only).
+
+
+
+**Query Parameters:**
+
+- `action` - Filter by action type
+
+- `resource_type` - Filter by resource type
+
+- `user` - Filter by user
+
+- `tenant` - Filter by tenant
+
+
+
+## 👑 Administrative Operations
+
+
+
+### Transfer Ownership
+
+**POST** `/api/transfer-ownership/`
+
+
+
+Transfer tenant ownership from current owner to another member.
+
+
+
+**Request:**
+
+```json
+
+{
+
+  "to_user_id": "uuid"
+
+}
+
+```
+
+
+
+### Assign Admin Role
+
+**POST** `/api/assign-admin/`
+
+
+
+Assign or remove admin (owner) role from a tenant member.
+
+
+
+**Request:**
+
+```json
+
+{
+
+  "user_id": "uuid",
+
+  "assign_admin": true
+
+}
+
+```
+
+
+
+## 👤 User Profile Management
+
+
+
+### Get User Profile
+
+**GET** `/api/accounts/profile/`
+
+
+
+Get current user's profile information.
+
+
+
+### Update User Profile
+
+**PUT/PATCH** `/api/accounts/profile/`
+
+
+
+Update current user's profile.
+
+
+
+### Get Current User
+
+**GET** `/api/users/me/`
+
+
+
+Get current authenticated user details.
+
+
+
+### Update Current User
+
+**PUT/PATCH** `/api/users/me/`
+
+
+
+Update current user information.
+
+
 
 ### List Members
 **GET** `/api/members/`
