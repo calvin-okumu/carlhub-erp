@@ -52,12 +52,11 @@ class TenantScopedMixin:
             return queryset.none()
 
 
-class TenantViewSet(TenantScopedMixin, viewsets.ModelViewSet):
+class TenantViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing tenant organizations.
 
     Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
-    In multi-tenant mode, automatically scopes data to the current tenant.
     """
     queryset = Tenant.objects.all()
     serializer_class = TenantSerializer
@@ -429,6 +428,12 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+
+        # Filter by project if accessed via nested route
+        project_pk = self.kwargs.get('project_pk')
+        if project_pk:
+            queryset = queryset.filter(project__slug=project_pk)
+
         return queryset.select_related('project').prefetch_related('sprints', 'sprints__tasks')
 
     def perform_create(self, serializer):
@@ -649,6 +654,11 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset().select_related('milestone', 'sprint', 'milestone__project')
+
+        # Filter by project if accessed via nested route
+        project_pk = self.kwargs.get('project_pk')
+        if project_pk:
+            queryset = queryset.filter(milestone__project__slug=project_pk)
 
         # Filter by backlog status
         backlog = self.request.query_params.get('backlog')
@@ -1027,6 +1037,14 @@ class InvitationViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def perform_create(self, serializer):
+        # Check if user is already a member of this tenant
+        email = serializer.validated_data.get('email')
+        tenant = self.request.tenant if hasattr(self.request, 'tenant') and self.request.tenant else None
+
+        if tenant and UserTenant.objects.filter(user__email=email, tenant=tenant).exists():
+            from django.core.exceptions import ValidationError
+            raise ValidationError('User is already a member of this tenant')
+
         if not hasattr(self.request, 'tenant') or self.request.tenant is None:
             serializer.save(invited_by=self.request.user)  # Dev mode
         else:
@@ -1485,6 +1503,13 @@ def approve_member_view(request):
                 'token': {'type': 'string'}
             }
         },
+        400: {
+            'description': 'Bad request - user already a member or invalid data',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
         403: {
             'description': 'Permission denied',
             'type': 'object',
@@ -1521,6 +1546,10 @@ def invite_member_view(request):
 
         if not email:
             return Response({'error': 'Email required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if user is already a member of this tenant
+        if UserTenant.objects.filter(user__email=email, tenant=tenant).exists():
+            return Response({'error': 'User is already a member of this tenant'}, status=status.HTTP_400_BAD_REQUEST)
 
         token = str(uuid.uuid4())
         expires_at = timezone.now() + timedelta(days=7)
