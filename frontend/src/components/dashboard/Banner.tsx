@@ -22,8 +22,7 @@ export default function Banner() {
                 <div className="flex items-center space-x-4">
                     {/* Logo/Icon */}
                     <div className="bg-white/20 p-3 rounded-xl ring-1 ring-white/30">
-                        <Image src="/logo.png" alt="CarlHub Logo" width={32} height={32} className="h-8 w-8 transition-transform duration-300 ease-in-out
-     group-hover:rotate-12" />
+                        <Image src="/logo.png" alt="CarlHub Logo" width={32} height={32} className="h-8 w-8" />
                     </div>
 
                     {/* Text */}
