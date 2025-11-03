@@ -326,7 +326,7 @@ docker-compose exec db pg_isready -U saascrm_user -d saascrm_db
 
 ## 📖 API Documentation
 
-Complete API documentation is available in [API_DOCUMENTATION.md](API_DOCUMENTATION.md)
+Complete API documentation is available in [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
 
 ### Quick API Examples
 
@@ -439,13 +439,14 @@ DjangoCRM/
 │   ├── db_routers.py       # Database routing for multi-tenancy
 │   ├── wsgi.py             # WSGI configuration
 │   └── asgi.py             # ASGI configuration
+├── docs/                   # Documentation
+│   └── API_DOCUMENTATION.md # Complete API documentation
 ├── Dockerfile              # Docker image for backend deployment
 ├── docker-compose.yml      # Docker Compose configuration for development
 ├── .env.example            # Environment variables template
 ├── check_env.py            # Environment configuration checker
 ├── setup_db.py             # Database setup script
 ├── test_*.py               # Additional test files
-├── API_DOCUMENTATION.md    # Complete API documentation
 ├── requirements.txt        # Python dependencies
 ├── manage.py               # Django management script
 └── README.md              # This file

@@ -3,7 +3,7 @@ import logging
 from datetime import timedelta
 
 from django.contrib.auth import authenticate
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -27,7 +27,32 @@ from .serializers import HealthCheckSerializer
 from .serializers import ClientSerializer, CustomUserSerializer, InvitationSerializer, InvoiceSerializer, MilestoneSerializer, PaymentSerializer, ProjectSerializer, SprintSerializer, TaskSerializer, TenantSerializer, UserTenantSerializer
 
 
-class TenantViewSet(viewsets.ModelViewSet):
+class TenantScopedMixin:
+    """
+    Mixin to provide tenant-scoped queryset filtering.
+
+    Ensures that data is properly isolated by tenant in multi-tenant environments.
+    In development mode (when request.tenant is None), filters by user's associated tenants.
+    """
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.tenant:
+            # Multi-tenant mode: filter by current tenant
+            return queryset.filter(tenant=self.request.tenant)
+        elif self.request.user.is_authenticated:
+            # Development mode: filter by user's tenants
+            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
+            if user_tenants:
+                return queryset.filter(tenant__in=user_tenants)
+            else:
+                # No tenants associated with user
+                return queryset.none()
+        else:
+            # Unauthenticated user
+            return queryset.none()
+
+
+class TenantViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing tenant organizations.
 
@@ -43,21 +68,6 @@ class TenantViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at"]
     ordering = ['name']
     lookup_field = 'slug'
-
-
-
-    def get_queryset(self):
-        if self.request.tenant:
-            return Tenant.objects.filter(id=self.request.tenant.id)
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                return Tenant.objects.filter(id__in=user_tenants)
-            else:
-                return Tenant.objects.none()  # No tenants, no access
-        else:
-            return Tenant.objects.none()  # Unauthenticated, no access
 
     def perform_create(self, serializer):
         # Determine the tenant
@@ -113,7 +123,7 @@ class TenantViewSet(viewsets.ModelViewSet):
         description="Delete a client."
     ),
 )
-class ClientViewSet(viewsets.ModelViewSet):
+class ClientViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing clients.
 
@@ -128,19 +138,6 @@ class ClientViewSet(viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at", "status"]
     ordering = ['name']
     lookup_field = 'slug'
-
-    def get_queryset(self):
-        if self.request.tenant:
-            return Client.objects.filter(tenant=self.request.tenant)
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                return Client.objects.filter(tenant__in=user_tenants)
-            else:
-                return Client.objects.none()  # No tenants, no clients
-        else:
-            return Client.objects.none()  # Unauthenticated, no access
 
     def perform_create(self, serializer):
         # Determine the tenant
@@ -167,6 +164,56 @@ class ClientViewSet(viewsets.ModelViewSet):
                 tenant = tenant
 
         serializer.save(tenant=tenant)
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete_clients(self, request):
+        """
+        Bulk delete multiple clients.
+        Expects: {"client_ids": [1, 2, 3]}
+        """
+        client_ids = request.data.get('client_ids', [])
+
+        if not client_ids:
+            return Response({'error': 'client_ids are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get current tenant
+        tenant = getattr(request, 'tenant', None)
+        if not tenant and request.user.is_authenticated:
+            # In dev mode, get tenant from user's ownership
+            from accounts.models import UserTenant
+            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            tenant = user_tenant.tenant if user_tenant else None
+
+        if not tenant:
+            return Response({'error': 'No tenant found'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get clients that belong to current tenant
+        clients_to_delete = Client.objects.filter(tenant=tenant, id__in=client_ids)
+
+        if not clients_to_delete.exists():
+            return Response({'error': 'No valid clients found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if any clients have associated projects
+        clients_with_projects = []
+        for client in clients_to_delete:
+            if client.projects.exists():
+                clients_with_projects.append(f"Client {client.id} ({client.name}) has associated projects")
+
+        if clients_with_projects:
+            return Response({
+                'error': 'Cannot delete clients with associated projects',
+                'details': clients_with_projects
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Perform bulk delete
+        delete_result = clients_to_delete.delete()  # delete() returns (total_deleted, details_dict)
+        details = delete_result[1]
+        deleted_count = details.get('project.Client', 0)  # Only count the clients deleted
+
+        return Response({
+            'message': f'Successfully deleted {deleted_count} clients',
+            'deleted_count': deleted_count
+        }, status=status.HTTP_200_OK)
 
 
 @extend_schema_view(
@@ -195,7 +242,7 @@ class ClientViewSet(viewsets.ModelViewSet):
         description="Delete a project and all associated milestones, tasks, and invoices."
     ),
 )
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing projects.
 
@@ -214,17 +261,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        if self.request.tenant:
-            return Project.objects.filter(tenant=self.request.tenant).prefetch_related('milestones', 'milestones__sprints')
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                return Project.objects.filter(tenant__in=user_tenants).prefetch_related('milestones', 'milestones__sprints')
-            else:
-                return Project.objects.none()  # No tenants, no projects
-        else:
-            return Project.objects.none()  # Unauthenticated, no access
+        queryset = super().get_queryset()
+        return queryset.prefetch_related('milestones', 'milestones__sprints')
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -294,6 +332,56 @@ class ProjectViewSet(viewsets.ModelViewSet):
             'milestones_updated': len(milestones)
         }, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post'])
+    def bulk_delete_projects(self, request):
+        """
+        Bulk delete multiple projects.
+        Expects: {"project_ids": [1, 2, 3]}
+        """
+        project_ids = request.data.get('project_ids', [])
+
+        if not project_ids:
+            return Response({'error': 'project_ids are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get current tenant
+        tenant = getattr(request, 'tenant', None)
+        if not tenant and request.user.is_authenticated:
+            # In dev mode, get tenant from user's ownership
+            from accounts.models import UserTenant
+            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            tenant = user_tenant.tenant if user_tenant else None
+
+        if not tenant:
+            return Response({'error': 'No tenant found'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get projects that belong to current tenant
+        projects_to_delete = Project.objects.filter(tenant=tenant, id__in=project_ids)
+
+        if not projects_to_delete.exists():
+            return Response({'error': 'No valid projects found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if any projects have associated invoices
+        projects_with_invoices = []
+        for project in projects_to_delete:
+            if project.invoices.exists():
+                projects_with_invoices.append(f"Project {project.id} ({project.name}) has associated invoices")
+
+        if projects_with_invoices:
+            return Response({
+                'error': 'Cannot delete projects with associated invoices',
+                'details': projects_with_invoices
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Perform bulk delete
+        delete_result = projects_to_delete.delete()  # delete() returns (total_deleted, details_dict)
+        details = delete_result[1]
+        deleted_count = details.get('project.Project', 0)  # Only count the projects deleted
+
+        return Response({
+            'message': f'Successfully deleted {deleted_count} projects',
+            'deleted_count': deleted_count
+        }, status=status.HTTP_200_OK)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -321,7 +409,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         description="Delete a milestone and all associated sprints and tasks."
     ),
 )
-class MilestoneViewSet(viewsets.ModelViewSet):
+class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing project milestones.
 
@@ -340,17 +428,8 @@ class MilestoneViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        if self.request.tenant:
-            return Milestone.objects.filter(tenant=self.request.tenant).select_related('project').prefetch_related('sprints', 'sprints__tasks')
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                return Milestone.objects.filter(tenant__in=user_tenants).select_related('project').prefetch_related('sprints', 'sprints__tasks')
-            else:
-                return Milestone.objects.none()  # No tenants, no milestones
-        else:
-            return Milestone.objects.none()  # Unauthenticated, no access
+        queryset = super().get_queryset()
+        return queryset.select_related('project').prefetch_related('sprints', 'sprints__tasks')
 
     def perform_create(self, serializer):
         project = serializer.validated_data.get('project')
@@ -409,7 +488,7 @@ class MilestoneViewSet(viewsets.ModelViewSet):
         )
     ]
 )
-class SprintViewSet(viewsets.ModelViewSet):
+class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing agile sprints.
 
@@ -428,25 +507,12 @@ class SprintViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        queryset = Sprint.objects.select_related('milestone').prefetch_related('tasks')
+        queryset = super().get_queryset().select_related('milestone').prefetch_related('tasks')
 
         # Handle nested routing for project-specific sprints
         project_slug = self.kwargs.get('project_slug')
         if project_slug:
             queryset = queryset.filter(milestone__project__slug=project_slug)
-
-        # Apply tenant filtering
-        if self.request.tenant:
-            queryset = queryset.filter(tenant=self.request.tenant)
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                queryset = queryset.filter(tenant__in=user_tenants)
-            else:
-                return Sprint.objects.none()  # No tenants, no sprints
-        else:
-            return Sprint.objects.none()  # Unauthenticated, no access
 
         return queryset
 
@@ -564,7 +630,7 @@ class SprintViewSet(viewsets.ModelViewSet):
         description="Delete a task."
     ),
 )
-class TaskViewSet(viewsets.ModelViewSet):
+class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing individual tasks.
 
@@ -582,18 +648,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.request.tenant:
-            queryset = Task.objects.filter(tenant=self.request.tenant).select_related('milestone', 'sprint', 'milestone__project')
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                queryset = Task.objects.filter(tenant__in=user_tenants).select_related('milestone', 'sprint', 'milestone__project')
-            else:
-                return Task.objects.none()  # No tenants, no tasks
-        else:
-            return Task.objects.none()  # Unauthenticated, no access
+        queryset = super().get_queryset().select_related('milestone', 'sprint', 'milestone__project')
 
         # Filter by backlog status
         backlog = self.request.query_params.get('backlog')
@@ -668,6 +723,44 @@ class TaskViewSet(viewsets.ModelViewSet):
             'updates': update_data
         }, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post'])
+    def bulk_delete_tasks(self, request):
+        """
+        Bulk delete multiple tasks.
+        Expects: {"task_ids": [1, 2, 3]}
+        """
+        task_ids = request.data.get('task_ids', [])
+
+        if not task_ids:
+            return Response({'error': 'task_ids are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get current tenant
+        tenant = getattr(request, 'tenant', None)
+        if not tenant and request.user.is_authenticated:
+            # In dev mode, get tenant from user's ownership
+            from accounts.models import UserTenant
+            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            tenant = user_tenant.tenant if user_tenant else None
+
+        if not tenant:
+            return Response({'error': 'No tenant found'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get tasks that belong to current tenant
+        tasks_to_delete = Task.objects.filter(tenant=tenant, id__in=task_ids)
+
+        if not tasks_to_delete.exists():
+            return Response({'error': 'No valid tasks found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Perform bulk delete
+        delete_result = tasks_to_delete.delete()  # delete() returns (total_deleted, details_dict)
+        details = delete_result[1]
+        deleted_count = details.get('project.Task', 0)  # Only count the tasks deleted
+
+        return Response({
+            'message': f'Successfully deleted {deleted_count} tasks',
+            'deleted_count': deleted_count
+        }, status=status.HTTP_200_OK)
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -695,7 +788,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         description="Delete an invoice and associated payments."
     ),
 )
-class InvoiceViewSet(viewsets.ModelViewSet):
+class InvoiceViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing invoices.
 
@@ -711,19 +804,6 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     ordering_fields = ["issued_at"]
     ordering = ['issued_at']
     lookup_field = 'slug'
-
-    def get_queryset(self):
-        if self.request.tenant:
-            return Invoice.objects.filter(tenant=self.request.tenant)
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                return Invoice.objects.filter(tenant__in=user_tenants)
-            else:
-                return Invoice.objects.none()  # No tenants, no invoices
-        else:
-            return Invoice.objects.none()  # Unauthenticated, no access
 
     def perform_create(self, serializer):
         # Determine the tenant
@@ -761,6 +841,11 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             from rest_framework import serializers
             raise serializers.ValidationError("Project does not belong to the current tenant.")
 
+        # Set default currency if not provided
+        if 'currency' not in serializer.validated_data:
+            from saasCRM.currency import get_tenant_default_currency
+            serializer.validated_data['currency'] = get_tenant_default_currency(tenant)
+
         serializer.save(tenant=tenant)
 
 
@@ -790,7 +875,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         description="Delete a payment record."
     ),
 )
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing payments.
 
@@ -806,19 +891,6 @@ class PaymentViewSet(viewsets.ModelViewSet):
     ordering_fields = ["paid_at"]
     ordering = ['paid_at']
     lookup_field = 'slug'
-
-    def get_queryset(self):
-        if self.request.tenant:
-            return Payment.objects.filter(tenant=self.request.tenant)
-        elif self.request.user.is_authenticated:
-            # In dev mode, filter by user's tenants
-            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
-            if user_tenants:
-                return Payment.objects.filter(tenant__in=user_tenants)
-            else:
-                return Payment.objects.none()  # No tenants, no payments
-        else:
-            return Payment.objects.none()  # Unauthenticated, no access
 
     def perform_create(self, serializer):
         # Determine the tenant
@@ -851,6 +923,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
             from rest_framework import serializers
             raise serializers.ValidationError("Invoice does not belong to the current tenant.")
 
+        # Set currency from invoice if not provided
+        if 'currency' not in serializer.validated_data and invoice:
+            serializer.validated_data['currency'] = invoice.currency
+        elif 'currency' not in serializer.validated_data:
+            from saasCRM.currency import get_tenant_default_currency
+            serializer.validated_data['currency'] = get_tenant_default_currency(tenant)
+
         serializer.save(tenant=tenant)
 
 
@@ -880,7 +959,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         description="Remove a user from the tenant."
     ),
 )
-class UserTenantViewSet(viewsets.ModelViewSet):
+class UserTenantViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing tenant user relationships.
 
@@ -896,12 +975,6 @@ class UserTenantViewSet(viewsets.ModelViewSet):
     ordering_fields = ["role"]
     ordering = ['role']
     lookup_field = 'slug'
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if not hasattr(self.request, 'tenant') or self.request.tenant is None:
-            return queryset  # Dev mode
-        return queryset.filter(tenant=self.request.tenant)
 
     def perform_create(self, serializer):
         if not hasattr(self.request, 'tenant') or self.request.tenant is None:
@@ -936,7 +1009,7 @@ class UserTenantViewSet(viewsets.ModelViewSet):
         description="Delete an invitation."
     ),
 )
-class InvitationViewSet(viewsets.ModelViewSet):
+class InvitationViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing tenant invitations.
 
@@ -952,12 +1025,6 @@ class InvitationViewSet(viewsets.ModelViewSet):
     ordering_fields = ["created_at"]
     ordering = ['created_at']
     lookup_field = 'slug'
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if not hasattr(self.request, 'tenant') or self.request.tenant is None:
-            return queryset  # Dev mode
-        return queryset.filter(tenant=self.request.tenant)
 
     def perform_create(self, serializer):
         if not hasattr(self.request, 'tenant') or self.request.tenant is None:
@@ -1021,6 +1088,27 @@ class UserViewSet(viewsets.ModelViewSet):
         if not (self.request.user.is_staff or self.request.user.is_superuser) and obj != self.request.user:
             self.permission_denied(self.request, message="You can only access your own profile")
         return obj
+
+    @action(detail=False, methods=['get', 'put', 'patch'], permission_classes=[permissions.IsAuthenticated])
+    def me(self, request):
+        """
+        Get or update current user's profile.
+        """
+        if request.method == 'GET':
+            serializer = self.get_serializer(request.user)
+            return Response(serializer.data)
+        elif request.method in ['PUT', 'PATCH']:
+            serializer = self.get_serializer(request.user, data=request.data, partial=(request.method == 'PATCH'))
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+            # Log profile update
+            try:
+                AuditLogger.log_user_profile_update(request.user, get_client_ip(request))
+            except Exception as e:
+                logger.error(f"Failed to log profile update audit event: {e}")
+
+            return Response(serializer.data)
 
 
 def login_page(request):
@@ -1329,6 +1417,16 @@ def approve_member_view(request):
         except UserTenant.DoesNotExist:
             return Response({'error': 'Pending member not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Check if approving as owner and ensure minimum owners
+        if member_user_tenant.role == 'Tenant Owner':
+            # Count current owners
+            current_owner_count = UserTenant.objects.filter(tenant=request.tenant, is_owner=True).count()
+            if current_owner_count >= 1:  # Allow multiple owners but ensure at least one
+                member_user_tenant.is_owner = True
+                member_user_tenant.role = 'Tenant Owner'
+            else:
+                return Response({'error': 'Cannot approve member as owner: tenant must maintain at least one owner'}, status=status.HTTP_400_BAD_REQUEST)
+
         member_user_tenant.is_approved = True
         member_user_tenant.save()
 
@@ -1342,6 +1440,10 @@ def approve_member_view(request):
 
         try:
             group = Group.objects.get(name=group_name)
+            member_user_tenant.user.groups.add(group)
+        except Group.DoesNotExist:
+            # Fallback: create group if it doesn't exist (shouldn't happen with migration)
+            group, created = Group.objects.get_or_create(name=group_name)
             member_user_tenant.user.groups.add(group)
         except Group.DoesNotExist:
             # Fallback: create group if it doesn't exist
@@ -1769,6 +1871,258 @@ def auth_methods_view(request):
 
 
 @extend_schema(
+    summary="Assign admin role to tenant member",
+    description="Assign or remove admin (owner) role to/from an approved tenant member. Only current owners can perform this action.",
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'user_id': {'type': 'integer', 'description': 'ID of the user to assign/remove admin role'},
+                'assign_admin': {'type': 'boolean', 'description': 'True to assign admin role, False to remove'}
+            },
+            'required': ['user_id', 'assign_admin']
+        }
+    },
+    responses={
+        200: {
+            'description': 'Admin role assigned/removed successfully',
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string'},
+                'user': {'type': 'string'},
+                'role': {'type': 'string'},
+                'is_owner': {'type': 'boolean'}
+            }
+        },
+        400: {
+            'description': 'Bad request - invalid user or assignment not allowed',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        403: {
+            'description': 'Forbidden - only owners can assign admin roles',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        404: {
+            'description': 'User not found',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def assign_admin_view(request):
+    """
+    Assign or remove admin (owner) role to/from a tenant member.
+    Only current owners can perform this action.
+    """
+    logger = logging.getLogger(__name__)
+
+    # Get tenant from request
+    if hasattr(request, 'tenant') and request.tenant:
+        tenant = request.tenant
+    else:
+        # Dev mode: get tenant from user's ownership
+        try:
+            user_tenant = UserTenant.objects.get(user=request.user, is_owner=True)
+            tenant = user_tenant.tenant
+        except UserTenant.DoesNotExist:
+            return Response({'error': 'No tenant ownership found'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if user is owner
+    try:
+        UserTenant.objects.get(user=request.user, tenant=tenant, is_owner=True)
+    except UserTenant.DoesNotExist:
+        return Response({'error': 'Only owners can assign admin roles'}, status=status.HTTP_403_FORBIDDEN)
+
+    user_id = request.data.get('user_id')
+    assign_admin = request.data.get('assign_admin')
+
+    if user_id is None or assign_admin is None:
+        return Response({'error': 'user_id and assign_admin are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        target_user = CustomUser.objects.get(id=user_id)
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'Target user not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Get the UserTenant relationship
+    try:
+        user_tenant = UserTenant.objects.get(user=target_user, tenant=tenant, is_approved=True)
+    except UserTenant.DoesNotExist:
+        return Response({'error': 'User is not an approved member of this tenant'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Prevent self-demotion if this would leave no owners
+    if not assign_admin and user_tenant.is_owner:
+        owner_count = UserTenant.objects.filter(tenant=tenant, is_owner=True).count()
+        if owner_count <= 1:
+            return Response({'error': 'Cannot remove admin role: tenant must have at least one owner'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Update the role
+    user_tenant.is_owner = assign_admin
+    user_tenant.role = 'Tenant Owner' if assign_admin else 'Employee'
+    user_tenant.save()
+
+    # Update user groups
+    from django.contrib.auth.models import Group
+    if assign_admin:
+        # Add to Tenant Owners group
+        try:
+            owner_group = Group.objects.get(name='Tenant Owners')
+            target_user.groups.add(owner_group)
+        except Group.DoesNotExist:
+            pass
+    else:
+        # Remove from Tenant Owners group, add to Employees
+        try:
+            owner_group = Group.objects.get(name='Tenant Owners')
+            target_user.groups.remove(owner_group)
+            employee_group = Group.objects.get(name='Employees')
+            target_user.groups.add(employee_group)
+        except Group.DoesNotExist:
+            pass
+
+    # Log the admin assignment/removal
+    try:
+        AuditLogger.log(
+            user=request.user,
+            action='admin_assigned' if assign_admin else 'admin_removed',
+            resource_type='user',
+            resource_id=str(target_user.id),
+            old_values={'is_owner': not assign_admin, 'role': 'Employee' if assign_admin else 'Tenant Owner'},
+            new_values={'is_owner': assign_admin, 'role': user_tenant.role},
+            ip_address=get_client_ip(request)
+        )
+    except Exception as e:
+        logger.error(f"Failed to log admin assignment audit event: {e}")
+
+    return Response({
+        'message': f'Admin role {"assigned" if assign_admin else "removed"} successfully',
+        'user': target_user.email,
+        'role': user_tenant.role,
+        'is_owner': user_tenant.is_owner
+    }, status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    summary="Transfer tenant ownership",
+    description="Transfer ownership of a tenant from current owner to another approved member. Only current owners can perform this action.",
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'to_user_id': {'type': 'integer', 'description': 'ID of the user to transfer ownership to'}
+            },
+            'required': ['to_user_id']
+        }
+    },
+    responses={
+        200: {
+            'description': 'Ownership transferred successfully',
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string'},
+                'from_user': {'type': 'string'},
+                'to_user': {'type': 'string'}
+            }
+        },
+        400: {
+            'description': 'Bad request - invalid user or transfer not allowed',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        403: {
+            'description': 'Forbidden - only owners can transfer ownership',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        },
+        404: {
+            'description': 'User not found',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def transfer_ownership_view(request):
+    """
+    Transfer ownership of the current tenant to another approved member.
+    Only current owners can perform this action.
+    """
+    logger = logging.getLogger(__name__)
+
+    # Get tenant from request
+    if hasattr(request, 'tenant') and request.tenant:
+        tenant = request.tenant
+    else:
+        # Dev mode: get tenant from user's ownership
+        try:
+            user_tenant = UserTenant.objects.get(user=request.user, is_owner=True)
+            tenant = user_tenant.tenant
+        except UserTenant.DoesNotExist:
+            return Response({'error': 'No tenant ownership found'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Check if user is owner
+    try:
+        UserTenant.objects.get(user=request.user, tenant=tenant, is_owner=True)
+    except UserTenant.DoesNotExist:
+        return Response({'error': 'Only owners can transfer ownership'}, status=status.HTTP_403_FORBIDDEN)
+
+    to_user_id = request.data.get('to_user_id')
+    if not to_user_id:
+        return Response({'error': 'to_user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        to_user = CustomUser.objects.get(id=to_user_id)
+    except CustomUser.DoesNotExist:
+        return Response({'error': 'Target user not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    try:
+        from_user_tenant, to_user_tenant = UserTenant.transfer_ownership(
+            tenant=tenant,
+            from_user=request.user,
+            to_user=to_user
+        )
+    except ValueError as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Log the ownership transfer
+    try:
+        AuditLogger.log(
+            user=request.user,
+            action='owner_transferred',
+            resource_type='tenant',
+            resource_id=str(tenant.id),
+            old_values={'owner': request.user.email},
+            new_values={'owner': to_user.email},
+            ip_address=get_client_ip(request)
+        )
+    except Exception as e:
+        logger.error(f"Failed to log ownership transfer audit event: {e}")
+
+    return Response({
+        'message': 'Ownership transferred successfully',
+        'from_user': request.user.email,
+        'to_user': to_user.email
+    }, status=status.HTTP_200_OK)
+
+
+@extend_schema(
     responses={200: HealthCheckSerializer}
 )
 @api_view(['GET'])
@@ -1782,5 +2136,305 @@ def health_check(request):
         'timestamp': timezone.now().isoformat(),
         'service': 'DjangoCRM API'
     }, status=200)
+
+
+@extend_schema(
+    summary="Create database backup",
+    description="Create a timestamped database backup. Only superusers can perform this action.",
+    request=None,
+    responses={
+        200: {
+            'description': 'Backup created successfully',
+            'type': 'object',
+            'properties': {
+                'message': {'type': 'string'},
+                'backup_file': {'type': 'string'},
+                'created_at': {'type': 'string', 'format': 'date-time'},
+                'size': {'type': 'string'}
+            }
+        },
+        403: {
+            'description': 'Forbidden - only superusers can create backups',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def database_backup_view(request):
+    """
+    Create a database backup. Only superusers are allowed to perform this action.
+    """
+    logger = logging.getLogger(__name__)
+
+    # Check if user is superuser
+    if not request.user.is_superuser:
+        return Response({'error': 'Only superusers can create database backups'}, status=status.HTTP_403_FORBIDDEN)
+
+    try:
+        from django.core.management import call_command
+        from django.conf import settings
+        import os
+        from datetime import datetime
+
+        # Generate timestamp for backup filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = f'db_backup_{timestamp}.json'
+        backup_path = os.path.join(settings.BASE_DIR, 'backend', backup_filename)
+
+        # Create backup using Django's dumpdata command
+        with open(backup_path, 'w') as f:
+            call_command('dumpdata', '--natural-foreign', '--natural-primary', stdout=f)
+
+        # Get file size
+        file_size = os.path.getsize(backup_path)
+        size_mb = file_size / (1024 * 1024)
+
+        # Log the backup creation
+        try:
+            AuditLogger.log(
+                user=request.user,
+                action='database_backup_created',
+                resource_type='system',
+                resource_id=backup_filename,
+                metadata={
+                    'backup_file': backup_filename,
+                    'file_size': f"{size_mb:.2f} MB",
+                    'created_at': timestamp
+                },
+                ip_address=get_client_ip(request)
+            )
+        except Exception as e:
+            logger.error(f"Failed to log database backup audit event: {e}")
+
+        return Response({
+            'message': 'Database backup created successfully',
+            'backup_file': backup_filename,
+            'created_at': timezone.now().isoformat(),
+            'size': f"{size_mb:.2f} MB"
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Database backup creation failed: {e}")
+        return Response({'error': 'Failed to create database backup'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@extend_schema(
+    summary="Export data to Excel",
+    description="Export clients, projects, or tasks to Excel format",
+    parameters=[
+        OpenApiParameter(
+            name='model',
+            type=OpenApiTypes.STR,
+            location=OpenApiParameter.QUERY,
+            description='Model to export (clients, projects, tasks)',
+            required=True,
+            enum=['clients', 'projects', 'tasks']
+        )
+    ],
+    responses={
+        200: {
+            'description': 'Excel file download',
+            'content': {
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+                    'schema': {'type': 'string', 'format': 'binary'}
+                }
+            }
+        },
+        400: {
+            'description': 'Invalid model type',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def excel_export_view(request):
+    """
+    Export data to Excel format. Supports clients, projects, and tasks.
+    """
+    logger = logging.getLogger(__name__)
+
+    model_type = request.GET.get('model')
+    if not model_type:
+        return Response({'error': 'Model parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if model_type not in ['clients', 'projects', 'tasks']:
+        return Response({'error': 'Invalid model type. Must be one of: clients, projects, tasks'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from .excel_utils import ClientExcelHandler, ProjectExcelHandler, TaskExcelHandler
+
+        # Get tenant from request
+        tenant = getattr(request, 'tenant', None)
+        if tenant is None:
+            # Check if user has any tenant association for security
+            try:
+                user_tenant = UserTenant.objects.filter(user=request.user, is_approved=True).first()
+                if user_tenant:
+                    tenant = user_tenant.tenant
+                else:
+                    return Response({'error': 'No tenant access found'}, status=status.HTTP_403_FORBIDDEN)
+            except UserTenant.DoesNotExist:
+                return Response({'error': 'No tenant access found'}, status=status.HTTP_403_FORBIDDEN)
+
+        excel_data = None
+        filename = ''
+
+        if model_type == 'clients':
+            handler = ClientExcelHandler(tenant)
+            excel_data = handler.export_clients()
+            filename = 'clients_export.xlsx'
+        elif model_type == 'projects':
+            handler = ProjectExcelHandler(tenant)
+            excel_data = handler.export_projects()
+            filename = 'projects_export.xlsx'
+        elif model_type == 'tasks':
+            handler = TaskExcelHandler(tenant)
+            excel_data = handler.export_tasks()
+            filename = 'tasks_export.xlsx'
+
+        if not excel_data:
+            return Response({'error': 'Invalid model type'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Log the export
+        try:
+            AuditLogger.log(
+                user=request.user,
+                action='data_exported',
+                resource_type='excel_export',
+                resource_id=model_type,
+                metadata={'export_type': model_type},
+                ip_address=get_client_ip(request)
+            )
+        except Exception as e:
+            logger.error(f"Failed to log data export audit event: {e}")
+
+        # Return Excel file as response
+        response = HttpResponse(
+            excel_data.getvalue(),
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    except Exception as e:
+        logger.error(f"Excel export failed: {e}")
+        return Response({'error': 'Failed to export data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@extend_schema(
+    summary="Import data from Excel",
+    description="Import clients, projects, or tasks from Excel file",
+    request={
+        'multipart/form-data': {
+            'type': 'object',
+            'properties': {
+                'file': {
+                    'type': 'string',
+                    'format': 'binary',
+                    'description': 'Excel file to import'
+                },
+                'model': {
+                    'type': 'string',
+                    'enum': ['clients', 'projects', 'tasks'],
+                    'description': 'Model type to import'
+                }
+            },
+            'required': ['file', 'model']
+        }
+    },
+    responses={
+        200: {
+            'description': 'Import completed',
+            'type': 'object',
+            'properties': {
+                'imported': {'type': 'integer'},
+                'updated': {'type': 'integer'},
+                'errors': {'type': 'array', 'items': {'type': 'string'}},
+                'warnings': {'type': 'array', 'items': {'type': 'string'}}
+            }
+        },
+        400: {
+            'description': 'Invalid request or file format',
+            'type': 'object',
+            'properties': {
+                'error': {'type': 'string'}
+            }
+        }
+    }
+)
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def excel_import_view(request):
+    """
+    Import data from Excel file. Supports clients, projects, and tasks.
+    """
+    logger = logging.getLogger(__name__)
+
+    if 'file' not in request.FILES:
+        return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+    model_type = request.POST.get('model')
+    if not model_type:
+        return Response({'error': 'Model parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if model_type not in ['clients', 'projects', 'tasks']:
+        return Response({'error': 'Invalid model type. Must be one of: clients, projects, tasks'},
+                       status=status.HTTP_400_BAD_REQUEST)
+
+    uploaded_file = request.FILES['file']
+
+    # Validate file type
+    if not uploaded_file.name.endswith(('.xlsx', '.xls')):
+        return Response({'error': 'File must be an Excel file (.xlsx or .xls)'},
+                       status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        from .excel_utils import ClientExcelHandler, ProjectExcelHandler, TaskExcelHandler
+
+        tenant = getattr(request, 'tenant', None)
+        file_content = uploaded_file.read()
+
+        if model_type == 'clients':
+            handler = ClientExcelHandler(tenant)
+            result = handler.import_clients(file_content)
+        elif model_type == 'projects':
+            handler = ProjectExcelHandler(tenant)
+            result = handler.import_projects(file_content)
+        elif model_type == 'tasks':
+            handler = TaskExcelHandler(tenant)
+            result = handler.import_tasks(file_content)
+
+        # Log the import
+        try:
+            AuditLogger.log(
+                user=request.user,
+                action='data_imported',
+                resource_type='excel_import',
+                resource_id=model_type,
+                metadata={
+                    'import_type': model_type,
+                    'imported_count': result.get('imported', 0),
+                    'updated_count': result.get('updated', 0),
+                    'errors_count': len(result.get('errors', []))
+                },
+                ip_address=get_client_ip(request)
+            )
+        except Exception as e:
+            logger.error(f"Failed to log data import audit event: {e}")
+
+        return Response(result, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Excel import failed: {e}")
+        return Response({'error': 'Failed to import data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

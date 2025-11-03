@@ -31,6 +31,61 @@ The system includes:
 - **API**: Comprehensive RESTful API with full Swagger/OpenAPI documentation and interactive testing
 - **Testing**: Complete test suite with comprehensive coverage of all functionality
 
+## Security & Multi-Tenant Isolation
+
+DjangoCRM implements comprehensive security measures to ensure data isolation and access control in a multi-tenant environment.
+
+### Tenant Data Isolation
+
+All data access is automatically scoped by tenant to prevent unauthorized cross-tenant data access:
+
+- **Automatic Filtering**: All ViewSets implement tenant-scoped querysets that filter data by the current tenant
+- **Development Mode Protection**: When `request.tenant` is `None` (development environments), data is filtered by user's associated tenants
+- **Fallback Security**: Users without tenant associations receive empty querysets, ensuring no data leakage
+- **Excel Export Security**: Excel export functionality validates tenant access before allowing data export
+
+### ViewSet Security Implementation
+
+All ViewSets inherit from `TenantScopedMixin` which provides consistent tenant filtering:
+
+```python
+class TenantScopedMixin:
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.tenant:
+            return queryset.filter(tenant=self.request.tenant)
+        elif self.request.user.is_authenticated:
+            user_tenants = UserTenant.objects.filter(user=self.request.user).values_list('tenant', flat=True)
+            if user_tenants:
+                return queryset.filter(tenant__in=user_tenants)
+            else:
+                return queryset.none()
+        else:
+            return queryset.none()
+```
+
+### Excel Export Security
+
+Excel export endpoints include additional security checks:
+
+- **Tenant Validation**: Users must have valid tenant associations to export data
+- **403 Forbidden**: Users without tenant access receive HTTP 403 responses
+- **Empty Data Fallback**: When tenant context is unavailable, empty querysets are returned instead of all data
+
+### Authentication & Authorization
+
+- **Token-Based Authentication**: Secure token authentication for API access
+- **OAuth Integration**: Support for Google and GitHub OAuth providers
+- **Role-Based Access Control**: 5 default user groups with granular permissions
+- **Permission Classes**: Custom permission classes for tenant ownership and resource access
+
+### Data Protection Measures
+
+- **No Cross-Tenant Access**: Users can only access data within their authorized tenants
+- **Secure Defaults**: All queries default to restrictive access patterns
+- **Audit Logging**: Comprehensive audit trails for security events
+- **Input Validation**: All API inputs are validated to prevent injection attacks
+
 ## Architecture
 
 The application is organized into two main Django apps:
