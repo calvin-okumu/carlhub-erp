@@ -34,6 +34,7 @@ class CustomUserManager(BaseUserManager):
 
 class CustomUser(AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
 
     groups = models.ManyToManyField(
         'auth.Group',
@@ -54,6 +55,18 @@ class CustomUser(AbstractUser):
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(f"{self.first_name}-{self.last_name}")
+            self.slug = base_slug
+            # Ensure uniqueness
+            counter = 1
+            while CustomUser.objects.filter(slug=self.slug).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email

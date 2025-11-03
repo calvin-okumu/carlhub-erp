@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('project.urls')),
     path('api/accounts/', include('accounts.urls')),
+    path('api/leave/', include('leave_management.urls')),
     path('accounts/', include('allauth.urls')),
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

@@ -284,14 +284,13 @@ class SignupAPITests(APITestCase):
             'email': 'noinvite@example.com',
             'password': 'securepass123',
             'first_name': 'No',
-            'last_name': 'Invite',
-            'company_name': 'New Company'
+            'last_name': 'Invite'
         }
 
         response = self.client.post(url, data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('invitation', response.data['error'])
+        self.assertIn('Company name required', response.data['error'])
 
 
 class AuditLogTests(TestCase):

@@ -71,6 +71,12 @@ class Command(BaseCommand):
         from accounts.models import UserTenant
         self.stdout.write(f'Linking {len(users)} users to {len(tenants)} tenants')
         for i, user in enumerate(users):
+            # Skip if user already has a UserTenant entry
+            if UserTenant.objects.filter(user=user).exists():
+                existing = UserTenant.objects.get(user=user)
+                self.stdout.write(f'User {user.email} already linked to tenant {existing.tenant.name}, skipping')
+                continue
+
             tenant = tenants[i % len(tenants)]  # Cycle through tenants
             self.stdout.write(f'Processing user {user.email} with tenant {tenant.name}')
             user_tenant, created = UserTenant.objects.get_or_create(
