@@ -1,6 +1,7 @@
 import uuid
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser, BaseUserManager, Group
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -88,6 +89,25 @@ class Tenant(models.Model):
         ('201-1000', '201-1000 employees'),
         ('1000+', '1000+ employees'),
     ])
+    default_currency = models.CharField(
+        max_length=3,
+        default='USD',
+        choices=[
+            ('USD', 'US Dollar'),
+            ('EUR', 'Euro'),
+            ('GBP', 'British Pound'),
+            ('JPY', 'Japanese Yen'),
+            ('CAD', 'Canadian Dollar'),
+            ('AUD', 'Australian Dollar'),
+            ('CHF', 'Swiss Franc'),
+            ('CNY', 'Chinese Yuan'),
+            ('INR', 'Indian Rupee'),
+            ('BRL', 'Brazilian Real'),
+            ('ZAR', 'South African Rand'),
+            ('KES', 'Kenyan Shilling'),
+        ],
+        help_text='Default currency for invoices and payments'
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -97,21 +117,8 @@ class Tenant(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            from django.utils.text import slugify
-            self.slug = slugify(self.name)
-            # Ensure uniqueness
-            original_slug = self.slug
-            counter = 1
-            while Tenant.objects.filter(slug=self.slug).exists():
-                self.slug = f"{original_slug}-{counter}"
-                counter += 1
-        super().save(*args, **kwargs)
-
     def __str__(self):
         return self.name
-
 
 class UserTenant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -133,6 +140,90 @@ class UserTenant(models.Model):
                 self.slug = f"{original_slug}-{counter}"
                 counter += 1
         super().save(*args, **kwargs)
+
+    @classmethod
+    def transfer_ownership(cls, tenant, from_user, to_user):
+        """
+        Transfer ownership from one user to another for a tenant.
+        Ensures at least one owner remains.
+        """
+        if not isinstance(tenant, Tenant):
+            raise ValueError("tenant must be a Tenant instance")
+        if not isinstance(from_user, get_user_model()):
+            raise ValueError("from_user must be a User instance")
+        if not isinstance(to_user, get_user_model()):
+            raise ValueError("to_user must be a User instance")
+
+        # Get the UserTenant relationships
+        try:
+            from_user_tenant = cls.objects.get(user=from_user, tenant=tenant, is_owner=True)
+        except cls.DoesNotExist:
+            raise ValueError("from_user is not an owner of this tenant")
+
+        try:
+            to_user_tenant = cls.objects.get(user=to_user, tenant=tenant, is_approved=True)
+        except cls.DoesNotExist:
+            raise ValueError("to_user is not an approved member of this tenant")
+
+        # Check if this would leave no owners
+        owner_count = cls.objects.filter(tenant=tenant, is_owner=True).count()
+        if owner_count <= 1:
+            raise ValueError("Cannot transfer ownership: tenant must have at least one owner")
+
+        # Perform the transfer
+        from_user_tenant.is_owner = False
+        from_user_tenant.role = 'Employee'  # Downgrade role
+        from_user_tenant.save()
+
+        to_user_tenant.is_owner = True
+        to_user_tenant.role = 'Tenant Owner'  # Upgrade role
+        to_user_tenant.save()
+
+        return from_user_tenant, to_user_tenant
+
+    @classmethod
+    def ensure_minimum_owners(cls, tenant):
+        """
+        Ensure a tenant has at least one owner.
+        If no owners exist, promote the first approved member to owner.
+        """
+        if not isinstance(tenant, Tenant):
+            raise ValueError("tenant must be a Tenant instance")
+
+        owners = cls.objects.filter(tenant=tenant, is_owner=True)
+        if owners.exists():
+            return  # Already has owners
+
+        # Find an approved member to promote
+        approved_members = cls.objects.filter(
+            tenant=tenant,
+            is_approved=True
+        ).exclude(user=tenant.created_by).order_by('created_at')
+
+        if approved_members.exists():
+            member = approved_members.first()
+            member.is_owner = True
+            member.role = 'Tenant Owner'
+            member.save()
+            return member
+
+        # If no approved members, promote the creator if they're still a member
+        if tenant.created_by:
+            try:
+                creator_membership = cls.objects.get(
+                    user=tenant.created_by,
+                    tenant=tenant,
+                    is_approved=True
+                )
+                creator_membership.is_owner = True
+                creator_membership.role = 'Tenant Owner'
+                creator_membership.save()
+                return creator_membership
+            except cls.DoesNotExist:
+                pass
+
+        # Last resort: create a system owner (shouldn't happen in normal operation)
+        raise ValueError("No eligible users to promote to owner")
 
     def __str__(self):
         return f"{self.user.email} - {self.tenant.name}"

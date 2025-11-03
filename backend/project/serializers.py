@@ -4,6 +4,7 @@ from rest_framework import serializers
 from accounts.models import CustomUser, Invitation, Tenant, UserTenant
 
 from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
+from saasCRM.currency import CurrencyConverter
 
 
 class TenantSerializer(serializers.ModelSerializer):
@@ -27,6 +28,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = ['id', 'name', 'slug', 'email', 'phone', 'status', 'tenant', 'tenant_name', 'projects_count', 'created_at', 'updated_at']
+        read_only_fields = ['tenant']
         help_texts = {
             'name': 'Full name of the client',
             'email': 'Primary contact email address (must be unique)',
@@ -176,29 +178,41 @@ class TaskSerializer(serializers.ModelSerializer):
 
 class InvoiceSerializer(serializers.ModelSerializer):
     client_name = serializers.CharField(source='client.name', read_only=True, help_text='Name of the billed client')
+    formatted_amount = serializers.SerializerMethodField(help_text='Amount formatted with currency symbol')
 
     class Meta:
         model = Invoice
-        fields = ['id', 'slug', 'client', 'client_name', 'project', 'amount', 'issued_at', 'paid']
+        fields = ['id', 'slug', 'client', 'client_name', 'project', 'currency', 'amount', 'formatted_amount', 'issued_at', 'paid']
         help_texts = {
             'client': 'Client being invoiced',
             'project': 'Project this invoice is for (optional)',
+            'currency': 'Currency code for this invoice',
             'amount': 'Invoice amount in currency units',
             'issued_at': 'Date the invoice was issued',
             'paid': 'Whether the invoice has been paid',
         }
 
+    @extend_schema_field(serializers.CharField)
+    def get_formatted_amount(self, obj):
+        return CurrencyConverter.format_currency(obj.amount, obj.currency)
+
 class PaymentSerializer(serializers.ModelSerializer):
     invoice_id = serializers.IntegerField(source='invoice.id', read_only=True, help_text='ID of the associated invoice')
+    formatted_amount = serializers.SerializerMethodField(help_text='Amount formatted with currency symbol')
 
     class Meta:
         model = Payment
-        fields = ['id', 'slug', 'invoice', 'invoice_id', 'amount', 'paid_at']
+        fields = ['id', 'slug', 'invoice', 'invoice_id', 'currency', 'amount', 'formatted_amount', 'paid_at']
         help_texts = {
             'invoice': 'Invoice this payment is for',
+            'currency': 'Currency code for this payment',
             'amount': 'Payment amount in currency units',
             'paid_at': 'Date and time the payment was made',
         }
+
+    @extend_schema_field(serializers.CharField)
+    def get_formatted_amount(self, obj):
+        return CurrencyConverter.format_currency(obj.amount, obj.currency)
 
 
 class CustomUserSerializer(serializers.ModelSerializer):

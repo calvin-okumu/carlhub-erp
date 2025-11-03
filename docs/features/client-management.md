@@ -58,6 +58,81 @@ curl -X PUT http://localhost:8000/api/clients/client-slug/ \
 ```
 
 ### Delete Client
+## Bulk Operations
+
+
+
+### Bulk Delete Clients
+
+
+
+Delete multiple clients in a single operation:
+
+
+
+```bash
+
+curl -X POST http://localhost:8000/api/clients/bulk_delete_clients/ \
+
+  -H "Authorization: Token YOUR_TOKEN" \
+
+  -H "Content-Type: application/json" \
+
+  -d '{
+
+    "client_ids": [1, 2, 3]
+
+  }'
+
+```
+
+
+
+**Validation**: Operation fails if any client has associated projects.
+
+
+
+## Data Import/Export
+
+
+
+### Excel Integration
+
+
+
+Import client data from Excel:
+
+
+
+```bash
+
+curl -X POST http://localhost:8000/api/excel-import/ \
+
+  -H "Authorization: Token YOUR_TOKEN" \
+
+  -F "model=clients" \
+
+  -F "file=@clients.xlsx"
+
+```
+
+
+
+Export client data to Excel:
+
+
+
+```bash
+
+curl -H "Authorization: Token YOUR_TOKEN" \
+
+  "http://localhost:8000/api/excel-export/?model=clients" \
+
+  -o clients.xlsx
+
+```
+
+
 
 ```bash
 curl -X DELETE http://localhost:8000/api/clients/client-slug/ \

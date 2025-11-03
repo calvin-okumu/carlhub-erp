@@ -69,11 +69,14 @@ curl -X POST http://localhost:8000/api/invoices/ \
   -d '{
     "client": "client-uuid",
     "project": "project-uuid",
+    "currency": "EUR",
     "amount": "5000.00",
     "description": "Website development - Phase 1",
     "due_date": "2025-02-01"
   }'
 ```
+
+**Currency Support**: Invoices support 12 currencies (USD, EUR, GBP, JPY, CAD, AUD, CHF, CNY, INR, BRL, ZAR, KES). Currency defaults to tenant's default currency if not specified.
 
 ### Invoice Statuses
 - **Draft**: Invoice created but not sent
@@ -97,12 +100,15 @@ curl -X POST http://localhost:8000/api/payments/ \
   -H "Content-Type: application/json" \
   -d '{
     "invoice": "invoice-uuid",
+    "currency": "EUR",
     "amount": "5000.00",
     "payment_date": "2025-01-15",
     "payment_method": "bank_transfer",
     "reference": "TXN-12345"
   }'
 ```
+
+**Currency Inheritance**: Payments inherit currency from their associated invoice unless explicitly specified.
 
 ### Payment Methods
 - **Bank Transfer**: Direct bank transfers
