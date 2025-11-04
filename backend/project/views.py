@@ -529,7 +529,7 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             serializer.save()
 
     @action(detail=True, methods=['post'])
-    def create_task(self, request, pk=None):
+    def create_task(self, request, slug=None):
         sprint = self.get_object()
         data = request.data.copy()
         data['milestone'] = sprint.milestone.id
@@ -542,19 +542,25 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
-    def assign_task(self, request, pk=None):
+    def assign_task(self, request, slug=None):
         sprint = self.get_object()
         task_id = request.data.get('task_id')
+        if not task_id:
+            return Response({'error': 'task_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             task = Task.objects.get(id=task_id, milestone=sprint.milestone)
             task.sprint = sprint
             task.save()
-            return Response({'message': 'Task assigned'}, status=status.HTTP_200_OK)
+            return Response({'message': 'Task assigned successfully'}, status=status.HTTP_200_OK)
         except Task.DoesNotExist:
-            return Response({'error': 'Task not found or invalid'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Task not found or does not belong to the same milestone as the sprint'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            logger.error(f"Error assigning task {task_id} to sprint {sprint.id}: {e}")
+            return Response({'error': 'Failed to assign task'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
-    def unassign_task(self, request, pk=None):
+    def unassign_task(self, request, slug=None):
         sprint = self.get_object()
         task_id = request.data.get('task_id')
         try:
@@ -659,6 +665,11 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         project_slug = self.kwargs.get('project_slug')
         if project_slug:
             queryset = queryset.filter(milestone__project__slug=project_slug)
+
+        # Filter by sprint if accessed via nested route
+        sprint_slug = self.kwargs.get('sprint_slug')
+        if sprint_slug:
+            queryset = queryset.filter(sprint__slug=sprint_slug)
 
         # Filter by backlog status
         backlog = self.request.query_params.get('backlog')

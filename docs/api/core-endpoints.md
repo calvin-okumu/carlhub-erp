@@ -407,6 +407,32 @@ Delete sprint.
 
 List all tasks with filtering.
 
+**Query Parameters:**
+- `status` - Filter by status (to_do, in_progress, in_review, testing, done)
+- `milestone` - Filter by milestone slug
+- `sprint` - Filter by sprint slug
+- `assignee` - Filter by assignee UUID
+- `milestone__project` - Filter by project slug
+- `backlog` - Filter backlog tasks (`true` for tasks not in sprints, `false` for tasks in sprints)
+- `search` - Search in title/description
+- `ordering` - Sort by field
+
+### List Project Tasks
+**GET** `/api/projects/{project_slug}/tasks/`
+
+List tasks for a specific project with filtering.
+
+**Query Parameters:**
+- Same as above, scoped to the project
+
+### List Sprint Tasks
+**GET** `/api/projects/{project_slug}/sprints/{sprint_slug}/tasks/`
+
+List tasks for a specific sprint within a project.
+
+**Query Parameters:**
+- Same as above, scoped to the sprint
+
 ### Get Task
 **GET** `/api/tasks/{slug}/`
 
