@@ -23,9 +23,14 @@ projects_router.register(r'milestones', views.MilestoneViewSet, basename='projec
 projects_router.register(r'sprints', views.SprintViewSet, basename='project-sprints')
 projects_router.register(r'tasks', views.TaskViewSet, basename='project-tasks')
 
+# Nested router for sprint tasks
+sprints_router = nested_routers.NestedSimpleRouter(projects_router, r'sprints', lookup='sprint')
+sprints_router.register(r'tasks', views.TaskViewSet, basename='sprint-tasks')
+
 urlpatterns = [
     path('', include(router.urls)),
     path('', include(projects_router.urls)),
+    path('', include(sprints_router.urls)),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('approve-member/', views.approve_member_view, name='approve_member'),
