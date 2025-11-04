@@ -1,17 +1,16 @@
-import React from 'react';
-import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
+import Table from '@/components/ui/Table';
 
 interface Employee {
     id: number;
-    name: string;
-    avatar: string;
-    jobTitle: string;
+    first_name: string;
+    last_name: string;
     email: string;
-    phone: string;
-    employmentDate: string;
-    status: string;
+    phone?: string;
+    job_title?: string;
+    hire_date?: string;
+    is_active?: boolean;
 }
 
 interface ActiveEmployeeTableProps {
@@ -23,11 +22,13 @@ interface ActiveEmployeeTableProps {
     onPageChange?: (page: number) => void;
     itemsPerPage?: number;
     totalItems?: number;
+    onEditEmployee?: (employee: Employee) => void;
+    onDeleteEmployee?: (employee: Employee) => void;
 }
 
-export default function ActiveEmployeeTable({ searchTerm, entriesPerPage, currentPage, employees = [], totalPages, onPageChange, itemsPerPage, totalItems }: ActiveEmployeeTableProps) {
+export default function ActiveEmployeeTable({ searchTerm, entriesPerPage, currentPage, employees = [], totalPages, onPageChange, itemsPerPage, totalItems, onEditEmployee, onDeleteEmployee }: ActiveEmployeeTableProps) {
     const filteredEmployees = employees.filter(emp =>
-        emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${emp.first_name} ${emp.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         emp.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -42,24 +43,43 @@ export default function ActiveEmployeeTable({ searchTerm, entriesPerPage, curren
         );
     }
 
-    const headers = ['Employee', 'Job Title', 'Email', 'Phone', 'Employment Date', 'Status', 'View', 'Actions'];
+    const headers = ['Employee', 'Job Title', 'Email', 'Phone', 'Employment Date', 'Status', 'Actions'];
 
     const rows = paginatedEmployees.map(emp => ({
         key: emp.id,
         data: [
             <div key="employee" className="flex items-center">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
-                    {emp.avatar}
+                    {emp.first_name?.[0]}{emp.last_name?.[0]}
                 </div>
-                {emp.name}
+                {emp.first_name} {emp.last_name}
             </div>,
-            emp.jobTitle,
+            emp.job_title || 'N/A',
             emp.email,
-            emp.phone,
-            emp.employmentDate,
-            <StatusBadge key="status" status={emp.status} />,
-            <Button key="view" className="bg-blue-600 text-white">View Employee</Button>,
-            <Button key="terminate" className="bg-red-600 text-white">Terminate</Button>,
+            emp.phone || 'N/A',
+            emp.hire_date ? new Date(emp.hire_date).toLocaleDateString() : 'N/A',
+            <StatusBadge key="status" status={emp.is_active ? 'active' : 'inactive'} />,
+            <div key="actions" className="flex gap-2">
+                <Button
+                    onClick={() => onEditEmployee?.(emp)}
+                    className="bg-blue-600 text-white"
+                    size="sm"
+                    variant='secondary'
+                >
+                    Edit
+                </Button>
+                <Button
+                    onClick={() => {
+                        if (confirm('Are you sure you want to terminate this employee?')) {
+                            onDeleteEmployee?.(emp);
+                        }
+                    }}
+                    size="sm"
+                    variant='danger'
+                >
+                    Terminate
+                </Button>
+            </div>,
         ],
     }));
 
