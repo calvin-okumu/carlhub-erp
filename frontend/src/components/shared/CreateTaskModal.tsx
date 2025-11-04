@@ -17,17 +17,17 @@ interface CreateTaskModalProps {
     sprints: Sprint[];
     assignees: UserTenant[];
     milestones: Milestone[];
-    onSave: (data: {
-        title: string;
-        description?: string;
-        status: string;
-        milestone: number;
-        sprint?: string;
-        assignee?: number;
-        start_date?: string;
-        end_date?: string;
-        estimated_hours?: number;
-    }) => void;
+     onSave: (data: {
+         title: string;
+         description?: string;
+         status: string;
+         milestone: string;
+         sprint?: string;
+         assignee?: number;
+         start_date?: string;
+         end_date?: string;
+         estimated_hours?: number;
+     }) => void;
     defaultSprintId?: string; // For pre-filling sprint in Kanban
     isBacklog?: boolean; // To simplify fields for backlog
 }
@@ -67,7 +67,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
 
     useEffect(() => {
         if (watchedSprint) {
-            const sprint = sprints.find(s => s.id.toString() === watchedSprint);
+            const sprint = sprints.find(s => s.slug === watchedSprint);
             if (sprint) {
                 setMinDate(sprint.start_date || '');
                 setMaxDate(sprint.end_date || '');
@@ -84,7 +84,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             milestoneId = data.milestone;
         } else {
             if (data.sprint) {
-                const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === data.sprint) : null;
+                const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === data.sprint) : null;
                 if (!sprint) return;
                 milestoneId = sprint.milestone;
             } else {
@@ -93,12 +93,19 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             }
         }
 
+        // Find sprint object to get the ID
+        let sprintId: string | undefined;
+        if (data.sprint) {
+            const sprintObj = Array.isArray(sprints) ? sprints.find(s => s.slug === data.sprint) : null;
+            sprintId = sprintObj?.id;
+        }
+
         const saveData = {
             title: data.title,
             description: data.description || undefined,
             status: data.status,
             milestone: milestoneId,
-            sprint: data.sprint || undefined,
+            sprint: sprintId,
             assignee: data.assignee ? parseInt(data.assignee) : undefined,
             start_date: data.start_date || undefined,
             end_date: data.end_date || undefined,
@@ -120,7 +127,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             setValue('start_date', task.start_date || '');
             setValue('end_date', task.end_date || '');
             setValue('estimated_hours', task.estimated_hours?.toString() || '');
-            const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === task.sprint) : null;
+            const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === task.sprint) : null;
             if (sprint) {
                 setMinDate(sprint.start_date || '');
                 setMaxDate(sprint.end_date || '');
@@ -208,17 +215,17 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                 {!isBacklog && (
                     <div>
                         <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
-                        <Select
-                            id="sprint"
-                            {...register('sprint', { required: 'Sprint is required' })}
-                        >
-                            <option value="">Select Sprint</option>
-                            {Array.isArray(sprints) && sprints.map(sprint => (
-                                <option key={sprint.id} value={sprint.id}>
-                                    {sprint.name}
-                                </option>
-                            ))}
-                        </Select>
+                         <Select
+                             id="sprint"
+                             {...register('sprint', { required: 'Sprint is required' })}
+                         >
+                             <option value="">Select Sprint</option>
+                             {Array.isArray(sprints) && sprints.map(sprint => (
+                                 <option key={sprint.slug} value={sprint.slug}>
+                                     {sprint.name}
+                                 </option>
+                             ))}
+                         </Select>
                     </div>
                 )}
                 {!isBacklog && (
@@ -288,7 +295,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                     <Button type="button" onClick={onClose} variant='secondary'>
                         Cancel
                     </Button>
-                    <Button>
+                    <Button type="submit">
                         {mode === 'add' ? 'Add Task' : 'Update Task'}
                     </Button>
                 </div>

@@ -6,13 +6,14 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import { createUser, updateUser } from '@/api/users';
+import type { UserProfile } from '@/api/types';
 
 interface EmployeeModalProps {
     isOpen: boolean;
     onClose: () => void;
     mode: 'add' | 'edit';
-    employee?: any; // For edit mode
-    onSave?: (employee: any) => void; // Callback after successful save
+    employee?: UserProfile; // For edit mode
+    onSave?: (employee: UserProfile) => void; // Callback after successful save
 }
 
 export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave }: EmployeeModalProps) {
@@ -163,7 +164,7 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
 
             // Call the onSave callback if provided
             if (onSave && result) {
-                onSave(result);
+                onSave(result as UserProfile);
             }
 
             alert(`Employee ${mode === 'add' ? 'created' : 'updated'} successfully!`);

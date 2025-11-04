@@ -208,8 +208,8 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         title: string;
         description?: string;
         status: string;
-        milestone: number;
-        sprint?: number;
+        milestone: string;
+        sprint?: string;
         assignee?: number;
         start_date?: string;
         end_date?: string;
@@ -219,9 +219,8 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         if (!token) return;
 
         try {
-            // Ensure sprint is set to current sprintSlug
-            const taskData = { ...data, sprint: sprintSlug };
-            await createTask(token, projectSlug, taskData);
+            // Sprint is already set correctly by the modal
+            await createTask(token, projectSlug, data);
             setCreateModalOpen(false);
             // Refetch tasks
             fetchData();
@@ -239,7 +238,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         return (
             <div className="min-h-screen bg-gray-50 p-6">
                 <div className="max-w-7xl mx-auto">
-                    <KanbanHeader sprint={{ id: 0, name: 'Error', status: 'planned', progress: 0, tasks_count: 0, created_at: '', milestone: 0, milestone_name: '' }} onBack={handleBack} />
+                    <KanbanHeader sprint={{ id: '0', slug: 'error', name: 'Error', status: 'planned', start_date: '', end_date: '', progress: 0, tasks_count: 0, created_at: '', milestone: '0', milestone_name: '' }} onBack={handleBack} />
                     <div className="text-center">
                         <div className="text-red-500 mb-4">{error}</div>
                         <button
@@ -263,7 +262,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         return (
             <div className="min-h-screen bg-gray-50 p-6">
                 <div className="max-w-7xl mx-auto">
-                    <KanbanHeader sprint={{ id: 0, name: 'Not Found', status: 'planned', progress: 0, tasks_count: 0, created_at: '', milestone: 0, milestone_name: '' }} onBack={handleBack} />
+                    <KanbanHeader sprint={{ id: '0', slug: 'not-found', name: 'Not Found', status: 'planned', start_date: '', end_date: '', progress: 0, tasks_count: 0, created_at: '', milestone: '0', milestone_name: '' }} onBack={handleBack} />
                     <div className="text-center">Sprint not found</div>
                 </div>
             </div>
@@ -341,7 +340,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
                                 <Button onClick={() => setAddModalOpen(false)} variant="outline">
                                     Cancel
                                 </Button>
-                                <Button onClick={handleAddSelectedTasks} variant="primary">
+                                <Button onClick={handleAddSelectedTasks} variant="gradient">
                                     Add Selected ({selectedTasks.length})
                                 </Button>
                             </div>

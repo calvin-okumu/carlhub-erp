@@ -62,7 +62,7 @@ export function useEmployees() {
       const token = localStorage.getItem("access_token");
       if (!token) throw new Error("No access token");
 
-      await updateUser(token, id, employeeData as any);
+      await updateUser(token, id, employeeData);
       await fetchEmployees();
     } catch (err) {
       throw err;
