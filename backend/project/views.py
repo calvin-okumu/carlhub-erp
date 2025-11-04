@@ -430,9 +430,9 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         queryset = super().get_queryset()
 
         # Filter by project if accessed via nested route
-        project_pk = self.kwargs.get('project_pk')
-        if project_pk:
-            queryset = queryset.filter(project__slug=project_pk)
+        project_slug = self.kwargs.get('project_slug')
+        if project_slug:
+            queryset = queryset.filter(project__slug=project_slug)
 
         return queryset.select_related('project').prefetch_related('sprints', 'sprints__tasks')
 
@@ -656,9 +656,9 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         queryset = super().get_queryset().select_related('milestone', 'sprint', 'milestone__project')
 
         # Filter by project if accessed via nested route
-        project_pk = self.kwargs.get('project_pk')
-        if project_pk:
-            queryset = queryset.filter(milestone__project__slug=project_pk)
+        project_slug = self.kwargs.get('project_slug')
+        if project_slug:
+            queryset = queryset.filter(milestone__project__slug=project_slug)
 
         # Filter by backlog status
         backlog = self.request.query_params.get('backlog')
