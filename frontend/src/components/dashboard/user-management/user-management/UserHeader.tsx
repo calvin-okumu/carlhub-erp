@@ -1,5 +1,5 @@
 import Button from "@/components/ui/Button";
-import { User, UserPlus, Users, Shield } from "lucide-react";
+import { Shield, User, UserPlus, Users } from "lucide-react";
 
 interface UserHeaderProps {
     activeTab: 'invites' | 'activeUsers' | 'employees';
