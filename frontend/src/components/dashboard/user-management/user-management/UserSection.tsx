@@ -13,18 +13,28 @@ import TerminatedEmployeeTable from "./Employees/TerminatedEmployeeTable";
 import EmployeeModal from "./Employees/EmployeeModal";
 import { useEmployees } from "@/hooks/useEmployees";
 import { getUsers } from "@/api/users";
+import type { UserTenant, User, UserProfile } from "@/api/types";
 
 export const UserSection = () => {
-    const [activeTab, setActiveTab] = useState<'invites' | 'activeUsers' | 'employees'>('employees');
+    const [activeTab, setActiveTab] = useState<'invites' | 'activeUsers' | 'employees' | 'groups'>('employees');
     const [employeeSubTab, setEmployeeSubTab] = useState<'active' | 'terminated'>('active');
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-    const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+    const [selectedEmployee, setSelectedEmployee] = useState<UserProfile | null>(null);
 
     const { employees, loading, createEmployee, updateEmployee, deleteEmployee, refetch } = useEmployees();
-    const [users, setUsers] = useState<any[]>([]);
+    const [users, setUsers] = useState<Array<{
+        id: number;
+        name: string;
+        avatar: string;
+        email: string;
+        job_title: string;
+        last_login: string;
+        role: string;
+        status: string;
+    }>>([]);
     const [usersLoading, setUsersLoading] = useState(false);
 
     // Separate employees by status
@@ -61,7 +71,7 @@ export const UserSection = () => {
         }
     };
 
-    const handleTabChange = (tab: 'invites' | 'activeUsers' | 'employees') => {
+    const handleTabChange = (tab: 'invites' | 'activeUsers' | 'employees' | 'groups') => {
         setActiveTab(tab);
         setCurrentPage(1);
         if (tab === 'employees') {
@@ -82,13 +92,13 @@ export const UserSection = () => {
         setIsModalOpen(true);
     };
 
-    const handleEditEmployee = (employee: any) => {
+    const handleEditEmployee = (employee: { id: number; first_name: string; last_name: string; email: string; phone?: string; job_title?: string; hire_date?: string; is_active?: boolean; }) => {
         setModalMode('edit');
-        setSelectedEmployee(employee);
+        setSelectedEmployee(employee as UserProfile);
         setIsModalOpen(true);
     };
 
-    const handleSaveEmployee = async (employeeData: any) => {
+    const handleSaveEmployee = async (employeeData: UserProfile) => {
         try {
             if (modalMode === 'add') {
                 await createEmployee(employeeData);
@@ -102,7 +112,7 @@ export const UserSection = () => {
         }
     };
 
-    const handleTerminateEmployee = async (employee: any) => {
+    const handleTerminateEmployee = async (employee: { id: number; first_name: string; last_name: string; email: string; phone?: string; job_title?: string; hire_date?: string; is_active?: boolean; }) => {
         if (confirm(`Are you sure you want to terminate ${employee.first_name} ${employee.last_name}?`)) {
             try {
                 await updateEmployee(employee.id, { is_active: false });
@@ -114,7 +124,7 @@ export const UserSection = () => {
         }
     };
 
-    const handleReactivateEmployee = async (employee: any) => {
+    const handleReactivateEmployee = async (employee: { id: number; first_name: string; last_name: string; email: string; phone?: string; job_title?: string; hire_date?: string; is_active?: boolean; }) => {
         try {
             await updateEmployee(employee.id, { is_active: true });
             refetch();
@@ -124,7 +134,7 @@ export const UserSection = () => {
         }
     };
 
-    const handleDeleteEmployee = async (employee: any) => {
+    const handleDeleteEmployee = async (employee: { id: number; first_name: string; last_name: string; email: string; phone?: string; job_title?: string; hire_date?: string; is_active?: boolean; }) => {
         if (confirm(`Are you sure you want to permanently delete ${employee.first_name} ${employee.last_name}? This action cannot be undone.`)) {
             try {
                 await deleteEmployee(employee.id);
@@ -173,7 +183,7 @@ export const UserSection = () => {
                     )}
                     <div className="flex items-center space-x-4">
                         <Input
-                            placeholder={`Search ${activeTab === 'invites' ? 'invites' : activeTab === 'activeUsers' ? 'users' : employeeSubTab === 'active' ? 'active employees' : 'terminated employees'}`}
+                            placeholder={`Search ${activeTab === 'invites' ? 'invites' : activeTab === 'activeUsers' ? 'users' : activeTab === 'groups' ? 'groups' : employeeSubTab === 'active' ? 'active employees' : 'terminated employees'}`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -195,19 +205,36 @@ export const UserSection = () => {
                          itemsPerPage={entriesPerPage}
                          totalItems={totalItems}
                      />
-                  ) : activeTab === 'activeUsers' ? (
-                      <ActiveUsersTable
-                          searchTerm={searchTerm}
-                          entriesPerPage={entriesPerPage}
-                          currentPage={currentPage}
-                          users={users}
-                          totalPages={Math.ceil(users.length / entriesPerPage)}
-                          onPageChange={setCurrentPage}
-                          itemsPerPage={entriesPerPage}
-                          totalItems={users.length}
-                      />
-                  ) : employeeSubTab === 'active' ? (
-                      <ActiveEmployeeTable
+                 ) : activeTab === 'activeUsers' ? (
+                     <ActiveUsersTable
+                         searchTerm={searchTerm}
+                         entriesPerPage={entriesPerPage}
+                         currentPage={currentPage}
+                         users={users}
+                         totalPages={Math.ceil(users.length / entriesPerPage)}
+                         onPageChange={setCurrentPage}
+                         itemsPerPage={entriesPerPage}
+                         totalItems={users.length}
+                     />
+                 ) : activeTab === 'groups' ? (
+                     <div className="p-8 text-center text-gray-500">
+                         <p>Groups & Permissions management coming soon...</p>
+                     </div>
+                 ) : employeeSubTab === 'active' ? (
+                     <ActiveEmployeeTable
+                         searchTerm={searchTerm}
+                         entriesPerPage={entriesPerPage}
+                         currentPage={currentPage}
+                         employees={currentEmployees}
+                         totalPages={Math.ceil(totalItems / entriesPerPage)}
+                         onPageChange={setCurrentPage}
+                         itemsPerPage={entriesPerPage}
+                         totalItems={totalItems}
+                         onEditEmployee={handleEditEmployee}
+                         onDeleteEmployee={handleTerminateEmployee}
+                     />
+                 ) : (
+                      <TerminatedEmployeeTable
                           searchTerm={searchTerm}
                           entriesPerPage={entriesPerPage}
                           currentPage={currentPage}
@@ -216,30 +243,17 @@ export const UserSection = () => {
                           onPageChange={setCurrentPage}
                           itemsPerPage={entriesPerPage}
                           totalItems={totalItems}
-                          onEditEmployee={handleEditEmployee}
-                          onDeleteEmployee={handleTerminateEmployee}
+                          onReactivateEmployee={handleReactivateEmployee}
+                          onDeleteEmployee={handleDeleteEmployee}
                       />
-                  ) : (
-                       <TerminatedEmployeeTable
-                           searchTerm={searchTerm}
-                           entriesPerPage={entriesPerPage}
-                           currentPage={currentPage}
-                           employees={currentEmployees}
-                           totalPages={Math.ceil(totalItems / entriesPerPage)}
-                           onPageChange={setCurrentPage}
-                           itemsPerPage={entriesPerPage}
-                           totalItems={totalItems}
-                           onReactivateEmployee={handleReactivateEmployee}
-                           onDeleteEmployee={handleDeleteEmployee}
-                       />
-                  )}
+                 )}
              </Card>
               {activeTab === 'employees' && (
                   <EmployeeModal
                       isOpen={isModalOpen}
                       onClose={() => setIsModalOpen(false)}
                       mode={modalMode}
-                      employee={selectedEmployee}
+                      employee={selectedEmployee || undefined}
                       onSave={handleSaveEmployee}
                   />
               )}

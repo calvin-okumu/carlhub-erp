@@ -19,7 +19,7 @@ export default function EmptyState({ icon: Icon, title, description, buttonText,
             <h3 className="mt-2 text-sm font-medium text-gray-900">{title}</h3>
             <p className="mt-1 text-sm text-gray-500">{description}</p>
             <div className="mt-6">
-                <Button onClick={onButtonClick} variant="primary">
+                <Button onClick={onButtonClick} variant="gradient">
                     {buttonText}
                 </Button>
             </div>

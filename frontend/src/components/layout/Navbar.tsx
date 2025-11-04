@@ -28,11 +28,15 @@ export default function Header() {
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
-            if (searchQuery.trim()) {
-                router.push(`/dashboard?search=${encodeURIComponent(searchQuery)}`);
-            } else {
-                router.push('/dashboard');
+            // Only perform search navigation if we're on the main dashboard page
+            if (window.location.pathname === '/dashboard') {
+                if (searchQuery.trim()) {
+                    router.push(`/dashboard?search=${encodeURIComponent(searchQuery)}`);
+                } else {
+                    router.push('/dashboard');
+                }
             }
+            // On other pages, don't navigate - search functionality is disabled
         }, 300); // Debounce
 
         return () => clearTimeout(timeoutId);
