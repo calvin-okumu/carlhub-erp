@@ -162,3 +162,227 @@ export async function updateUserProfile(token: string, id: number, profileData: 
   // Return the updated profile
   return await getUserProfile(token, id);
 }
+
+export async function createUser(token: string, userData: {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  job_title?: string;
+  employee_id?: string;
+  employee_number?: string;
+  hire_date?: string;
+  street_address?: string;
+  city?: string;
+  state_province?: string;
+  postal_code?: string;
+  country?: string;
+  emergency_contact?: string;
+  emergency_phone?: string;
+  medical_aid_provider?: string;
+  medical_aid_plan?: string;
+  medical_aid_number?: string;
+  medical_conditions?: string;
+  allergies?: string;
+  medications?: string;
+  bank_name?: string;
+  account_number?: string;
+  branch_code?: string;
+  account_type?: string;
+  routing_number?: string;
+  swift_code?: string;
+  is_active?: boolean;
+}): Promise<User> {
+  // First, create the user account (assuming there's a user creation endpoint)
+  // If not, this might need to be done through signup or another endpoint
+  const createUserUrl = `${API_BASE}/users/`;
+  const userResponse = await fetch(createUserUrl, {
+    method: "POST",
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      first_name: userData.first_name,
+      last_name: userData.last_name,
+      email: userData.email,
+      phone: userData.phone,
+      job_title: userData.job_title,
+      is_active: userData.is_active ?? true,
+    }),
+  });
+
+  if (!userResponse.ok) {
+    const errorData = await userResponse.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to create user: ${userResponse.status} ${userResponse.statusText}`);
+  }
+
+  const userDataResponse = await userResponse.json();
+
+  // Then create/update the profile with additional employee details
+  const profileData = {
+    job_title: userData.job_title || '',
+    phone: userData.phone || '',
+    employee_id: userData.employee_id || '',
+    employee_number: userData.employee_number || '',
+    hire_date: userData.hire_date || '',
+    street_address: userData.street_address || '',
+    city: userData.city || '',
+    state_province: userData.state_province || '',
+    postal_code: userData.postal_code || '',
+    country: userData.country || '',
+    emergency_contact: userData.emergency_contact || '',
+    emergency_phone: userData.emergency_phone || '',
+    medical_aid_provider: userData.medical_aid_provider || '',
+    medical_aid_plan: userData.medical_aid_plan || '',
+    medical_aid_number: userData.medical_aid_number || '',
+    medical_conditions: userData.medical_conditions || '',
+    allergies: userData.allergies || '',
+    medications: userData.medications || '',
+    bank_name: userData.bank_name || '',
+    account_number: userData.account_number || '',
+    branch_code: userData.branch_code || '',
+    account_type: userData.account_type || '',
+    routing_number: userData.routing_number || '',
+    swift_code: userData.swift_code || '',
+  };
+
+  // Update profile if user was created successfully
+  if (userDataResponse.id) {
+    await updateUserProfile(token, userDataResponse.id, profileData);
+  }
+
+  // Return the created user
+  return {
+    id: userDataResponse.id,
+    email: userData.email,
+    first_name: userData.first_name,
+    last_name: userData.last_name,
+    is_active: userData.is_active ?? true,
+    date_joined: userDataResponse.date_joined || '',
+    organization: '', // Will be set when added to tenant
+    job: userData.job_title || '',
+  };
+}
+
+export async function updateUser(token: string, id: number, userData: Partial<{
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  job_title: string;
+  employee_id: string;
+  employee_number: string;
+  hire_date: string;
+  street_address: string;
+  city: string;
+  state_province: string;
+  postal_code: string;
+  country: string;
+  emergency_contact: string;
+  emergency_phone: string;
+  medical_aid_provider: string;
+  medical_aid_plan: string;
+  medical_aid_number: string;
+  medical_conditions: string;
+  allergies: string;
+  medications: string;
+  bank_name: string;
+  account_number: string;
+  branch_code: string;
+  account_type: string;
+  routing_number: string;
+  swift_code: string;
+  is_active: boolean;
+}>): Promise<User> {
+  // Update user basic info
+  const userUpdateData = {
+    first_name: userData.first_name,
+    last_name: userData.last_name,
+    email: userData.email,
+    phone: userData.phone,
+    job_title: userData.job_title,
+    is_active: userData.is_active,
+  };
+
+  // Remove undefined values
+  Object.keys(userUpdateData).forEach(key => {
+    if (userUpdateData[key as keyof typeof userUpdateData] === undefined) {
+      delete userUpdateData[key as keyof typeof userUpdateData];
+    }
+  });
+
+  if (Object.keys(userUpdateData).length > 0) {
+    const userUrl = `${API_BASE}/users/${id}/`;
+    const userResponse = await fetch(userUrl, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Token ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userUpdateData),
+    });
+
+    if (!userResponse.ok) {
+      const errorData = await userResponse.json().catch(() => ({}));
+      throw new Error(errorData.error || `Failed to update user: ${userResponse.status} ${userResponse.statusText}`);
+    }
+  }
+
+  // Update profile with employee details
+  const profileUpdateData = {
+    job_title: userData.job_title,
+    phone: userData.phone,
+    employee_id: userData.employee_id,
+    employee_number: userData.employee_number,
+    hire_date: userData.hire_date,
+    street_address: userData.street_address,
+    city: userData.city,
+    state_province: userData.state_province,
+    postal_code: userData.postal_code,
+    country: userData.country,
+    emergency_contact: userData.emergency_contact,
+    emergency_phone: userData.emergency_phone,
+    medical_aid_provider: userData.medical_aid_provider,
+    medical_aid_plan: userData.medical_aid_plan,
+    medical_aid_number: userData.medical_aid_number,
+    medical_conditions: userData.medical_conditions,
+    allergies: userData.allergies,
+    medications: userData.medications,
+    bank_name: userData.bank_name,
+    account_number: userData.account_number,
+    branch_code: userData.branch_code,
+    account_type: userData.account_type,
+    routing_number: userData.routing_number,
+    swift_code: userData.swift_code,
+  };
+
+  // Remove undefined values
+  Object.keys(profileUpdateData).forEach(key => {
+    if (profileUpdateData[key as keyof typeof profileUpdateData] === undefined) {
+      delete profileUpdateData[key as keyof typeof profileUpdateData];
+    }
+  });
+
+  if (Object.keys(profileUpdateData).length > 0) {
+    await updateUserProfile(token, id, profileUpdateData);
+  }
+
+  // Return updated user
+  return await getUser(token, id);
+}
+
+export async function deleteUser(token: string, id: number): Promise<void> {
+  const url = `${API_BASE}/users/${id}/`;
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Token ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to delete user: ${response.status} ${response.statusText}`);
+  }
+}
