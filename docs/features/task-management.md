@@ -9,14 +9,13 @@ Tasks are the fundamental work units in DjangoCRM, representing individual items
 Tasks can be created through the API:
 
 ```bash
-curl -X POST http://localhost:8000/api/tasks/ \
+curl -X POST http://localhost:8000/api/tasks/?milestone=milestone-slug \
   -H "Authorization: Token YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Implement user authentication",
     "description": "Add login/logout functionality with JWT tokens",
     "status": "to_do",
-    "milestone": "milestone-uuid",
     "assignee": "user-uuid",
     "estimated_hours": 8
   }'
@@ -51,7 +50,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 # Filter by project
 curl -H "Authorization: Token YOUR_TOKEN" \
-  "http://localhost:8000/api/tasks/?milestone__project=project-slug"
+  "http://localhost:8000/api/tasks/?project=project-slug"
 
 # Get backlog tasks (not assigned to sprints)
 curl -H "Authorization: Token YOUR_TOKEN" \
