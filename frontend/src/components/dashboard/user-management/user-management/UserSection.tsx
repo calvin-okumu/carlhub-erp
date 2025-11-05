@@ -11,6 +11,7 @@ import ActiveUsersTable from "./Employees/ActiveUsersTable";
 import InvitesTable from "./Employees/InvitesTable";
 import TerminatedEmployeeTable from "./Employees/TerminatedEmployeeTable";
 import EmployeeModal from "./Employees/EmployeeModal";
+import InviteModal from "./Employees/InviteModal";
 import { useEmployees } from "@/hooks/useEmployees";
 import { getUsers } from "@/api/users";
 import type { UserTenant, User, UserProfile } from "@/api/types";
@@ -23,6 +24,14 @@ export const UserSection = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedEmployee, setSelectedEmployee] = useState<UserProfile | null>(null);
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [groups, setGroups] = useState<Array<{id: number, name: string}>>([
+        { id: 1, name: 'Admin' },
+        { id: 2, name: 'Manager' },
+        { id: 3, name: 'Employee' },
+        { id: 4, name: 'Developer' },
+        { id: 5, name: 'Designer' }
+    ]);
 
     const { employees, loading, createEmployee, updateEmployee, deleteEmployee, refetch } = useEmployees();
     const [users, setUsers] = useState<Array<{
@@ -118,9 +127,30 @@ export const UserSection = () => {
                 await updateEmployee(employee.id, { is_active: false });
                 refetch();
             } catch (error) {
-                console.error('Error terminating employee:', error);
-                alert('Failed to terminate employee');
+                console.error('Error deleting employee:', error);
+                alert('Failed to delete employee');
             }
+        }
+    };
+
+    const handleInviteMember = () => {
+        setIsInviteModalOpen(true);
+    };
+
+    const handleSendInvite = async (email: string, groups: number[]) => {
+        // TODO: API call to send invite
+        alert(`Send invite to ${email} with groups: ${groups.join(', ')}`);
+    };
+
+    const handleResendInvite = async (inviteId: number) => {
+        // TODO: API call to resend invite
+        alert(`Resend invite for ID: ${inviteId}`);
+    };
+
+    const handleDeleteInvite = async (inviteId: number) => {
+        if (confirm('Are you sure you want to delete this invitation?')) {
+            // TODO: API call to delete invite
+            alert(`Delete invite for ID: ${inviteId}`);
         }
     };
 
@@ -180,8 +210,15 @@ export const UserSection = () => {
                                 </button>
                             </div>
                         </div>
-                    )}
-                    <div className="flex items-center space-x-4">
+                     )}
+                     {activeTab === 'invites' && (
+                         <div className="flex items-center space-x-4">
+                             <Button onClick={handleInviteMember} className="bg-blue-600 text-white">
+                                 + Invite Member
+                             </Button>
+                         </div>
+                     )}
+                     <div className="flex items-center space-x-4">
                         <Input
                             placeholder={`Search ${activeTab === 'invites' ? 'invites' : activeTab === 'activeUsers' ? 'users' : activeTab === 'groups' ? 'groups' : employeeSubTab === 'active' ? 'active employees' : 'terminated employees'}`}
                             value={searchTerm}
@@ -194,17 +231,19 @@ export const UserSection = () => {
                 </div>
                   {(loading || usersLoading) ? (
                      <Loader />
-                 ) : activeTab === 'invites' ? (
-                     <InvitesTable
-                         searchTerm={searchTerm}
-                         entriesPerPage={entriesPerPage}
-                         currentPage={currentPage}
-                         invites={[]}
-                         totalPages={Math.ceil(totalItems / entriesPerPage)}
-                         onPageChange={setCurrentPage}
-                         itemsPerPage={entriesPerPage}
-                         totalItems={totalItems}
-                     />
+                  ) : activeTab === 'invites' ? (
+                      <InvitesTable
+                          searchTerm={searchTerm}
+                          entriesPerPage={entriesPerPage}
+                          currentPage={currentPage}
+                          invites={[]}
+                          totalPages={Math.ceil(totalItems / entriesPerPage)}
+                          onPageChange={setCurrentPage}
+                          itemsPerPage={entriesPerPage}
+                          totalItems={totalItems}
+                          onResendInvite={handleResendInvite}
+                          onDeleteInvite={handleDeleteInvite}
+                      />
                  ) : activeTab === 'activeUsers' ? (
                      <ActiveUsersTable
                          searchTerm={searchTerm}
@@ -248,15 +287,21 @@ export const UserSection = () => {
                       />
                  )}
              </Card>
-              {activeTab === 'employees' && (
-                  <EmployeeModal
-                      isOpen={isModalOpen}
-                      onClose={() => setIsModalOpen(false)}
-                      mode={modalMode}
-                      employee={selectedEmployee || undefined}
-                      onSave={handleSaveEmployee}
-                  />
-              )}
+               {activeTab === 'employees' && (
+                   <EmployeeModal
+                       isOpen={isModalOpen}
+                       onClose={() => setIsModalOpen(false)}
+                       mode={modalMode}
+                       employee={selectedEmployee || undefined}
+                       onSave={handleSaveEmployee}
+                   />
+               )}
+               <InviteModal
+                   isOpen={isInviteModalOpen}
+                   onClose={() => setIsInviteModalOpen(false)}
+                   onSendInvite={handleSendInvite}
+                   groups={groups}
+               />
          </div>
      );
 };

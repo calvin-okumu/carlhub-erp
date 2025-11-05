@@ -55,7 +55,7 @@ export default function ActiveUsersTable({ searchTerm, entriesPerPage, currentPa
             user.email,
             user.job_title || 'N/A',
             user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never',
-            user.role,
+             user.role,
             <Button key="view" className="bg-blue-600 text-white">View</Button>,
         ],
     }));
