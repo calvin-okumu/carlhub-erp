@@ -17,17 +17,17 @@ interface CreateTaskModalProps {
     sprints: Sprint[];
     assignees: UserTenant[];
     milestones: Milestone[];
-     onSave: (data: {
-         title: string;
-         description?: string;
-         status: string;
-         milestone: string;
-         sprint?: string;
-         assignee?: number;
-         start_date?: string;
-         end_date?: string;
-         estimated_hours?: number;
-     }) => void;
+    onSave: (data: {
+        title: string;
+        description?: string;
+        status: string;
+        milestone: string;
+        sprint?: string;
+        assignee?: number;
+        start_date?: string;
+        end_date?: string;
+        estimated_hours?: number;
+    }) => void;
     defaultSprintId?: string; // For pre-filling sprint in Kanban
     isBacklog?: boolean; // To simplify fields for backlog
 }
@@ -215,17 +215,17 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                 {!isBacklog && (
                     <div>
                         <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
-                         <Select
-                             id="sprint"
-                             {...register('sprint', { required: 'Sprint is required' })}
-                         >
-                             <option value="">Select Sprint</option>
-                             {Array.isArray(sprints) && sprints.map(sprint => (
-                                 <option key={sprint.slug} value={sprint.slug}>
-                                     {sprint.name}
-                                 </option>
-                             ))}
-                         </Select>
+                        <Select
+                            id="sprint"
+                            {...register('sprint', { required: 'Sprint is required' })}
+                        >
+                            <option value="">Select Sprint</option>
+                            {Array.isArray(sprints) && sprints.map(sprint => (
+                                <option key={sprint.slug} value={sprint.slug}>
+                                    {sprint.name}
+                                </option>
+                            ))}
+                        </Select>
                     </div>
                 )}
                 {!isBacklog && (
@@ -252,12 +252,12 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             id="start_date"
                             {...register('start_date', {
                                 validate: value => {
-                                    if (value && minDate && value < minDate) return 'Task start date cannot be before the sprint\'s start date.';
+                                    if (!isBacklog && value && minDate && value < minDate) return 'Task start date cannot be before the sprint\'s start date.';
                                     return true;
                                 }
                             })}
-                            min={minDate}
-                            max={maxDate}
+                            min={!isBacklog ? minDate : undefined}
+                            max={!isBacklog ? maxDate : undefined}
                             className={errors.start_date ? 'border-red-500' : ''}
                         />
                         {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date.message}</p>}
@@ -269,12 +269,12 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             id="end_date"
                             {...register('end_date', {
                                 validate: value => {
-                                    if (value && maxDate && value > maxDate) return 'Task end date cannot be after the sprint\'s end date.';
+                                    if (!isBacklog && value && maxDate && value > maxDate) return 'Task end date cannot be after the sprint\'s end date.';
                                     return true;
                                 }
                             })}
-                            min={minDate}
-                            max={maxDate}
+                            min={!isBacklog ? minDate : undefined}
+                            max={!isBacklog ? maxDate : undefined}
                             className={errors.end_date ? 'border-red-500' : ''}
                         />
                         {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date.message}</p>}

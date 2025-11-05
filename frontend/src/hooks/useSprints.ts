@@ -4,6 +4,7 @@ import {
   createSprint,
   deleteSprint,
   getSprints,
+  getTasks,
   updateSprint,
 } from "../api/project_mgmt";
 
@@ -23,7 +24,24 @@ export function useSprints(projectSlug: string) {
     setLoading(true);
     try {
       const data = await getSprints(token, { projectSlug, ordering: '-created_at' });
-      setSprints(data.results);
+
+      // Calculate progress for each sprint based on tasks (inheriting backend averaging pattern)
+      const sprintsWithProgress = await Promise.all(
+        data.results.map(async (sprint) => {
+          try {
+            const tasksData = await getTasks(token, { projectSlug, sprintSlug: sprint.slug });
+            const calculatedProgress = tasksData.results.length > 0
+              ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+              : 0;
+            return { ...sprint, progress: calculatedProgress, tasks_count: tasksData.results.length };
+          } catch (err) {
+            console.error(`Failed to fetch tasks for sprint ${sprint.slug}:`, err);
+            return sprint; // Return sprint with original progress if task fetch fails
+          }
+        })
+      );
+
+      setSprints(sprintsWithProgress);
     } catch (err) {
       console.error(err);
       setError("Failed to load sprints. Please try again.");
@@ -67,8 +85,14 @@ export function useSprints(projectSlug: string) {
     try {
       const newSprint = await createSprint(token, projectSlug, data);
       console.log("Created sprint:", newSprint);
+      // Calculate progress for the new sprint (should be 0 since no tasks yet)
+      const tasksData = await getTasks(token, { projectSlug, sprintSlug: newSprint.slug });
+      const calculatedProgress = tasksData.results.length > 0
+        ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+        : 0;
+      const sprintWithProgress = { ...newSprint, progress: calculatedProgress, tasks_count: tasksData.results.length };
       setSprints((prev) =>
-        prev.map((s) => (s.id === tempSprint.id ? newSprint : s)),
+        prev.map((s) => (s.id === tempSprint.id ? sprintWithProgress : s)),
       );
     } catch (err) {
       setSprints((prev) => prev.filter((s) => s.id !== tempSprint.id));
@@ -102,7 +126,13 @@ export function useSprints(projectSlug: string) {
     setLoading(true);
     try {
       const updatedSprint = await updateSprint(token, slug, data);
-      setSprints((prev) => prev.map((s) => (s.slug === slug ? updatedSprint : s)));
+      // Recalculate progress for the updated sprint
+      const tasksData = await getTasks(token, { projectSlug, sprintSlug: slug });
+      const calculatedProgress = tasksData.results.length > 0
+        ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+        : 0;
+      const sprintWithProgress = { ...updatedSprint, progress: calculatedProgress, tasks_count: tasksData.results.length };
+      setSprints((prev) => prev.map((s) => (s.slug === slug ? sprintWithProgress : s)));
     } catch (err) {
       // Revert on error
       setSprints((prev) => prev.map((s) => (s.slug === slug ? originalSprint : s)));
