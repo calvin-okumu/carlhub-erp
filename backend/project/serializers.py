@@ -94,6 +94,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
     project_name = serializers.CharField(source='project.name', read_only=True, help_text='Name of the parent project')
     sprints_count = serializers.SerializerMethodField(help_text='Number of sprints in this milestone')
     progress = serializers.IntegerField(min_value=0, max_value=100, help_text='Milestone progress percentage (0-100)')
+    project = serializers.CharField(help_text='Project slug')
 
     def validate_progress(self, value):
         if value < 0 or value > 100:
@@ -118,6 +119,41 @@ class MilestoneSerializer(serializers.ModelSerializer):
     def get_sprints_count(self, obj):
         return obj.sprints.count()
 
+    def validate(self, attrs):
+        """
+        Validate project relationship and resolve slug to ID for top-level milestone creation.
+        """
+        from accounts.models import Tenant, UserTenant
+        from .models import Project
+
+        # Get current tenant
+        request = self.context.get('request')
+        if request and hasattr(request, 'tenant') and request.tenant:
+            tenant = request.tenant
+        elif request and request.user.is_authenticated:
+            # Fallback for dev mode
+            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            tenant = user_tenant.tenant if user_tenant else None
+        else:
+            tenant = None
+
+        if not tenant:
+            raise serializers.ValidationError("No tenant found for validation")
+
+        # Validate project relationship
+        project_slug = attrs.get('project')
+        if project_slug:
+            try:
+                project = Project.objects.get(slug=project_slug, tenant=tenant)
+                attrs['project'] = project  # Replace slug with instance
+            except Project.DoesNotExist:
+                raise serializers.ValidationError(f"Project '{project_slug}' not found")
+
+        # Set tenant
+        attrs['tenant'] = tenant
+
+        return attrs
+
     @extend_schema_field(serializers.IntegerField)
     def get_progress(self, obj):
         return obj.calculate_progress()
@@ -132,6 +168,7 @@ class SprintSerializer(serializers.ModelSerializer):
     milestone_name = serializers.CharField(source='milestone.name', read_only=True, help_text='Name of the parent milestone')
     tasks_count = serializers.SerializerMethodField(help_text='Number of tasks in this sprint')
     progress = serializers.IntegerField(min_value=0, max_value=100, read_only=True, help_text='Sprint progress percentage (0-100)')
+    milestone = serializers.CharField(help_text='Milestone slug')
 
     class Meta:
         model = Sprint
@@ -151,6 +188,41 @@ class SprintSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Cannot mark sprint as completed until all tasks are done.")
         return value
 
+    def validate(self, attrs):
+        """
+        Validate milestone relationship and resolve slug to ID for top-level sprint creation.
+        """
+        from accounts.models import Tenant, UserTenant
+        from .models import Milestone
+
+        # Get current tenant
+        request = self.context.get('request')
+        if request and hasattr(request, 'tenant') and request.tenant:
+            tenant = request.tenant
+        elif request and request.user.is_authenticated:
+            # Fallback for dev mode
+            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            tenant = user_tenant.tenant if user_tenant else None
+        else:
+            tenant = None
+
+        if not tenant:
+            raise serializers.ValidationError("No tenant found for validation")
+
+        # Validate milestone relationship
+        milestone_slug = attrs.get('milestone')
+        if milestone_slug:
+            try:
+                milestone = Milestone.objects.get(slug=milestone_slug, tenant=tenant)
+                attrs['milestone'] = milestone  # Replace slug with instance
+            except Milestone.DoesNotExist:
+                raise serializers.ValidationError(f"Milestone '{milestone_slug}' not found")
+
+        # Set tenant
+        attrs['tenant'] = tenant
+
+        return attrs
+
     @extend_schema_field(serializers.IntegerField)
     def get_tasks_count(self, obj):
         return obj.tasks.count()
@@ -160,6 +232,8 @@ class TaskSerializer(serializers.ModelSerializer):
     sprint_name = serializers.CharField(source='sprint.name', read_only=True, help_text='Name of the assigned sprint (if any)')
     progress = serializers.IntegerField(min_value=0, max_value=100, read_only=True, help_text='Task progress percentage (0-100)')
     is_assigned = serializers.SerializerMethodField(help_text='Whether the task is assigned to a sprint')
+    milestone = serializers.CharField(help_text='Milestone slug')
+    sprint = serializers.CharField(required=False, allow_null=True, help_text='Sprint slug (optional)')
 
     class Meta:
         model = Task
@@ -169,12 +243,64 @@ class TaskSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.BooleanField)
     def get_is_assigned(self, obj):
         return obj.sprint is not None
+
+    def validate(self, attrs):
+        """
+        Validate relationships and resolve slugs to IDs for top-level task creation.
+        """
+        from accounts.models import Tenant, UserTenant
+        from .models import Milestone, Sprint, Project
+
+        # Get current tenant
+        request = self.context.get('request')
+        if request and hasattr(request, 'tenant') and request.tenant:
+            tenant = request.tenant
+        elif request and request.user.is_authenticated:
+            # Fallback for dev mode
+            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            tenant = user_tenant.tenant if user_tenant else None
+        else:
+            tenant = None
+
+        if not tenant:
+            raise serializers.ValidationError("No tenant found for validation")
+
+        # Validate milestone relationship
+        milestone_slug = attrs.get('milestone')
+        if milestone_slug:
+            try:
+                milestone = Milestone.objects.get(slug=milestone_slug, tenant=tenant)
+                attrs['milestone'] = milestone  # Replace slug with instance
+            except Milestone.DoesNotExist:
+                raise serializers.ValidationError(f"Milestone '{milestone_slug}' not found")
+
+        # Validate sprint relationship (if provided)
+        sprint_slug = attrs.get('sprint')
+        if sprint_slug:
+            try:
+                sprint = Sprint.objects.get(slug=sprint_slug, tenant=tenant)
+                attrs['sprint'] = sprint  # Replace slug with instance
+
+                # Ensure sprint belongs to the same milestone as the task
+                if 'milestone' in attrs and attrs['milestone'] != sprint.milestone:
+                    raise serializers.ValidationError(
+                        f"Sprint '{sprint_slug}' belongs to milestone '{sprint.milestone.slug}', "
+                        f"but task milestone is '{attrs['milestone'].slug}'"
+                    )
+            except Sprint.DoesNotExist:
+                raise serializers.ValidationError(f"Sprint '{sprint_slug}' not found")
+
+        # Set tenant
+        attrs['tenant'] = tenant
+
+        return attrs
+
         help_texts = {
             'title': 'Task title or summary',
             'description': 'Detailed task description',
              'status': 'Current task status (To Do, In Progress, In Review, Testing, Done)',
-            'milestone': 'Parent milestone this task belongs to',
-            'sprint': 'Sprint this task is assigned to (optional)',
+            'milestone': 'Parent milestone this task belongs to (slug)',
+            'sprint': 'Sprint this task is assigned to (optional, slug)',
             'assignee': 'User assigned to this task',
             'start_date': 'Task start date',
             'end_date': 'Task end date',

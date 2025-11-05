@@ -505,7 +505,7 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     serializer_class = SprintSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageSprints]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "milestone", "milestone__project"]
+    filterset_fields = ["status", "milestone", "milestone__project", "project"]
     search_fields = ["name"]
     ordering_fields = ["name", "start_date"]
     ordering = ['start_date']
@@ -527,19 +527,6 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             serializer.save(tenant=milestone.tenant)
         else:
             serializer.save()
-
-    @action(detail=True, methods=['post'])
-    def create_task(self, request, slug=None):
-        sprint = self.get_object()
-        data = request.data.copy()
-        data['milestone'] = sprint.milestone.id
-        data['sprint'] = sprint.id
-        data['tenant'] = sprint.tenant.id
-        serializer = TaskSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def assign_task(self, request, slug=None):
@@ -571,7 +558,7 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         except Task.DoesNotExist:
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['patch'])
     def bulk_update_sprints(self, request):
         """
         Bulk update multiple sprints with the same status.

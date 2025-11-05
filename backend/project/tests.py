@@ -465,18 +465,21 @@ class MilestoneAPITests(APITestCase):
         """Test creating milestone"""
         data = {
             'name': 'New Milestone',
-            'project': self.project.id,
+            'project': self.project.slug,
             'status': 'planning',
             'progress': 0
         }
         response = self.client.post('/api/milestones/', data, format='json')
+        if response.status_code != status.HTTP_201_CREATED:
+            print(f"Response status: {response.status_code}")
+            print(f"Response data: {response.data}")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_milestone_validation(self):
         """Test milestone progress validation"""
         data = {
             'name': 'Invalid Milestone',
-            'project': self.project.id,
+            'project': self.project.slug,
             'progress': 150  # Invalid: > 100
         }
         response = self.client.post('/api/milestones/', data, format='json')
