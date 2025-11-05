@@ -58,12 +58,12 @@ class ProjectSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Budget cannot be negative.")
         return value
 
-    def validate(self, data):
+    def validate(self, attrs):
         # Sanitize description/tags
-        if 'description' in data and data['description']:
+        if 'description' in attrs and attrs['description']:
             import bleach
-            data['description'] = bleach.clean(data['description'], tags=[], strip=True)
-        return data
+            attrs['description'] = bleach.clean(attrs['description'], tags=[], strip=True)
+        return attrs
 
     class Meta:
         model = Project
@@ -121,6 +121,12 @@ class MilestoneSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.IntegerField)
     def get_progress(self, obj):
         return obj.calculate_progress()
+
+    def to_representation(self, instance):
+        """Override to return calculated progress instead of stored field"""
+        data = super().to_representation(instance)
+        data['progress'] = instance.calculate_progress()
+        return data
 
 class SprintSerializer(serializers.ModelSerializer):
     milestone_name = serializers.CharField(source='milestone.name', read_only=True, help_text='Name of the parent milestone')
