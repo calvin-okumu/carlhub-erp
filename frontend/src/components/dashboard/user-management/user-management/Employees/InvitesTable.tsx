@@ -1,8 +1,6 @@
-import React from 'react';
-import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
-
+import Table from '@/components/ui/Table';
 interface Invite {
     id: number;
     email: string;
@@ -47,8 +45,8 @@ export default function InvitesTable({ searchTerm, entriesPerPage, currentPage, 
             invite.email,
             invite.sentDate,
             <StatusBadge key="status" status={invite.status} />,
-            <Button key="resend" className="bg-blue-600 text-white" onClick={() => onResendInvite?.(invite.id)}>Resend</Button>,
-            <Button key="delete" className="bg-red-600 text-white" onClick={() => onDeleteInvite?.(invite.id)}>Delete</Button>,
+            <Button key="resend" variant='secondary' onClick={() => onResendInvite?.(invite.id)}>Resend</Button>,
+            <Button key="delete" variant='danger' onClick={() => onDeleteInvite?.(invite.id)}>Delete</Button>,
         ],
     }));
 

@@ -14,6 +14,7 @@ import EmployeeModal from "./Employees/EmployeeModal";
 import InviteModal from "./Employees/InviteModal";
 import { useEmployees } from "@/hooks/useEmployees";
 import { getUsers } from "@/api/users";
+import { API_BASE } from "@/api";
 import type { UserTenant, User, UserProfile } from "@/api/types";
 
 export const UserSection = () => {
@@ -32,6 +33,14 @@ export const UserSection = () => {
         { id: 4, name: 'Developer' },
         { id: 5, name: 'Designer' }
     ]);
+
+    const [invites, setInvites] = useState<Array<{
+        id: number;
+        email: string;
+        sentDate: string;
+        status: string;
+    }>>([]);
+    const [invitesLoading, setInvitesLoading] = useState(false);
 
     const { employees, loading, createEmployee, updateEmployee, deleteEmployee, refetch } = useEmployees();
     const [users, setUsers] = useState<Array<{
@@ -80,6 +89,40 @@ export const UserSection = () => {
         }
     };
 
+    const fetchInvites = async () => {
+        try {
+            setInvitesLoading(true);
+            const token = localStorage.getItem("access_token");
+            if (!token) return;
+
+            const response = await fetch(`${API_BASE}/invitations/`, {
+                headers: {
+                    'Authorization': `Token ${token}`,
+                }
+            });
+
+            if (response.ok) {
+                const invitations = await response.json();
+
+                // Handle different response formats (results array or direct array)
+                const invitesArray = invitations.results || invitations || [];
+                const transformedInvites = invitesArray.map((invite: any) => ({
+                    id: invite.id,
+                    email: invite.email,
+                    sentDate: new Date(invite.created_at).toLocaleDateString(),
+                    status: invite.is_used ? 'Used' : invite.email_confirmed ? 'Confirmed' : 'Pending'
+                }));
+                setInvites(transformedInvites);
+            } else {
+                console.error('Failed to fetch invites:', response.status, response.statusText);
+            }
+        } catch (error) {
+            console.error('Error fetching invites:', error);
+        } finally {
+            setInvitesLoading(false);
+        }
+    };
+
     const handleTabChange = (tab: 'invites' | 'activeUsers' | 'employees' | 'groups') => {
         setActiveTab(tab);
         setCurrentPage(1);
@@ -87,6 +130,8 @@ export const UserSection = () => {
             setEmployeeSubTab('active');
         } else if (tab === 'activeUsers') {
             fetchUsers();
+        } else if (tab === 'invites') {
+            fetchInvites();
         }
     };
 
@@ -137,10 +182,14 @@ export const UserSection = () => {
         setIsInviteModalOpen(true);
     };
 
-    const handleSendInvite = async (email: string, groups: number[]) => {
-        // TODO: API call to send invite
-        alert(`Send invite to ${email} with groups: ${groups.join(', ')}`);
+    const handleInviteSent = () => {
+        // Refresh the invites list after sending an invitation
+        if (activeTab === 'invites') {
+            fetchInvites();
+        }
     };
+
+
 
     const handleResendInvite = async (inviteId: number) => {
         // TODO: API call to resend invite
@@ -229,21 +278,21 @@ export const UserSection = () => {
                         </Select>
                     </div>
                 </div>
-                  {(loading || usersLoading) ? (
+                   {(loading || usersLoading || invitesLoading) ? (
                      <Loader />
                   ) : activeTab === 'invites' ? (
-                      <InvitesTable
-                          searchTerm={searchTerm}
-                          entriesPerPage={entriesPerPage}
-                          currentPage={currentPage}
-                          invites={[]}
-                          totalPages={Math.ceil(totalItems / entriesPerPage)}
-                          onPageChange={setCurrentPage}
-                          itemsPerPage={entriesPerPage}
-                          totalItems={totalItems}
-                          onResendInvite={handleResendInvite}
-                          onDeleteInvite={handleDeleteInvite}
-                      />
+                       <InvitesTable
+                           searchTerm={searchTerm}
+                           entriesPerPage={entriesPerPage}
+                           currentPage={currentPage}
+                           invites={invites}
+                           totalPages={Math.ceil(invites.length / entriesPerPage)}
+                           onPageChange={setCurrentPage}
+                           itemsPerPage={entriesPerPage}
+                           totalItems={invites.length}
+                           onResendInvite={handleResendInvite}
+                           onDeleteInvite={handleDeleteInvite}
+                       />
                  ) : activeTab === 'activeUsers' ? (
                      <ActiveUsersTable
                          searchTerm={searchTerm}
@@ -296,12 +345,12 @@ export const UserSection = () => {
                        onSave={handleSaveEmployee}
                    />
                )}
-               <InviteModal
-                   isOpen={isInviteModalOpen}
-                   onClose={() => setIsInviteModalOpen(false)}
-                   onSendInvite={handleSendInvite}
-                   groups={groups}
-               />
+                 <InviteModal
+                     isOpen={isInviteModalOpen}
+                     onClose={() => setIsInviteModalOpen(false)}
+                     groups={groups}
+                     onInviteSent={handleInviteSent}
+                 />
          </div>
      );
 };
