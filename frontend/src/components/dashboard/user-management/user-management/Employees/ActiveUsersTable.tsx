@@ -1,13 +1,14 @@
 import React from 'react';
 import Table from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
-import StatusBadge from '@/components/ui/StatusBadge';
 
 interface User {
     id: number;
     name: string;
     avatar: string;
     email: string;
+    job_title?: string;
+    last_login?: string;
     role: string;
     status: string;
 }
@@ -40,7 +41,7 @@ export default function ActiveUsersTable({ searchTerm, entriesPerPage, currentPa
         );
     }
 
-    const headers = ['User', 'Email', 'Role', 'Status', 'View', 'Actions'];
+    const headers = ['User', 'Email', 'Job Title', 'Last Login', 'Role', 'View'];
 
     const rows = paginatedUsers.map(user => ({
         key: user.id,
@@ -52,10 +53,10 @@ export default function ActiveUsersTable({ searchTerm, entriesPerPage, currentPa
                 {user.name}
             </div>,
             user.email,
-            user.role,
-            <StatusBadge key="status" status={user.status} />,
-            <Button key="view" className="bg-blue-600 text-white">View User</Button>,
-            <Button key="deactivate" className="bg-red-600 text-white">Deactivate</Button>,
+            user.job_title || 'N/A',
+            user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never',
+             user.role,
+            <Button key="view" className="bg-blue-600 text-white">View</Button>,
         ],
     }));
 

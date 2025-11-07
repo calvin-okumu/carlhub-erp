@@ -59,7 +59,12 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
             // Fetch tasks for this sprint
             const tasksData = await getTasks(token, { projectSlug, sprintSlug: sprintSlug });
 
-            setSprint(sprint);
+            // Calculate sprint progress as average of task progress (inheriting backend pattern)
+            const calculatedSprintProgress = tasksData.results.length > 0
+                ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+                : 0;
+
+            setSprint({ ...sprint, progress: calculatedSprintProgress });
             setTasks(tasksData.results);
         } catch (err) {
             console.error('Fetch error:', err);
@@ -117,36 +122,51 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         setSelectedTask(null);
     };
 
-    const getProgressForStatus = (status: string): number => {
-        const progressMap = {
-            'todo': 0,
-            'in_progress': 0,
-            'in_review': 0,
-            'testing': 100,
-            'done': 100,
-            'completed': 100
-        };
-        return progressMap[status as keyof typeof progressMap] ?? 0;
-    };
+    // Sprint progress calculated on frontend as average of task progress (inheriting backend averaging pattern)
 
     const handleStatusChange = async (taskSlug: string, newStatus: string) => {
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
         try {
-            // Calculate progress based on new status
-            const newProgress = getProgressForStatus(newStatus);
+            // Update task status - backend will handle progress calculation
+            await updateTask(token, taskSlug, { status: newStatus });
 
-            await updateTask(token, taskSlug, {
-                status: newStatus,
-                progress: newProgress
-            });
-            // Refetch tasks
+            // Update local tasks state optimistically
+            const updatedTasks = tasks.map(task =>
+                task.slug === taskSlug
+                    ? { ...task, status: newStatus, progress: getTaskProgress(newStatus) }
+                    : task
+            );
+            setTasks(updatedTasks);
+
+            // Recalculate sprint progress (inheriting backend averaging pattern)
+            const newSprintProgress = updatedTasks.length > 0
+                ? Math.round(updatedTasks.reduce((sum, task) => sum + task.progress, 0) / updatedTasks.length)
+                : 0;
+
+            if (sprint) {
+                setSprint({ ...sprint, progress: newSprintProgress });
+            }
+
+            // Refetch to get updated progress from backend
             fetchData();
         } catch (error) {
-            console.error('Error updating task status and progress:', error);
+            console.error('Error updating task status:', error);
             alert('Failed to update task status. Please try again.');
         }
+    };
+
+    // Helper function to get task progress based on status (matching backend Task.progress property)
+    const getTaskProgress = (status: string): number => {
+        const statusWeights: Record<string, number> = {
+            'to_do': 0,
+            'in_progress': 25,
+            'in_review': 50,
+            'testing': 75,
+            'done': 100
+        };
+        return statusWeights[status] || 0;
     };
 
     const handleDeleteTask = async (taskSlug: string) => {
@@ -196,8 +216,9 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
             );
             setAddModalOpen(false);
             setSelectedTasks([]);
-            // Refetch tasks
-            fetchData();
+            // Refetch tasks and update sprint progress
+            await fetchData();
+            // Sprint progress will be updated in fetchData since it gets the latest sprint data
         } catch (error) {
             console.error('Error adding tasks:', error);
             setAddError(error instanceof Error ? error.message : 'Failed to add tasks');
@@ -208,8 +229,8 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         title: string;
         description?: string;
         status: string;
-        milestone: number;
-        sprint?: number;
+        milestone: string;
+        sprint?: string;
         assignee?: number;
         start_date?: string;
         end_date?: string;
@@ -219,12 +240,12 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         if (!token) return;
 
         try {
-            // Ensure sprint is set to current sprintSlug
-            const taskData = { ...data, sprint: sprintSlug };
-            await createTask(token, projectSlug, taskData);
+            // Sprint is already set correctly by the modal
+            await createTask(token, projectSlug, data);
             setCreateModalOpen(false);
-            // Refetch tasks
-            fetchData();
+            // Refetch tasks and update sprint progress
+            await fetchData();
+            // Sprint progress will be updated in fetchData since it gets the latest sprint data
         } catch (error) {
             console.error('Error saving task:', error);
             // TODO: Show error message
@@ -239,7 +260,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         return (
             <div className="min-h-screen bg-gray-50 p-6">
                 <div className="max-w-7xl mx-auto">
-                    <KanbanHeader sprint={{ id: 0, name: 'Error', status: 'planned', progress: 0, tasks_count: 0, created_at: '', milestone: 0, milestone_name: '' }} onBack={handleBack} />
+                    <KanbanHeader sprint={{ id: '0', slug: 'error', name: 'Error', status: 'planned', start_date: '', end_date: '', progress: 0, tasks_count: 0, created_at: '', milestone: '0', milestone_name: '' }} onBack={handleBack} />
                     <div className="text-center">
                         <div className="text-red-500 mb-4">{error}</div>
                         <button
@@ -263,7 +284,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         return (
             <div className="min-h-screen bg-gray-50 p-6">
                 <div className="max-w-7xl mx-auto">
-                    <KanbanHeader sprint={{ id: 0, name: 'Not Found', status: 'planned', progress: 0, tasks_count: 0, created_at: '', milestone: 0, milestone_name: '' }} onBack={handleBack} />
+                    <KanbanHeader sprint={{ id: '0', slug: 'not-found', name: 'Not Found', status: 'planned', start_date: '', end_date: '', progress: 0, tasks_count: 0, created_at: '', milestone: '0', milestone_name: '' }} onBack={handleBack} />
                     <div className="text-center">Sprint not found</div>
                 </div>
             </div>
@@ -341,7 +362,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
                                 <Button onClick={() => setAddModalOpen(false)} variant="outline">
                                     Cancel
                                 </Button>
-                                <Button onClick={handleAddSelectedTasks} variant="primary">
+                                <Button onClick={handleAddSelectedTasks} variant="gradient">
                                     Add Selected ({selectedTasks.length})
                                 </Button>
                             </div>

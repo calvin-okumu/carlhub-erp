@@ -21,7 +21,7 @@ interface CreateTaskModalProps {
         title: string;
         description?: string;
         status: string;
-        milestone: number;
+        milestone: string;
         sprint?: string;
         assignee?: number;
         start_date?: string;
@@ -67,7 +67,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
 
     useEffect(() => {
         if (watchedSprint) {
-            const sprint = sprints.find(s => s.id.toString() === watchedSprint);
+            const sprint = sprints.find(s => s.slug === watchedSprint);
             if (sprint) {
                 setMinDate(sprint.start_date || '');
                 setMaxDate(sprint.end_date || '');
@@ -84,7 +84,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             milestoneId = data.milestone;
         } else {
             if (data.sprint) {
-                const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === data.sprint) : null;
+                const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === data.sprint) : null;
                 if (!sprint) return;
                 milestoneId = sprint.milestone;
             } else {
@@ -93,12 +93,19 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             }
         }
 
+        // Find sprint object to get the ID
+        let sprintId: string | undefined;
+        if (data.sprint) {
+            const sprintObj = Array.isArray(sprints) ? sprints.find(s => s.slug === data.sprint) : null;
+            sprintId = sprintObj?.id;
+        }
+
         const saveData = {
             title: data.title,
             description: data.description || undefined,
             status: data.status,
             milestone: milestoneId,
-            sprint: data.sprint || undefined,
+            sprint: sprintId,
             assignee: data.assignee ? parseInt(data.assignee) : undefined,
             start_date: data.start_date || undefined,
             end_date: data.end_date || undefined,
@@ -120,7 +127,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             setValue('start_date', task.start_date || '');
             setValue('end_date', task.end_date || '');
             setValue('estimated_hours', task.estimated_hours?.toString() || '');
-            const sprint = Array.isArray(sprints) ? sprints.find(s => s.id === task.sprint) : null;
+            const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === task.sprint) : null;
             if (sprint) {
                 setMinDate(sprint.start_date || '');
                 setMaxDate(sprint.end_date || '');
@@ -214,7 +221,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                         >
                             <option value="">Select Sprint</option>
                             {Array.isArray(sprints) && sprints.map(sprint => (
-                                <option key={sprint.id} value={sprint.id}>
+                                <option key={sprint.slug} value={sprint.slug}>
                                     {sprint.name}
                                 </option>
                             ))}
@@ -245,12 +252,12 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             id="start_date"
                             {...register('start_date', {
                                 validate: value => {
-                                    if (value && minDate && value < minDate) return 'Task start date cannot be before the sprint\'s start date.';
+                                    if (!isBacklog && value && minDate && value < minDate) return 'Task start date cannot be before the sprint\'s start date.';
                                     return true;
                                 }
                             })}
-                            min={minDate}
-                            max={maxDate}
+                            min={!isBacklog ? minDate : undefined}
+                            max={!isBacklog ? maxDate : undefined}
                             className={errors.start_date ? 'border-red-500' : ''}
                         />
                         {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date.message}</p>}
@@ -262,12 +269,12 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             id="end_date"
                             {...register('end_date', {
                                 validate: value => {
-                                    if (value && maxDate && value > maxDate) return 'Task end date cannot be after the sprint\'s end date.';
+                                    if (!isBacklog && value && maxDate && value > maxDate) return 'Task end date cannot be after the sprint\'s end date.';
                                     return true;
                                 }
                             })}
-                            min={minDate}
-                            max={maxDate}
+                            min={!isBacklog ? minDate : undefined}
+                            max={!isBacklog ? maxDate : undefined}
                             className={errors.end_date ? 'border-red-500' : ''}
                         />
                         {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date.message}</p>}
@@ -288,7 +295,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                     <Button type="button" onClick={onClose} variant='secondary'>
                         Cancel
                     </Button>
-                    <Button>
+                    <Button type="submit">
                         {mode === 'add' ? 'Add Task' : 'Update Task'}
                     </Button>
                 </div>

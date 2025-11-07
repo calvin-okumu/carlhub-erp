@@ -64,7 +64,7 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
         status: string;
         start_date?: string;
         end_date?: string;
-        milestone: number;
+        milestone: string;
     }) => {
         try {
             if (modalMode === 'add') {

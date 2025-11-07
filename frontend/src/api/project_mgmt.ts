@@ -364,7 +364,7 @@ export async function deleteSprint(token: string, slug: string): Promise<void> {
 }
 
 // Sprint task management
-export async function createTaskInSprint(token: string, sprintSlug: string, taskData: {
+export async function createTaskInSprint(token: string, projectSlug: string, sprintSlug: string, taskData: {
   title: string;
   description?: string;
   status: string;
@@ -374,7 +374,7 @@ export async function createTaskInSprint(token: string, sprintSlug: string, task
   end_date?: string;
   estimated_hours?: number;
 }): Promise<Task> {
-  const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/create_task/`, {
+  const response = await fetch(`${API_BASE}/projects/${projectSlug}/sprints/${sprintSlug}/create_task/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
@@ -399,7 +399,7 @@ export async function assignTaskToSprint(token: string, sprintSlug: string, task
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ task_slug: taskSlug }),
+    body: JSON.stringify({ task_id: taskSlug }),
   });
 
   const data = await response.json();
@@ -418,7 +418,7 @@ export async function unassignTaskFromSprint(token: string, sprintSlug: string, 
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ task_slug: taskSlug }),
+    body: JSON.stringify({ task_id: taskSlug }),
   });
 
   const data = await response.json();
@@ -493,7 +493,6 @@ export async function createTask(token: string, projectSlug: string, taskData: {
   status: string;
   milestone: string;
   sprint?: string;
-  project: string;
   assignee?: number;
   start_date?: string;
   end_date?: string;

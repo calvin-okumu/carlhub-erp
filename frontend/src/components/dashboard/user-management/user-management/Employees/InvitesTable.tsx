@@ -19,9 +19,11 @@ interface InvitesTableProps {
     onPageChange?: (page: number) => void;
     itemsPerPage?: number;
     totalItems?: number;
+    onResendInvite?: (inviteId: number) => void;
+    onDeleteInvite?: (inviteId: number) => void;
 }
 
-export default function InvitesTable({ searchTerm, entriesPerPage, currentPage, invites = [], totalPages, onPageChange, itemsPerPage, totalItems }: InvitesTableProps) {
+export default function InvitesTable({ searchTerm, entriesPerPage, currentPage, invites = [], totalPages, onPageChange, itemsPerPage, totalItems, onResendInvite, onDeleteInvite }: InvitesTableProps) {
     const filteredInvites = invites.filter(invite =>
         invite.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -37,7 +39,7 @@ export default function InvitesTable({ searchTerm, entriesPerPage, currentPage, 
         );
     }
 
-    const headers = ['Email', 'Sent Date', 'Status', 'Actions'];
+    const headers = ['Email Address', 'Last Sent', 'Status', 'Resend', 'Delete'];
 
     const rows = paginatedInvites.map(invite => ({
         key: invite.id,
@@ -45,7 +47,8 @@ export default function InvitesTable({ searchTerm, entriesPerPage, currentPage, 
             invite.email,
             invite.sentDate,
             <StatusBadge key="status" status={invite.status} />,
-            <Button key="resend" className="bg-blue-600 text-white">Resend</Button>,
+            <Button key="resend" className="bg-blue-600 text-white" onClick={() => onResendInvite?.(invite.id)}>Resend</Button>,
+            <Button key="delete" className="bg-red-600 text-white" onClick={() => onDeleteInvite?.(invite.id)}>Delete</Button>,
         ],
     }));
 

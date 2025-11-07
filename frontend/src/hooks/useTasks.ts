@@ -54,6 +54,7 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
     // Temporary task for optimistic update
     const tempTask: Task = {
       id: Date.now().toString(), // temporary id
+      slug: `temp-${Date.now()}`, // temporary slug
       title: data.title,
       description: data.description || "",
       status: data.status,
