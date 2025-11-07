@@ -279,19 +279,45 @@ Update E2E tests to use new URL patterns and verify data relationships.
 If issues arise during migration:
 
 1. **Immediate Rollback**: The old nested endpoints are removed, so rollback requires:
-   - Revert to previous backend commit
-   - Update frontend to use old endpoints again
+   - Revert backend to commit before API simplification: `git revert 7463d35`
+   - Update frontend to use old nested endpoints again
 
 2. **Gradual Migration**: Consider maintaining both APIs temporarily:
    - Keep old endpoints as deprecated
    - Gradually migrate frontend components
    - Remove old endpoints after full migration
 
+3. **Database Rollback**: No database migrations were changed, so no DB rollback needed
+
 ## Support
 
 - **API Documentation**: Visit `/api/schema/swagger-ui/` for interactive docs
 - **Migration Examples**: See updated documentation in `docs/features/`
 - **Testing Scripts**: Use debug scripts in `backend/debug_*.py` for testing
+
+## Deployment Strategy
+
+Since this is a breaking change affecting both backend and frontend:
+
+### Staging Deployment
+1. **Deploy Backend Only**: Push backend changes to staging first
+2. **Frontend Migration**: Update frontend to use new API endpoints
+3. **Integration Testing**: Test all functionality on staging
+4. **Rollback if Needed**: Use automated rollback in CI/CD if issues detected
+
+### Production Deployment
+1. **Blue-Green Deployment**: Use existing blue-green strategy
+2. **Simultaneous Deploy**: Deploy both backend and updated frontend together
+3. **Health Checks**: Verify all endpoints work with new structure
+4. **Rollback Plan**: Automated rollback to previous version if health checks fail
+
+### Deployment Checklist
+- [ ] Backend deployed to staging
+- [ ] Frontend updated and tested on staging
+- [ ] All API endpoints verified working
+- [ ] Database migrations (none required)
+- [ ] Rollback commit identified (7463d35)
+- [ ] Production deployment scheduled with maintenance window
 
 ## Timeline
 

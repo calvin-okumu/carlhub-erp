@@ -447,15 +447,15 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
 @extend_schema_view(
     list=extend_schema(
         summary="List sprints",
-        description="Retrieve a list of sprints for the current tenant with task count and progress."
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve sprint",
-        description="Retrieve details of a specific sprint including tasks count and progress."
+        description="Retrieve a list of sprints for the current tenant."
     ),
     create=extend_schema(
         summary="Create sprint",
-        description="Create a new sprint for a milestone."
+        description="Create a new sprint."
+    ),
+    retrieve=extend_schema(
+        summary="Get sprint details",
+        description="Retrieve detailed information about a specific sprint."
     ),
     update=extend_schema(
         summary="Update sprint",
@@ -468,10 +468,6 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     destroy=extend_schema(
         summary="Delete sprint",
         description="Delete a sprint and unassign all associated tasks."
-    ),
-    create_task=extend_schema(
-        summary="Create task in sprint",
-        description="Create a new task directly assigned to this sprint."
     ),
     assign_task=extend_schema(
         summary="Assign task to sprint",
@@ -505,7 +501,7 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     serializer_class = SprintSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageSprints]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "milestone", "milestone__project", "project"]
+    filterset_fields = ["status", "milestone", "milestone__project"]
     search_fields = ["name"]
     ordering_fields = ["name", "start_date"]
     ordering = ['start_date']
