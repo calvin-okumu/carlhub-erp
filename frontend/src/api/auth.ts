@@ -56,6 +56,23 @@ export async function signup(
   return data;
 }
 
+export async function confirmEmail(token: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE}/confirm-invitation/?token=${encodeURIComponent(token)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to confirm email");
+  }
+
+  return data;
+}
+
 export async function changePassword(token: string, currentPassword: string, newPassword: string): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE}/change-password/`, {
     method: "POST",

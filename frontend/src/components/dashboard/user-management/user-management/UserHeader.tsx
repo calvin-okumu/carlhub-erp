@@ -23,11 +23,10 @@ export const UserHeader = ({ activeTab, onTabChange }: UserHeaderProps) => {
                     key={key}
                     variant="outline"
                     onClick={() => onTabChange(key)}
-                    className={`flex items-center gap-2 ${
-                        activeTab === key
-                            ? 'bg-blue-100 border-blue-500 text-blue-700'
-                            : ''
-                    }`}
+                    className={`flex items-center gap-2 ${activeTab === key
+                        ? 'bg-blue-100 border-blue-600 text-blue-700'
+                        : ''
+                        }`}
                 >
                     <Icon size={16} />
                     {label}
