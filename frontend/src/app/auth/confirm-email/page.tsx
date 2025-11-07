@@ -58,18 +58,8 @@ export default function ConfirmEmailPage() {
                             <p className="text-gray-600 mb-6">{message}</p>
 
                             <div className="space-y-4">
-                                <Link
-                                    href="/login"
-                                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 font-semibold inline-block text-center"
-                                >
-                                    Sign In to Your Account
-                                </Link>
-
                                 <p className="text-sm text-gray-600">
-                                    Don&apos;t have an account yet?{" "}
-                                    <Link href="/signup" className="text-blue-600 hover:text-blue-500 font-semibold">
-                                        Create one here
-                                    </Link>
+                                    You can now return to your email to complete account creation.
                                 </p>
                             </div>
                         </>

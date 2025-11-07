@@ -1,11 +1,11 @@
 
 "use client";
 
-import { signup } from "@/api";
+import { signup, getInvitationDetails } from "@/api";
 import AuthLayout from "@/components/AuthLayout";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type FormData = {
@@ -18,11 +18,36 @@ type FormData = {
 };
 
 export default function SignUpPage() {
-    const { register, handleSubmit, formState: { errors } } = useForm<FormData>();
+    const { register, handleSubmit, formState: { errors }, setValue } = useForm<FormData>();
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
+    const [invitationToken, setInvitationToken] = useState<string | null>(null);
+    const [invitationDetails, setInvitationDetails] = useState<{ tenant_name: string; role: string } | null>(null);
+    const [loadingInvitation, setLoadingInvitation] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const token = searchParams.get('token');
+        if (token) {
+            setInvitationToken(token);
+            setLoadingInvitation(true);
+            getInvitationDetails(token)
+                .then((response) => {
+                    setInvitationDetails(response.invitation);
+                    // Pre-fill the company name field
+                    setValue('company_name', response.invitation.tenant_name);
+                })
+                .catch((err) => {
+                    console.error('Failed to load invitation details:', err);
+                    setError('Invalid or expired invitation link');
+                })
+                .finally(() => {
+                    setLoadingInvitation(false);
+                });
+        }
+    }, [searchParams, setValue]);
 
     const onSubmit = async (data: FormData) => {
         setError("");
@@ -31,7 +56,7 @@ export default function SignUpPage() {
         setLoading(true);
 
         try {
-            const result = await signup(data.email, data.password, data.first_name, data.last_name, data.company_name);
+            const result = await signup(data.email, data.password, data.first_name, data.last_name, invitationToken ? undefined : data.company_name, invitationToken || undefined);
 
             localStorage.setItem("access_token", result.token);
             localStorage.setItem("user", JSON.stringify({
@@ -64,8 +89,17 @@ export default function SignUpPage() {
             <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">Create your account 🚀</h2>
                 <p className="text-gray-600 mb-8 text-center">
-                    Get started with intelligent business management!
+                    {invitationDetails ? `Join ${invitationDetails.tenant_name} as ${invitationDetails.role}` : "Get started with intelligent business management!"}
                 </p>
+
+                {loadingInvitation && (
+                    <div className="flex items-center justify-center p-8 bg-gray-50 rounded-lg mb-6">
+                        <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                            <p className="text-gray-600">Loading invitation details...</p>
+                        </div>
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     {/* First Name */}
@@ -108,17 +142,33 @@ export default function SignUpPage() {
                     </div>
 
                     {/* Company Name */}
-                    <div>
-                        <label htmlFor="company_name" className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
-                        <input
-                            id="company_name"
-                            type="text"
-                            placeholder="Enter your company name"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                            {...register("company_name", { required: "Company name is required" })}
-                        />
-                        {errors.company_name && <p className="text-red-500 text-sm mt-1">{errors.company_name.message}</p>}
-                    </div>
+                    {!invitationDetails && (
+                        <div>
+                            <label htmlFor="company_name" className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
+                            <input
+                                id="company_name"
+                                type="text"
+                                placeholder="Enter your company name"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                {...register("company_name", { required: !invitationDetails ? "Company name is required" : false })}
+                            />
+                            {errors.company_name && <p className="text-red-500 text-sm mt-1">{errors.company_name.message}</p>}
+                        </div>
+                    )}
+
+                    {/* Invitation Info */}
+                    {invitationDetails && (
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
+                            <input
+                                type="text"
+                                value={invitationDetails.tenant_name}
+                                disabled
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                            />
+                            <p className="text-sm text-gray-600 mt-1">You&apos;ve been invited to join this company as {invitationDetails.role}</p>
+                        </div>
+                    )}
 
                     {/* Password */}
                     <div>
