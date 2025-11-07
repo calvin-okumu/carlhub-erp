@@ -27,14 +27,22 @@ export async function signup(
   password: string,
   first_name: string,
   last_name: string,
-  company_name: string,
+  company_name?: string,
+  invitation_token?: string,
 ): Promise<SignupResponse> {
+  const body: { email: string; password: string; first_name: string; last_name: string; invitation_token?: string; company_name?: string } = { email, password, first_name, last_name };
+  if (invitation_token) {
+    body.invitation_token = invitation_token;
+  } else {
+    body.company_name = company_name;
+  }
+
   const response = await fetch(`${API_BASE}/signup/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, password, first_name, last_name, company_name }),
+    body: JSON.stringify(body),
   });
 
   const data = await response.json();
@@ -51,6 +59,40 @@ export async function signup(
       }
     }
     throw new Error(errorMessage);
+  }
+
+  return data;
+}
+
+export async function confirmEmail(token: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE}/confirm-invitation/?token=${encodeURIComponent(token)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to confirm email");
+  }
+
+  return data;
+}
+
+export async function getInvitationDetails(token: string): Promise<{ invitation: { email: string; tenant_name: string; role: string; expires_at: string } }> {
+  const response = await fetch(`${API_BASE}/confirm-invitation/?token=${encodeURIComponent(token)}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to get invitation details");
   }
 
   return data;

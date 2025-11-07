@@ -28,7 +28,7 @@ const features = [
         active: true,
     },
     {
-        title: "Customer Relations CRM",
+        title: "Customer Relations(CRM)",
         subtitle: "Build stronger customer relationships",
         icon: UserCheck,
         color: "bg-orange-400",
@@ -135,42 +135,42 @@ export default function FeatureGrid() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
                     {filteredFeatures.map((feature) => (
-                    <div
-                        key={feature.title}
-                        className={`bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 ${feature.hoverColor}`}
-                    >
-                        {/* Icon */}
                         <div
-                            className={`w-14 h-14 rounded-xl ${feature.color} flex items-center justify-center mb-4 shadow-md`}
+                            key={feature.title}
+                            className={`bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100 ${feature.hoverColor}`}
                         >
-                            <feature.icon className="h-7 w-7 text-white" />
+                            {/* Icon */}
+                            <div
+                                className={`w-14 h-14 rounded-xl ${feature.color} flex items-center justify-center mb-4 shadow-md`}
+                            >
+                                <feature.icon className="h-7 w-7 text-white" />
+                            </div>
+
+                            {/* Title + Subtitle */}
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">
+                                {feature.title}
+                            </h3>
+                            <p className="text-gray-600 mb-6 leading-relaxed">{feature.subtitle}</p>
+
+                            {/* CTA */}
+                            {feature.active ? (
+                                <Link
+                                    href={feature.href}
+                                    className={`block w-full text-center py-3 px-4 rounded-lg font-semibold text-white shadow-md hover:shadow-lg transition-all ${feature.buttonColor}`}
+                                >
+                                    {feature.cta}
+                                </Link>
+                            ) : (
+                                <button
+                                    disabled
+                                    aria-disabled="true"
+                                    className="w-full py-3 px-4 rounded-lg font-semibold bg-gray-100 text-gray-400 cursor-not-allowed"
+                                >
+                                    {feature.cta}
+                                </button>
+                            )}
                         </div>
-
-                        {/* Title + Subtitle */}
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">
-                            {feature.title}
-                        </h3>
-                        <p className="text-gray-600 mb-6 leading-relaxed">{feature.subtitle}</p>
-
-                        {/* CTA */}
-                        {feature.active ? (
-                            <Link
-                                href={feature.href}
-                                className={`block w-full text-center py-3 px-4 rounded-lg font-semibold text-white shadow-md hover:shadow-lg transition-all ${feature.buttonColor}`}
-                            >
-                                {feature.cta}
-                            </Link>
-                        ) : (
-                            <button
-                                disabled
-                                aria-disabled="true"
-                                className="w-full py-3 px-4 rounded-lg font-semibold bg-gray-100 text-gray-400 cursor-not-allowed"
-                            >
-                                {feature.cta}
-                            </button>
-                        )}
-                    </div>
-                ))}
+                    ))}
                 </div>
             )}
         </div>

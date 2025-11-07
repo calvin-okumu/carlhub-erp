@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import { API_BASE } from '@/api';
 
 interface Group {
     id: number;
@@ -11,11 +12,11 @@ interface Group {
 interface InviteModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSendInvite: (email: string, groups: number[]) => void;
     groups?: Group[];
+    onInviteSent?: () => void;
 }
 
-export default function InviteModal({ isOpen, onClose, onSendInvite, groups = [] }: InviteModalProps) {
+export default function InviteModal({ isOpen, onClose, groups = [], onInviteSent }: InviteModalProps) {
     const [email, setEmail] = useState('');
     const [selectedGroups, setSelectedGroups] = useState<number[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -28,21 +29,77 @@ export default function InviteModal({ isOpen, onClose, onSendInvite, groups = []
         );
     };
 
+    // Map selected groups to backend role
+    const mapGroupsToRole = (selectedGroups: number[]): string => {
+        // Group ID to role mapping based on the groups array
+        const groupRoleMap: { [key: number]: string } = {
+            1: 'Tenant Owner', // Admin group
+            2: 'Manager',      // Manager group
+            3: 'Employee',     // Employee group
+        };
+
+        // If multiple groups selected, use highest priority role
+        const rolePriority = ['Tenant Owner', 'Manager', 'Employee'];
+
+        for (const role of rolePriority) {
+            if (selectedGroups.some(groupId => groupRoleMap[groupId] === role)) {
+                return role;
+            }
+        }
+
+        return 'Employee'; // Default fallback
+    };
+
     const handleSendInvite = async () => {
         if (!email.trim()) {
             alert('Please enter an email address');
             return;
         }
 
+        if (selectedGroups.length === 0) {
+            alert('Please select at least one group');
+            return;
+        }
+
+        const token = localStorage.getItem('access_token');
+        if (!token) {
+            alert('You must be logged in to send invitations');
+            return;
+        }
+
+        const role = mapGroupsToRole(selectedGroups);
+
         setIsLoading(true);
         try {
-            await onSendInvite(email.trim(), selectedGroups);
-            setEmail('');
-            setSelectedGroups([]);
-            onClose();
+            const response = await fetch(`${API_BASE}/invite-member/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Token ${token}`,
+                },
+                body: JSON.stringify({
+                    email: email.trim(),
+                    role: role
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Success
+                setEmail('');
+                setSelectedGroups([]);
+                onClose();
+                alert('Invitation sent successfully!');
+                onInviteSent?.(); // Call the callback to refresh the invites list
+            } else {
+                // Handle backend error responses
+                const errorMessage = data.error || data.message || 'Failed to send invitation';
+                alert(`Error: ${errorMessage}`);
+            }
         } catch (error) {
             console.error('Error sending invite:', error);
-            alert('Failed to send invitation');
+            alert('Network error. Please check your connection and try again.');
         } finally {
             setIsLoading(false);
         }
