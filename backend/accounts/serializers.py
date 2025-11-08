@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import AuditLog, UserProfile, EmployeeDocument, CustomUser
+from .models import AuditLog, UserProfile, EmployeeDocument, CustomUser, CustomPermission, PermissionGroup
 
 class UserProfileSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(source='user.first_name', read_only=True)
@@ -47,3 +47,30 @@ class AuditLogSerializer(serializers.ModelSerializer):
             'timestamp', 'metadata', 'user_email', 'tenant_name'
         ]
         read_only_fields = ['id', 'timestamp']
+
+
+class CustomPermissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomPermission
+        fields = [
+            'id', 'slug', 'name', 'codename', 'description',
+            'category', 'app_label', 'is_active', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at']
+
+
+class PermissionGroupSerializer(serializers.ModelSerializer):
+    custom_permissions = CustomPermissionSerializer(many=True, read_only=True)
+    user_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PermissionGroup
+        fields = [
+            'id', 'slug', 'name', 'description', 'is_system_group',
+            'custom_permissions', 'users', 'user_count', 'tenant',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'user_count', 'tenant']
+
+    def get_user_count(self, obj):
+        return obj.users.count()

@@ -30,6 +30,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     first_name = factory.Faker('first_name')
     last_name = factory.Faker('last_name')
     password = factory.PostGenerationMethodCall('set_password', 'password123')
+    is_deleted = False
 
     @factory.post_generation
     def groups(self, create, extracted, **kwargs):
@@ -49,6 +50,7 @@ class TenantFactory(factory.django.DjangoModelFactory):
     website = factory.Faker('url')
     industry = factory.Iterator(['Technology', 'Healthcare', 'Finance', 'Education', 'Retail'])
     company_size = factory.Iterator(['1-10', '11-50', '51-200', '201-1000', '1000+'])
+    is_deleted = False
 
 class ClientFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -58,6 +60,7 @@ class ClientFactory(factory.django.DjangoModelFactory):
     phone = factory.LazyFunction(generate_valid_phone)
     status = factory.Iterator(['active', 'inactive', 'prospect'])
     tenant = factory.LazyFunction(lambda: Tenant.objects.order_by('?').first() or TenantFactory())
+    is_deleted = False
 
 class ProjectFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -72,6 +75,7 @@ class ProjectFactory(factory.django.DjangoModelFactory):
     budget = factory.Faker('random_int', min=10000, max=100000)
     description = factory.LazyFunction(lambda: fake.text()[:500])
     tags = factory.LazyFunction(lambda: ','.join(fake.words(nb=3))[:500])
+    is_deleted = False
 
 class MilestoneFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -85,6 +89,7 @@ class MilestoneFactory(factory.django.DjangoModelFactory):
     project = factory.LazyFunction(lambda: Project.objects.order_by('?').first() or ProjectFactory())
     tenant = factory.SelfAttribute('project.tenant')
     assignee = factory.SubFactory(UserFactory)
+    is_deleted = False
 
 class SprintFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -96,6 +101,7 @@ class SprintFactory(factory.django.DjangoModelFactory):
     tenant = factory.SelfAttribute('milestone.tenant')
     start_date = factory.LazyAttribute(lambda obj: obj.milestone.planned_start + timedelta(days=1) if obj.milestone.planned_start else factory.Faker('date_this_year'))
     end_date = factory.LazyAttribute(lambda obj: obj.start_date + timedelta(days=7) if obj.start_date else None)
+    is_deleted = False
 
 class TaskFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -110,6 +116,7 @@ class TaskFactory(factory.django.DjangoModelFactory):
     start_date = factory.LazyAttribute(lambda obj: obj.milestone.planned_start + timedelta(days=1) if obj.milestone.planned_start else factory.Faker('date_this_year'))
     end_date = factory.LazyAttribute(lambda obj: obj.start_date + timedelta(days=3) if obj.start_date else None)
     estimated_hours = factory.Faker('random_int', min=1, max=40)
+    is_deleted = False
 
 class InvoiceFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -120,6 +127,7 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     amount = factory.Faker('random_int', min=1000, max=50000)
     issued_at = factory.Faker('date_this_year')
     paid = factory.Faker('boolean')
+    is_deleted = False
 
 class PaymentFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -128,6 +136,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
     invoice = factory.SubFactory(InvoiceFactory)
     amount = factory.SelfAttribute('invoice.amount')
     paid_at = factory.Faker('date_this_year')
+    is_deleted = False
 
 class UserTenantFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -137,3 +146,4 @@ class UserTenantFactory(factory.django.DjangoModelFactory):
     is_owner = factory.Faker('boolean')
     is_approved = factory.LazyAttribute(lambda obj: True if obj.is_owner else factory.Faker('boolean')())
     role = factory.Iterator(['Employee', 'Manager', 'Tenant Owner'])
+    is_deleted = False

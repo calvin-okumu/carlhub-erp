@@ -258,6 +258,218 @@ Update tenant information.
 
 Delete tenant (admin only).
 
+## 🔐 Permissions Management
+
+### Custom Permissions
+
+#### List Custom Permissions
+**GET** `/api/accounts/permissions/`
+
+List custom permissions available to the current tenant admin.
+
+**Response:**
+```json
+{
+  "count": 5,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "manage-projects",
+      "name": "Manage Projects",
+      "codename": "manage_projects",
+      "description": "Can create, update, and delete projects",
+      "category": "project",
+      "app_label": "tenant_uuid",
+      "is_active": true,
+      "created_at": "2025-11-07T10:00:00Z",
+      "updated_at": "2025-11-07T10:00:00Z"
+    }
+  ]
+}
+```
+
+#### Create Custom Permission
+**POST** `/api/accounts/permissions/`
+
+Create a new custom permission (admin only).
+
+**Request:**
+```json
+{
+  "name": "Manage Projects",
+  "codename": "manage_projects",
+  "description": "Can create, update, and delete projects",
+  "category": "project"
+}
+```
+
+#### Get Custom Permission
+**GET** `/api/accounts/permissions/{id}/`
+
+Get specific permission details.
+
+#### Update Custom Permission
+**PUT/PATCH** `/api/accounts/permissions/{id}/`
+
+Update permission information (admin only).
+
+#### Delete Custom Permission
+**DELETE** `/api/accounts/permissions/{id}/`
+
+Delete custom permission (admin only).
+
+### Permission Groups
+
+#### List Permission Groups
+**GET** `/api/accounts/permission-groups/`
+
+List permission groups for the current tenant.
+
+**Response:**
+```json
+{
+  "count": 3,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "slug": "project-managers",
+      "name": "Project Managers",
+      "description": "Users who can manage projects",
+      "is_system_group": false,
+      "custom_permissions": [
+        {
+          "id": "uuid",
+          "name": "Manage Projects",
+          "codename": "manage_projects",
+          "category": "project"
+        }
+      ],
+      "user_count": 5,
+      "tenant": "uuid",
+      "created_at": "2025-11-07T10:00:00Z",
+      "updated_at": "2025-11-07T10:00:00Z"
+    }
+  ]
+}
+```
+
+#### Create Permission Group
+**POST** `/api/accounts/permission-groups/`
+
+Create a new permission group (admin only).
+
+**Request:**
+```json
+{
+  "name": "Project Managers",
+  "description": "Users who can manage projects"
+}
+```
+
+#### Get Permission Group
+**GET** `/api/accounts/permission-groups/{id}/`
+
+Get specific permission group details.
+
+#### Update Permission Group
+**PUT/PATCH** `/api/accounts/permission-groups/{id}/`
+
+Update permission group information (admin only).
+
+#### Delete Permission Group
+**DELETE** `/api/accounts/permission-groups/{id}/`
+
+Delete permission group (admin only).
+
+#### Assign Permissions to Group
+**POST** `/api/accounts/permission-groups/{id}/assign_permissions/`
+
+Assign custom permissions to a permission group (admin only).
+
+**Request:**
+```json
+{
+  "permission_ids": ["uuid1", "uuid2"]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Assigned 2 permissions to group"
+}
+```
+
+#### Assign Users to Group
+**POST** `/api/accounts/permission-groups/{id}/assign_users/`
+
+Assign users to a permission group (admin only).
+
+**Request:**
+```json
+{
+  "user_ids": ["uuid1", "uuid2"]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Assigned 2 users to group"
+}
+```
+
+### User Permissions
+
+#### Get User Permissions
+**GET** `/api/accounts/users/{user_id}/permissions/`
+
+Get a user's current permissions (admin only).
+
+**Response:**
+```json
+{
+  "user_id": "uuid",
+  "django_permissions": ["add_project", "change_project"],
+  "custom_permissions": ["manage_projects", "view_reports"],
+  "groups": [
+    {
+      "id": "uuid",
+      "name": "Project Managers"
+    }
+  ],
+  "permission_groups": [
+    {
+      "id": "uuid",
+      "name": "Project Managers"
+    }
+  ]
+}
+```
+
+#### Assign Permissions to User
+**POST** `/api/accounts/users/{user_id}/permissions/`
+
+Assign permissions directly to a user (admin only). Creates a personal permission group.
+
+**Request:**
+```json
+{
+  "permission_ids": ["uuid1", "uuid2"]
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Assigned 2 permissions to user"
+}
+```
+
 ## 👥 Users
 
 ### List Users
@@ -310,41 +522,16 @@ Update client information.
 ### Delete Client
 **DELETE** `/api/clients/{slug}/`
 
-Delete client.
+Delete client (hard delete - permanently removes client and associated data).
 
-## 📁 Projects
-
-### List Projects
-**GET** `/api/projects/`
-
-List all projects with filtering and search.
-
-**Query Parameters:**
-- `status` - Filter by status
-- `priority` - Filter by priority
-- `client` - Filter by client slug
-- `search` - Search in name/description
-- `ordering` - Sort by field
-
-### Get Project
-**GET** `/api/projects/{slug}/`
-
-Get project details with related data.
-
-### Create Project
-**POST** `/api/projects/`
-
-Create new project.
-
-### Update Project
-**PUT/PATCH** `/api/projects/{slug}/`
-
-Update project information.
+**Note:** Unlike projects, tasks, and other resources, clients are hard deleted and cannot be restored.
 
 ### Delete Project
 **DELETE** `/api/projects/{slug}/`
 
-Delete project.
+Soft delete project (marks as deleted but preserves data for potential restoration).
+
+**Note:** Soft deleted projects can be restored by administrators. See [Bulk Operations](#bulk-operations) for restoration endpoints.
 
 ## 🎯 Milestones
 
@@ -371,7 +558,7 @@ Update milestone.
 ### Delete Milestone
 **DELETE** `/api/milestones/{slug}/`
 
-Delete milestone.
+Soft delete milestone (marks as deleted but preserves data for potential restoration).
 
 ## 📋 Sprints
 
@@ -398,7 +585,7 @@ Update sprint.
 ### Delete Sprint
 **DELETE** `/api/sprints/{slug}/`
 
-Delete sprint.
+Soft delete sprint (marks as deleted but preserves data for potential restoration).
 
 ## ✅ Tasks
 
@@ -451,7 +638,7 @@ Update task.
 ### Delete Task
 **DELETE** `/api/tasks/{slug}/`
 
-Delete task.
+Soft delete task (marks as deleted but preserves data for potential restoration).
 
 ## 💰 Invoices
 
@@ -699,7 +886,7 @@ curl -X POST http://localhost:8000/api/excel-import/ \
 ### Bulk Delete Clients
 **POST** `/api/clients/bulk_delete_clients/`
 
-Delete multiple clients in a single request.
+Delete multiple clients in a single request (hard delete - permanently removes clients).
 
 **Request:**
 ```json
@@ -724,10 +911,12 @@ Delete multiple clients in a single request.
 }
 ```
 
+**Note:** Clients are hard deleted and cannot be restored. Ensure no associated projects exist before deletion.
+
 ### Bulk Delete Projects
 **POST** `/api/projects/bulk_delete_projects/`
 
-Delete multiple projects in a single request.
+Soft delete multiple projects in a single request (preserves data for restoration).
 
 **Request:**
 ```json
@@ -752,10 +941,12 @@ Delete multiple projects in a single request.
 }
 ```
 
+**Note:** Projects are soft deleted and can be restored by administrators. See [Data Management](../features/data-management.md) for restoration procedures.
+
 ### Bulk Delete Tasks
 **POST** `/api/tasks/bulk_delete_tasks/`
 
-Delete multiple tasks in a single request.
+Soft delete multiple tasks in a single request (preserves data for restoration).
 
 **Request:**
 ```json
@@ -771,6 +962,8 @@ Delete multiple tasks in a single request.
   "deleted_count": 3
 }
 ```
+
+**Note:** Tasks are soft deleted and can be restored by administrators. See [Data Management](../features/data-management.md) for restoration procedures.
 
 ### Bulk Update Sprints
 **POST** `/api/sprints/bulk_update_sprints/`

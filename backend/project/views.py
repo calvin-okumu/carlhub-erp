@@ -249,7 +249,7 @@ class ProjectViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     Automatically calculates project progress based on milestones and tasks.
     Includes filtering by status/priority, searching, and ordering capabilities.
     """
-    queryset = Project.objects.all()
+    queryset = Project.objects.filter(is_deleted=False)
     serializer_class = ProjectSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageProjects]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -298,6 +298,10 @@ class ProjectViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             raise serializers.ValidationError("Client does not belong to the current tenant.")
 
         serializer.save(tenant=tenant)
+
+    def perform_destroy(self, instance):
+        # Soft delete the project
+        instance.delete()
 
     @action(detail=True, methods=['post'])
     def refresh_project_progress(self, request, pk=None):
@@ -371,14 +375,42 @@ class ProjectViewSet(TenantScopedMixin, viewsets.ModelViewSet):
                 'details': projects_with_invoices
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Perform bulk delete
-        delete_result = projects_to_delete.delete()  # delete() returns (total_deleted, details_dict)
-        details = delete_result[1]
-        deleted_count = details.get('project.Project', 0)  # Only count the projects deleted
+        # Perform bulk soft delete
+        deleted_count = 0
+        for project in projects_to_delete:
+            project.delete()  # Soft delete
+            deleted_count += 1
 
         return Response({
             'message': f'Successfully deleted {deleted_count} projects',
             'deleted_count': deleted_count
+        }, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, CanManageProjects])
+    def restore(self, request, slug=None):
+        """
+        Restore a soft-deleted project.
+        Only administrators can restore projects.
+        """
+        # Get the project including soft-deleted ones
+        try:
+            project = Project.all_objects.get(slug=slug)
+        except Project.DoesNotExist:
+            return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check tenant access
+        if hasattr(request, 'tenant') and request.tenant and project.tenant != request.tenant:
+            return Response({'error': 'Project does not belong to your tenant'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not project.is_deleted:
+            return Response({'error': 'Project is not deleted'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Restore the project
+        project.restore()
+
+        return Response({
+            'message': f'Project "{project.name}" has been restored successfully',
+            'project': self.get_serializer(project).data
         }, status=status.HTTP_200_OK)
 
 
@@ -416,7 +448,7 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     Automatically calculates milestone progress based on associated tasks.
     Includes filtering by status/project, searching, and ordering capabilities.
     """
-    queryset = Milestone.objects.all()
+    queryset = Milestone.objects.filter(is_deleted=False)
     serializer_class = MilestoneSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageMilestones]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -436,26 +468,23 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
 
         return queryset.select_related('project').prefetch_related('sprints', 'sprints__tasks')
 
-    def perform_create(self, serializer):
-        project = serializer.validated_data.get('project')
-        if project:
-            serializer.save(tenant=project.tenant)
-        else:
-            serializer.save()
+    def perform_destroy(self, instance):
+        # Soft delete the milestone
+        instance.delete()
 
 
 @extend_schema_view(
     list=extend_schema(
         summary="List sprints",
-        description="Retrieve a list of sprints for the current tenant with task count and progress."
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve sprint",
-        description="Retrieve details of a specific sprint including tasks count and progress."
+        description="Retrieve a list of sprints for the current tenant."
     ),
     create=extend_schema(
         summary="Create sprint",
-        description="Create a new sprint for a milestone."
+        description="Create a new sprint."
+    ),
+    retrieve=extend_schema(
+        summary="Get sprint details",
+        description="Retrieve detailed information about a specific sprint."
     ),
     update=extend_schema(
         summary="Update sprint",
@@ -468,10 +497,6 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     destroy=extend_schema(
         summary="Delete sprint",
         description="Delete a sprint and unassign all associated tasks."
-    ),
-    create_task=extend_schema(
-        summary="Create task in sprint",
-        description="Create a new task directly assigned to this sprint."
     ),
     assign_task=extend_schema(
         summary="Assign task to sprint",
@@ -501,7 +526,7 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     Includes custom actions for task management within sprints.
     Automatically calculates sprint progress based on associated tasks.
     """
-    queryset = Sprint.objects.all()
+    queryset = Sprint.objects.filter(is_deleted=False)
     serializer_class = SprintSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageSprints]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -527,19 +552,6 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             serializer.save(tenant=milestone.tenant)
         else:
             serializer.save()
-
-    @action(detail=True, methods=['post'])
-    def create_task(self, request, slug=None):
-        sprint = self.get_object()
-        data = request.data.copy()
-        data['milestone'] = sprint.milestone.id
-        data['sprint'] = sprint.id
-        data['tenant'] = sprint.tenant.id
-        serializer = TaskSerializer(data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'])
     def assign_task(self, request, slug=None):
@@ -571,7 +583,7 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         except Task.DoesNotExist:
             return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['patch'])
     def bulk_update_sprints(self, request):
         """
         Bulk update multiple sprints with the same status.
@@ -614,6 +626,10 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             'updated_count': updated_count
         }, status=status.HTTP_200_OK)
 
+    def perform_destroy(self, instance):
+        # Soft delete the sprint
+        instance.delete()
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -648,7 +664,7 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     Provides CRUD operations for task management with tenant isolation.
     Includes validation and progress tracking for agile workflow management.
     """
-    queryset = Task.objects.all()
+    queryset = Task.objects.filter(is_deleted=False)
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageTasks]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -772,14 +788,46 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         if not tasks_to_delete.exists():
             return Response({'error': 'No valid tasks found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Perform bulk delete
-        delete_result = tasks_to_delete.delete()  # delete() returns (total_deleted, details_dict)
-        details = delete_result[1]
-        deleted_count = details.get('project.Task', 0)  # Only count the tasks deleted
+        # Perform bulk soft delete
+        deleted_count = 0
+        for task in tasks_to_delete:
+            task.delete()  # Soft delete
+            deleted_count += 1
 
         return Response({
             'message': f'Successfully deleted {deleted_count} tasks',
             'deleted_count': deleted_count
+        }, status=status.HTTP_200_OK)
+
+    def perform_destroy(self, instance):
+        # Soft delete the task
+        instance.delete()
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, CanManageTasks])
+    def restore(self, request, slug=None):
+        """
+        Restore a soft-deleted task.
+        Only administrators can restore tasks.
+        """
+        # Get the task including soft-deleted ones
+        try:
+            task = Task.all_objects.get(slug=slug)
+        except Task.DoesNotExist:
+            return Response({'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check tenant access
+        if hasattr(request, 'tenant') and request.tenant and task.tenant != request.tenant:
+            return Response({'error': 'Task does not belong to your tenant'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not task.is_deleted:
+            return Response({'error': 'Task is not deleted'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Restore the task
+        task.restore()
+
+        return Response({
+            'message': f'Task "{task.title}" has been restored successfully',
+            'task': self.get_serializer(task).data
         }, status=status.HTTP_200_OK)
 
 
@@ -816,7 +864,7 @@ class InvoiceViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     Provides CRUD operations for invoice management with tenant isolation.
     Handles billing and payment tracking for client projects.
     """
-    queryset = Invoice.objects.all()
+    queryset = Invoice.objects.filter(is_deleted=False)
     serializer_class = InvoiceSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageInvoices]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -869,6 +917,10 @@ class InvoiceViewSet(TenantScopedMixin, viewsets.ModelViewSet):
 
         serializer.save(tenant=tenant)
 
+    def perform_destroy(self, instance):
+        # Soft delete the invoice
+        instance.delete()
+
 
 @extend_schema_view(
     list=extend_schema(
@@ -903,7 +955,7 @@ class PaymentViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     Provides CRUD operations for payment tracking with tenant isolation.
     Manages financial transactions and invoice settlements.
     """
-    queryset = Payment.objects.all()
+    queryset = Payment.objects.filter(is_deleted=False)
     serializer_class = PaymentSerializer
     permission_classes = [permissions.IsAuthenticated, CanManagePayments]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
@@ -952,6 +1004,10 @@ class PaymentViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             serializer.validated_data['currency'] = get_tenant_default_currency(tenant)
 
         serializer.save(tenant=tenant)
+
+    def perform_destroy(self, instance):
+        # Soft delete the payment
+        instance.delete()
 
 
 @extend_schema_view(
@@ -1117,6 +1173,10 @@ class UserViewSet(viewsets.ModelViewSet):
         if not (self.request.user.is_staff or self.request.user.is_superuser) and obj != self.request.user:
             self.permission_denied(self.request, message="You can only access your own profile")
         return obj
+
+    def perform_destroy(self, instance):
+        # Soft delete the user
+        instance.delete()
 
     @action(detail=False, methods=['get', 'put', 'patch'], permission_classes=[permissions.IsAuthenticated])
     def me(self, request):

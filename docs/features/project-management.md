@@ -137,30 +137,16 @@ curl -X POST http://localhost:8000/api/projects/ \
 
 ### Creating Milestones
 
-
-
 ```bash
-
-curl -X POST http://localhost:8000/api/milestones/ \
-
+curl -X POST http://localhost:8000/api/milestones/?project=project-slug \
   -H "Authorization: Token YOUR_TOKEN" \
-
   -H "Content-Type: application/json" \
-
   -d '{
-
     "name": "Phase 1: Requirements & Design",
-
-    "project": "project-uuid",
-
     "description": "Complete system requirements and UI/UX design",
-
     "target_date": "2025-02-28",
-
     "status": "active"
-
   }'
-
 ```
 
 
@@ -191,32 +177,16 @@ Milestones track progress through associated sprints and tasks.
 
 ### Sprint Operations
 
-
-
 ```bash
-
 # Create sprint
-
-curl -X POST http://localhost:8000/api/sprints/ \
-
+curl -X POST http://localhost:8000/api/sprints/?milestone=milestone-slug \
   -H "Authorization: Token YOUR_TOKEN" \
-
   -H "Content-Type: application/json" \
-
   -d '{
-
     "name": "Sprint 1 - Foundation",
-
-    "project": "project-uuid",
-
-    "milestone": "milestone-uuid",
-
     "start_date": "2025-01-15",
-
     "end_date": "2025-01-28",
-
     "goal": "Complete project foundation and setup"
-
   }'
 
 
@@ -247,40 +217,19 @@ curl -X POST http://localhost:8000/api/sprints/bulk_update_sprints/ \
 
 ### Task Creation and Assignment
 
-
-
 ```bash
-
-curl -X POST http://localhost:8000/api/tasks/ \
-
+curl -X POST http://localhost:8000/api/tasks/?milestone=milestone-slug&sprint=sprint-slug \
   -H "Authorization: Token YOUR_TOKEN" \
-
   -H "Content-Type: application/json" \
-
   -d '{
-
     "title": "Implement user authentication",
-
     "description": "Create login, registration, and password reset functionality",
-
-    "project": "project-uuid",
-
-    "milestone": "milestone-uuid",
-
-    "sprint": "sprint-uuid",
-
     "assignee": "user-uuid",
-
-    "status": "todo",
-
+    "status": "to_do",
     "priority": "high",
-
     "estimated_hours": 16.0,
-
     "start_date": "2025-01-15",
-
     "end_date": "2025-01-22"
-
   }'
 
 ```
@@ -508,10 +457,8 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 
 # Get sprints for a specific project
-
 curl -H "Authorization: Token YOUR_TOKEN" \
-
-  http://localhost:8000/api/projects/project-slug/sprints/
+  "http://localhost:8000/api/sprints/?project=project-slug"
 
 ```
 
@@ -635,7 +582,44 @@ Projects provide comprehensive reporting data:
 1. **Quality Assurance**: Ensure all deliverables meet requirements
 2. **Documentation**: Complete project documentation
 3. **Client Handover**: Transfer deliverables to client
-4. **Retrospective**: Review what went well and areas for improvement</content>
+4. **Retrospective**: Review what went well and areas for improvement
+
+## Soft Delete and Restoration
+
+Projects use soft delete functionality to preserve data integrity. When a project is "deleted", it is marked as deleted but remains in the database.
+
+### Soft Delete Behavior
+
+- **DELETE operations** mark projects as `is_deleted=True` with a `deleted_at` timestamp
+- **Soft-deleted projects** are hidden from normal queries but can be restored
+- **Related data preservation**: Milestones, sprints, and tasks remain intact when a project is soft-deleted
+- **Cascade prevention**: Foreign keys to soft-deleted projects are set to NULL instead of cascading deletes
+
+### Restoring Projects
+
+Administrators can restore soft-deleted projects:
+
+```bash
+curl -X POST http://localhost:8000/api/projects/project-slug/restore/ \
+  -H "Authorization: Token YOUR_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "message": "Project 'Project Name' has been restored successfully",
+  "project": {
+    "id": "project-uuid",
+    "name": "Project Name",
+    "is_deleted": false,
+    "deleted_at": null
+  }
+}
+```
+
+### Data Management
+
+See [Data Management](data-management.md) for comprehensive information about soft delete policies, restoration procedures, and data retention.</content>
 </xai:function_call"> 
 
 Assistant: Now create client-management.md. 

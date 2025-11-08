@@ -1,0 +1,7140 @@
+openapi: 3.0.3
+info:
+  title: DjangoCRM API
+  version: 1.0.0
+  description: "\n    Multi-tenant Customer Relationship Management (CRM) system API.\n\
+    \n    This API provides comprehensive tools for managing:\n    - **Tenants**:\
+    \ Multi-tenant organization management\n    - **Clients**: Customer relationship\
+    \ management\n    - **Projects**: Project lifecycle management with milestones\
+    \ and tasks\n    - **Invoices & Payments**: Financial management and billing\n\
+    \    - **Users & Teams**: User management and role-based access control\n\n  \
+    \  ## Authentication\n    - Use `Authorization: Token <token>` header for API\
+    \ requests\n    - Obtain tokens via `/api/login/` or `/api/signup/` endpoints\n\
+    \    - Session authentication is also supported for web users\n\n    ## Multi-tenancy\n\
+    \    In production with multi-tenancy enabled, all data is automatically scoped\
+    \ to the current tenant based on the request context.\n    "
+  contact:
+    name: DjangoCRM Support
+    email: support@djangocrm.com
+  license:
+    name: MIT License
+paths:
+  /api/accounts/audit-logs/:
+    get:
+      operationId: accounts_audit_logs_list
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+          enum:
+          - admin_user_activated
+          - admin_user_suspended
+          - bulk_invitation_completed
+          - bulk_invitation_started
+          - invitation_cancelled
+          - invitation_confirmed
+          - invitation_expired
+          - invitation_sent
+          - invitation_used
+          - member_approved
+          - member_rejected
+          - project_created
+          - role_assigned
+          - role_created
+          - role_updated
+          - security_failed_login
+          - security_token_misuse
+          - user_login
+          - user_logout
+          - user_password_change
+          - user_profile_update
+          - user_signup
+        description: |-
+          * `user_signup` - User Signup
+          * `user_login` - User Login
+          * `user_logout` - User Logout
+          * `user_profile_update` - Profile Update
+          * `user_password_change` - Password Change
+          * `invitation_sent` - Invitation Sent
+          * `invitation_confirmed` - Invitation Confirmed
+          * `invitation_used` - Invitation Used
+          * `invitation_cancelled` - Invitation Cancelled
+          * `invitation_expired` - Invitation Expired
+          * `member_approved` - Member Approved
+          * `member_rejected` - Member Rejected
+          * `role_created` - Role Created
+          * `role_updated` - Role Updated
+          * `role_assigned` - Role Assigned
+          * `project_created` - Project Created
+          * `bulk_invitation_started` - Bulk Invitation Started
+          * `bulk_invitation_completed` - Bulk Invitation Completed
+          * `security_failed_login` - Failed Login Attempt
+          * `security_token_misuse` - Token Misuse
+          * `admin_user_suspended` - User Suspended
+          * `admin_user_activated` - User Activated
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: resource_type
+        schema:
+          type: string
+          enum:
+          - bulk_invitation
+          - invitation
+          - profile
+          - role
+          - tenant
+          - user
+        description: |-
+          * `user` - User
+          * `invitation` - Invitation
+          * `role` - Role
+          * `tenant` - Tenant
+          * `profile` - User Profile
+          * `bulk_invitation` - Bulk Invitation
+      - in: query
+        name: tenant
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: user
+        schema:
+          type: integer
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAuditLogList'
+          description: ''
+  /api/accounts/documents/:
+    get:
+      operationId: accounts_documents_list
+      description: List and create employee documents
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedEmployeeDocumentList'
+          description: ''
+    post:
+      operationId: accounts_documents_create
+      description: List and create employee documents
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocument'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocument'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocument'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocument'
+          description: ''
+  /api/accounts/documents/{id}/:
+    get:
+      operationId: accounts_documents_retrieve
+      description: Retrieve, update, delete employee documents
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocument'
+          description: ''
+    put:
+      operationId: accounts_documents_update
+      description: Retrieve, update, delete employee documents
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocument'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocument'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/EmployeeDocument'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocument'
+          description: ''
+    patch:
+      operationId: accounts_documents_partial_update
+      description: Retrieve, update, delete employee documents
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeDocument'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeDocument'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedEmployeeDocument'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmployeeDocument'
+          description: ''
+    delete:
+      operationId: accounts_documents_destroy
+      description: Retrieve, update, delete employee documents
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounts/profile/:
+    get:
+      operationId: accounts_profile_retrieve
+      description: Get and update user profile
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+    put:
+      operationId: accounts_profile_update
+      description: Get and update user profile
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+    patch:
+      operationId: accounts_profile_partial_update
+      description: Get and update user profile
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserProfile'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+          description: ''
+  /api/approve-member/:
+    post:
+      operationId: approve_member_create
+      description: Approve a pending member request and assign appropriate group permissions.
+      summary: Approve tenant member
+      tags:
+      - approve-member
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+              required:
+              - user_id
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Member approved successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Permission denied
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/assign-admin/:
+    post:
+      operationId: assign_admin_create
+      description: Assign or remove admin (owner) role to/from an approved tenant
+        member. Only current owners can perform this action.
+      summary: Assign admin role to tenant member
+      tags:
+      - assign-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user to assign/remove admin role
+                assign_admin:
+                  type: boolean
+                  description: True to assign admin role, False to remove
+              required:
+              - user_id
+              - assign_admin
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Admin role assigned/removed successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    type: string
+                  role:
+                    type: string
+                  is_owner:
+                    type: boolean
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Bad request - invalid user or assignment not allowed
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Forbidden - only owners can assign admin roles
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: User not found
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/auth-methods/:
+    get:
+      operationId: auth_methods_retrieve
+      description: Returns information about supported authentication methods and
+        providers.
+      summary: Get available authentication methods
+      tags:
+      - auth-methods
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Authentication methods information
+                type: object
+                properties:
+                  traditional:
+                    type: object
+                    properties:
+                      endpoint:
+                        type: string
+                      method:
+                        type: string
+                      description:
+                        type: string
+                      fields:
+                        type: array
+                        items:
+                          type: string
+                  oauth:
+                    type: object
+                    properties:
+                      providers:
+                        type: object
+                        properties:
+                          google:
+                            type: object
+                            properties:
+                              login_url:
+                                type: string
+                              description:
+                                type: string
+                          github:
+                            type: object
+                            properties:
+                              login_url:
+                                type: string
+                              description:
+                                type: string
+          description: ''
+  /api/clients/:
+    get:
+      operationId: clients_list
+      description: Retrieve a list of clients for the current tenant.
+      summary: List clients
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - prospect
+        description: |-
+          * `active` - Active
+          * `inactive` - Inactive
+          * `prospect` - Prospect
+      tags:
+      - clients
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedClientList'
+          description: ''
+    post:
+      operationId: clients_create
+      description: Create a new client for the current tenant.
+      summary: Create client
+      tags:
+      - clients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Client'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Client'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+  /api/clients/{slug}/:
+    get:
+      operationId: clients_retrieve
+      description: Retrieve details of a specific client.
+      summary: Retrieve client
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - clients
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+    put:
+      operationId: clients_update
+      description: Update an existing client's information.
+      summary: Update client
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - clients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Client'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Client'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+    patch:
+      operationId: clients_partial_update
+      description: Partially update a client's information.
+      summary: Partially update client
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - clients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedClient'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedClient'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedClient'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+    delete:
+      operationId: clients_destroy
+      description: Delete a client.
+      summary: Delete client
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - clients
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/clients/bulk_delete_clients/:
+    post:
+      operationId: clients_bulk_delete_clients_create
+      description: |-
+        Bulk delete multiple clients.
+        Expects: {"client_ids": [1, 2, 3]}
+      tags:
+      - clients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Client'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Client'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
+  /api/confirm-invitation/:
+    get:
+      operationId: confirm_invitation_retrieve
+      description: Confirm invitation email by marking the invitation as email_confirmed.
+        This endpoint is called when a user clicks the confirmation link in their
+        email.
+      summary: Confirm invitation email
+      parameters:
+      - in: query
+        name: token
+        schema:
+          type: string
+        description: Invitation token (for GET requests)
+      tags:
+      - confirm-invitation
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  invitation:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      tenant_name:
+                        type: string
+                      role:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+    post:
+      operationId: confirm_invitation_create
+      description: Confirm invitation email by marking the invitation as email_confirmed.
+        This endpoint is called when a user clicks the confirmation link in their
+        email.
+      summary: Confirm invitation email
+      parameters:
+      - in: query
+        name: token
+        schema:
+          type: string
+        description: Invitation token (for GET requests)
+      tags:
+      - confirm-invitation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Invitation token
+              required:
+              - token
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  invitation:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      tenant_name:
+                        type: string
+                      role:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/database-backup/:
+    post:
+      operationId: database_backup_create
+      description: Create a timestamped database backup. Only superusers can perform
+        this action.
+      summary: Create database backup
+      tags:
+      - database-backup
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Backup created successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+                  backup_file:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  size:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Forbidden - only superusers can create backups
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/excel-export/:
+    get:
+      operationId: excel_export_retrieve
+      description: Export clients, projects, or tasks to Excel format
+      summary: Export data to Excel
+      parameters:
+      - in: query
+        name: model
+        schema:
+          type: string
+          enum:
+          - clients
+          - projects
+          - tasks
+        description: Model to export (clients, projects, tasks)
+        required: true
+      tags:
+      - excel-export
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Excel file download
+                content:
+                  application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+                    schema:
+                      type: string
+                      format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid model type
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/excel-import/:
+    post:
+      operationId: excel_import_create
+      description: Import clients, projects, or tasks from Excel file
+      summary: Import data from Excel
+      tags:
+      - excel-import
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel file to import
+                model:
+                  type: string
+                  enum:
+                  - clients
+                  - projects
+                  - tasks
+                  description: Model type to import
+              required:
+              - file
+              - model
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Import completed
+                type: object
+                properties:
+                  imported:
+                    type: integer
+                  updated:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid request or file format
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/health/:
+    get:
+      operationId: health_retrieve
+      description: Health check endpoint for monitoring service availability
+      tags:
+      - health
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+          description: ''
+  /api/invitations/:
+    get:
+      operationId: invitations_list
+      description: Retrieve a list of invitations sent by the current tenant.
+      summary: List invitations
+      parameters:
+      - in: query
+        name: is_used
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tenant
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - invitations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInvitationList'
+          description: ''
+    post:
+      operationId: invitations_create
+      description: Create a new invitation to join the tenant.
+      summary: Create invitation
+      tags:
+      - invitations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
+  /api/invitations/{slug}/:
+    get:
+      operationId: invitations_retrieve
+      description: Retrieve details of a specific invitation.
+      summary: Retrieve invitation
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invitations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
+    put:
+      operationId: invitations_update
+      description: Update an existing invitation's information.
+      summary: Update invitation
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invitations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
+    patch:
+      operationId: invitations_partial_update
+      description: Partially update an invitation's information.
+      summary: Partially update invitation
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invitations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInvitation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInvitation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInvitation'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
+    delete:
+      operationId: invitations_destroy
+      description: Delete an invitation.
+      summary: Delete invitation
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invitations
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/invite-member/:
+    post:
+      operationId: invite_member_create
+      description: Send an invitation email to join the tenant with specified role.
+      summary: Invite member to tenant
+      tags:
+      - invite-member
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum:
+                  - Employee
+                  - Manager
+                  - Tenant Owner
+              required:
+              - email
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Invitation sent successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+                  token:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Bad request - user already a member or invalid data
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Permission denied
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/invoices/:
+    get:
+      operationId: invoices_list
+      description: Retrieve a list of invoices for the current tenant.
+      summary: List invoices
+      parameters:
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: paid
+        schema:
+          type: boolean
+      - in: query
+        name: project
+        schema:
+          type: string
+          format: uuid
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - invoices
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInvoiceList'
+          description: ''
+    post:
+      operationId: invoices_create
+      description: Create a new invoice for a client and project.
+      summary: Create invoice
+      tags:
+      - invoices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/invoices/{slug}/:
+    get:
+      operationId: invoices_retrieve
+      description: Retrieve details of a specific invoice.
+      summary: Retrieve invoice
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invoices
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    put:
+      operationId: invoices_update
+      description: Update an existing invoice's information.
+      summary: Update invoice
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invoices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    patch:
+      operationId: invoices_partial_update
+      description: Partially update an invoice's information.
+      summary: Partially update invoice
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invoices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    delete:
+      operationId: invoices_destroy
+      description: Delete an invoice and associated payments.
+      summary: Delete invoice
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invoices
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/balances/:
+    get:
+      operationId: leave_balances_list
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: query
+        name: employee
+        schema:
+          type: integer
+      - in: query
+        name: leave_type
+        schema:
+          type: string
+          enum:
+          - annual_leave
+          - emergency_leave
+          - maternity_leave
+          - personal_leave
+          - sick_leave
+          - unpaid_leave
+        description: |-
+          Type of leave this balance applies to
+
+          * `annual_leave` - Annual Leave
+          * `sick_leave` - Sick Leave
+          * `personal_leave` - Personal Leave
+          * `maternity_leave` - Maternity/Paternity Leave
+          * `emergency_leave` - Emergency Leave
+          * `unpaid_leave` - Unpaid Leave
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: year
+        schema:
+          type: integer
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeaveBalanceList'
+          description: ''
+    post:
+      operationId: leave_balances_create
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+  /api/leave/balances/{id}/:
+    get:
+      operationId: leave_balances_retrieve
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave balance.
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+    put:
+      operationId: leave_balances_update
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave balance.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+    patch:
+      operationId: leave_balances_partial_update
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave balance.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveBalance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveBalance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveBalance'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+    delete:
+      operationId: leave_balances_destroy
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave balance.
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/policies/:
+    get:
+      operationId: leave_policies_list
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: leave_type
+        schema:
+          type: string
+          enum:
+          - annual_leave
+          - emergency_leave
+          - maternity_leave
+          - personal_leave
+          - sick_leave
+          - unpaid_leave
+        description: |-
+          Type of leave this policy applies to
+
+          * `annual_leave` - Annual Leave
+          * `sick_leave` - Sick Leave
+          * `personal_leave` - Personal Leave
+          * `maternity_leave` - Maternity/Paternity Leave
+          * `emergency_leave` - Emergency Leave
+          * `unpaid_leave` - Unpaid Leave
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeavePolicyList'
+          description: ''
+    post:
+      operationId: leave_policies_create
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+  /api/leave/policies/{id}/:
+    get:
+      operationId: leave_policies_retrieve
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave policy.
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+    put:
+      operationId: leave_policies_update
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave policy.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+    patch:
+      operationId: leave_policies_partial_update
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave policy.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeavePolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeavePolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeavePolicy'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+    delete:
+      operationId: leave_policies_destroy
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave policy.
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/requests/:
+    get:
+      operationId: leave_requests_list
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: query
+        name: approved_by
+        schema:
+          type: integer
+      - in: query
+        name: employee
+        schema:
+          type: integer
+      - in: query
+        name: leave_type
+        schema:
+          type: string
+          enum:
+          - annual_leave
+          - emergency_leave
+          - maternity_leave
+          - personal_leave
+          - sick_leave
+          - unpaid_leave
+        description: |-
+          Type of leave being requested
+
+          * `annual_leave` - Annual Leave
+          * `sick_leave` - Sick Leave
+          * `personal_leave` - Personal Leave
+          * `maternity_leave` - Maternity/Paternity Leave
+          * `emergency_leave` - Emergency Leave
+          * `unpaid_leave` - Unpaid Leave
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - approved
+          - cancelled
+          - pending
+          - rejected
+          - taken
+        description: |-
+          Current status of the leave request
+
+          * `pending` - Pending Approval
+          * `approved` - Approved
+          * `rejected` - Rejected
+          * `cancelled` - Cancelled
+          * `taken` - Leave Taken
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeaveRequestList'
+          description: ''
+    post:
+      operationId: leave_requests_create
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{id}/:
+    get:
+      operationId: leave_requests_retrieve
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    put:
+      operationId: leave_requests_update
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    patch:
+      operationId: leave_requests_partial_update
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    delete:
+      operationId: leave_requests_destroy
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/requests/{id}/approve/:
+    post:
+      operationId: leave_requests_approve_create
+      description: Approve a leave request.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{id}/cancel/:
+    post:
+      operationId: leave_requests_cancel_create
+      description: Cancel a leave request (only by the employee who created it).
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{id}/reject/:
+    post:
+      operationId: leave_requests_reject_create
+      description: Reject a leave request.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this leave request.
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/login/:
+    post:
+      operationId: login_create
+      description: Authenticate user with email and password, return token and user
+        info.
+      summary: User login
+      tags:
+      - login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 1
+              required:
+              - email
+              - password
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Login successful
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user_id:
+                    type: integer
+                  email:
+                    type: string
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  message:
+                    type: string
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                description: Invalid credentials
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/members/:
+    get:
+      operationId: members_list
+      description: Retrieve a list of users associated with the current tenant.
+      summary: List tenant members
+      parameters:
+      - in: query
+        name: is_approved
+        schema:
+          type: boolean
+      - in: query
+        name: is_owner
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: role
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: tenant
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - members
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserTenantList'
+          description: ''
+    post:
+      operationId: members_create
+      description: Add a new user to the tenant.
+      summary: Add tenant member
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTenant'
+          description: ''
+  /api/members/{slug}/:
+    get:
+      operationId: members_retrieve
+      description: Retrieve details of a specific tenant member.
+      summary: Retrieve tenant member
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - members
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTenant'
+          description: ''
+    put:
+      operationId: members_update
+      description: Update a tenant member's information.
+      summary: Update tenant member
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTenant'
+          description: ''
+    patch:
+      operationId: members_partial_update
+      description: Partially update a tenant member's information.
+      summary: Partially update tenant member
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserTenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserTenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserTenant'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTenant'
+          description: ''
+    delete:
+      operationId: members_destroy
+      description: Remove a user from the tenant.
+      summary: Remove tenant member
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - members
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/milestones/:
+    get:
+      operationId: milestones_list
+      description: Retrieve a list of milestones for the current tenant with progress
+        calculation.
+      summary: List milestones
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: project
+        schema:
+          type: string
+          format: uuid
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - completed
+          - planning
+        description: |-
+          * `planning` - Planning
+          * `active` - Active
+          * `completed` - Completed
+      tags:
+      - milestones
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMilestoneList'
+          description: ''
+    post:
+      operationId: milestones_create
+      description: Create a new milestone for a project.
+      summary: Create milestone
+      tags:
+      - milestones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Milestone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Milestone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Milestone'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+          description: ''
+  /api/milestones/{slug}/:
+    get:
+      operationId: milestones_retrieve
+      description: Retrieve details of a specific milestone including sprints count
+        and progress.
+      summary: Retrieve milestone
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - milestones
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+          description: ''
+    put:
+      operationId: milestones_update
+      description: Update an existing milestone's information.
+      summary: Update milestone
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - milestones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Milestone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Milestone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Milestone'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+          description: ''
+    patch:
+      operationId: milestones_partial_update
+      description: Partially update a milestone's information.
+      summary: Partially update milestone
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - milestones
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMilestone'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMilestone'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMilestone'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Milestone'
+          description: ''
+    delete:
+      operationId: milestones_destroy
+      description: Delete a milestone and all associated sprints and tasks.
+      summary: Delete milestone
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - milestones
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/payments/:
+    get:
+      operationId: payments_list
+      description: Retrieve a list of payments for the current tenant.
+      summary: List payments
+      parameters:
+      - in: query
+        name: invoice
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - payments
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentList'
+          description: ''
+    post:
+      operationId: payments_create
+      description: Create a new payment for an invoice.
+      summary: Create payment
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payment'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/payments/{slug}/:
+    get:
+      operationId: payments_retrieve
+      description: Retrieve details of a specific payment.
+      summary: Retrieve payment
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    put:
+      operationId: payments_update
+      description: Update an existing payment's information.
+      summary: Update payment
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payment'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    patch:
+      operationId: payments_partial_update
+      description: Partially update a payment's information.
+      summary: Partially update payment
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPayment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPayment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPayment'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    delete:
+      operationId: payments_destroy
+      description: Delete a payment record.
+      summary: Delete payment
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/:
+    get:
+      operationId: projects_list
+      description: Retrieve a list of projects for the current tenant with progress
+        calculation.
+      summary: List projects
+      parameters:
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: priority
+        schema:
+          type: string
+          enum:
+          - high
+          - low
+          - medium
+        description: |-
+          * `low` - Low
+          * `medium` - Medium
+          * `high` - High
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - archived
+          - completed
+          - on_hold
+          - planning
+        description: |-
+          * `planning` - Planning
+          * `active` - Active
+          * `on_hold` - On Hold
+          * `completed` - Completed
+          * `archived` - Archived
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjectList'
+          description: ''
+    post:
+      operationId: projects_create
+      description: Create a new project for the current tenant.
+      summary: Create project
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/{slug}/:
+    get:
+      operationId: projects_retrieve
+      description: Retrieve details of a specific project including milestones count
+        and progress.
+      summary: Retrieve project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    put:
+      operationId: projects_update
+      description: Update an existing project's information.
+      summary: Update project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    patch:
+      operationId: projects_partial_update
+      description: Partially update a project's information.
+      summary: Partially update project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProject'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    delete:
+      operationId: projects_destroy
+      description: Delete a project and all associated milestones, tasks, and invoices.
+      summary: Delete project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/{slug}/refresh_project_progress/:
+    post:
+      operationId: projects_refresh_project_progress_create
+      description: |-
+        Manually recalculate and update project progress.
+        Useful for fixing any progress calculation inconsistencies.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/bulk_delete_projects/:
+    post:
+      operationId: projects_bulk_delete_projects_create
+      description: |-
+        Bulk delete multiple projects.
+        Expects: {"project_ids": [1, 2, 3]}
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/resend-invitation/:
+    post:
+      operationId: resend_invitation_create
+      description: Resend invitation email for an existing invitation token. This
+        allows users to request a new invitation email if they didn't receive the
+        original.
+      summary: Resend invitation email
+      tags:
+      - resend-invitation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  description: Invitation token
+              required:
+              - token
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  invitation:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                      tenant_name:
+                        type: string
+                      role:
+                        type: string
+                      expires_at:
+                        type: string
+                        format: date-time
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '500':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/signup/:
+    post:
+      operationId: signup_create
+      description: Register a new user and optionally create a tenant. Supports invitation
+        acceptance.
+      summary: User signup
+      tags:
+      - signup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 1
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+                company_name:
+                  type: string
+                address:
+                  type: string
+                phone:
+                  type: string
+                website:
+                  type: string
+                  format: uri
+                industry:
+                  type: string
+                company_size:
+                  type: string
+                  enum:
+                  - 1-10
+                  - 11-50
+                  - 51-200
+                  - 201-1000
+                  - 1000+
+                invitation_token:
+                  type: string
+              required:
+              - email
+              - password
+              - first_name
+              - last_name
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Signup successful
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user_id:
+                    type: integer
+                  email:
+                    type: string
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+                  tenant:
+                    type: string
+                  message:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Validation error
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/sprints/:
+    get:
+      operationId: sprints_list
+      description: Retrieve a list of sprints for the current tenant.
+      summary: List sprints
+      parameters:
+      - in: query
+        name: milestone
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: milestone__project
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - canceled
+          - completed
+          - planned
+        description: |-
+          * `planned` - Planned
+          * `active` - Active
+          * `completed` - Completed
+          * `canceled` - Canceled
+      tags:
+      - sprints
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSprintList'
+          description: ''
+    post:
+      operationId: sprints_create
+      description: Create a new sprint.
+      summary: Create sprint
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      tags:
+      - sprints
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+          description: ''
+  /api/sprints/{slug}/:
+    get:
+      operationId: sprints_retrieve
+      description: Retrieve detailed information about a specific sprint.
+      summary: Get sprint details
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sprints
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+          description: ''
+    put:
+      operationId: sprints_update
+      description: Update an existing sprint's information.
+      summary: Update sprint
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sprints
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+          description: ''
+    patch:
+      operationId: sprints_partial_update
+      description: Partially update a sprint's information.
+      summary: Partially update sprint
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sprints
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSprint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSprint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSprint'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+          description: ''
+    delete:
+      operationId: sprints_destroy
+      description: Delete a sprint and unassign all associated tasks.
+      summary: Delete sprint
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sprints
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/sprints/{slug}/assign_task/:
+    post:
+      operationId: sprints_assign_task_create
+      description: Assign an existing task to this sprint.
+      summary: Assign task to sprint
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sprints
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+          description: ''
+  /api/sprints/{slug}/unassign_task/:
+    post:
+      operationId: sprints_unassign_task_create
+      description: Remove a task from this sprint.
+      summary: Unassign task from sprint
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sprints
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Sprint'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+          description: ''
+  /api/sprints/bulk_update_sprints/:
+    patch:
+      operationId: sprints_bulk_update_sprints_partial_update
+      description: |-
+        Bulk update multiple sprints with the same status.
+        Expects: {"sprint_ids": [1, 2, 3], "status": "active"}
+      parameters:
+      - in: path
+        name: project_slug
+        schema:
+          type: string
+        description: Project slug for filtering sprints within a specific project
+        required: true
+      tags:
+      - sprints
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSprint'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSprint'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSprint'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sprint'
+          description: ''
+  /api/tasks/:
+    get:
+      operationId: tasks_list
+      description: Retrieve a list of tasks for the current tenant with progress calculation.
+        Use 'backlog=true' to filter backlog tasks, 'backlog=false' for assigned tasks.
+      summary: List tasks
+      parameters:
+      - in: query
+        name: assignee
+        schema:
+          type: integer
+      - in: query
+        name: milestone
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: milestone__project
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: sprint
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - done
+          - in_progress
+          - in_review
+          - testing
+          - to_do
+        description: |-
+          * `to_do` - To Do
+          * `in_progress` - In Progress
+          * `in_review` - In Review
+          * `testing` - Testing
+          * `done` - Done
+      tags:
+      - tasks
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaskList'
+          description: ''
+    post:
+      operationId: tasks_create
+      description: Create a new task for a milestone.
+      summary: Create task
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/tasks/{slug}/:
+    get:
+      operationId: tasks_retrieve
+      description: Retrieve details of a specific task including progress.
+      summary: Retrieve task
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+    put:
+      operationId: tasks_update
+      description: Update an existing task's information.
+      summary: Update task
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+    patch:
+      operationId: tasks_partial_update
+      description: Partially update a task's information.
+      summary: Partially update task
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTask'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+    delete:
+      operationId: tasks_destroy
+      description: Delete a task.
+      summary: Delete task
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/tasks/bulk_delete_tasks/:
+    post:
+      operationId: tasks_bulk_delete_tasks_create
+      description: |-
+        Bulk delete multiple tasks.
+        Expects: {"task_ids": [1, 2, 3]}
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/tasks/bulk_update_tasks/:
+    post:
+      operationId: tasks_bulk_update_tasks_create
+      description: |-
+        Bulk update multiple tasks with status and/or sprint assignment.
+        Expects: {"task_ids": [1, 2, 3], "status": "in_progress", "sprint_id": 5}
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/tenants/:
+    get:
+      operationId: tenants_list
+      description: |-
+        ViewSet for managing tenant organizations.
+
+        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - tenants
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTenantList'
+          description: ''
+    post:
+      operationId: tenants_create
+      description: |-
+        ViewSet for managing tenant organizations.
+
+        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      tags:
+      - tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+          description: ''
+  /api/tenants/{slug}/:
+    get:
+      operationId: tenants_retrieve
+      description: |-
+        ViewSet for managing tenant organizations.
+
+        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tenants
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+          description: ''
+    put:
+      operationId: tenants_update
+      description: |-
+        ViewSet for managing tenant organizations.
+
+        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Tenant'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+          description: ''
+    patch:
+      operationId: tenants_partial_update
+      description: |-
+        ViewSet for managing tenant organizations.
+
+        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTenant'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+          description: ''
+    delete:
+      operationId: tenants_destroy
+      description: |-
+        ViewSet for managing tenant organizations.
+
+        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tenants
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/transfer-ownership/:
+    post:
+      operationId: transfer_ownership_create
+      description: Transfer ownership of a tenant from current owner to another approved
+        member. Only current owners can perform this action.
+      summary: Transfer tenant ownership
+      tags:
+      - transfer-ownership
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                to_user_id:
+                  type: integer
+                  description: ID of the user to transfer ownership to
+              required:
+              - to_user_id
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Ownership transferred successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+                  from_user:
+                    type: string
+                  to_user:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Bad request - invalid user or transfer not allowed
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Forbidden - only owners can transfer ownership
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: User not found
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/users/:
+    get:
+      operationId: users_list
+      description: Retrieve a list of users. Regular users can only see their own
+        profile.
+      summary: List users
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomUserList'
+          description: ''
+    post:
+      operationId: users_create
+      description: Create a new user account. Generally handled through signup process.
+      summary: Create user
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+  /api/users/{slug}/:
+    get:
+      operationId: users_retrieve
+      description: Retrieve details of a specific user. Users can only access their
+        own profile.
+      summary: Retrieve user
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+    put:
+      operationId: users_update
+      description: Update user information. Users can only update their own profile.
+      summary: Update user
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+    patch:
+      operationId: users_partial_update
+      description: Partially update user information. Users can only update their
+        own profile.
+      summary: Partially update user
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+    delete:
+      operationId: users_destroy
+      description: Delete a user account. Users can only delete their own account.
+      summary: Delete user
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/me/:
+    get:
+      operationId: users_me_retrieve
+      description: Get or update current user's profile.
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+    put:
+      operationId: users_me_update
+      description: Get or update current user's profile.
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+    patch:
+      operationId: users_me_partial_update
+      description: Get or update current user's profile.
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+components:
+  schemas:
+    AccountTypeEnum:
+      enum:
+      - checking
+      - savings
+      type: string
+      description: |-
+        * `checking` - Checking
+        * `savings` - Savings
+    ActionEnum:
+      enum:
+      - user_signup
+      - user_login
+      - user_logout
+      - user_profile_update
+      - user_password_change
+      - invitation_sent
+      - invitation_confirmed
+      - invitation_used
+      - invitation_cancelled
+      - invitation_expired
+      - member_approved
+      - member_rejected
+      - role_created
+      - role_updated
+      - role_assigned
+      - project_created
+      - bulk_invitation_started
+      - bulk_invitation_completed
+      - security_failed_login
+      - security_token_misuse
+      - admin_user_suspended
+      - admin_user_activated
+      type: string
+      description: |-
+        * `user_signup` - User Signup
+        * `user_login` - User Login
+        * `user_logout` - User Logout
+        * `user_profile_update` - Profile Update
+        * `user_password_change` - Password Change
+        * `invitation_sent` - Invitation Sent
+        * `invitation_confirmed` - Invitation Confirmed
+        * `invitation_used` - Invitation Used
+        * `invitation_cancelled` - Invitation Cancelled
+        * `invitation_expired` - Invitation Expired
+        * `member_approved` - Member Approved
+        * `member_rejected` - Member Rejected
+        * `role_created` - Role Created
+        * `role_updated` - Role Updated
+        * `role_assigned` - Role Assigned
+        * `project_created` - Project Created
+        * `bulk_invitation_started` - Bulk Invitation Started
+        * `bulk_invitation_completed` - Bulk Invitation Completed
+        * `security_failed_login` - Failed Login Attempt
+        * `security_token_misuse` - Token Misuse
+        * `admin_user_suspended` - User Suspended
+        * `admin_user_activated` - User Activated
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        action:
+          $ref: '#/components/schemas/ActionEnum'
+        resource_type:
+          $ref: '#/components/schemas/ResourceTypeEnum'
+        resource_id:
+          type: string
+          nullable: true
+          maxLength: 255
+        old_values:
+          nullable: true
+        new_values:
+          nullable: true
+        ip_address:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+          readOnly: true
+        metadata:
+          nullable: true
+        user_email:
+          type: string
+          readOnly: true
+        tenant_name:
+          type: string
+          readOnly: true
+      required:
+      - action
+      - id
+      - resource_type
+      - tenant_name
+      - timestamp
+      - user_email
+    BlankEnum:
+      enum:
+      - ''
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          pattern: ^\+?1?\d{9,15}$
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/ClientStatusEnum'
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        projects_count:
+          type: integer
+          readOnly: true
+          description: Number of projects associated with this client
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - email
+      - id
+      - name
+      - projects_count
+      - tenant
+      - tenant_name
+      - updated_at
+    ClientStatusEnum:
+      enum:
+      - active
+      - inactive
+      - prospect
+      type: string
+      description: |-
+        * `active` - Active
+        * `inactive` - Inactive
+        * `prospect` - Prospect
+    CompanySizeEnum:
+      enum:
+      - 1-10
+      - 11-50
+      - 51-200
+      - 201-1000
+      - 1000+
+      type: string
+      description: |-
+        * `1-10` - 1-10 employees
+        * `11-50` - 11-50 employees
+        * `51-200` - 51-200 employees
+        * `201-1000` - 201-1000 employees
+        * `1000+` - 1000+ employees
+    CurrencyEnum:
+      enum:
+      - USD
+      - EUR
+      - GBP
+      - JPY
+      - CAD
+      - AUD
+      - CHF
+      - CNY
+      - INR
+      - BRL
+      - ZAR
+      - KES
+      type: string
+      description: |-
+        * `USD` - US Dollar
+        * `EUR` - Euro
+        * `GBP` - British Pound
+        * `JPY` - Japanese Yen
+        * `CAD` - Canadian Dollar
+        * `AUD` - Australian Dollar
+        * `CHF` - Swiss Franc
+        * `CNY` - Chinese Yuan
+        * `INR` - Indian Rupee
+        * `BRL` - Brazilian Real
+        * `ZAR` - South African Rand
+        * `KES` - Kenyan Shilling
+    CustomUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - date_joined
+      - email
+      - id
+      - is_active
+    DefaultCurrencyEnum:
+      enum:
+      - USD
+      - EUR
+      - GBP
+      - JPY
+      - CAD
+      - AUD
+      - CHF
+      - CNY
+      - INR
+      - BRL
+      - ZAR
+      - KES
+      type: string
+      description: |-
+        * `USD` - US Dollar
+        * `EUR` - Euro
+        * `GBP` - British Pound
+        * `JPY` - Japanese Yen
+        * `CAD` - Canadian Dollar
+        * `AUD` - Australian Dollar
+        * `CHF` - Swiss Franc
+        * `CNY` - Chinese Yuan
+        * `INR` - Indian Rupee
+        * `BRL` - Brazilian Real
+        * `ZAR` - South African Rand
+        * `KES` - Kenyan Shilling
+    EmployeeDocument:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        document_file:
+          type: string
+          format: uri
+        uploaded_at:
+          type: string
+          format: date-time
+          readOnly: true
+        file_size:
+          type: integer
+          readOnly: true
+        file_type:
+          type: string
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+      required:
+      - document_file
+      - file_size
+      - file_type
+      - id
+      - title
+      - uploaded_at
+      - user
+    HealthCheck:
+      type: object
+      description: Serializer for health check endpoint response
+      properties:
+        status:
+          type: string
+          description: Service health status
+        timestamp:
+          type: string
+          format: date-time
+          description: Current server timestamp
+        service:
+          type: string
+          description: Service name
+      required:
+      - service
+      - status
+      - timestamp
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        tenant:
+          type: string
+          format: uuid
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        token:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          maxLength: 100
+        invited_by:
+          type: integer
+          readOnly: true
+        invited_by_email:
+          type: string
+          readOnly: true
+          description: Email of the user who sent the invitation
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+        is_used:
+          type: boolean
+        email_confirmed:
+          type: boolean
+      required:
+      - created_at
+      - email
+      - expires_at
+      - id
+      - invited_by
+      - invited_by_email
+      - slug
+      - tenant
+      - tenant_name
+      - token
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+          description: Name of the billed client
+        project:
+          type: string
+          format: uuid
+          nullable: true
+        currency:
+          nullable: true
+          description: |-
+            Currency for this invoice
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
+        issued_at:
+          type: string
+          format: date-time
+          readOnly: true
+        paid:
+          type: boolean
+      required:
+      - amount
+      - client
+      - client_name
+      - formatted_amount
+      - id
+      - issued_at
+    LeaveBalance:
+      type: object
+      description: Serializer for leave balances with utilization calculations.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          description: Employee whose leave balance this represents
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant the balance belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this balance applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Calendar year for this leave balance
+        total_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Total leave days allocated for this year
+        used_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days already used this year
+        carried_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days carried over from previous year
+        remaining_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Remaining leave days available
+        utilization_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Leave utilization percentage
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - employee
+      - employee_name
+      - id
+      - leave_type
+      - remaining_days
+      - slug
+      - tenant
+      - tenant_name
+      - total_days
+      - updated_at
+      - utilization_percentage
+      - year
+    LeavePolicy:
+      type: object
+      description: Serializer for leave policies with validation.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant this policy applies to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this policy applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        annual_entitlement:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          description: Default annual leave entitlement in days
+        max_consecutive_days:
+          type: integer
+          maximum: 365
+          minimum: 1
+          description: Maximum consecutive days allowed for this leave type
+        notice_period_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Minimum notice period required in working days
+        carry_over_allowed:
+          type: boolean
+          description: Whether unused leave can be carried over to next year
+        max_carry_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be carried over (null = unlimited)
+        auto_approve_max_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be auto-approved (null = no auto-approval)
+        is_active:
+          type: boolean
+          description: Whether this policy is currently active
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - annual_entitlement
+      - created_at
+      - id
+      - leave_type
+      - slug
+      - tenant
+      - tenant_name
+      - updated_at
+    LeaveRequest:
+      type: object
+      description: Serializer for leave requests with comprehensive validation and
+        display fields.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          readOnly: true
+          description: Employee requesting leave
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Company/tenant the request belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave being requested
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        start_date:
+          type: string
+          format: date
+          description: First day of leave
+        end_date:
+          type: string
+          format: date
+          description: Last day of leave
+        days_requested:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Total number of leave days requested
+        reason:
+          type: string
+          description: Reason for the leave request
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveRequestStatusEnum'
+          description: |-
+            Current status of the leave request
+
+            * `pending` - Pending Approval
+            * `approved` - Approved
+            * `rejected` - Rejected
+            * `cancelled` - Cancelled
+            * `taken` - Leave Taken
+        applied_date:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the leave request was submitted
+        approved_by:
+          type: integer
+          nullable: true
+          description: Manager who approved/rejected the request
+        approved_by_name:
+          type: string
+          readOnly: true
+          description: Name of the approver
+        approved_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the request was approved/rejected
+        approval_notes:
+          type: string
+          description: Notes from the approver
+        duration_display:
+          type: string
+          readOnly: true
+          description: Human-readable duration
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - applied_date
+      - approved_by_name
+      - created_at
+      - days_requested
+      - duration_display
+      - employee
+      - employee_name
+      - end_date
+      - id
+      - leave_type
+      - slug
+      - start_date
+      - tenant
+      - tenant_name
+      - updated_at
+    LeaveRequestStatusEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      - cancelled
+      - taken
+      type: string
+      description: |-
+        * `pending` - Pending Approval
+        * `approved` - Approved
+        * `rejected` - Rejected
+        * `cancelled` - Cancelled
+        * `taken` - Leave Taken
+    LeaveTypeEnum:
+      enum:
+      - annual_leave
+      - sick_leave
+      - personal_leave
+      - maternity_leave
+      - emergency_leave
+      - unpaid_leave
+      type: string
+      description: |-
+        * `annual_leave` - Annual Leave
+        * `sick_leave` - Sick Leave
+        * `personal_leave` - Personal Leave
+        * `maternity_leave` - Maternity/Paternity Leave
+        * `emergency_leave` - Emergency Leave
+        * `unpaid_leave` - Unpaid Leave
+    Milestone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/MilestoneStatusEnum'
+        planned_start:
+          type: string
+          format: date
+          nullable: true
+        actual_start:
+          type: string
+          format: date
+          nullable: true
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        assignee:
+          type: integer
+          nullable: true
+        progress:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Milestone progress percentage (0-100)
+        project:
+          type: string
+          description: Project slug
+        project_name:
+          type: string
+          readOnly: true
+          description: Name of the parent project
+        sprints_count:
+          type: integer
+          readOnly: true
+          description: Number of sprints in this milestone
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - progress
+      - project
+      - project_name
+      - sprints_count
+    MilestoneStatusEnum:
+      enum:
+      - planning
+      - active
+      - completed
+      type: string
+      description: |-
+        * `planning` - Planning
+        * `active` - Active
+        * `completed` - Completed
+    NullEnum:
+      enum:
+      - null
+    PaginatedAuditLogList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLog'
+    PaginatedClientList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Client'
+    PaginatedCustomUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomUser'
+    PaginatedEmployeeDocumentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/EmployeeDocument'
+    PaginatedInvitationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invitation'
+    PaginatedInvoiceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invoice'
+    PaginatedLeaveBalanceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveBalance'
+    PaginatedLeavePolicyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeavePolicy'
+    PaginatedLeaveRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveRequest'
+    PaginatedMilestoneList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Milestone'
+    PaginatedPaymentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Payment'
+    PaginatedProjectList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+    PaginatedSprintList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sprint'
+    PaginatedTaskList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+    PaginatedTenantList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tenant'
+    PaginatedUserTenantList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserTenant'
+    PatchedClient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          pattern: ^\+?1?\d{9,15}$
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/ClientStatusEnum'
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        projects_count:
+          type: integer
+          readOnly: true
+          description: Number of projects associated with this client
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedCustomUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          title: Email address
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+          readOnly: true
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedEmployeeDocument:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        document_file:
+          type: string
+          format: uri
+        uploaded_at:
+          type: string
+          format: date-time
+          readOnly: true
+        file_size:
+          type: integer
+          readOnly: true
+        file_type:
+          type: string
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+    PatchedInvitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        tenant:
+          type: string
+          format: uuid
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        token:
+          type: string
+          readOnly: true
+        role:
+          type: string
+          maxLength: 100
+        invited_by:
+          type: integer
+          readOnly: true
+        invited_by_email:
+          type: string
+          readOnly: true
+          description: Email of the user who sent the invitation
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+        is_used:
+          type: boolean
+        email_confirmed:
+          type: boolean
+    PatchedInvoice:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+          description: Name of the billed client
+        project:
+          type: string
+          format: uuid
+          nullable: true
+        currency:
+          nullable: true
+          description: |-
+            Currency for this invoice
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
+        issued_at:
+          type: string
+          format: date-time
+          readOnly: true
+        paid:
+          type: boolean
+    PatchedLeaveBalance:
+      type: object
+      description: Serializer for leave balances with utilization calculations.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          description: Employee whose leave balance this represents
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant the balance belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this balance applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Calendar year for this leave balance
+        total_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Total leave days allocated for this year
+        used_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days already used this year
+        carried_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days carried over from previous year
+        remaining_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Remaining leave days available
+        utilization_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Leave utilization percentage
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedLeavePolicy:
+      type: object
+      description: Serializer for leave policies with validation.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant this policy applies to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this policy applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        annual_entitlement:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          description: Default annual leave entitlement in days
+        max_consecutive_days:
+          type: integer
+          maximum: 365
+          minimum: 1
+          description: Maximum consecutive days allowed for this leave type
+        notice_period_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Minimum notice period required in working days
+        carry_over_allowed:
+          type: boolean
+          description: Whether unused leave can be carried over to next year
+        max_carry_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be carried over (null = unlimited)
+        auto_approve_max_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be auto-approved (null = no auto-approval)
+        is_active:
+          type: boolean
+          description: Whether this policy is currently active
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedLeaveRequest:
+      type: object
+      description: Serializer for leave requests with comprehensive validation and
+        display fields.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          readOnly: true
+          description: Employee requesting leave
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Company/tenant the request belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave being requested
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        start_date:
+          type: string
+          format: date
+          description: First day of leave
+        end_date:
+          type: string
+          format: date
+          description: Last day of leave
+        days_requested:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Total number of leave days requested
+        reason:
+          type: string
+          description: Reason for the leave request
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveRequestStatusEnum'
+          description: |-
+            Current status of the leave request
+
+            * `pending` - Pending Approval
+            * `approved` - Approved
+            * `rejected` - Rejected
+            * `cancelled` - Cancelled
+            * `taken` - Leave Taken
+        applied_date:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the leave request was submitted
+        approved_by:
+          type: integer
+          nullable: true
+          description: Manager who approved/rejected the request
+        approved_by_name:
+          type: string
+          readOnly: true
+          description: Name of the approver
+        approved_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the request was approved/rejected
+        approval_notes:
+          type: string
+          description: Notes from the approver
+        duration_display:
+          type: string
+          readOnly: true
+          description: Human-readable duration
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedMilestone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/MilestoneStatusEnum'
+        planned_start:
+          type: string
+          format: date
+          nullable: true
+        actual_start:
+          type: string
+          format: date
+          nullable: true
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        assignee:
+          type: integer
+          nullable: true
+        progress:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Milestone progress percentage (0-100)
+        project:
+          type: string
+          description: Project slug
+        project_name:
+          type: string
+          readOnly: true
+          description: Name of the parent project
+        sprints_count:
+          type: integer
+          readOnly: true
+          description: Number of sprints in this milestone
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedPayment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        invoice:
+          type: string
+          format: uuid
+        invoice_id:
+          type: integer
+          readOnly: true
+          description: ID of the associated invoice
+        currency:
+          nullable: true
+          description: |-
+            Currency for this payment
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedProject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+          description: Name of the associated client
+        status:
+          $ref: '#/components/schemas/ProjectStatusEnum'
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        budget:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        description:
+          type: string
+        tags:
+          type: string
+          maxLength: 500
+        team_members:
+          type: array
+          items:
+            type: integer
+        access_groups:
+          type: array
+          items:
+            type: integer
+        milestones_count:
+          type: integer
+          readOnly: true
+          description: Number of milestones in this project
+        progress:
+          type: integer
+          readOnly: true
+          description: Overall project progress percentage (0-100)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedSprint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        status:
+          $ref: '#/components/schemas/SprintStatusEnum'
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        milestone:
+          type: string
+          description: Milestone slug
+        milestone_name:
+          type: string
+          readOnly: true
+          description: Name of the parent milestone
+        tasks_count:
+          type: integer
+          readOnly: true
+          description: Number of tasks in this sprint
+        progress:
+          type: integer
+          maximum: 100
+          minimum: 0
+          readOnly: true
+          description: Sprint progress percentage (0-100)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatusEnum'
+        milestone:
+          type: string
+          description: Milestone slug
+        milestone_name:
+          type: string
+          readOnly: true
+          description: Name of the parent milestone
+        sprint:
+          type: string
+          nullable: true
+          description: Sprint slug (optional)
+        sprint_name:
+          type: string
+          readOnly: true
+          description: Name of the assigned sprint (if any)
+        assignee:
+          type: integer
+          nullable: true
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        estimated_hours:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: Approximate hours expected
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        progress:
+          type: integer
+          maximum: 100
+          minimum: 0
+          readOnly: true
+          description: Task progress percentage (0-100)
+        is_assigned:
+          type: boolean
+          readOnly: true
+          description: Whether the task is assigned to a sprint
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedTenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        domain:
+          type: string
+          maxLength: 255
+        address:
+          type: string
+        phone:
+          type: string
+          maxLength: 20
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+        industry:
+          type: string
+          maxLength: 100
+        company_size:
+          oneOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        default_currency:
+          allOf:
+          - $ref: '#/components/schemas/DefaultCurrencyEnum'
+          description: |-
+            Default currency for invoices and payments
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_by:
+          type: integer
+          nullable: true
+          description: User who originally created this tenant during signup
+    PatchedUserProfile:
+      type: object
+      properties:
+        user:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
+          readOnly: true
+        job_title:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+        linkedin_profile:
+          type: string
+          format: uri
+          maxLength: 200
+        employee_id:
+          type: string
+          maxLength: 50
+        employee_number:
+          type: string
+          maxLength: 50
+        tax_number:
+          type: string
+          maxLength: 50
+        hire_date:
+          type: string
+          format: date
+          nullable: true
+        street_address:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state_province:
+          type: string
+          maxLength: 100
+        postal_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        emergency_contact:
+          type: string
+          maxLength: 100
+        emergency_phone:
+          type: string
+          maxLength: 20
+        medical_aid_provider:
+          type: string
+          maxLength: 100
+        medical_aid_plan:
+          type: string
+          maxLength: 100
+        medical_aid_number:
+          type: string
+          maxLength: 50
+        medical_conditions:
+          type: string
+        allergies:
+          type: string
+        medications:
+          type: string
+        bank_name:
+          type: string
+          maxLength: 100
+        account_number:
+          type: string
+          maxLength: 50
+        branch_code:
+          type: string
+          maxLength: 20
+        account_type:
+          oneOf:
+          - $ref: '#/components/schemas/AccountTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        routing_number:
+          type: string
+          maxLength: 20
+        swift_code:
+          type: string
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedUserTenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        user:
+          type: integer
+        user_email:
+          type: string
+          readOnly: true
+          description: Email address of the user
+        user_first_name:
+          type: string
+          readOnly: true
+          description: First name of the user
+        user_last_name:
+          type: string
+          readOnly: true
+          description: Last name of the user
+        tenant:
+          type: string
+          format: uuid
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        is_owner:
+          type: boolean
+        is_approved:
+          type: boolean
+        role:
+          type: string
+          maxLength: 100
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        invoice:
+          type: string
+          format: uuid
+        invoice_id:
+          type: integer
+          readOnly: true
+          description: ID of the associated invoice
+        currency:
+          nullable: true
+          description: |-
+            Currency for this payment
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - formatted_amount
+      - id
+      - invoice
+      - invoice_id
+      - paid_at
+    PriorityEnum:
+      enum:
+      - low
+      - medium
+      - high
+      type: string
+      description: |-
+        * `low` - Low
+        * `medium` - Medium
+        * `high` - High
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+          description: Name of the associated client
+        status:
+          $ref: '#/components/schemas/ProjectStatusEnum'
+        priority:
+          $ref: '#/components/schemas/PriorityEnum'
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        budget:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        description:
+          type: string
+        tags:
+          type: string
+          maxLength: 500
+        team_members:
+          type: array
+          items:
+            type: integer
+        access_groups:
+          type: array
+          items:
+            type: integer
+        milestones_count:
+          type: integer
+          readOnly: true
+          description: Number of milestones in this project
+        progress:
+          type: integer
+          readOnly: true
+          description: Overall project progress percentage (0-100)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - client
+      - client_name
+      - created_at
+      - id
+      - milestones_count
+      - name
+      - progress
+    ProjectStatusEnum:
+      enum:
+      - planning
+      - active
+      - on_hold
+      - completed
+      - archived
+      type: string
+      description: |-
+        * `planning` - Planning
+        * `active` - Active
+        * `on_hold` - On Hold
+        * `completed` - Completed
+        * `archived` - Archived
+    ResourceTypeEnum:
+      enum:
+      - user
+      - invitation
+      - role
+      - tenant
+      - profile
+      - bulk_invitation
+      type: string
+      description: |-
+        * `user` - User
+        * `invitation` - Invitation
+        * `role` - Role
+        * `tenant` - Tenant
+        * `profile` - User Profile
+        * `bulk_invitation` - Bulk Invitation
+    Sprint:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        status:
+          $ref: '#/components/schemas/SprintStatusEnum'
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        milestone:
+          type: string
+          description: Milestone slug
+        milestone_name:
+          type: string
+          readOnly: true
+          description: Name of the parent milestone
+        tasks_count:
+          type: integer
+          readOnly: true
+          description: Number of tasks in this sprint
+        progress:
+          type: integer
+          maximum: 100
+          minimum: 0
+          readOnly: true
+          description: Sprint progress percentage (0-100)
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - milestone
+      - milestone_name
+      - name
+      - progress
+      - tasks_count
+    SprintStatusEnum:
+      enum:
+      - planned
+      - active
+      - completed
+      - canceled
+      type: string
+      description: |-
+        * `planned` - Planned
+        * `active` - Active
+        * `completed` - Completed
+        * `canceled` - Canceled
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        description:
+          type: string
+        status:
+          $ref: '#/components/schemas/TaskStatusEnum'
+        milestone:
+          type: string
+          description: Milestone slug
+        milestone_name:
+          type: string
+          readOnly: true
+          description: Name of the parent milestone
+        sprint:
+          type: string
+          nullable: true
+          description: Sprint slug (optional)
+        sprint_name:
+          type: string
+          readOnly: true
+          description: Name of the assigned sprint (if any)
+        assignee:
+          type: integer
+          nullable: true
+        start_date:
+          type: string
+          format: date
+          nullable: true
+        end_date:
+          type: string
+          format: date
+          nullable: true
+        estimated_hours:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          nullable: true
+          description: Approximate hours expected
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        progress:
+          type: integer
+          maximum: 100
+          minimum: 0
+          readOnly: true
+          description: Task progress percentage (0-100)
+        is_assigned:
+          type: boolean
+          readOnly: true
+          description: Whether the task is assigned to a sprint
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - is_assigned
+      - milestone
+      - milestone_name
+      - progress
+      - sprint_name
+      - title
+      - updated_at
+    TaskStatusEnum:
+      enum:
+      - to_do
+      - in_progress
+      - in_review
+      - testing
+      - done
+      type: string
+      description: |-
+        * `to_do` - To Do
+        * `in_progress` - In Progress
+        * `in_review` - In Review
+        * `testing` - Testing
+        * `done` - Done
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        domain:
+          type: string
+          maxLength: 255
+        address:
+          type: string
+        phone:
+          type: string
+          maxLength: 20
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+        industry:
+          type: string
+          maxLength: 100
+        company_size:
+          oneOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        default_currency:
+          allOf:
+          - $ref: '#/components/schemas/DefaultCurrencyEnum'
+          description: |-
+            Default currency for invoices and payments
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_by:
+          type: integer
+          nullable: true
+          description: User who originally created this tenant during signup
+      required:
+      - created_at
+      - id
+      - name
+    UserProfile:
+      type: object
+      properties:
+        user:
+          type: integer
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
+          readOnly: true
+        job_title:
+          type: string
+          maxLength: 100
+        phone:
+          type: string
+          maxLength: 20
+        linkedin_profile:
+          type: string
+          format: uri
+          maxLength: 200
+        employee_id:
+          type: string
+          maxLength: 50
+        employee_number:
+          type: string
+          maxLength: 50
+        tax_number:
+          type: string
+          maxLength: 50
+        hire_date:
+          type: string
+          format: date
+          nullable: true
+        street_address:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state_province:
+          type: string
+          maxLength: 100
+        postal_code:
+          type: string
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        emergency_contact:
+          type: string
+          maxLength: 100
+        emergency_phone:
+          type: string
+          maxLength: 20
+        medical_aid_provider:
+          type: string
+          maxLength: 100
+        medical_aid_plan:
+          type: string
+          maxLength: 100
+        medical_aid_number:
+          type: string
+          maxLength: 50
+        medical_conditions:
+          type: string
+        allergies:
+          type: string
+        medications:
+          type: string
+        bank_name:
+          type: string
+          maxLength: 100
+        account_number:
+          type: string
+          maxLength: 50
+        branch_code:
+          type: string
+          maxLength: 20
+        account_type:
+          oneOf:
+          - $ref: '#/components/schemas/AccountTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        routing_number:
+          type: string
+          maxLength: 20
+        swift_code:
+          type: string
+          maxLength: 20
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - first_name
+      - last_name
+      - updated_at
+      - user
+    UserTenant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        user:
+          type: integer
+        user_email:
+          type: string
+          readOnly: true
+          description: Email address of the user
+        user_first_name:
+          type: string
+          readOnly: true
+          description: First name of the user
+        user_last_name:
+          type: string
+          readOnly: true
+          description: Last name of the user
+        tenant:
+          type: string
+          format: uuid
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        is_owner:
+          type: boolean
+        is_approved:
+          type: boolean
+        role:
+          type: string
+          maxLength: 100
+      required:
+      - id
+      - tenant
+      - tenant_name
+      - user
+      - user_email
+      - user_first_name
+      - user_last_name
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"
+tags:
+- name: tenants
+  description: Tenant organization management
+- name: clients
+  description: Client/customer management
+- name: projects
+  description: Project lifecycle management
+- name: milestones
+  description: Project milestone tracking
+- name: sprints
+  description: Agile sprint management
+- name: tasks
+  description: Individual task management
+- name: invoices
+  description: Invoice and billing management
+- name: payments
+  description: Payment tracking
+- name: users
+  description: User and team management
+- name: invitations
+  description: Invitation system
+- name: authentication
+  description: User authentication and signup

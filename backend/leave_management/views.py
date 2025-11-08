@@ -51,6 +51,10 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = LeaveRequest.objects.select_related('employee', 'tenant', 'approved_by')
 
+        # Handle schema generation (no authenticated user)
+        if not user or user.is_anonymous:
+            return queryset.none()
+
         # If user has permission to view all requests, return all for their tenant
         if user.has_perm('leave_management.view_leaverequest'):
             if hasattr(self.request, 'tenant') and self.request.tenant:
@@ -202,6 +206,10 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
         user = self.request.user
         queryset = LeaveBalance.objects.select_related('employee', 'tenant')
 
+        # Handle schema generation (no authenticated user)
+        if not user or user.is_anonymous:
+            return queryset.none()
+
         # If user has permission to view all balances, return all for their tenant
         if user.has_perm('leave_management.view_leavebalance'):
             if hasattr(self.request, 'tenant') and self.request.tenant:
@@ -229,10 +237,15 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter queryset based on user permissions."""
+        user = self.request.user
         queryset = LeavePolicy.objects.select_related('tenant')
 
+        # Handle schema generation (no authenticated user)
+        if not user or user.is_anonymous:
+            return queryset.none()
+
         # If user has permission to view all policies, return all for their tenant
-        if self.request.user.has_perm('leave_management.view_leavepolicy'):
+        if user.has_perm('leave_management.view_leavepolicy'):
             if hasattr(self.request, 'tenant') and self.request.tenant:
                 return queryset.filter(tenant=self.request.tenant)
             return queryset
