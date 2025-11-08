@@ -133,6 +133,41 @@ class InvitationAPITests(APITestCase):
         self.assertIn('newmember@example.com', mail.outbox[0].to)
         self.assertIn('Invitation to join', mail.outbox[0].subject)
 
+    def test_invite_existing_user_fails(self):
+        """Test that inviting an existing user in the system fails"""
+        # Create another user in a different tenant
+        other_tenant = Tenant.objects.create(name="Other Tenant", domain="other.com")
+        existing_user = CustomUser.objects.create_user(
+            email='existing@example.com',
+            password='password123',
+            first_name='Existing',
+            last_name='User'
+        )
+        UserTenant.objects.create(
+            user=existing_user,
+            tenant=other_tenant,
+            is_owner=True,
+            is_approved=True
+        )
+
+        url = reverse('invite_member')
+        data = {
+            'email': 'existing@example.com',  # This user already exists in the system
+            'role': 'Employee'
+        }
+
+        response = self.client.post(url, data, format='json')
+
+        # Should fail with 400 Bad Request
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'User already exists in the system')
+
+        # No invitation should be created
+        self.assertFalse(Invitation.objects.filter(email='existing@example.com').exists())
+
+        # No email should be sent
+        self.assertEqual(len(mail.outbox), 0)
+
     def test_confirm_invitation(self):
         """Test confirming an invitation"""
         invitation = Invitation.objects.create(
