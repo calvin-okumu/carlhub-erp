@@ -833,7 +833,7 @@ class BulkOperationsAPITests(APITestCase):
         self.assertEqual(response.data['deleted_count'], 2)
         self.assertIn('Successfully deleted 2 clients', response.data['message'])
 
-        # Verify clients were deleted
+        # Verify clients were hard deleted
         self.assertFalse(Client.objects.filter(id=self.client_obj3.id).exists())
         self.assertFalse(Client.objects.filter(id=self.client_obj4.id).exists())
 
@@ -845,8 +845,9 @@ class BulkOperationsAPITests(APITestCase):
         self.assertIn('Cannot delete clients with associated projects', response.data['error'])
         self.assertIn('has associated projects', str(response.data['details']))
 
-        # Verify client was not deleted
-        self.assertTrue(Client.objects.filter(id=self.client_obj1.id).exists())
+        # Verify client was not deleted (hard delete, so still exists)
+        client1 = Client.objects.get(id=self.client_obj1.id)
+        self.assertTrue(client1.id == self.client_obj1.id)
 
     def test_bulk_delete_clients_empty_list(self):
         """Test bulk delete clients with empty list"""
@@ -870,9 +871,14 @@ class BulkOperationsAPITests(APITestCase):
         self.assertEqual(response.data['deleted_count'], 2)
         self.assertIn('Successfully deleted 2 projects', response.data['message'])
 
-        # Verify projects were deleted
+        # Verify projects were soft deleted (not in default queryset)
         self.assertFalse(Project.objects.filter(id=self.project1.id).exists())
         self.assertFalse(Project.objects.filter(id=self.project2.id).exists())
+        # But they exist in all objects with is_deleted=True
+        project1 = Project.all_objects.get(id=self.project1.id)
+        project2 = Project.all_objects.get(id=self.project2.id)
+        self.assertTrue(project1.is_deleted)
+        self.assertTrue(project2.is_deleted)
 
     def test_bulk_delete_projects_with_invoices(self):
         """Test bulk delete projects fails when they have associated invoices"""
@@ -890,8 +896,9 @@ class BulkOperationsAPITests(APITestCase):
         self.assertIn('Cannot delete projects with associated invoices', response.data['error'])
         self.assertIn('has associated invoices', str(response.data['details']))
 
-        # Verify project was not deleted
-        self.assertTrue(Project.objects.filter(id=self.project1.id).exists())
+        # Verify project was not soft deleted
+        project1 = Project.objects.get(id=self.project1.id)
+        self.assertFalse(project1.is_deleted)
 
     def test_bulk_delete_projects_empty_list(self):
         """Test bulk delete projects with empty list"""
@@ -908,9 +915,14 @@ class BulkOperationsAPITests(APITestCase):
         self.assertEqual(response.data['deleted_count'], 2)
         self.assertIn('Successfully deleted 2 tasks', response.data['message'])
 
-        # Verify tasks were deleted
+        # Verify tasks were soft deleted (not in default queryset)
         self.assertFalse(Task.objects.filter(id=self.task1.id).exists())
         self.assertFalse(Task.objects.filter(id=self.task2.id).exists())
+        # But they exist in all objects with is_deleted=True
+        task1 = Task.all_objects.get(id=self.task1.id)
+        task2 = Task.all_objects.get(id=self.task2.id)
+        self.assertTrue(task1.is_deleted)
+        self.assertTrue(task2.is_deleted)
 
 
 class ExcelExportImportTests(APITestCase):

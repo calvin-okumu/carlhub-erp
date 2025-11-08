@@ -15,6 +15,8 @@ from django.core.validators import (
 from django.db import models
 from django.utils.text import slugify
 
+from accounts.models import SoftDeleteMixin
+
 
 class Client(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -55,7 +57,7 @@ class Client(models.Model):
         return self.name
 
 
-class Project(models.Model):
+class Project(SoftDeleteMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("planning", "Planning"),
@@ -127,7 +129,7 @@ class Project(models.Model):
         ]
 
 
-class Milestone(models.Model):
+class Milestone(SoftDeleteMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("planning", "Planning"),
@@ -155,7 +157,7 @@ class Milestone(models.Model):
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )  # 0-100
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="milestones", db_index=True
+        Project, on_delete=models.SET_NULL, null=True, blank=True, related_name="milestones", db_index=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -198,7 +200,7 @@ class Milestone(models.Model):
         return f"{self.name} ({self.project.name})"
 
 
-class Sprint(models.Model):
+class Sprint(SoftDeleteMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("planned", "Planned"),
@@ -215,7 +217,7 @@ class Sprint(models.Model):
         'accounts.Tenant', on_delete=models.CASCADE, related_name="sprints", null=True, blank=True, db_index=True
     )
     milestone = models.ForeignKey(
-        Milestone, on_delete=models.CASCADE, related_name="sprints", db_index=True
+        Milestone, on_delete=models.SET_NULL, null=True, blank=True, related_name="sprints", db_index=True
     )
     progress = models.PositiveIntegerField(
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
@@ -270,7 +272,7 @@ class Sprint(models.Model):
         return f"{self.name} ({self.milestone.name})"
 
 
-class Task(models.Model):
+class Task(SoftDeleteMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     STATUS_CHOICES = [
         ("to_do", "To Do"),
@@ -287,7 +289,7 @@ class Task(models.Model):
         'accounts.Tenant', on_delete=models.CASCADE, related_name="tasks", null=True, blank=True, db_index=True
     )
     milestone = models.ForeignKey(
-        Milestone, on_delete=models.CASCADE, related_name="tasks", db_index=True
+        Milestone, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks", db_index=True
     )
     sprint = models.ForeignKey(Sprint, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks", db_index=True)
     assignee = models.ForeignKey(
@@ -337,7 +339,7 @@ class Task(models.Model):
 
 
 # Financial models
-class Invoice(models.Model):
+class Invoice(SoftDeleteMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     tenant = models.ForeignKey(
@@ -347,7 +349,7 @@ class Invoice(models.Model):
         Client, on_delete=models.CASCADE, related_name="invoices", db_index=True
     )
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name="invoices", null=True, blank=True
+        Project, on_delete=models.SET_NULL, related_name="invoices", null=True, blank=True
     )
     currency = models.CharField(
         max_length=3,
@@ -396,14 +398,14 @@ class Invoice(models.Model):
         return f"Invoice {self.id or 'Unsaved'} - {self.client.name}"
 
 
-class Payment(models.Model):
+class Payment(SoftDeleteMixin, models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="payments", null=True, blank=True, db_index=True
     )
     invoice = models.ForeignKey(
-        Invoice, on_delete=models.CASCADE, related_name="payments", db_index=True
+        Invoice, on_delete=models.SET_NULL, null=True, blank=True, related_name="payments", db_index=True
     )
     currency = models.CharField(
         max_length=3,

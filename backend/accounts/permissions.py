@@ -15,8 +15,9 @@ class IsTenantAdmin(permissions.BasePermission):
 
         # Check tenant admin roles
         try:
+            # Since UserTenant is OneToOne, check the single relationship
             user_tenant = request.user.usertenant
-            if user_tenant.is_approved and user_tenant.role in ['admin', 'owner']:
+            if user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner']):
                 return True
         except:
             pass

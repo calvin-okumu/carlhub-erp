@@ -582,7 +582,44 @@ Projects provide comprehensive reporting data:
 1. **Quality Assurance**: Ensure all deliverables meet requirements
 2. **Documentation**: Complete project documentation
 3. **Client Handover**: Transfer deliverables to client
-4. **Retrospective**: Review what went well and areas for improvement</content>
+4. **Retrospective**: Review what went well and areas for improvement
+
+## Soft Delete and Restoration
+
+Projects use soft delete functionality to preserve data integrity. When a project is "deleted", it is marked as deleted but remains in the database.
+
+### Soft Delete Behavior
+
+- **DELETE operations** mark projects as `is_deleted=True` with a `deleted_at` timestamp
+- **Soft-deleted projects** are hidden from normal queries but can be restored
+- **Related data preservation**: Milestones, sprints, and tasks remain intact when a project is soft-deleted
+- **Cascade prevention**: Foreign keys to soft-deleted projects are set to NULL instead of cascading deletes
+
+### Restoring Projects
+
+Administrators can restore soft-deleted projects:
+
+```bash
+curl -X POST http://localhost:8000/api/projects/project-slug/restore/ \
+  -H "Authorization: Token YOUR_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "message": "Project 'Project Name' has been restored successfully",
+  "project": {
+    "id": "project-uuid",
+    "name": "Project Name",
+    "is_deleted": false,
+    "deleted_at": null
+  }
+}
+```
+
+### Data Management
+
+See [Data Management](data-management.md) for comprehensive information about soft delete policies, restoration procedures, and data retention.</content>
 </xai:function_call"> 
 
 Assistant: Now create client-management.md. 

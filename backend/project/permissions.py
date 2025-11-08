@@ -39,7 +39,8 @@ class HasDjangoPermission(permissions.BasePermission):
         action = self._get_action_from_view(view)
         required_perm = self.permission_map.get(action)
         if required_perm:
-            return bool(request.user.has_perm(required_perm))
+            # Check both Django permissions and custom permissions
+            return self._check_permission(request.user, required_perm, getattr(request, 'tenant', None))
         return False
 
     def has_object_permission(self, request, view, obj) -> bool:
@@ -54,7 +55,29 @@ class HasDjangoPermission(permissions.BasePermission):
         else:
             required_perm = self.permission_map.get(action)
         if required_perm:
-            return bool(request.user.has_perm(required_perm))
+            return self._check_permission(request.user, required_perm, getattr(request, 'tenant', None))
+        return False
+
+    def _check_permission(self, user, permission_codename, tenant):
+        """Check both Django and custom permissions"""
+        if not tenant or not permission_codename:
+            return False
+
+        # Check Django permission
+        if user.has_perm(permission_codename):
+            return True
+
+        # Check custom permissions in user's permission groups
+        try:
+            from accounts.models import PermissionGroup
+            user_groups = user.permission_groups.filter(tenant=tenant)
+            for group in user_groups:
+                if group.custom_permissions.filter(codename=permission_codename).exists():
+                    return True
+        except:
+            # If custom permissions aren't available yet, just check Django permissions
+            pass
+
         return False
 
     def _get_action_from_view(self, view):

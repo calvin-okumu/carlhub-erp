@@ -212,7 +212,44 @@ Task status changes automatically update progress metrics.
 Tasks can be assigned to users and tracked by individual.
 
 ### Project Management
-Tasks contribute to overall project completion metrics.</content>
+Tasks contribute to overall project completion metrics.
+
+## Soft Delete and Restoration
+
+Tasks use soft delete functionality to preserve data integrity. When a task is "deleted", it is marked as deleted but remains in the database.
+
+### Soft Delete Behavior
+
+- **DELETE operations** mark tasks as `is_deleted=True` with a `deleted_at` timestamp
+- **Soft-deleted tasks** are hidden from normal queries but can be restored
+- **Related data preservation**: Task relationships (assignee, sprint, milestone) are preserved when soft-deleted
+- **Cascade prevention**: Foreign keys to soft-deleted tasks are set to NULL instead of cascading deletes
+
+### Restoring Tasks
+
+Administrators can restore soft-deleted tasks:
+
+```bash
+curl -X POST http://localhost:8000/api/tasks/task-slug/restore/ \
+  -H "Authorization: Token YOUR_TOKEN"
+```
+
+**Response:**
+```json
+{
+  "message": "Task 'Task Title' has been restored successfully",
+  "task": {
+    "id": "task-uuid",
+    "title": "Task Title",
+    "is_deleted": false,
+    "deleted_at": null
+  }
+}
+```
+
+### Data Management
+
+See [Data Management](data-management.md) for comprehensive information about soft delete policies, restoration procedures, and data retention.</content>
 </xai:function_call"> 
 
 Assistant: Now create user-management.md. 

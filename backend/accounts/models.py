@@ -9,7 +9,64 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+class SoftDeleteManager(models.Manager):
+    """
+    Manager that excludes soft deleted objects by default.
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
+
+class SoftDeleteAllManager(models.Manager):
+    """
+    Manager that includes soft deleted objects.
+    """
+    def get_queryset(self):
+        return super().get_queryset()
+
+
+class SoftDeleteMixin(models.Model):
+    """
+    Mixin to add soft delete functionality to models.
+    """
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+
+    objects = SoftDeleteManager()
+    all_objects = SoftDeleteAllManager()
+
+    class Meta:
+        abstract = True
+
+    def delete(self, using=None, keep_parents=False):
+        """
+        Soft delete the instance by setting is_deleted=True and deleted_at.
+        """
+        from django.utils import timezone
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(using=using, update_fields=['is_deleted', 'deleted_at'])
+
+    def restore(self, using=None):
+        """
+        Restore a soft deleted instance by setting is_deleted=False and deleted_at=None.
+        """
+        from django.utils import timezone
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save(using=using, update_fields=['is_deleted', 'deleted_at'])
+
+    def hard_delete(self, using=None, keep_parents=False):
+        """
+        Permanently delete the instance.
+        """
+        super().delete(using=using, keep_parents=keep_parents)
+
+
 class CustomUserManager(BaseUserManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(is_deleted=False)
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError('The Email must be set')
@@ -33,7 +90,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
-class CustomUser(AbstractUser):
+class CustomUser(SoftDeleteMixin, AbstractUser):
     email = models.EmailField(_('email address'), unique=True)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
 
@@ -124,7 +181,7 @@ class UserTenant(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE)
+    tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE, db_index=True)
     is_owner = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)  # Default True for owners, False for invited members
     role = models.CharField(max_length=100, default='Employee')
@@ -398,3 +455,83 @@ class AuditLog(models.Model):
     def __str__(self):
         user_info = f" by {self.user.email}" if self.user else ""
         return f"{self.get_action_display()} on {self.get_resource_type_display()}{user_info} at {self.timestamp}"
+
+
+class CustomPermission(models.Model):
+    """
+    Custom permissions that can be created by admins
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=255, unique=True)
+    codename = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+    category = models.CharField(max_length=100, choices=[
+        ('project', 'Project Management'),
+        ('leave', 'Leave Management'),
+        ('crm', 'CRM'),
+        ('finance', 'Finance'),
+        ('admin', 'Administration'),
+        ('custom', 'Custom'),
+    ], default='custom')
+    app_label = models.CharField(max_length=100, default='accounts')
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            self.slug = base_slug
+            counter = 1
+            while CustomPermission.objects.filter(slug=self.slug).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.category}: {self.name}"
+
+    class Meta:
+        ordering = ['category', 'name']
+        indexes = [
+            models.Index(fields=['created_by']),
+        ]
+
+
+class PermissionGroup(models.Model):
+    """
+    Enhanced groups with custom permissions and metadata
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    is_system_group = models.BooleanField(default=False)  # Prevent deletion of system groups
+    custom_permissions = models.ManyToManyField(CustomPermission, blank=True)
+    # Keep existing groups relationship
+    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='permission_groups', blank=True)
+    tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE, db_index=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_groups')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = slugify(self.name)
+            self.slug = base_slug
+            counter = 1
+            while PermissionGroup.objects.filter(slug=self.slug).exists():
+                self.slug = f"{base_slug}-{counter}"
+                counter += 1
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.tenant.name}: {self.name}"
+
+    class Meta:
+        ordering = ['tenant', 'name']
+        unique_together = ['name', 'tenant']

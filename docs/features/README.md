@@ -26,6 +26,7 @@ DjangoCRM provides a comprehensive set of features for managing client relations
 
 ### [User Management](./user-management.md)
 - Multi-tenant user accounts with role-based permissions
+- Custom permissions system with tenant-isolated permission groups
 - Authentication via email/password or OAuth providers
 - Tenant membership management and invitations
 - Profile management and access control
@@ -56,6 +57,12 @@ DjangoCRM provides a comprehensive set of features for managing client relations
 - Detailed logging of user actions and system events
 - Admin interface and API access for audit logs
 - Tenant-isolated audit trails with proper access controls
+
+### [Data Management](./data-management.md)
+- Soft delete functionality for recoverable data preservation
+- Hard delete for sensitive or relationship-critical data
+- Administrator restoration capabilities
+- Comprehensive data retention and cleanup policies
 
 ### [Multi-Tenancy](./multi-tenancy.md)
 - Complete data isolation between organizations
