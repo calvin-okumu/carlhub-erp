@@ -133,8 +133,8 @@ class InvitationAPITests(APITestCase):
         self.assertIn('newmember@example.com', mail.outbox[0].to)
         self.assertIn('Invitation to join', mail.outbox[0].subject)
 
-    def test_invite_existing_user_fails(self):
-        """Test that inviting an existing user in the system fails"""
+    def test_invite_existing_user_from_different_tenant_succeeds(self):
+        """Test that inviting an existing user from a different tenant succeeds"""
         # Create another user in a different tenant
         other_tenant = Tenant.objects.create(name="Other Tenant", domain="other.com")
         existing_user = CustomUser.objects.create_user(
@@ -152,7 +152,42 @@ class InvitationAPITests(APITestCase):
 
         url = reverse('invite_member')
         data = {
-            'email': 'existing@example.com',  # This user already exists in the system
+            'email': 'existing@example.com',  # This user exists in another tenant
+            'role': 'Employee'
+        }
+
+        response = self.client.post(url, data, format='json')
+
+        # Should succeed with 200 OK
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
+
+        # Invitation should be created
+        invitation = Invitation.objects.get(email='existing@example.com')
+        self.assertEqual(invitation.tenant, self.tenant)
+        self.assertEqual(invitation.invited_by, self.owner)
+
+        # Email should be sent
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_invite_user_already_in_same_tenant_fails(self):
+        """Test that inviting a user already in the same tenant fails"""
+        # Create a user already in this tenant
+        existing_member = CustomUser.objects.create_user(
+            email='member@example.com',
+            password='password123',
+            first_name='Existing',
+            last_name='Member'
+        )
+        UserTenant.objects.create(
+            user=existing_member,
+            tenant=self.tenant,
+            is_approved=True
+        )
+
+        url = reverse('invite_member')
+        data = {
+            'email': 'member@example.com',  # This user is already in this tenant
             'role': 'Employee'
         }
 
@@ -160,10 +195,10 @@ class InvitationAPITests(APITestCase):
 
         # Should fail with 400 Bad Request
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data['error'], 'User already exists in the system')
+        self.assertEqual(response.data['error'], 'User is already a member of this tenant')
 
         # No invitation should be created
-        self.assertFalse(Invitation.objects.filter(email='existing@example.com').exists())
+        self.assertFalse(Invitation.objects.filter(email='member@example.com').exists())
 
         # No email should be sent
         self.assertEqual(len(mail.outbox), 0)

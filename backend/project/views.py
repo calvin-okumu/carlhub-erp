@@ -1618,10 +1618,6 @@ def invite_member_view(request):
         if not email:
             return Response({'error': 'Email required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if email belongs to an existing user in the system
-        if CustomUser.objects.filter(email=email).exists():
-            return Response({'error': 'User already exists in the system'}, status=status.HTTP_400_BAD_REQUEST)
-
         # Check if user is already a member of this tenant
         if UserTenant.objects.filter(user__email=email, tenant=tenant).exists():
             return Response({'error': 'User is already a member of this tenant'}, status=status.HTTP_400_BAD_REQUEST)
