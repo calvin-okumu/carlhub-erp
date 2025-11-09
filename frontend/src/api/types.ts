@@ -115,7 +115,7 @@ export interface Project {
   id: string;
   name: string;
   slug: string;
-  client: string;
+  client: number;
   client_name: string;
   status: string;
   priority: string;
