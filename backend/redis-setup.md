@@ -280,20 +280,28 @@ Update your Django `settings.py`:
 REDIS_URL = 'redis://:secure_password_123@localhost:6379/0'
 
 # Cache configuration
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': {
-                'max_connections': 20,
-                'decode_responses': True,
-            },
-            'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+use_redis = os.getenv('USE_REDIS_CACHE', 'false').lower() == 'true'
+
+if 'test' in sys.argv or (DEBUG and not use_redis):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': 'redis://127.0.0.1:6379/1',
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'IGNORE_EXCEPTIONS': True,
+            }
+        }
+    }
+
+# Note: Set USE_REDIS_CACHE=true in your .env to use Redis cache even in debug mode.
+# By default, debug mode uses in-memory cache for better development performance.
 
 # Session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
