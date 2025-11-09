@@ -90,7 +90,7 @@ Tenant owners approve pending team member requests.
 
 
 
-Send professional HTML email invitations to join the tenant. Uses mobile-responsive templates with step-by-step onboarding instructions.
+Send professional HTML email invitations to join the tenant. Uses mobile-responsive templates with step-by-step onboarding instructions. Existing users can be invited to join additional tenants, but duplicate memberships within the same tenant are prevented.
 
 
 
@@ -126,21 +126,21 @@ Send professional HTML email invitations to join the tenant. Uses mobile-respons
 
 
 
-**Error Response (400 Bad Request):**
+**Error Responses:**
 
+**400 Bad Request - User Already Member:**
 ```json
-
 {
-
   "error": "User is already a member of this tenant"
-
 }
-
 ```
 
+**Other potential errors:**
+- `Email required` - When email field is missing
+- `Only owners can invite members` - When non-owner tries to invite
+- `No tenant ownership found` - When user has no tenant ownership
 
-
-**Error Handling:** Email sending failures handled gracefully with user-friendly messages. Prevents duplicate invitations for existing tenant members.
+**Error Handling:** Email sending failures handled gracefully with user-friendly messages. Prevents duplicate memberships within the same tenant while allowing existing users to join multiple tenants.
 
 
 
