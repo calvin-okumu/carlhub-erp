@@ -203,28 +203,35 @@ class InvitationAPITests(APITestCase):
         # No email should be sent
         self.assertEqual(len(mail.outbox), 0)
 
-    def test_confirm_invitation(self):
-        """Test confirming an invitation"""
-        invitation = Invitation.objects.create(
-            email='confirm@example.com',
+    def test_invite_user_with_pending_invitation_fails(self):
+        """Test that inviting a user with a pending invitation in the same tenant fails"""
+        # Create a pending invitation
+        Invitation.objects.create(
+            email='pending@example.com',
             tenant=self.tenant,
             invited_by=self.owner,
             role='Employee',
-            token='confirm-token-123',
+            token='pending-token-123',
             expires_at=timezone.now() + timedelta(days=7)
         )
 
-        url = reverse('confirm_invitation')
-        data = {'token': 'confirm-token-123'}
+        url = reverse('invite_member')
+        data = {
+            'email': 'pending@example.com',  # Same email as pending invitation
+            'role': 'Employee'
+        }
 
         response = self.client.post(url, data, format='json')
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('confirmed successfully', response.data['message'])
+        # Should fail with 400 Bad Request
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['error'], 'An invitation is already pending for this email in this tenant')
 
-        # Refresh invitation from database
-        invitation.refresh_from_db()
-        self.assertTrue(invitation.email_confirmed)
+        # No new invitation should be created
+        self.assertEqual(Invitation.objects.filter(email='pending@example.com').count(), 1)
+
+        # No email should be sent
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_resend_invitation(self):
         """Test resending an invitation"""

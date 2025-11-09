@@ -1,7 +1,7 @@
 # DjangoCRM Project Makefile
 # Unified commands for development, testing, and deployment
 
-.PHONY: help setup setup-backend setup-frontend setup-docker dev dev-backend dev-frontend check-servers stop test test-backend test-frontend build build-backend build-frontend clean clean-backend clean-frontend docker-up docker-down docker-up-staging docker-down-staging docker-logs install migrate createsuperuser shell dbshell env-check db-backup db-restore ci-setup ci-test ci-build
+.PHONY: help setup setup-backend setup-frontend setup-docker dev dev-backend dev-frontend check-servers stop test test-backend test-frontend lint lint-backend lint-frontend build build-backend build-frontend clean clean-backend clean-frontend docker-up docker-down docker-up-staging docker-down-staging docker-logs install migrate createsuperuser shell dbshell env-check db-backup db-restore ci-setup ci-test ci-build
 
 # Default target
 help:
@@ -24,6 +24,9 @@ help:
 	@echo "  make test               - Run all tests"
 	@echo "  make test-backend       - Run backend tests"
 	@echo "  make test-frontend      - Run frontend tests"
+	@echo "  make lint               - Lint all code"
+	@echo "  make lint-backend       - Lint backend code"
+		@echo "  make lint-frontend      - Lint frontend code"
 	@echo ""
 	@echo "Build Commands:"
 	@echo "  make build              - Build both backend and frontend"
@@ -172,6 +175,19 @@ test-frontend:
 	@echo "Running frontend tests..."
 	@cd frontend && npm test 2>/dev/null || echo "No test script configured for frontend"
 
+# Linting commands
+lint:
+	@echo "Linting all code..."
+	@make lint-frontend
+
+lint-backend:
+	@echo "Linting backend..."
+	@echo "No linter configured for backend"
+
+lint-frontend:
+	@echo "Linting frontend..."
+	@cd frontend && npm run lint
+
 # Build commands
 build:
 	@echo "Building both backend and frontend..."
@@ -240,7 +256,7 @@ clean-frontend:
 # Utility commands
 install:
 	@echo "Installing all dependencies..."
-	@pip install -r backend/requirements.txt
+	@cd backend && . venv/bin/activate && pip install -r requirements.txt
 	@cd frontend && npm install
 
 migrate:

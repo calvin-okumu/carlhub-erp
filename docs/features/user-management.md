@@ -123,8 +123,10 @@ curl -X POST http://localhost:8000/api/invite-member/ \
 ```
 
 
+**Validation:** The system prevents:
+- Inviting users who are already members of the tenant (returns "User is already a member of this tenant")
+- Creating multiple pending invitations to the same email address within the same tenant (returns "An invitation is already pending for this email in this tenant")
 
-**Validation:** The system prevents inviting users who are already members of the tenant, returning a 400 Bad Request error with message "User is already a member of this tenant".
 
 
   }'
@@ -190,7 +192,7 @@ curl http://localhost:8000/api/confirm-invitation/?token=invitation-token
 
 
 
-**Validation:** The system prevents inviting users who are already members of the tenant, returning a 400 Bad Request error with message "User is already a member of this tenant".
+
 
 
     "expires_at": "2025-11-01T00:00:00Z"
