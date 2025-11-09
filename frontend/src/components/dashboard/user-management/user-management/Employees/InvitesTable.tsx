@@ -6,6 +6,8 @@ interface Invite {
     email: string;
     sentDate: string;
     status: string;
+    token: string;
+    slug: string;
 }
 
 interface InvitesTableProps {

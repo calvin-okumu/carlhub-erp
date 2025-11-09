@@ -14,7 +14,7 @@ import EmployeeModal from "./Employees/EmployeeModal";
 import InviteModal from "./Employees/InviteModal";
 import { useEmployees } from "@/hooks/useEmployees";
 import { getUsers } from "@/api/users";
-import { API_BASE } from "@/api";
+import { API_BASE, resendInvitation, deleteInvitation } from "@/api";
 import type { UserTenant, User, UserProfile } from "@/api/types";
 
 export const UserSection = () => {
@@ -39,6 +39,8 @@ export const UserSection = () => {
         email: string;
         sentDate: string;
         status: string;
+        token: string;
+        slug: string;
     }>>([]);
     const [invitesLoading, setInvitesLoading] = useState(false);
 
@@ -110,7 +112,9 @@ export const UserSection = () => {
                     id: invite.id,
                     email: invite.email,
                     sentDate: new Date(invite.created_at).toLocaleDateString(),
-                    status: invite.is_used ? 'Used' : invite.email_confirmed ? 'Confirmed' : 'Pending'
+                    status: invite.is_used ? 'Used' : invite.email_confirmed ? 'Confirmed' : 'Pending',
+                    token: invite.token,
+                    slug: invite.slug
                 }));
                 setInvites(transformedInvites);
             } else {
@@ -192,14 +196,41 @@ export const UserSection = () => {
 
 
     const handleResendInvite = async (inviteId: number) => {
-        // TODO: API call to resend invite
-        alert(`Resend invite for ID: ${inviteId}`);
+        try {
+            const invite = invites.find(i => i.id === inviteId);
+            if (!invite) {
+                alert('Invitation not found');
+                return;
+            }
+
+            await resendInvitation(invite.token);
+            alert('Invitation resent successfully!');
+            // Refresh the invites list
+            fetchInvites();
+        } catch (error) {
+            console.error('Error resending invitation:', error);
+            alert('Failed to resend invitation. Please try again.');
+        }
     };
 
     const handleDeleteInvite = async (inviteId: number) => {
         if (confirm('Are you sure you want to delete this invitation?')) {
-            // TODO: API call to delete invite
-            alert(`Delete invite for ID: ${inviteId}`);
+            try {
+                const token = localStorage.getItem("access_token");
+                const invite = invites.find(i => i.id === inviteId);
+                if (!invite || !token) {
+                    alert('Invitation or authentication token not found');
+                    return;
+                }
+
+                await deleteInvitation(token, invite.slug);
+                alert('Invitation deleted successfully!');
+                // Refresh the invites list
+                fetchInvites();
+            } catch (error) {
+                console.error('Error deleting invitation:', error);
+                alert('Failed to delete invitation. Please try again.');
+            }
         }
     };
 

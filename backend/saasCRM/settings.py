@@ -95,6 +95,9 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver").split(",")
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
 # Frontend URL for generating frontend links
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# Frontend paths for email links
+FRONTEND_CONFIRMATION_PATH = os.getenv("FRONTEND_CONFIRMATION_PATH", "/api/confirm-invitation")
+FRONTEND_SIGNUP_PATH = os.getenv("FRONTEND_SIGNUP_PATH", "/api/signup")
 
 # Custom user model
 AUTH_USER_MODEL = "accounts.CustomUser"

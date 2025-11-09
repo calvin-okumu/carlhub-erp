@@ -15,7 +15,7 @@ export type {
 } from "./types";
 
 // Export auth functions
-export { login, signup, confirmEmail, getInvitationDetails } from "./auth";
+export { login, signup, confirmEmail, getInvitationDetails, resendInvitation, deleteInvitation } from "./auth";
 
 // Export CRM functions
 export {

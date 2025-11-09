@@ -141,34 +141,34 @@ export default function SignUpPage() {
                         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                     </div>
 
-                    {/* Company Name */}
-                    {!invitationDetails && (
-                        <div>
-                            <label htmlFor="company_name" className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
-                            <input
-                                id="company_name"
-                                type="text"
-                                placeholder="Enter your company name"
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                                {...register("company_name", { required: !invitationDetails ? "Company name is required" : false })}
-                            />
-                            {errors.company_name && <p className="text-red-500 text-sm mt-1">{errors.company_name.message}</p>}
-                        </div>
-                    )}
+                     {/* Company Name */}
+                     {!invitationDetails && (
+                         <div>
+                             <label htmlFor="company_name" className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
+                             <input
+                                 id="company_name"
+                                 type="text"
+                                 placeholder="Enter your company name"
+                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                 {...register("company_name", { required: !invitationDetails ? "Company name is required" : false })}
+                             />
+                             {errors.company_name && <p className="text-red-500 text-sm mt-1">{errors.company_name.message}</p>}
+                         </div>
+                     )}
 
-                    {/* Invitation Info */}
-                    {invitationDetails && (
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
-                            <input
-                                type="text"
-                                value={invitationDetails.tenant_name}
-                                disabled
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
-                            />
-                            <p className="text-sm text-gray-600 mt-1">You&apos;ve been invited to join this company as {invitationDetails.role}</p>
-                        </div>
-                    )}
+                     {/* Invitation Info */}
+                     {invitationDetails && (
+                         <div>
+                             <label className="block text-sm font-semibold text-gray-700 mb-2">Company Name</label>
+                             <input
+                                 type="text"
+                                 value={invitationDetails.tenant_name}
+                                 disabled
+                                 className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                             />
+                             <p className="text-sm text-gray-600 mt-1">You&apos;ve been invited to join this company as {invitationDetails.role}</p>
+                         </div>
+                     )}
 
                     {/* Password */}
                     <div>
