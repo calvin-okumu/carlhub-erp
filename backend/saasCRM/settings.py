@@ -383,7 +383,9 @@ REST_FRAMEWORK = {
     },
 }
 
-if 'test' in sys.argv:
+use_redis = os.getenv('USE_REDIS_CACHE', 'false').lower() == 'true'
+
+if 'test' in sys.argv or (DEBUG and not use_redis):
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
