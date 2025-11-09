@@ -42,7 +42,7 @@ def test_traditional_login(email="admin@example.com", password="admin123"):
             data = response.json()
             token = data.get('token')
             print("✅ Traditional login successful")
-            print(f"   Token: {token[:20]}...")
+            print(f"   Token: {token}")
             return token
         else:
             print(f"❌ Traditional login failed: {response.status_code}")
