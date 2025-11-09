@@ -98,6 +98,39 @@ export async function getInvitationDetails(token: string): Promise<{ invitation:
   return data;
 }
 
+export async function resendInvitation(token: string): Promise<{ message: string }> {
+  const response = await fetch(`${API_BASE}/resend-invitation/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to resend invitation");
+  }
+
+  return data;
+}
+
+export async function deleteInvitation(token: string, invitationSlug: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/invitations/${invitationSlug}/`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.error || "Failed to delete invitation");
+  }
+}
+
 export async function changePassword(token: string, currentPassword: string, newPassword: string): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE}/change-password/`, {
     method: "POST",
