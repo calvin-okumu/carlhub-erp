@@ -61,7 +61,7 @@ export function useProjects() {
 
   const addProject = async (data: {
     name: string;
-    client: string;
+    client: number;
     status: string;
     priority: string;
     start_date: string;
@@ -87,7 +87,7 @@ export function useProjects() {
 
   const editProject = async (slug: string, data: Partial<{
     name: string;
-    client: string;
+    client: number;
     status: string;
     priority: string;
     start_date: string;
