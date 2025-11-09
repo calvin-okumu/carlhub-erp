@@ -139,6 +139,9 @@ AUTHENTICATION_BACKENDS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "saasCRM.security_middleware.SecurityHeadersMiddleware",
+    "saasCRM.security_middleware.APISecurityMiddleware",
+    "saasCRM.rate_limiting.EnhancedRateLimitMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

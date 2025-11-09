@@ -25,9 +25,11 @@ from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
 from .permissions import CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments, CanManageProjects, CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner
 from .serializers import HealthCheckSerializer
 from .serializers import ClientSerializer, CustomUserSerializer, InvitationSerializer, InvoiceSerializer, MilestoneSerializer, PaymentSerializer, ProjectSerializer, SprintSerializer, TaskSerializer, TenantSerializer, UserTenantSerializer
+from saasCRM.query_optimization import OptimizedTenantScopedMixin, OptimizedViewSetMixin
+from saasCRM.enhanced_caching import CacheManager, CacheDecorator
 
 
-class TenantScopedMixin:
+class TenantScopedMixin(OptimizedTenantScopedMixin):
     """
     Mixin to provide tenant-scoped queryset filtering.
 
@@ -122,7 +124,7 @@ class TenantViewSet(viewsets.ModelViewSet):
         description="Delete a client."
     ),
 )
-class ClientViewSet(TenantScopedMixin, viewsets.ModelViewSet):
+class ClientViewSet(OptimizedTenantScopedMixin, OptimizedViewSetMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing clients.
 
@@ -163,6 +165,13 @@ class ClientViewSet(TenantScopedMixin, viewsets.ModelViewSet):
                 tenant = tenant
 
         serializer.save(tenant=tenant)
+
+    @CacheDecorator.cache_queryset(timeout=600, model_name='client')
+    def list(self, request, *args, **kwargs):
+        """
+        List clients with caching.
+        """
+        return super().list(request, *args, **kwargs)
 
     @action(detail=False, methods=['post'])
     def bulk_delete_clients(self, request):
