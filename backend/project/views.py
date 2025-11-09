@@ -1112,6 +1112,10 @@ class InvitationViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             from django.core.exceptions import ValidationError
             raise ValidationError('User is already a member of this tenant')
 
+        if tenant and Invitation.objects.filter(email=email, tenant=tenant, is_used=False).exists():
+            from django.core.exceptions import ValidationError
+            raise ValidationError('An invitation is already pending for this email in this tenant')
+
         if not hasattr(self.request, 'tenant') or self.request.tenant is None:
             serializer.save(invited_by=self.request.user)  # Dev mode
         else:
@@ -1621,6 +1625,10 @@ def invite_member_view(request):
         # Check if user is already a member of this tenant
         if UserTenant.objects.filter(user__email=email, tenant=tenant).exists():
             return Response({'error': 'User is already a member of this tenant'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if there's already a pending invitation
+        if Invitation.objects.filter(email=email, tenant=tenant, is_used=False).exists():
+            return Response({'error': 'An invitation is already pending for this email in this tenant'}, status=status.HTTP_400_BAD_REQUEST)
 
         token = str(uuid.uuid4())
         expires_at = timezone.now() + timedelta(days=7)
