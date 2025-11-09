@@ -50,7 +50,6 @@ class TenantFactory(factory.django.DjangoModelFactory):
     website = factory.Faker('url')
     industry = factory.Iterator(['Technology', 'Healthcare', 'Finance', 'Education', 'Retail'])
     company_size = factory.Iterator(['1-10', '11-50', '51-200', '201-1000', '1000+'])
-    is_deleted = False
 
 class ClientFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -60,7 +59,6 @@ class ClientFactory(factory.django.DjangoModelFactory):
     phone = factory.LazyFunction(generate_valid_phone)
     status = factory.Iterator(['active', 'inactive', 'prospect'])
     tenant = factory.LazyFunction(lambda: Tenant.objects.order_by('?').first() or TenantFactory())
-    is_deleted = False
 
 class ProjectFactory(factory.django.DjangoModelFactory):
     class Meta:
@@ -146,4 +144,3 @@ class UserTenantFactory(factory.django.DjangoModelFactory):
     is_owner = factory.Faker('boolean')
     is_approved = factory.LazyAttribute(lambda obj: True if obj.is_owner else factory.Faker('boolean')())
     role = factory.Iterator(['Employee', 'Manager', 'Tenant Owner'])
-    is_deleted = False
