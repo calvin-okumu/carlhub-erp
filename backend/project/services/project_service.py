@@ -2,7 +2,8 @@ from typing import List, Optional, Dict, Any
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from ..models import Project, Client, Milestone, Sprint, Task, Tenant
+from ..models import Project, Client, Milestone, Sprint, Task
+from accounts.models import Tenant
 from accounts.models import UserTenant
 
 

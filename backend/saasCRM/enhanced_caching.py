@@ -266,7 +266,8 @@ class CacheDecorator:
                 )
                 
                 if cached_data:
-                    return cached_data['results']
+                    from rest_framework.response import Response
+                    return Response(cached_data['results'])
                 
                 # Execute original function
                 result = func(self, *args, **kwargs)
