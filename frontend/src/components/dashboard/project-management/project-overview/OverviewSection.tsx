@@ -16,47 +16,47 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
       const [tasksCount, setTasksCount] = useState(0);
       const [milestones, setMilestones] = useState<Milestone[]>([]);
 
-      useEffect(() => {
-          const fetchSprintsCount = async () => {
-              const token = localStorage.getItem('access_token');
-              if (!token) return;
-
-                try {
-                    const sprints = await getSprints(token, { projectSlug: project.slug });
-                    setSprintsCount(sprints.results.length);
-                } catch (err) {
-                    console.error('Failed to fetch sprints count:', err);
-                }
-           };
-
-           const fetchTasksCount = async () => {
+       useEffect(() => {
+           const fetchSprintsCount = async () => {
                const token = localStorage.getItem('access_token');
                if (!token) return;
 
-                try {
-                    const tasks = await getTasks(token, { projectSlug: project.slug });
-                    setTasksCount(tasks.results.length);
-                } catch (err) {
-                    console.error('Failed to fetch tasks count:', err);
-                }
-           };
+                 try {
+                     const sprints = await getSprints(token, { projectId: project.id });
+                     setSprintsCount(sprints.results.length);
+                 } catch (err) {
+                     console.error('Failed to fetch sprints count:', err);
+                 }
+            };
 
-           const fetchMilestones = async () => {
-               const token = localStorage.getItem('access_token');
-               if (!token) return;
+            const fetchTasksCount = async () => {
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
 
-                try {
-                    const milestonesData = await getMilestones(token, { projectSlug: project.slug });
-                    setMilestones(milestonesData.results);
-                } catch (err) {
-                    console.error('Failed to fetch milestones:', err);
-                }
-           };
+                 try {
+                     const tasks = await getTasks(token, { projectId: project.id });
+                     setTasksCount(tasks.results.length);
+                 } catch (err) {
+                     console.error('Failed to fetch tasks count:', err);
+                 }
+            };
 
-           fetchSprintsCount();
-           fetchTasksCount();
-           fetchMilestones();
-       }, [project.slug]);
+            const fetchMilestones = async () => {
+                const token = localStorage.getItem('access_token');
+                if (!token) return;
+
+                 try {
+                     const milestonesData = await getMilestones(token, { projectId: project.id });
+                     setMilestones(milestonesData.results);
+                 } catch (err) {
+                     console.error('Failed to fetch milestones:', err);
+                 }
+            };
+
+            fetchSprintsCount();
+            fetchTasksCount();
+            fetchMilestones();
+        }, [project.id]);
 
        // Calculate project progress as average of milestone progress
        const calculateProjectProgress = () => {

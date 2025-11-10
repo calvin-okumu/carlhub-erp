@@ -105,7 +105,7 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
                 key: sprint.id + '-kanban',
                 data: [
                     <td key={sprint.id + '-kanban-td'} colSpan={headers.length} className="p-4 bg-gray-50 border-t">
-                        <KanbanSection projectSlug={projectSlug} sprintSlug={sprint.slug} onBack={() => setExpandedSprintId(null)} />
+                        <KanbanSection sprintSlug={sprint.slug} onBack={() => setExpandedSprintId(null)} />
                     </td>
                 ]
             });

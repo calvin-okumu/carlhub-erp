@@ -12,7 +12,7 @@ function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
-export function useSprints(projectSlug: string) {
+export function useSprints(projectId: number) {
   const [sprints, setSprints] = useState<Sprint[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,13 +23,13 @@ export function useSprints(projectSlug: string) {
 
     setLoading(true);
     try {
-      const data = await getSprints(token, { projectSlug, ordering: '-created_at' });
+      const data = await getSprints(token, { projectId, ordering: '-created_at' });
 
       // Calculate progress for each sprint based on tasks (inheriting backend averaging pattern)
       const sprintsWithProgress = await Promise.all(
         data.results.map(async (sprint) => {
           try {
-            const tasksData = await getTasks(token, { projectSlug, sprintSlug: sprint.slug });
+            const tasksData = await getTasks(token, { projectId, sprintSlug: sprint.slug });
             const calculatedProgress = tasksData.results.length > 0
               ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
               : 0;
@@ -48,7 +48,7 @@ export function useSprints(projectSlug: string) {
     } finally {
       setLoading(false);
     }
-  }, [projectSlug]);
+  }, [projectId]);
 
   useEffect(() => {
     fetchSprints();
@@ -83,10 +83,10 @@ export function useSprints(projectSlug: string) {
 
     setLoading(true);
     try {
-      const newSprint = await createSprint(token, projectSlug, data);
+      const newSprint = await createSprint(token, projectId, data);
       console.log("Created sprint:", newSprint);
       // Calculate progress for the new sprint (should be 0 since no tasks yet)
-      const tasksData = await getTasks(token, { projectSlug, sprintSlug: newSprint.slug });
+      const tasksData = await getTasks(token, { projectId, sprintSlug: newSprint.slug });
       const calculatedProgress = tasksData.results.length > 0
         ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
         : 0;
@@ -127,7 +127,7 @@ export function useSprints(projectSlug: string) {
     try {
       const updatedSprint = await updateSprint(token, slug, data);
       // Recalculate progress for the updated sprint
-      const tasksData = await getTasks(token, { projectSlug, sprintSlug: slug });
+      const tasksData = await getTasks(token, { projectId, sprintSlug: slug });
       const calculatedProgress = tasksData.results.length > 0
         ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
         : 0;

@@ -7,13 +7,11 @@ import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import Card from '@/components/ui/Card';
+import { useProject } from '@/context/ProjectContext';
 import { Trash2 } from 'lucide-react';
 
-interface CompletedTasksSectionProps {
-    projectSlug: string;
-}
-
-export default function CompletedTasksSection({ projectSlug }: CompletedTasksSectionProps) {
+export default function CompletedTasksSection() {
+    const { project } = useProject();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +27,7 @@ export default function CompletedTasksSection({ projectSlug }: CompletedTasksSec
 
             try {
                 // Get all tasks for the project and filter for completed status
-                const allTasks = await getTasks(token, { projectSlug });
+                const allTasks = await getTasks(token, { projectId: project?.id });
                 const completedTasks = allTasks.results.filter(task => task.status === 'done');
                 setTasks(completedTasks);
             } catch (err) {
@@ -40,8 +38,10 @@ export default function CompletedTasksSection({ projectSlug }: CompletedTasksSec
             }
         };
 
-        fetchCompletedTasks();
-    }, [projectSlug]);
+        if (project?.id) {
+            fetchCompletedTasks();
+        }
+    }, [project?.id]);
 
     const handleDeleteTask = async (taskSlug: string) => {
         if (!confirm('Are you sure you want to delete this completed task?')) return;

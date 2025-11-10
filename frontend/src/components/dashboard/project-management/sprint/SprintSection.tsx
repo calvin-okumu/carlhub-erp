@@ -4,18 +4,16 @@ import { getMilestones } from '@/api/project_mgmt';
 import type { Milestone, Sprint } from '@/api/types';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
+import { useProject } from '@/context/ProjectContext';
 import { useSprints } from '@/hooks/useSprints';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import SprintModal from './SprintModal';
 import SprintTable from './SprintTable';
 
-interface SprintSectionProps {
-    projectSlug: string;
-}
-
-export default function SprintSection({ projectSlug }: SprintSectionProps) {
-    const { sprints, loading, error, addSprint, editSprint, removeSprint } = useSprints(projectSlug);
+export default function SprintSection() {
+    const { project } = useProject();
+    const { sprints, loading, error, addSprint, editSprint, removeSprint } = useSprints(project?.id || 0);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
@@ -29,7 +27,7 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
             if (!token) return;
 
             try {
-                const data = await getMilestones(token, { projectSlug });
+                const data = await getMilestones(token, { projectId: project?.id });
                 setMilestones(data.results);
             } catch (err) {
                 console.error('Failed to fetch milestones:', err);
@@ -37,7 +35,7 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
         };
 
         fetchMilestones();
-    }, [projectSlug]);
+    }, [project?.id]);
 
     const handleAddSprint = () => {
         setModalMode('add');
@@ -114,7 +112,7 @@ export default function SprintSection({ projectSlug }: SprintSectionProps) {
                 onEditSprint={handleEditSprint}
                 onDeleteSprint={handleDelete}
                 onAddSprint={handleAddSprint}
-                projectSlug={projectSlug}
+                projectSlug={project?.slug || ''}
                 searchValue={searchValue}
                 statusFilter={statusFilter}
             />
