@@ -38,6 +38,11 @@ class Client(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=['tenant', 'status']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['created_at']),
+        ]
         constraints = [
             models.UniqueConstraint(fields=['name', 'tenant'], name='unique_client_name_per_tenant')
         ]
@@ -124,6 +129,12 @@ class Project(SoftDeleteMixin, models.Model):
         return self.name
 
     class Meta:
+        indexes = [
+            models.Index(fields=['tenant', 'status']),
+            models.Index(fields=['client', 'created_at']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['created_at']),
+        ]
         constraints = [
             models.UniqueConstraint(fields=['name', 'client', 'tenant'], name='unique_project_name_per_client_tenant')
         ]

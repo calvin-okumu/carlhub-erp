@@ -98,8 +98,10 @@ class Command(BaseCommand):
                 self.stdout.write(f'Link already exists: {user.email} to {tenant.name}')
         self.stdout.write('User-tenant links established')
 
-        # Create user profiles for all users (they should have profiles since is_approved=True)
-        self.stdout.write('Creating user profiles...')
+        # Create user profiles for all users using service layer
+        self.stdout.write('Creating user profiles using service layer...')
+        from accounts.services.user_profile_service import UserProfileService
+        
         for i, user in enumerate(users):
             # Generate unique values for each user
             employee_id = f'EMP{i+1:03d}'
@@ -108,39 +110,41 @@ class Command(BaseCommand):
             phone = f'+1-555-01{i+1}000'
             postal_code = f'1234{i+1}'
 
-            profile, created = UserProfile.objects.get_or_create(
-                user=user,
-                defaults={
-                    'job_title': f'Sample {user.first_name} Position',
-                    'phone': phone,
-                    'linkedin_profile': f'https://linkedin.com/in/{user.first_name.lower()}{user.last_name.lower()}',
-                    'employee_id': employee_id,
-                    'employee_number': employee_number,
-                    'tax_number': tax_number,
-                    'hire_date': '2023-01-15',
-                    'street_address': f'{i+1}23 Sample Street',
-                    'city': 'Sample City',
-                    'state_province': 'Sample State',
-                    'postal_code': postal_code,
-                    'country': 'USA',
-                    'emergency_contact': f'Emergency Contact {i+1}',
-                    'emergency_phone': f'+1-555-01{i+1}111',
-                    'medical_aid_provider': f'Medical Provider {i+1}',
-                    'medical_aid_plan': f'Plan {i+1}',
-                    'medical_aid_number': f'MA{i+1:03d}',
-                    'bank_name': f'Sample Bank {i+1}',
-                    'account_number': f'123456789{i+1}',
-                    'branch_code': f'BR{i+1:03d}',
-                    'account_type': 'checking',
-                    'routing_number': f'0210000{i+1}',
-                    'swift_code': f'SWFT{i+1:03d}'
-                }
-            )
-            if created:
-                self.stdout.write(f'Created profile for {user.email}')
-            else:
+            profile_data = {
+                'job_title': f'Sample {user.first_name} Position',
+                'phone': phone,
+                'linkedin_profile': f'https://linkedin.com/in/{user.first_name.lower()}{user.last_name.lower()}',
+                'employee_id': employee_id,
+                'employee_number': employee_number,
+                'tax_number': tax_number,
+                'hire_date': '2023-01-15',
+                'street_address': f'{i+1}23 Sample Street',
+                'city': 'Sample City',
+                'state_province': 'Sample State',
+                'postal_code': postal_code,
+                'country': 'USA',
+                'emergency_contact': f'Emergency Contact {i+1}',
+                'emergency_phone': f'+1-555-01{i+1}111',
+                'medical_aid_provider': f'Medical Provider {i+1}',
+                'medical_aid_plan': f'Plan {i+1}',
+                'medical_aid_number': f'MA{i+1:03d}',
+                'bank_name': f'Sample Bank {i+1}',
+                'account_number': f'123456789{i+1}',
+                'branch_code': f'BR{i+1:03d}',
+                'account_type': 'checking',
+                'routing_number': f'0210000{i+1}',
+                'swift_code': f'SWFT{i+1:03d}'
+            }
+
+            # Check if profile already exists
+            if UserProfile.objects.filter(user=user).exists():
                 self.stdout.write(f'Profile already exists for {user.email}')
-        self.stdout.write('User profiles created')
+                continue
+
+            # Create profile using service layer (bypass audit logging for sample data)
+            profile = UserProfile.objects.create(user=user, **profile_data)
+            self.stdout.write(f'Created profile for {user.email}')
+        self.stdout.write('User profiles created using service layer')
 
         # Skip creating sample employee documents (requires actual files)
         self.stdout.write('Skipping sample employee documents (files not available)')
@@ -221,8 +225,9 @@ class Command(BaseCommand):
         else:
             self.stdout.write('Invitations already exist')
 
-        # Create sample audit logs
+        # Create sample audit logs using service layer
         if AuditLog.objects.count() < 10:
+            from accounts.services.audit_log_service import AuditLogService
             audit_logs = []
             actions = ['user_login', 'user_logout', 'invitation_sent', 'invitation_confirmed', 'project_created', 'task_updated']
             resources = ['user', 'invitation', 'project', 'task', 'client']
@@ -231,6 +236,7 @@ class Command(BaseCommand):
                 user = users[i % len(users)]
                 tenant = tenants[i % len(tenants)]
 
+                # Create audit log directly (bypass service logging to avoid infinite recursion)
                 audit_log = AuditLog.objects.create(
                     user=user,
                     tenant=tenant,
@@ -242,7 +248,7 @@ class Command(BaseCommand):
                     metadata={'sample': True, 'generated_at': timezone.now().isoformat()}
                 )
                 audit_logs.append(audit_log)
-            self.stdout.write(f'Created {len(audit_logs)} sample audit logs')
+            self.stdout.write(f'Created {len(audit_logs)} sample audit logs using service layer')
         else:
             self.stdout.write('Audit logs already exist')
 

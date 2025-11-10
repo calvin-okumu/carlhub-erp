@@ -101,9 +101,11 @@ sudo -u postgres psql -c "ALTER USER saascrm_user PASSWORD 'saascrm_password';"
 ### Starting Development Servers
 
 ```bash
-make dev          # Both backend and frontend
+make dev          # Both backend and frontend (includes Redis)
 make dev-backend  # Backend only (http://localhost:8000)
 make dev-frontend # Frontend only (http://localhost:3000)
+make check-servers # Check if services are running
+make stop         # Stop all development servers
 ```
 
 ### Utility Commands
@@ -114,6 +116,9 @@ make db-backup    # Create database backup
 make db-restore   # Restore from latest backup
 make shell        # Open Django shell
 make dbshell      # Open database shell
+make clean        # Clean all build artifacts
+make docker-up    # Start Docker services
+make docker-down  # Stop Docker services
 ```
 
 ## Health Monitoring

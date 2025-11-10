@@ -6,7 +6,9 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saasCRM.settings')
+    # Determine settings module based on environment
+    env = os.getenv('DJANGO_ENV', 'development')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', f'saasCRM.settings.{env}')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

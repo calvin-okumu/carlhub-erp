@@ -58,7 +58,7 @@ class LeaveRequest(models.Model):
     days_requested = models.DecimalField(
         max_digits=4,
         decimal_places=1,
-        validators=[MinValueValidator(0.5), MaxValueValidator(365)],
+        validators=[MinValueValidator(Decimal('0.5')), MaxValueValidator(Decimal('365'))],
         help_text="Total number of leave days requested"
     )
     reason = models.TextField(
@@ -212,21 +212,21 @@ class LeaveBalance(models.Model):
     total_days = models.DecimalField(
         max_digits=5,
         decimal_places=1,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Total leave days allocated for this year"
     )
     used_days = models.DecimalField(
         max_digits=5,
         decimal_places=1,
         default=0,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Days already used this year"
     )
     carried_over = models.DecimalField(
         max_digits=5,
         decimal_places=1,
         default=0,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Days carried over from previous year"
     )
 
@@ -305,7 +305,7 @@ class LeavePolicy(models.Model):
     annual_entitlement = models.DecimalField(
         max_digits=4,
         decimal_places=1,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Default annual leave entitlement in days"
     )
     max_consecutive_days = models.IntegerField(
@@ -315,7 +315,7 @@ class LeavePolicy(models.Model):
     )
     notice_period_days = models.IntegerField(
         default=7,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Minimum notice period required in working days"
     )
 
@@ -329,7 +329,7 @@ class LeavePolicy(models.Model):
         decimal_places=1,
         null=True,
         blank=True,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Maximum days that can be carried over (null = unlimited)"
     )
 
@@ -339,7 +339,7 @@ class LeavePolicy(models.Model):
         decimal_places=1,
         null=True,
         blank=True,
-        validators=[MinValueValidator(0)],
+        validators=[MinValueValidator(Decimal('0'))],
         help_text="Maximum days that can be auto-approved (null = no auto-approval)"
     )
 

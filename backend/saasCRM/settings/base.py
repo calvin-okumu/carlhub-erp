@@ -4,10 +4,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load environment variables from .env file
 if os.getenv('DOCKER_CONTAINER') == 'true':
@@ -46,37 +44,11 @@ else:
             'root': {'handlers': ['console'], 'level': 'INFO'},
         }
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise ValueError("SECRET_KEY not set in .env")
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver").split(",")
-
-# Security settings for production
-if not DEBUG:
-    SECURE_HSTS_SECONDS = os.getenv("SECURE_HSTS_SECONDS", "31536000")
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").lower() == "true"
-    SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "True").lower() == "true"
-    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").lower() == "true"
-    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() == "true"
-    CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "True").lower() == "true"
-    X_FRAME_OPTIONS = 'DENY'
-    SECURE_BROWSER_XSS_FILTER = True
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-else:
-    # Development security settings
-    SECURE_HSTS_SECONDS = 0
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
 # Site URL for generating absolute URLs
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
 # Frontend URL for generating frontend links
@@ -91,9 +63,7 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 # Multi-tenancy configuration
 MULTI_TENANCY_ENABLED = os.getenv("MULTI_TENANCY_ENABLED", "False").lower() == "true"
 
-
 # Application definition
-
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -110,7 +80,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "corsheaders",
@@ -160,10 +129,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "saasCRM.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database configuration
 # Default to PostgreSQL, fallback to SQLite if PostgreSQL is not available
 try:
     import psycopg2  # Test if psycopg2 is available
@@ -232,23 +198,7 @@ except ImportError:
         }
     }
 
-# Test database configuration
-# Use SQLite for tests to avoid needing PostgreSQL setup
-if 'test' in sys.argv:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
-    }
-else:
-    # Django automatically creates test databases with 'test_' prefix
-    TEST = {
-        'NAME': 'saascrm_db',  # Use same db for tests
-    }
-
-
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -326,29 +276,20 @@ else:
     pass
 
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "Africa/Nairobi"
-
 USE_I18N = True
-
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
 STATIC_URL = "static/"
 STATICFILES_DIRS = []
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# REST Framework configuration
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "saasCRM.jwt_auth.JWTAuthentication",
@@ -372,34 +313,7 @@ REST_FRAMEWORK = {
     },
 }
 
-use_redis = os.getenv('USE_REDIS_CACHE', 'false').lower() == 'true'
-
-if 'test' in sys.argv or (DEBUG and not use_redis):
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        }
-    }
-else:
-    CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'IGNORE_EXCEPTIONS': True,
-            }
-        }
-    }
-
-    # Check Redis availability and warn if not running
-    try:
-        import redis
-        r = redis.Redis(host='127.0.0.1', port=6379, db=1)
-        r.ping()
-    except Exception:
-        print("Warning: Redis is not running or unreachable. Caching will be disabled.")
-
+# Spectacular API documentation settings
 SPECTACULAR_SETTINGS = {
     "TITLE": "DjangoCRM API",
     "DESCRIPTION": """
@@ -440,6 +354,13 @@ SPECTACULAR_SETTINGS = {
         {"name": "invitations", "description": "Invitation system"},
         {"name": "authentication", "description": "User authentication and signup"},
     ],
+    "SECURITY_SCHEMES": [
+        {"name": "JWTAuthentication", "type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
+    ],
+    "ENUM_NAME_OVERRIDES": {
+        "CurrencyEnum": "CurrencyChoice",
+        "DefaultCurrencyEnum": "CurrencyChoice",
+    },
 }
 
 # CORS settings
