@@ -13,7 +13,7 @@ interface MilestoneModalProps {
     onClose: () => void;
     mode: 'add' | 'edit';
     milestone?: Milestone;
-    projectId: string;
+    projectSlug: string;
     tenant: number;
     assignees: UserTenant[];
     projectStart?: string;
@@ -31,7 +31,7 @@ interface MilestoneModalProps {
     }) => void;
 }
 
-export default function MilestoneModal({ isOpen, onClose, mode, milestone, projectId, tenant, assignees, projectStart, projectEnd, onSave }: MilestoneModalProps) {
+export default function MilestoneModal({ isOpen, onClose, mode, milestone, projectSlug, tenant, assignees, projectStart, projectEnd, onSave }: MilestoneModalProps) {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -108,7 +108,7 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
 
             due_date: formData.due_date || undefined,
             assignee: formData.assignee ? parseInt(formData.assignee) : undefined,
-            project: projectId,
+            project: projectSlug,
             tenant: tenant,
         };
 
