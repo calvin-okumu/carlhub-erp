@@ -26,7 +26,7 @@ export const UserSection = () => {
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedEmployee, setSelectedEmployee] = useState<UserProfile | null>(null);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-    const [groups, setGroups] = useState<Array<{id: number, name: string}>>([
+    const [groups, setGroups] = useState<Array<{ id: number, name: string }>>([
         { id: 1, name: 'Admin' },
         { id: 2, name: 'Manager' },
         { id: 3, name: 'Employee' },
@@ -270,35 +270,33 @@ export const UserSection = () => {
                             <div className="flex bg-gray-100 rounded-lg p-1">
                                 <button
                                     onClick={() => handleEmployeeSubTabChange('active')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                        employeeSubTab === 'active'
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${employeeSubTab === 'active'
                                             ? 'bg-white text-blue-600 shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
-                                    }`}
+                                        }`}
                                 >
                                     Active ({activeEmployees.length})
                                 </button>
                                 <button
                                     onClick={() => handleEmployeeSubTabChange('terminated')}
-                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                                        employeeSubTab === 'terminated'
+                                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${employeeSubTab === 'terminated'
                                             ? 'bg-white text-blue-600 shadow-sm'
                                             : 'text-gray-600 hover:text-gray-900'
-                                    }`}
+                                        }`}
                                 >
                                     Terminated ({terminatedEmployees.length})
                                 </button>
                             </div>
                         </div>
-                     )}
-                     {activeTab === 'invites' && (
-                         <div className="flex items-center space-x-4">
-                             <Button onClick={handleInviteMember} className="bg-blue-600 text-white">
-                                 + Invite Member
-                             </Button>
-                         </div>
-                     )}
-                     <div className="flex items-center space-x-4">
+                    )}
+                    {activeTab === 'invites' && (
+                        <div className="flex items-center space-x-4">
+                            <Button onClick={handleInviteMember} className="bg-blue-600 text-white">
+                                + Invite Member
+                            </Button>
+                        </div>
+                    )}
+                    <div className="flex items-center space-x-4">
                         <Input
                             placeholder={`Search ${activeTab === 'invites' ? 'invites' : activeTab === 'activeUsers' ? 'users' : activeTab === 'groups' ? 'groups' : employeeSubTab === 'active' ? 'active employees' : 'terminated employees'}`}
                             value={searchTerm}
@@ -309,80 +307,80 @@ export const UserSection = () => {
                         </Select>
                     </div>
                 </div>
-                   {(loading || usersLoading || invitesLoading) ? (
-                     <Loader />
-                  ) : activeTab === 'invites' ? (
-                       <InvitesTable
-                           searchTerm={searchTerm}
-                           entriesPerPage={entriesPerPage}
-                           currentPage={currentPage}
-                           invites={invites}
-                           totalPages={Math.ceil(invites.length / entriesPerPage)}
-                           onPageChange={setCurrentPage}
-                           itemsPerPage={entriesPerPage}
-                           totalItems={invites.length}
-                           onResendInvite={handleResendInvite}
-                           onDeleteInvite={handleDeleteInvite}
-                       />
-                 ) : activeTab === 'activeUsers' ? (
-                     <ActiveUsersTable
-                         searchTerm={searchTerm}
-                         entriesPerPage={entriesPerPage}
-                         currentPage={currentPage}
-                         users={users}
-                         totalPages={Math.ceil(users.length / entriesPerPage)}
-                         onPageChange={setCurrentPage}
-                         itemsPerPage={entriesPerPage}
-                         totalItems={users.length}
-                     />
-                 ) : activeTab === 'groups' ? (
-                     <div className="p-8 text-center text-gray-500">
-                         <p>Groups & Permissions management coming soon...</p>
-                     </div>
-                 ) : employeeSubTab === 'active' ? (
-                     <ActiveEmployeeTable
-                         searchTerm={searchTerm}
-                         entriesPerPage={entriesPerPage}
-                         currentPage={currentPage}
-                         employees={currentEmployees}
-                         totalPages={Math.ceil(totalItems / entriesPerPage)}
-                         onPageChange={setCurrentPage}
-                         itemsPerPage={entriesPerPage}
-                         totalItems={totalItems}
-                         onEditEmployee={handleEditEmployee}
-                         onDeleteEmployee={handleTerminateEmployee}
-                     />
-                 ) : (
-                      <TerminatedEmployeeTable
-                          searchTerm={searchTerm}
-                          entriesPerPage={entriesPerPage}
-                          currentPage={currentPage}
-                          employees={currentEmployees}
-                          totalPages={Math.ceil(totalItems / entriesPerPage)}
-                          onPageChange={setCurrentPage}
-                          itemsPerPage={entriesPerPage}
-                          totalItems={totalItems}
-                          onReactivateEmployee={handleReactivateEmployee}
-                          onDeleteEmployee={handleDeleteEmployee}
-                      />
-                 )}
-             </Card>
-               {activeTab === 'employees' && (
-                   <EmployeeModal
-                       isOpen={isModalOpen}
-                       onClose={() => setIsModalOpen(false)}
-                       mode={modalMode}
-                       employee={selectedEmployee || undefined}
-                       onSave={handleSaveEmployee}
-                   />
-               )}
-                 <InviteModal
-                     isOpen={isInviteModalOpen}
-                     onClose={() => setIsInviteModalOpen(false)}
-                     groups={groups}
-                     onInviteSent={handleInviteSent}
-                 />
-         </div>
-     );
+                {(loading || usersLoading || invitesLoading) ? (
+                    <Loader />
+                ) : activeTab === 'invites' ? (
+                    <InvitesTable
+                        searchTerm={searchTerm}
+                        entriesPerPage={entriesPerPage}
+                        currentPage={currentPage}
+                        invites={invites}
+                        totalPages={Math.ceil(invites.length / entriesPerPage)}
+                        onPageChange={setCurrentPage}
+                        itemsPerPage={entriesPerPage}
+                        totalItems={invites.length}
+                        onResendInvite={handleResendInvite}
+                        onDeleteInvite={handleDeleteInvite}
+                    />
+                ) : activeTab === 'activeUsers' ? (
+                    <ActiveUsersTable
+                        searchTerm={searchTerm}
+                        entriesPerPage={entriesPerPage}
+                        currentPage={currentPage}
+                        users={users}
+                        totalPages={Math.ceil(users.length / entriesPerPage)}
+                        onPageChange={setCurrentPage}
+                        itemsPerPage={entriesPerPage}
+                        totalItems={users.length}
+                    />
+                ) : activeTab === 'groups' ? (
+                    <div className="p-8 text-center text-gray-500">
+                        <p>Groups & Permissions management coming soon...</p>
+                    </div>
+                ) : employeeSubTab === 'active' ? (
+                    <ActiveEmployeeTable
+                        searchTerm={searchTerm}
+                        entriesPerPage={entriesPerPage}
+                        currentPage={currentPage}
+                        employees={currentEmployees}
+                        totalPages={Math.ceil(totalItems / entriesPerPage)}
+                        onPageChange={setCurrentPage}
+                        itemsPerPage={entriesPerPage}
+                        totalItems={totalItems}
+                        onEditEmployee={handleEditEmployee}
+                        onDeleteEmployee={handleTerminateEmployee}
+                    />
+                ) : (
+                    <TerminatedEmployeeTable
+                        searchTerm={searchTerm}
+                        entriesPerPage={entriesPerPage}
+                        currentPage={currentPage}
+                        employees={currentEmployees}
+                        totalPages={Math.ceil(totalItems / entriesPerPage)}
+                        onPageChange={setCurrentPage}
+                        itemsPerPage={entriesPerPage}
+                        totalItems={totalItems}
+                        onReactivateEmployee={handleReactivateEmployee}
+                        onDeleteEmployee={handleDeleteEmployee}
+                    />
+                )}
+            </Card>
+            {activeTab === 'employees' && (
+                <EmployeeModal
+                    isOpen={isModalOpen}
+                    onClose={() => setIsModalOpen(false)}
+                    mode={modalMode}
+                    employee={selectedEmployee || undefined}
+                    onSave={handleSaveEmployee}
+                />
+            )}
+            <InviteModal
+                isOpen={isInviteModalOpen}
+                onClose={() => setIsInviteModalOpen(false)}
+                groups={groups}
+                onInviteSent={handleInviteSent}
+            />
+        </div>
+    );
 };
 

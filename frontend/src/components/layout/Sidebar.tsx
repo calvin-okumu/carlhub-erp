@@ -74,11 +74,11 @@ const assetItems = [
 ];
 
 const leaveItems = [
-    { name: "Leave Requests", href: "/dashboard/leave/leave-requests", icon: FileText },
-    { name: "Leave Calendar", href: "/dashboard/leave/leave-calendar", icon: Calendar },
-    { name: "Leave Balance", href: "/dashboard/leave/leave-balance", icon: DollarSign },
-    { name: "Leave Approvals", href: "/dashboard/leave/leave-approvals", icon: UserCheck },
-    { name: "Leave Policies", href: "/dashboard/leave/leave-policies", icon: StickyNote },
+    { name: "Leave Requests", href: "/dashboard/leave/requests", icon: FileText },
+    { name: "Leave Calendar", href: "/dashboard/leave/calendar", icon: Calendar },
+    { name: "Leave Balance", href: "/dashboard/leave/balance", icon: DollarSign },
+    { name: "Leave Approvals", href: "/dashboard/leave/approvals", icon: UserCheck },
+    { name: "Leave Policies", href: "/dashboard/leave/policies", icon: StickyNote },
 ];
 
 export default function Sidebar() {
@@ -99,7 +99,7 @@ export default function Sidebar() {
                         height={32}
                         className="mr-2"
                     />
-                    <h1 className="h1-title  text-2xl font-bold !text-blue-600">Carlhub</h1>
+                    <h1 className="text-2xl font-bold text-blue-600">Carlhub</h1>
                 </div>
 
                 {/* Navigation */}
@@ -396,10 +396,10 @@ export default function Sidebar() {
                                     LEAVE MANAGEMENT
                                 </div>
                                 <div className="ml-6 mt-1 space-y-1">
-                                    {leaveItems.map((item) => {
-                                        const isActive = pathname === item.href;
+                                     {leaveItems.map((item) => {
+                                         const isActive = pathname === item.href || (pathname === '/dashboard/leave' && item.href === '/dashboard/leave/requests');
 
-                                        return (
+                                         return (
                                             <Link
                                                 key={item.name}
                                                 href={item.href}

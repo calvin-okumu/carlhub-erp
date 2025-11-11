@@ -9,6 +9,19 @@ import Textarea from '@/components/ui/Textarea';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+// Utility function to format dates for HTML date inputs (YYYY-MM-DD format)
+function formatDateForInput(dateString: string | undefined): string {
+    if (!dateString) return '';
+    try {
+        // Handle various date formats by extracting YYYY-MM-DD
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+    } catch {
+        return '';
+    }
+}
+
 interface CreateTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -72,8 +85,8 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
         if (watchedSprint) {
             const sprint = sprints.find(s => s.slug === watchedSprint);
             if (sprint) {
-                setMinDate(sprint.start_date || '');
-                setMaxDate(sprint.end_date || '');
+                setMinDate(formatDateForInput(sprint.start_date));
+                setMaxDate(formatDateForInput(sprint.end_date));
             }
         } else {
             setMinDate('');
@@ -85,15 +98,19 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
         if (isBacklog && watchedMilestone) {
             const milestone = milestones.find(m => m.id === watchedMilestone);
             if (milestone) {
-                setMinDate(milestone.planned_start || '');
-                setMaxDate(milestone.due_date || '');
+                setMinDate(formatDateForInput(milestone.planned_start));
+                setMaxDate(formatDateForInput(milestone.due_date));
             }
-        } else if (!isKanban) {
+        } else if (isKanban && sprintContext) {
+            // Set dates based on sprint context in kanban mode
+            setMinDate(formatDateForInput(sprintContext.start_date));
+            setMaxDate(formatDateForInput(sprintContext.end_date));
+        } else if (!isKanban && !isBacklog) {
             // Reset dates if not in kanban or backlog mode
             setMinDate('');
             setMaxDate('');
         }
-    }, [watchedMilestone, milestones, isBacklog, isKanban]);
+    }, [watchedMilestone, milestones, isBacklog, isKanban, sprintContext]);
 
     const onSubmit = (data: FormData) => {
         let milestoneId: string;
@@ -151,8 +168,8 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             setValue('estimated_hours', task.estimated_hours?.toString() || '');
             const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === task.sprint) : null;
             if (sprint) {
-                setMinDate(sprint.start_date || '');
-                setMaxDate(sprint.end_date || '');
+                setMinDate(formatDateForInput(sprint.start_date));
+                setMaxDate(formatDateForInput(sprint.end_date));
             }
         } else {
             setValue('title', '');
