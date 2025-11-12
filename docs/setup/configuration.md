@@ -21,9 +21,10 @@ DjangoCRM supports three distinct environments with different configurations:
 
 | File | Purpose | Environment |
 |------|---------|-------------|
+| `.env` (root) | Docker development settings | Docker Dev |
 | `backend/.env` | Local development settings | Local |
-| `backend/env.example` | Template for all environments | All |
-| `.env.staging` | Staging-specific overrides | Staging |
+| `env.example` | Template for all environments | All |
+| `.env.staging` | Staging-specific settings | Staging |
 | `docker-compose.yml` | Docker development services | Docker Dev |
 | `docker-compose.staging.yml` | Staging services | Staging |
 
@@ -32,9 +33,27 @@ DjangoCRM supports three distinct environments with different configurations:
 Variables are loaded in this order (later overrides earlier):
 
 1. **Base Settings** (`saasCRM/settings/base.py`)
-2. **Environment Files** (`.env`, `.env.staging`)
+2. **Environment Files** (`.env`, `.env.staging`, `backend/.env`)
 3. **Environment-Specific** (`development.py`, `production.py`)
 4. **Runtime Overrides** (Docker environment variables)
+
+### Environment File Loading Logic
+
+The system uses intelligent file loading based on deployment context:
+
+```python
+# In saasCRM/settings.py
+if os.getenv('DOCKER_CONTAINER') == 'true':
+    load_dotenv(dotenv_path=BASE_DIR.parent / '.env')  # Root .env for Docker
+else:
+    load_dotenv(dotenv_path=BASE_DIR / '.env')  # Backend .env for local
+```
+
+**File Usage by Environment:**
+- **Local Development**: `backend/.env` (direct loading)
+- **Docker Development**: `.env` (root level, via DOCKER_CONTAINER=true)
+- **Staging**: `.env.staging` (explicit env_file directive)
+- **Production**: External/CI variables (no .env file for security)
 
 ---
 
@@ -44,7 +63,7 @@ Variables are loaded in this order (later overrides earlier):
 
 ```bash
 # 1. Copy environment template
-cp backend/env.example backend/.env
+cp env.example backend/.env
 
 # 2. Configure local database
 sudo -u postgres createuser saascrm_user

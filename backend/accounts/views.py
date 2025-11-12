@@ -44,18 +44,21 @@ class EmployeeDocumentListView(generics.ListCreateAPIView):
         from .services.employee_document_service import EmployeeDocumentService
         # Prepare file data
         file_data = {
-            'file': serializer.validated_data.get('file'),
+            'file': serializer.validated_data.get('document_file'),
             'file_type': serializer.validated_data.get('file_type', ''),
             'file_size': serializer.validated_data.get('file_size', 0)
         }
         
         # Use service to create document with audit logging
-        EmployeeDocumentService.create_document(
+        document = EmployeeDocumentService.create_document(
             user=self.request.user,
             file_data=file_data,
             title=serializer.validated_data.get('title', ''),
             request=self.request
         )
+        
+        # Set the created document on the serializer for response
+        serializer.instance = document
 
 
 class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -70,7 +73,11 @@ class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self):
         document_id = self.kwargs.get('pk')
         from .services.employee_document_service import EmployeeDocumentService
-        return EmployeeDocumentService.get_document(self.request.user, document_id)
+        document = EmployeeDocumentService.get_document(self.request.user, document_id)
+        if document is None:
+            from rest_framework.exceptions import NotFound
+            raise NotFound("Document not found")
+        return document
 
     def perform_update(self, serializer):
         from .services.employee_document_service import EmployeeDocumentService

@@ -121,19 +121,47 @@ class CacheManager:
             return 0
         except ImportError:
             # Fallback for non-Redis backends (like LocMemCache in tests)
-            try:
-                # For LocMemCache, we can't use patterns, so we'll clear all cache
-                # This is less efficient but works for testing
-                cache.clear()
-                if settings.DEBUG:
-                    logger.debug(f"Cache CLEAR_ALL (fallback for pattern: {pattern})")
-                return 0  # Can't determine actual count with this fallback
-            except Exception as e:
-                logger.error(f"Error clearing cache as fallback for pattern {pattern}: {e}")
-                return 0
+            return cls._fallback_pattern_deletion(pattern)
         except Exception as e:
             logger.error(f"Error deleting cache pattern {pattern}: {e}")
             return 0
+    
+    @classmethod
+    def _fallback_pattern_deletion(cls, pattern: str) -> int:
+        """Fallback pattern deletion for backends that don't support patterns."""
+        try:
+            # Check if cache backend supports iteration
+            cache_backend = cache._cache
+            
+            # For LocMemCache and similar backends
+            if hasattr(cache_backend, '_cache'):
+                # Try to iterate through keys and delete matches
+                keys_to_delete = []
+                for key in cache_backend._cache.keys():
+                    if cls._pattern_matches(key, pattern):
+                        keys_to_delete.append(key)
+                
+                for key in keys_to_delete:
+                    cache.delete(key)
+                
+                if settings.DEBUG and keys_to_delete:
+                    logger.debug(f"Cache DELETE_PATTERN_FALLBACK: {pattern} -> {len(keys_to_delete)} keys")
+                return len(keys_to_delete)
+            else:
+                # Last resort: clear all cache (less efficient but safe)
+                cache.clear()
+                if settings.DEBUG:
+                    logger.debug(f"Cache CLEAR_ALL (fallback for pattern: {pattern})")
+                return 0
+        except Exception as e:
+            logger.error(f"Error in fallback pattern deletion for {pattern}: {e}")
+            return 0
+    
+    @classmethod
+    def _pattern_matches(cls, key: str, pattern: str) -> bool:
+        """Simple pattern matching for cache keys."""
+        import fnmatch
+        return fnmatch.fnmatch(key, pattern)
     
     @classmethod
     def invalidate_model(cls, model_name: str, tenant_id: Optional[str] = None):

@@ -52,13 +52,18 @@ def setup_logging(base_dir: Path) -> dict:
     # Logging formatters
     formatters = {
         'verbose': {
-            'format': f'{env_info} {{levelname}} {{asctime}} {{module}} {{filename}} {{lineno:d}} {{funcName}} {{process:d}} {{thread:d}} {{message}}',
-            'style': '{',
+            'format': f'{env_info} [%(correlation_id)s] %(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(process)d %(thread)d %(message)s',
+            'style': '%',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
         'simple': {
-            'format': f'{env_info} {{levelname}} {{asctime}} {{module}} {{message}}',
-            'style': '{',
+            'format': f'{env_info} [%(correlation_id)s] %(levelname)s %(asctime)s %(module)s %(message)s',
+            'style': '%',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'correlation': {
+            'format': f'{env_info} [%(correlation_id)s] %(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(user_email)s %(tenant_id)s %(message)s',
+            'style': '%',
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     }
@@ -90,7 +95,7 @@ def setup_logging(base_dir: Path) -> dict:
             'level': 'INFO',
             'class': 'saasCRM.logging.PrependingRotatingFileHandler',
             'filename': logs_dir / 'info.log',
-            'formatter': 'verbose',
+            'formatter': 'correlation',
             'filters': ['info_only'],
             'maxBytes': 10485760,  # 10MB
             'backupCount': 5,
@@ -99,7 +104,7 @@ def setup_logging(base_dir: Path) -> dict:
             'level': 'WARNING',
             'class': 'saasCRM.logging.PrependingRotatingFileHandler',
             'filename': logs_dir / 'warning.log',
-            'formatter': 'verbose',
+            'formatter': 'correlation',
             'filters': ['warning_only'],
             'maxBytes': 10485760,  # 10MB
             'backupCount': 5,
@@ -108,7 +113,7 @@ def setup_logging(base_dir: Path) -> dict:
             'level': 'ERROR',
             'class': 'saasCRM.logging.PrependingRotatingFileHandler',
             'filename': logs_dir / 'error.log',
-            'formatter': 'verbose',
+            'formatter': 'correlation',
             'filters': ['error_only'],
             'maxBytes': 10485760,  # 10MB
             'backupCount': 5,

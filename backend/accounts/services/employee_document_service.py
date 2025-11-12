@@ -36,7 +36,7 @@ class EmployeeDocumentService:
         document = EmployeeDocument.objects.create(
             user=user,
             title=title,
-            file=file_data['file'],
+            document_file=file_data['file'],
             file_type=file_data.get('file_type', ''),
             file_size=file_data.get('file_size', 0)
         )
@@ -79,11 +79,9 @@ class EmployeeDocumentService:
         if 'title' in update_data:
             document.title = update_data['title']
         if 'file' in update_data:
-            document.file = update_data['file']
+            document.document_file = update_data['file']
             document.file_type = update_data.get('file_type', document.file_type)
             document.file_size = update_data.get('file_size', document.file_size)
-        
-        document.updated_at = timezone.now()
         document.save()
         
         # Get new values for audit
@@ -166,7 +164,7 @@ class EmployeeDocumentService:
         """Get document statistics for a user."""
         documents = EmployeeDocumentService.get_user_documents(user)
         
-        total_size = sum(doc.file_size for doc in documents)
+        total_size = sum(doc.file_size or 0 for doc in documents)
         file_types = {}
         
         for doc in documents:
@@ -174,8 +172,8 @@ class EmployeeDocumentService:
             file_types[file_type] = file_types.get(file_type, 0) + 1
         
         return {
-            'total_documents': documents.count(),
+            'total_documents': len(documents),
             'total_size': total_size,
             'file_types': file_types,
-            'recent_documents': documents.order_by('-created_at')[:5]
+            'recent_documents': sorted(documents, key=lambda x: x.uploaded_at, reverse=True)[:5]
         }
