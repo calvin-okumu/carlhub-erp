@@ -189,3 +189,75 @@ export interface PaginatedResponse<T> {
   previous: string | null;
   results: T[];
 }
+
+// Leave Management Types
+export interface LeaveRequest {
+  id: string;
+  slug: string;
+  employee: number;
+  employee_name: string;
+  tenant: number;
+  tenant_name: string;
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  days_requested: number;
+  reason: string;
+  status: "pending" | "approved" | "rejected" | "cancelled" | "taken";
+  applied_date: string;
+  approved_by?: number;
+  approved_by_name?: string;
+  approved_date?: string;
+  approval_notes?: string;
+  duration_display: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LeaveBalance {
+  id: string;
+  slug: string;
+  employee: number;
+  employee_name: string;
+  tenant: number;
+  tenant_name: string;
+  leave_type: string;
+  year: number;
+  total_days: number;
+  used_days: number;
+  carried_over: number;
+  remaining_days: number;
+  utilization_percentage: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LeavePolicy {
+  id: string;
+  slug: string;
+  tenant: number;
+  tenant_name: string;
+  leave_type: string;
+  annual_entitlement: number;
+  max_consecutive_days: number;
+  notice_period_days: number;
+  carry_over_allowed: boolean;
+  max_carry_over?: number;
+  auto_approve_max_days?: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateLeaveRequestData {
+  leave_type: string;
+  start_date: string;
+  end_date: string;
+  days_requested?: number;
+  reason?: string;
+  tenant?: number;
+}
+
+export interface ApproveLeaveRequestData {
+  notes?: string;
+}

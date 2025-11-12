@@ -2,6 +2,9 @@
 export type {
   Client,
   CreateClientData,
+  LeaveBalance,
+  LeavePolicy,
+  LeaveRequest,
   LoginResponse,
   Milestone,
   PaginatedResponse,
@@ -50,6 +53,22 @@ export {
   updateSprint,
   updateTask,
 } from "./project_mgmt";
+
+// Export Leave Management functions
+export {
+  approveLeaveRequest,
+  cancelLeaveRequest,
+  createLeaveRequest,
+  deleteLeaveRequest,
+  getLeaveBalance,
+  getLeaveBalances,
+  getLeavePolicies,
+  getLeavePolicy,
+  getLeaveRequest,
+  getLeaveRequests,
+  rejectLeaveRequest,
+  updateLeaveRequest,
+} from "./leave";
 
 // Export API base URL
 export const API_BASE =

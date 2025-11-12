@@ -18,7 +18,8 @@
     "react": "19.1.0",
     "react-datepicker": "^8.8.0",
     "react-dom": "19.1.0",
-    "react-hook-form": "^7.65.0"
+    "react-hook-form": "^7.65.0",
+    "react-router-dom": "^7.9.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

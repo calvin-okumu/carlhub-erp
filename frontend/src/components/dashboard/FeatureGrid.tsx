@@ -112,7 +112,7 @@ const features = [
         hoverColor: "hover:shadow-indigo-400/20 hover:border-indigo-400 hover:bg-indigo-400/10",
         buttonColor: "bg-gradient-to-r from-indigo-400 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600",
         cta: "View Leave",
-        href: "/dashboard/leave/leave-requests",
+        href: "/dashboard/leave/",
         active: true,
     },
 ];

@@ -172,7 +172,35 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
 
         } catch (error) {
             console.error('Error submitting employee data:', error);
-            alert(`Failed to ${mode === 'add' ? 'create' : 'update'} employee. Please try again.`);
+
+            // Try to parse backend validation errors
+            let errorMessage = `Failed to ${mode === 'add' ? 'create' : 'update'} employee. Please try again.`;
+
+            if (error instanceof Error) {
+                // Check if it's a backend validation error
+                try {
+                    const errorData = JSON.parse(error.message);
+                    if (errorData && typeof errorData === 'object') {
+                        const fieldErrors = Object.entries(errorData)
+                            .filter(([key, value]) => Array.isArray(value))
+                            .map(([key, value]) => `${key}: ${(value as string[]).join(', ')}`)
+                            .join('\n');
+
+                        if (fieldErrors) {
+                            errorMessage = `Validation errors:\n${fieldErrors}`;
+                        } else if (errorData.detail) {
+                            errorMessage = errorData.detail;
+                        } else if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                    }
+                } catch {
+                    // If parsing fails, use the original error message
+                    errorMessage = error.message || errorMessage;
+                }
+            }
+
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }
