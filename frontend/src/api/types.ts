@@ -203,7 +203,7 @@ export interface LeaveRequest {
   end_date: string;
   days_requested: number;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled' | 'taken';
+  status: "pending" | "approved" | "rejected" | "cancelled" | "taken";
   applied_date: string;
   approved_by?: number;
   approved_by_name?: string;
@@ -253,8 +253,9 @@ export interface CreateLeaveRequestData {
   leave_type: string;
   start_date: string;
   end_date: string;
-  days_requested: number;
+  days_requested?: number;
   reason?: string;
+  tenant?: number;
 }
 
 export interface ApproveLeaveRequestData {
