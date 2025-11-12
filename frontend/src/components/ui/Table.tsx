@@ -2,7 +2,7 @@ import React from 'react';
 import Pagination from '@/components/shared/Pagination';
 
 interface TableProps {
-    headers: string[];
+    headers: (string | React.ReactNode)[];
     rows: { key: string | number; data: (string | number | React.ReactNode)[] }[];
     className?: string;
     currentPage?: number;
@@ -16,7 +16,7 @@ export default function Table({ headers, rows, className = '', currentPage, tota
    return (
      <div className={`overflow-x-auto ${className}`}>
        <table className="min-w-full divide-y divide-gray-200">
-         <thead className="bg-gray-50">
+         <thead className="bg-white">
            <tr>
               {headers.map((header, index) => (
                 <th

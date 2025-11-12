@@ -74,6 +74,7 @@ const assetItems = [
 ];
 
 const leaveItems = [
+    { name: "Leave Overview", href: "/dashboard/leave", icon: Calendar },
     { name: "Leave Requests", href: "/dashboard/leave/requests", icon: FileText },
     { name: "Leave Calendar", href: "/dashboard/leave/calendar", icon: Calendar },
     { name: "Leave Balance", href: "/dashboard/leave/balance", icon: DollarSign },
@@ -397,7 +398,7 @@ export default function Sidebar() {
                                 </div>
                                 <div className="ml-6 mt-1 space-y-1">
                                      {leaveItems.map((item) => {
-                                         const isActive = pathname === item.href || (pathname === '/dashboard/leave' && item.href === '/dashboard/leave/requests');
+                                         const isActive = pathname === item.href;
 
                                          return (
                                             <Link

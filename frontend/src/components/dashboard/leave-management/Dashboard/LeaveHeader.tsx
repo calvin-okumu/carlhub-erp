@@ -1,36 +1,33 @@
-import Button from "@/components/ui/Button";
-import { Calendar, Clock, User, Users } from "lucide-react";
-
-interface LeaveHeaderProps {
-    activeTab: "requests" | "calendar" | "approvals" | "policies";
-    onTabChange: (
-        tab: "requests" | "calendar" | "approvals" | "policies"
-    ) => void;
-}
+import { Calendar, Clock, User, UserRoundMinus, Users } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const tabs = [
     { key: "requests", label: "Requests", icon: User },
     { key: "calendar", label: "Calendar", icon: Calendar },
     { key: "approvals", label: "Approvals", icon: Clock },
+    { key: "balance", label: "Balance", icon: UserRoundMinus },
     { key: "policies", label: "Policies", icon: Users },
 ] as const;
 
-export const LeaveHeader = ({ activeTab, onTabChange }: LeaveHeaderProps) => {
+export const LeaveHeader = () => {
+    const pathname = usePathname();
+    const activeTab = pathname.split('/').pop() as typeof tabs[number]['key'];
+
     return (
         <div className="flex items-center justify-end gap-2">
             {tabs.map(({ key, label, icon: Icon }) => (
-                <Button
+                <Link
                     key={key}
-                    variant="outline"
-                    onClick={() => onTabChange(key)}
-                    className={`flex items-center gap-2 ${activeTab === key
+                    href={`/dashboard/leave/${key}`}
+                    className={`flex bg-white shadow-md items-center gap-2 px-3 py-2 rounded-md border ${activeTab === key
                         ? 'bg-blue-100 border-blue-600 text-blue-700'
-                        : ''
+                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                 >
                     <Icon size={16} />
                     {label}
-                </Button>
+                </Link>
             ))}
         </div>
     );
