@@ -369,6 +369,42 @@ export async function updateUser(token: string, id: number, userData: Partial<{
   return await getUser(token, id);
 }
 
+export async function createMember(token: string, memberData: {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+}): Promise<User> {
+  const url = `${API_BASE}/members/`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(memberData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to create member: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  // Return the created member as User
+  return {
+    id: data.user,
+    email: data.user_email,
+    first_name: data.user_first_name,
+    last_name: data.user_last_name,
+    is_active: true,
+    date_joined: '',
+    organization: data.tenant_name,
+    job: data.role,
+  };
+}
+
 export async function deleteUser(token: string, id: number): Promise<void> {
   const url = `${API_BASE}/users/${id}/`;
   const response = await fetch(url, {
