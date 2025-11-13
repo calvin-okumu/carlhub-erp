@@ -10,10 +10,29 @@ export const LeaveSummaryTable = () => {
     const [requests, setRequests] = useState<LeaveRequest[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const formatLeaveType = (leaveType: string) => {
+        return leaveType.split('_').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    };
+
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const data = await getLeaveRequests({ limit: 5 });
+                // Get current user ID from localStorage
+                const userData = localStorage.getItem('user');
+                let employeeId: number | undefined;
+
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    employeeId = user.id;
+                }
+
+                const data = await getLeaveRequests({
+                    page_size: 5,
+                    employee: employeeId
+                });
+
                 if (data && typeof data === 'object' && 'results' in data) {
                     setRequests(data.results);
                 } else {
@@ -39,7 +58,7 @@ export const LeaveSummaryTable = () => {
         key: request.id,
         data: [
             request.employee_name || 'Unknown',
-            request.leave_type || 'N/A',
+            formatLeaveType(request.leave_type) || 'N/A',
             request.status,
             new Date(request.start_date).toLocaleDateString(),
             new Date(request.end_date).toLocaleDateString(),

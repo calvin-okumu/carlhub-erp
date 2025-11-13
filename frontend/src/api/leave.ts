@@ -30,7 +30,7 @@ export const getLeaveRequests = async (
 
   const response = await fetch(`${API_BASE}/leave/requests/?${searchParams}`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -45,7 +45,7 @@ export const getLeaveRequests = async (
 export const getLeaveRequest = async (id: string): Promise<LeaveRequest> => {
   const response = await fetch(`${API_BASE}/leave/requests/${id}/`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -59,9 +59,9 @@ export const getLeaveRequest = async (id: string): Promise<LeaveRequest> => {
 
 export const createLeaveRequest = async (data: CreateLeaveRequestData): Promise<LeaveRequest> => {
   const response = await fetch(`${API_BASE}/leave/requests/`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
@@ -78,9 +78,9 @@ export const createLeaveRequest = async (data: CreateLeaveRequestData): Promise<
 
 export const updateLeaveRequest = async (id: string, data: Partial<CreateLeaveRequestData>): Promise<LeaveRequest> => {
   const response = await fetch(`${API_BASE}/leave/requests/${id}/`, {
-    method: 'PATCH',
+    method: "PATCH",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
@@ -95,9 +95,9 @@ export const updateLeaveRequest = async (id: string, data: Partial<CreateLeaveRe
 
 export const deleteLeaveRequest = async (id: string): Promise<void> => {
   const response = await fetch(`${API_BASE}/leave/requests/${id}/`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
     },
   });
 
@@ -108,9 +108,9 @@ export const deleteLeaveRequest = async (id: string): Promise<void> => {
 
 export const approveLeaveRequest = async (id: string, data?: ApproveLeaveRequestData): Promise<LeaveRequest> => {
   const response = await fetch(`${API_BASE}/leave/requests/${id}/approve/`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data || {}),
@@ -125,9 +125,9 @@ export const approveLeaveRequest = async (id: string, data?: ApproveLeaveRequest
 
 export const rejectLeaveRequest = async (id: string, data?: ApproveLeaveRequestData): Promise<LeaveRequest> => {
   const response = await fetch(`${API_BASE}/leave/requests/${id}/reject/`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data || {}),
@@ -142,9 +142,9 @@ export const rejectLeaveRequest = async (id: string, data?: ApproveLeaveRequestD
 
 export const cancelLeaveRequest = async (id: string): Promise<LeaveRequest> => {
   const response = await fetch(`${API_BASE}/leave/requests/${id}/cancel/`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -177,7 +177,7 @@ export const getLeaveBalances = async (
 
   const response = await fetch(`${API_BASE}/leave/balances/?${searchParams}`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -192,7 +192,7 @@ export const getLeaveBalances = async (
 export const getLeaveBalance = async (id: string): Promise<LeaveBalance> => {
   const response = await fetch(`${API_BASE}/leave/balances/${id}/`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -224,7 +224,7 @@ export const getLeavePolicies = async (
 
   const response = await fetch(`${API_BASE}/leave/policies/?${searchParams}`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
   });
@@ -239,7 +239,7 @@ export const getLeavePolicies = async (
 export const getLeavePolicy = async (id: string): Promise<LeavePolicy> => {
   const response = await fetch(`${API_BASE}/leave/policies/${id}/`, {
     headers: {
-      'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+      'Authorization': `Token ${localStorage.getItem('access_token')}`,
       'Content-Type': 'application/json',
     },
   });

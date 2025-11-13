@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Clock, X } from 'lucide-react';
+import { Clock, Edit, Trash2 } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import type { LeaveRequest } from '../../../../api/types';
 import Loader from '../../../shared/Loader';
@@ -16,9 +16,9 @@ interface LeaveRequestTableProps {
     totalItems: number;
     itemsPerPage: number;
     onPageChange: (page: number) => void;
-    onApproveRequest: (id: string) => void;
-    onRejectRequest: (id: string) => void;
+    onEditRequest: (id: string) => void;
     onCancelRequest: (id: string) => void;
+    onDeleteRequest: (id: string) => void;
 }
 
 export default function LeaveRequestTable({
@@ -30,9 +30,9 @@ export default function LeaveRequestTable({
     totalItems,
     itemsPerPage,
     onPageChange,
-    onApproveRequest,
-    onRejectRequest,
-    onCancelRequest
+    onEditRequest,
+    onCancelRequest,
+    onDeleteRequest
 }: LeaveRequestTableProps) {
     const [searchValue, setSearchValue] = useState('');
 
@@ -46,17 +46,15 @@ export default function LeaveRequestTable({
         [leaveRequests, searchValue]
     );
 
-    const handleApprove = useCallback((id: string) => {
-        if (confirm("Are you sure you want to approve this leave request?")) {
-            onApproveRequest(id);
-        }
-    }, [onApproveRequest]);
+    const handleEdit = useCallback((id: string) => {
+        onEditRequest(id);
+    }, [onEditRequest]);
 
-    const handleReject = useCallback((id: string) => {
-        if (confirm("Are you sure you want to reject this leave request?")) {
-            onRejectRequest(id);
+    const handleDelete = useCallback((id: string) => {
+        if (confirm("Are you sure you want to delete this leave request? This action cannot be undone.")) {
+            onDeleteRequest(id);
         }
-    }, [onRejectRequest]);
+    }, [onDeleteRequest]);
 
     const handleCancel = useCallback((id: string) => {
         if (confirm("Are you sure you want to cancel this leave request?")) {
@@ -101,24 +99,18 @@ export default function LeaveRequestTable({
             </span>,
             getStatusBadge(request.status),
             <div key={request.id + '-actions'} className="flex gap-2">
-                {request.status === 'pending' && (
-                    <>
-                        <Button
-                            onClick={() => handleApprove(request.id)}
-                            variant="gradient"
-                            size="sm"
-                        >
-                            <Check className="h-4 w-4" />
-                        </Button>
-                        <Button
-                            onClick={() => handleReject(request.id)}
-                            variant="danger"
-                            size="sm"
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </>
+                {/* Edit button - available for pending and approved requests */}
+                {(request.status === 'pending' || request.status === 'approved') && (
+                    <Button
+                        onClick={() => handleEdit(request.id)}
+                        variant="outline"
+                        size="sm"
+                    >
+                        <Edit className="h-4 w-4" />
+                    </Button>
                 )}
+
+                {/* Cancel button - available for pending and approved requests */}
                 {(request.status === 'pending' || request.status === 'approved') && (
                     <Button
                         onClick={() => handleCancel(request.id)}
@@ -126,6 +118,17 @@ export default function LeaveRequestTable({
                         size="sm"
                     >
                         <Clock className="h-4 w-4" />
+                    </Button>
+                )}
+
+                {/* Delete button - only available for rejected requests */}
+                {request.status === 'rejected' && (
+                    <Button
+                        onClick={() => handleDelete(request.id)}
+                        variant="danger"
+                        size="sm"
+                    >
+                        <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
             </div>

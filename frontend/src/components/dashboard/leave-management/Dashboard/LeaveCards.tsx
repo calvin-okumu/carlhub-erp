@@ -22,7 +22,19 @@ export const LeaveCards = ({
     useEffect(() => {
         const fetchAllRequests = async () => {
             try {
-                const data = await getLeaveRequests({ limit: 1000 });
+                // Get current user ID from localStorage
+                const userData = localStorage.getItem('user');
+                let employeeId: number | undefined;
+
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    employeeId = user.id;
+                }
+
+                const data = await getLeaveRequests({
+                    page_size: 1000,
+                    employee: employeeId
+                });
 
                 if (data && typeof data === 'object' && 'results' in data) {
                     setAllRequests(data.results);
