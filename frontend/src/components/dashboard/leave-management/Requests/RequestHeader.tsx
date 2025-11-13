@@ -3,17 +3,22 @@ import { useEffect, useState } from 'react';
 import SearchInput from '../../../shared/SearchInput';
 import Button from '../../../ui/Button';
 import LeaveRequestModal from './LeaveRequestModal';
+import type { LeaveRequest } from '../../../../api/types';
 interface RequestHeaderProps {
     onSearchChange: (value: string) => void;
     onRequestSuccess?: () => void;
     searchPlaceholder?: string;
     onCreateRequest?: (openModal: () => void) => void;
+    editingRequest?: LeaveRequest | null;
+    onEditClose?: () => void;
 }
 export const RequestHeader = ({
     onSearchChange,
     onRequestSuccess,
     searchPlaceholder = "Search leave requests...",
-    onCreateRequest
+    onCreateRequest,
+    editingRequest,
+    onEditClose
 }: RequestHeaderProps) => {
     const [searchValue, setSearchValue] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -62,6 +67,17 @@ export const RequestHeader = ({
                 onClose={handleModalClose}
                 onSuccess={handleRequestSuccess}
             />
+            {editingRequest && (
+                <LeaveRequestModal
+                    isOpen={!!editingRequest}
+                    onClose={() => onEditClose?.()}
+                    onSuccess={() => {
+                        onRequestSuccess?.();
+                        onEditClose?.();
+                    }}
+                    editingRequest={editingRequest}
+                />
+            )}
         </>
     );
 };

@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
-import { createLeaveRequest } from '@/api/leave';
-import type { CreateLeaveRequestData } from '@/api/types';
+import { createLeaveRequest, updateLeaveRequest } from '@/api/leave';
+import type { CreateLeaveRequestData, LeaveRequest } from '@/api/types';
 
 interface LeaveRequestModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess?: () => void;
+    editingRequest?: LeaveRequest | null;
 }
 
 const LEAVE_TYPE_CHOICES = [
@@ -24,13 +25,33 @@ const LEAVE_TYPE_CHOICES = [
     { value: 'unpaid_leave', label: 'Unpaid Leave' },
 ];
 
-export default function LeaveRequestModal({ isOpen, onClose, onSuccess }: LeaveRequestModalProps) {
+export default function LeaveRequestModal({ isOpen, onClose, onSuccess, editingRequest }: LeaveRequestModalProps) {
+    const isEditing = !!editingRequest;
     const [formData, setFormData] = useState<CreateLeaveRequestData>({
         leave_type: '',
         start_date: '',
         end_date: '',
         reason: '',
     });
+
+    // Update form data when editing request changes
+    useEffect(() => {
+        if (editingRequest) {
+            setFormData({
+                leave_type: editingRequest.leave_type,
+                start_date: editingRequest.start_date,
+                end_date: editingRequest.end_date,
+                reason: editingRequest.reason,
+            });
+        } else {
+            setFormData({
+                leave_type: '',
+                start_date: '',
+                end_date: '',
+                reason: '',
+            });
+        }
+    }, [editingRequest]);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -86,7 +107,11 @@ export default function LeaveRequestModal({ isOpen, onClose, onSuccess }: LeaveR
 
         setLoading(true);
         try {
-            await createLeaveRequest(formData);
+            if (isEditing && editingRequest) {
+                await updateLeaveRequest(editingRequest.id, formData);
+            } else {
+                await createLeaveRequest(formData);
+            }
             onSuccess?.();
             onClose();
             // Reset form
@@ -119,7 +144,7 @@ export default function LeaveRequestModal({ isOpen, onClose, onSuccess }: LeaveR
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="New Leave Request" size="md">
+        <Modal isOpen={isOpen} onClose={handleClose} title={isEditing ? "Edit Leave Request" : "New Leave Request"} size="md">
             <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Leave Type */}
                 <div>
@@ -212,7 +237,7 @@ export default function LeaveRequestModal({ isOpen, onClose, onSuccess }: LeaveR
                         disabled={loading}
                         className="min-w-[100px]"
                     >
-                        {loading ? 'Submitting...' : 'Submit Request'}
+                        {loading ? 'Submitting...' : (isEditing ? 'Update Request' : 'Submit Request')}
                     </Button>
                 </div>
             </form>

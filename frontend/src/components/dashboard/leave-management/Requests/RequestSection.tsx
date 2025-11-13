@@ -3,8 +3,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { LeaveSort } from './LeaveSort';
 import { RequestHeader } from './RequestHeader';
 import LeaveRequestTable from './LeaveRequestTable';
-import { getLeaveRequests, approveLeaveRequest, rejectLeaveRequest, cancelLeaveRequest } from '../../../../api/leave';
+import { getLeaveRequests, getLeaveRequest, cancelLeaveRequest, deleteLeaveRequest } from '../../../../api/leave';
 import type { LeaveRequest, PaginatedResponse } from '../../../../api/types';
+import type { LeaveType, SortOption } from './LeaveSort';
 
 export const RequestSection = () => {
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
@@ -14,15 +15,64 @@ export const RequestSection = () => {
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
     const [itemsPerPage] = useState(10);
+    const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
+    const [currentSort, setCurrentSort] = useState<LeaveType>('all');
+    const [currentSortOption, setCurrentSortOption] = useState<SortOption>('applied_date_desc');
 
     const fetchLeaveRequests = useCallback(async (page = 1) => {
         try {
             setLoading(true);
             setError(null);
-            const response: PaginatedResponse<LeaveRequest> = await getLeaveRequests({
+
+            // Get current user ID from localStorage
+            const userData = localStorage.getItem('user');
+            let employeeId: number | undefined;
+
+            if (userData) {
+                const user = JSON.parse(userData);
+                employeeId = user.id;
+            }
+
+            const params: {
+                page: number;
+                page_size: number;
+                leave_type?: string;
+                employee?: number;
+                ordering: string;
+            } = {
                 page,
-                page_size: itemsPerPage
-            });
+                page_size: itemsPerPage,
+                ordering: '-applied_date',
+                employee: employeeId,
+            };
+
+            // Add filtering
+            if (currentSort !== 'all') {
+                params.leave_type = currentSort;
+            }
+
+            // Add sorting
+            switch (currentSortOption) {
+                case 'applied_date_desc':
+                    params.ordering = '-applied_date';
+                    break;
+                case 'applied_date_asc':
+                    params.ordering = 'applied_date';
+                    break;
+                case 'start_date_desc':
+                    params.ordering = '-start_date';
+                    break;
+                case 'start_date_asc':
+                    params.ordering = 'start_date';
+                    break;
+                case 'status':
+                    params.ordering = 'status';
+                    break;
+                default:
+                    params.ordering = '-applied_date';
+            }
+
+            const response: PaginatedResponse<LeaveRequest> = await getLeaveRequests(params);
             setLeaveRequests(response.results);
             setCurrentPage(page);
             setTotalPages(Math.ceil(response.count / itemsPerPage));
@@ -33,7 +83,7 @@ export const RequestSection = () => {
         } finally {
             setLoading(false);
         }
-    }, [itemsPerPage]);
+    }, [itemsPerPage, currentSort, currentSortOption]);
 
     useEffect(() => {
         fetchLeaveRequests();
@@ -43,23 +93,23 @@ export const RequestSection = () => {
         fetchLeaveRequests(page);
     }, [fetchLeaveRequests]);
 
-    const handleApproveRequest = useCallback(async (id: string) => {
+    const handleEditRequest = useCallback(async (id: string) => {
         try {
-            await approveLeaveRequest(id);
-            fetchLeaveRequests(currentPage); // Refresh the list
+            const request = await getLeaveRequest(id);
+            setEditingRequest(request);
         } catch (err) {
-            console.error('Error approving leave request:', err);
-            alert('Failed to approve leave request');
+            console.error('Error fetching leave request for editing:', err);
+            alert('Failed to load leave request for editing');
         }
-    }, [currentPage, fetchLeaveRequests]);
+    }, []);
 
-    const handleRejectRequest = useCallback(async (id: string) => {
+    const handleDeleteRequest = useCallback(async (id: string) => {
         try {
-            await rejectLeaveRequest(id);
+            await deleteLeaveRequest(id);
             fetchLeaveRequests(currentPage); // Refresh the list
         } catch (err) {
-            console.error('Error rejecting leave request:', err);
-            alert('Failed to reject leave request');
+            console.error('Error deleting leave request:', err);
+            alert('Failed to delete leave request');
         }
     }, [currentPage, fetchLeaveRequests]);
 
@@ -77,16 +127,28 @@ export const RequestSection = () => {
         fetchLeaveRequests(currentPage);
     }, [currentPage, fetchLeaveRequests]);
 
+    const handleSortChange = useCallback((sortBy: LeaveType) => {
+        setCurrentSort(sortBy);
+    }, []);
+
+    const handleSortOptionChange = useCallback((sortOption: SortOption) => {
+        setCurrentSortOption(sortOption);
+    }, []);
+
     return (
         <div>
             <RequestHeader
                 onSearchChange={() => { }}
                 onRequestSuccess={handleRequestSuccess}
                 onCreateRequest={() => { }}
+                editingRequest={editingRequest}
+                onEditClose={() => setEditingRequest(null)}
             />
             <LeaveSort
-                onSortChange={() => { }}
-                currentSort="all"
+                onSortChange={handleSortChange}
+                onSortOptionChange={handleSortOptionChange}
+                currentSort={currentSort}
+                currentSortOption={currentSortOption}
             />
             <LeaveRequestTable
                 leaveRequests={leaveRequests}
@@ -97,9 +159,9 @@ export const RequestSection = () => {
                 totalItems={totalItems}
                 itemsPerPage={itemsPerPage}
                 onPageChange={handlePageChange}
-                onApproveRequest={handleApproveRequest}
-                onRejectRequest={handleRejectRequest}
+                onEditRequest={handleEditRequest}
                 onCancelRequest={handleCancelRequest}
+                onDeleteRequest={handleDeleteRequest}
             />
         </div>
     );
