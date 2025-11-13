@@ -47,7 +47,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     ordering = ['-applied_date']
 
     def get_queryset(self):
-        """Filter queryset based on user permissions."""
+        """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
         queryset = LeaveRequest.objects.select_related('employee', 'tenant', 'approved_by')
 
@@ -55,14 +55,31 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         if not user or user.is_anonymous:
             return queryset.none()
 
-        # If user has permission to view all requests, return all for their tenant
-        if user.has_perm('leave_management.view_leaverequest'):
+        # Check if user can view all requests (admin/owner/special permissions)
+        if self._can_view_all_requests(user):
             if hasattr(self.request, 'tenant') and self.request.tenant:
                 return queryset.filter(tenant=self.request.tenant)
             return queryset
 
         # Otherwise, only show user's own requests
         return queryset.filter(employee=user)
+
+    def _can_view_all_requests(self, user):
+        """Check if user can view all leave requests in the tenant."""
+        # Superusers can view all
+        if user.is_superuser:
+            return True
+        
+        # Check for explicit permission
+        if user.has_perm('leave_management.view_leaverequest'):
+            return True
+        
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner'])
+        except:
+            return False
 
     def perform_create(self, serializer):
         """Set the employee and tenant when creating a request."""
@@ -202,7 +219,7 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
     ordering = ['-year', 'leave_type']
 
     def get_queryset(self):
-        """Filter queryset based on user permissions."""
+        """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
         queryset = LeaveBalance.objects.select_related('employee', 'tenant')
 
@@ -210,14 +227,31 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
         if not user or user.is_anonymous:
             return queryset.none()
 
-        # If user has permission to view all balances, return all for their tenant
-        if user.has_perm('leave_management.view_leavebalance'):
+        # Check if user can view all balances (admin/owner/special permissions)
+        if self._can_view_all_balances(user):
             if hasattr(self.request, 'tenant') and self.request.tenant:
                 return queryset.filter(tenant=self.request.tenant)
             return queryset
 
         # Otherwise, only show user's own balances
         return queryset.filter(employee=user)
+
+    def _can_view_all_balances(self, user):
+        """Check if user can view all leave balances in the tenant."""
+        # Superusers can view all
+        if user.is_superuser:
+            return True
+        
+        # Check for explicit permission
+        if user.has_perm('leave_management.view_leavebalance'):
+            return True
+        
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner'])
+        except:
+            return False
 
 
 class LeavePolicyViewSet(viewsets.ModelViewSet):
@@ -236,7 +270,7 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
     ordering = ['leave_type']
 
     def get_queryset(self):
-        """Filter queryset based on user permissions."""
+        """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
         queryset = LeavePolicy.objects.select_related('tenant')
 
@@ -244,8 +278,8 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
         if not user or user.is_anonymous:
             return queryset.none()
 
-        # If user has permission to view all policies, return all for their tenant
-        if user.has_perm('leave_management.view_leavepolicy'):
+        # Check if user can view all policies (admin/owner/special permissions)
+        if self._can_view_all_policies(user):
             if hasattr(self.request, 'tenant') and self.request.tenant:
                 return queryset.filter(tenant=self.request.tenant)
             return queryset
@@ -255,3 +289,20 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
             return queryset.filter(tenant=self.request.tenant, is_active=True)
 
         return queryset.none()
+
+    def _can_view_all_policies(self, user):
+        """Check if user can view all leave policies in the tenant."""
+        # Superusers can view all
+        if user.is_superuser:
+            return True
+        
+        # Check for explicit permission
+        if user.has_perm('leave_management.view_leavepolicy'):
+            return True
+        
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner'])
+        except:
+            return False

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from accounts.models import CustomUser, Tenant
+from accounts.models import CustomUser, Tenant, UserTenant, Invitation
 
 from .models import LeaveBalance, LeavePolicy, LeaveRequest
 
@@ -69,20 +69,74 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
 
         return data
 
+    def _can_create_for_others(self, user):
+        """Check if user can create leave requests for others."""
+        # Superusers can create for anyone
+        if user.is_superuser:
+            return True
+        
+        # Check if user has tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner'])
+        except:
+            return False
+
     def create(self, validated_data):
-        """Create leave request with tenant context."""
+        """Create leave request with tenant context and user-specific validation."""
         request = self.context['request']
+        
+        # Check if user is trying to create for someone else (from initial data)
+        initial_data = self.initial_data if hasattr(self, 'initial_data') else {}
+        if 'employee' in initial_data:
+            try:
+                target_employee_id = initial_data['employee']
+                if target_employee_id != request.user.id:
+                    if not self._can_create_for_others(request.user):
+                        raise serializers.ValidationError(
+                            "You can only create leave requests for yourself."
+                        )
+            except (ValueError, TypeError):
+                pass  # Invalid employee ID, let field validation handle it
+        
         validated_data['employee'] = request.user
 
         # Set tenant from request context
         if hasattr(request, 'tenant') and request.tenant:
             validated_data['tenant'] = request.tenant
         else:
-            # Fallback for dev mode - get tenant from user's ownership
+            # Fallback for dev mode - get tenant from user's approved UserTenant relationship
             try:
-                validated_data['tenant'] = request.user.usertenant.tenant
-            except:
-                raise serializers.ValidationError("Unable to determine tenant context.")
+                user_tenant = UserTenant.objects.get(user=request.user)
+                if user_tenant.is_approved:
+                    validated_data['tenant'] = user_tenant.tenant
+                else:
+                    raise serializers.ValidationError(
+                        "Your tenant membership is pending approval. Only approved tenant members can create leave requests."
+                    )
+            except UserTenant.DoesNotExist:
+                # Check if user has pending invitations
+                pending_invitations = Invitation.objects.filter(
+                    email=request.user.email,
+                    is_used=False
+                ).select_related('tenant')
+                
+                if pending_invitations.exists():
+                    invitation_info = []
+                    for inv in pending_invitations:
+                        status = "expired" if inv.is_expired() else "pending"
+                        invitation_info.append(f"{inv.tenant.name} ({status})")
+                    
+                    raise serializers.ValidationError(
+                        f"You have pending invitations but haven't accepted any yet: "
+                        f"{', '.join(invitation_info)}. Please accept an invitation to create leave requests."
+                    )
+                else:
+                    raise serializers.ValidationError(
+                        "You are not a member of any tenant. Only approved tenant members can create leave requests."
+                    )
+            except Exception as e:
+                raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
 
         return super().create(validated_data)
 
@@ -131,7 +185,7 @@ class LeavePolicySerializer(serializers.ModelSerializer):
             'created_at', 'updated_at'
         ]
         read_only_fields = [
-            'id', 'slug', 'tenant_name', 'created_at', 'updated_at'
+            'id', 'slug', 'tenant', 'tenant_name', 'created_at', 'updated_at'
         ]
         help_texts = {
             'tenant': 'Company/tenant this policy applies to',
@@ -165,8 +219,18 @@ class LeavePolicySerializer(serializers.ModelSerializer):
         else:
             # Fallback for dev mode - get tenant from user's ownership
             try:
-                validated_data['tenant'] = request.user.usertenant.tenant
-            except:
-                raise serializers.ValidationError("Unable to determine tenant context.")
+                user_tenant = UserTenant.objects.get(user=request.user)
+                if user_tenant.is_approved:
+                    validated_data['tenant'] = user_tenant.tenant
+                else:
+                    raise serializers.ValidationError(
+                        "Your tenant membership is pending approval. Only approved tenant members can create leave policies."
+                    )
+            except UserTenant.DoesNotExist:
+                raise serializers.ValidationError(
+                    "You are not a member of any tenant. Only approved tenant members can create leave policies."
+                )
+            except Exception as e:
+                raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
 
         return super().create(validated_data)

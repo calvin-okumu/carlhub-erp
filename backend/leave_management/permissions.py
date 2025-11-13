@@ -3,6 +3,20 @@ from rest_framework import permissions
 from accounts.models import UserTenant
 
 
+def is_tenant_admin_or_owner(user):
+    """Check if user is tenant admin or owner."""
+    # Superusers are always admins
+    if user.is_superuser:
+        return True
+    
+    # Check tenant admin/owner role
+    try:
+        user_tenant = user.usertenant
+        return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner'])
+    except:
+        return False
+
+
 class HasTenantAccess(permissions.BasePermission):
     """
     Base permission class that ensures tenant isolation for leave management.
@@ -60,18 +74,18 @@ class CanManageLeaveRequests(permissions.BasePermission):
 
         # Employees can view their own requests
         if action == 'view':
-            return obj.employee == request.user or request.user.has_perm('leave_management.view_leaverequest')
+            return obj.employee == request.user or request.user.has_perm('leave_management.view_leaverequest') or is_tenant_admin_or_owner(request.user)
 
         # Employees can only modify their own pending requests
         if action == 'change':
             if obj.employee == request.user and obj.status == 'pending':
                 return True
             # Managers/admins can approve/reject any request
-            return request.user.has_perm('leave_management.change_leaverequest')
+            return request.user.has_perm('leave_management.change_leaverequest') or is_tenant_admin_or_owner(request.user)
 
         # Only admins can delete requests
         if action == 'delete':
-            return request.user.has_perm('leave_management.delete_leaverequest')
+            return request.user.has_perm('leave_management.delete_leaverequest') or is_tenant_admin_or_owner(request.user)
 
         return False
 
@@ -98,7 +112,7 @@ class CanApproveLeaves(permissions.BasePermission):
             return False
 
         # Must have permission to change leave requests (approve/reject)
-        return request.user.has_perm('leave_management.change_leaverequest')
+        return request.user.has_perm('leave_management.change_leaverequest') or is_tenant_admin_or_owner(request.user)
 
     def has_object_permission(self, request, view, obj) -> bool:
         # Check tenant access first
@@ -106,7 +120,7 @@ class CanApproveLeaves(permissions.BasePermission):
             return False
 
         # Must have permission to change leave requests
-        return request.user.has_perm('leave_management.change_leaverequest')
+        return request.user.has_perm('leave_management.change_leaverequest') or is_tenant_admin_or_owner(request.user)
 
 
 class CanManageLeaveBalances(permissions.BasePermission):
