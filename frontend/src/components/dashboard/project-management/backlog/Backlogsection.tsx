@@ -6,17 +6,15 @@ import type { Milestone, Sprint, Task, UserTenant } from '@/api/types';
 import CreateTaskModal from '@/components/shared/CreateTaskModal';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
+import { useProject } from '@/context/ProjectContext';
 import { useTasks } from '@/hooks/useTasks';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import BacklogTable from './BacklogTable';
 
-interface BacklogSectionProps {
-    projectSlug: string;
-}
-
-export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
-    const { tasks, loading, error, addTask, editTask, removeTask } = useTasks(projectSlug, true);
+export default function BacklogSection() {
+    const { project } = useProject();
+    const { tasks, loading, error, addTask, editTask, removeTask } = useTasks(project?.id || '', true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -32,8 +30,8 @@ export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
 
             try {
                 const [milestonesData, sprintsData, usersData] = await Promise.all([
-                    getMilestones(token, { projectSlug }),
-                    getSprints(token, { projectSlug }),
+                    getMilestones(token, { projectId: project?.id }),
+                    getSprints(token, { projectId: project?.id }),
                     getUserTenants(token)
                 ]);
                 setMilestones(milestonesData.results);
@@ -45,7 +43,7 @@ export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
         };
 
         fetchData();
-    }, [projectSlug]);
+    }, [project?.id]);
 
     const handleAddTask = () => {
         setModalMode('add');
@@ -104,6 +102,7 @@ export default function BacklogSection({ projectSlug }: BacklogSectionProps) {
                 onDeleteTask={removeTask}
                 onAddTask={handleAddTask}
                 searchValue={searchValue}
+                projectSlug={project?.slug || ''}
             />
             <CreateTaskModal
                 isOpen={modalOpen}

@@ -11,7 +11,7 @@ function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
-export function useTasks(projectSlug: string, backlog: boolean = false) {
+export function useTasks(projectId: string, backlog: boolean = false) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
 
     setLoading(true);
     try {
-      const data = await getTasks(token, { projectSlug, backlog, ordering: '-created_at' });
+      const data = await getTasks(token, { projectId, backlog, ordering: '-created_at' });
       setTasks(data.results);
     } catch (err) {
       console.error(err);
@@ -30,11 +30,11 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
     } finally {
       setLoading(false);
     }
-  }, [backlog, projectSlug]);
+  }, [backlog, projectId]);
 
-   useEffect(() => {
-       fetchTasks();
-   }, [fetchTasks, backlog]);
+    useEffect(() => {
+        fetchTasks();
+    }, [fetchTasks]);
 
   const addTask = async (data: {
      title: string;
@@ -47,7 +47,7 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
      end_date?: string;
      estimated_hours?: number;
    }) => {
-     const taskData = { ...data, project: projectSlug };
+     const taskData = { ...data, project: projectId };
     const token = getToken();
     if (!token) return;
 
@@ -76,7 +76,7 @@ export function useTasks(projectSlug: string, backlog: boolean = false) {
 
      setLoading(true);
       try {
-        const newTask = await createTask(token, projectSlug, taskData);
+        const newTask = await createTask(token, projectId, taskData);
        console.log("Created task:", newTask);
       setTasks((prev) => prev.map((t) => (t.id === tempTask.id ? newTask : t)));
     } catch (err) {

@@ -9,6 +9,19 @@ import Textarea from '@/components/ui/Textarea';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+// Utility function to format dates for HTML date inputs (YYYY-MM-DD format)
+function formatDateForInput(dateString: string | undefined): string {
+    if (!dateString) return '';
+    try {
+        // Handle various date formats by extracting YYYY-MM-DD
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return '';
+        return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+    } catch {
+        return '';
+    }
+}
+
 interface CreateTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -30,6 +43,8 @@ interface CreateTaskModalProps {
     }) => void;
     defaultSprintId?: string; // For pre-filling sprint in Kanban
     isBacklog?: boolean; // To simplify fields for backlog
+    isKanban?: boolean; // Hide milestone/sprint fields and auto-set them
+    sprintContext?: Sprint; // Sprint object for kanban context
 }
 
 type FormData = {
@@ -45,7 +60,7 @@ type FormData = {
     estimated_hours: string;
 };
 
-export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, assignees, milestones, onSave, defaultSprintId, isBacklog = false }: CreateTaskModalProps) {
+export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, assignees, milestones, onSave, defaultSprintId, isBacklog = false, isKanban = false, sprintContext }: CreateTaskModalProps) {
     const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
         defaultValues: {
             title: '',
@@ -64,13 +79,14 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
     const [maxDate, setMaxDate] = useState('');
 
     const watchedSprint = watch('sprint');
+    const watchedMilestone = watch('milestone');
 
     useEffect(() => {
         if (watchedSprint) {
             const sprint = sprints.find(s => s.slug === watchedSprint);
             if (sprint) {
-                setMinDate(sprint.start_date || '');
-                setMaxDate(sprint.end_date || '');
+                setMinDate(formatDateForInput(sprint.start_date));
+                setMaxDate(formatDateForInput(sprint.end_date));
             }
         } else {
             setMinDate('');
@@ -78,24 +94,47 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
         }
     }, [watchedSprint, sprints]);
 
+    useEffect(() => {
+        if (isBacklog && watchedMilestone) {
+            const milestone = milestones.find(m => m.id === watchedMilestone);
+            if (milestone) {
+                setMinDate(formatDateForInput(milestone.planned_start));
+                setMaxDate(formatDateForInput(milestone.due_date));
+            }
+        } else if (isKanban && sprintContext) {
+            // Set dates based on sprint context in kanban mode
+            setMinDate(formatDateForInput(sprintContext.start_date));
+            setMaxDate(formatDateForInput(sprintContext.end_date));
+        } else if (!isKanban && !isBacklog) {
+            // Reset dates if not in kanban or backlog mode
+            setMinDate('');
+            setMaxDate('');
+        }
+    }, [watchedMilestone, milestones, isBacklog, isKanban, sprintContext]);
+
     const onSubmit = (data: FormData) => {
         let milestoneId: string;
-        if (isBacklog) {
-            milestoneId = data.milestone;
+        let sprintId: string | undefined;
+
+        if (isKanban && sprintContext) {
+            // In kanban mode, auto-set milestone and sprint from context
+            milestoneId = sprintContext.milestone;
+            sprintId = sprintContext.slug;
+        } else if (data.sprint) {
+            // If sprint is selected, use the sprint's milestone
+            const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === data.sprint) : null;
+            if (!sprint) return;
+            const milestone = milestones.find(m => m.id === sprint.milestone);
+            milestoneId = milestone?.slug || '';
+            sprintId = sprint.slug;
         } else {
-            if (data.sprint) {
-                const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === data.sprint) : null;
-                if (!sprint) return;
-                milestoneId = sprint.milestone;
-            } else {
-                alert('Please select a sprint to assign the milestone.');
-                return;
-            }
+            // For backlog tasks or tasks without sprint, use selected milestone
+            const milestone = milestones.find(m => m.id === data.milestone);
+            milestoneId = milestone?.slug || '';
         }
 
-        // Find sprint object to get the ID
-        let sprintId: string | undefined;
-        if (data.sprint) {
+        // Find sprint object to get the ID (only for non-kanban mode)
+        if (!isKanban && data.sprint) {
             const sprintObj = Array.isArray(sprints) ? sprints.find(s => s.slug === data.sprint) : null;
             sprintId = sprintObj?.id;
         }
@@ -105,7 +144,7 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             description: data.description || undefined,
             status: data.status,
             milestone: milestoneId,
-            sprint: sprintId,
+            ...(sprintId && { sprint: sprintId }),
             assignee: data.assignee ? parseInt(data.assignee) : undefined,
             start_date: data.start_date || undefined,
             end_date: data.end_date || undefined,
@@ -129,8 +168,8 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
             setValue('estimated_hours', task.estimated_hours?.toString() || '');
             const sprint = Array.isArray(sprints) ? sprints.find(s => s.slug === task.sprint) : null;
             if (sprint) {
-                setMinDate(sprint.start_date || '');
-                setMaxDate(sprint.end_date || '');
+                setMinDate(formatDateForInput(sprint.start_date));
+                setMaxDate(formatDateForInput(sprint.end_date));
             }
         } else {
             setValue('title', '');
@@ -196,12 +235,12 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                         </Select>
                     </div>
                 </div>
-                {isBacklog && milestones && Array.isArray(milestones) && (
+                {!isKanban && milestones && Array.isArray(milestones) && (
                     <div>
                         <label htmlFor="milestone" className="block text-sm font-medium text-gray-700">Milestone</label>
                         <Select
                             id="milestone"
-                            {...register('milestone', { required: 'Milestone is required' })}
+                            {...register('milestone', { required: !isKanban && 'Milestone is required' })}
                         >
                             <option value="">Select Milestone</option>
                             {Array.isArray(milestones) && milestones.map(milestone => (
@@ -212,12 +251,12 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                         </Select>
                     </div>
                 )}
-                {!isBacklog && (
+                {!isBacklog && !isKanban && (
                     <div>
                         <label htmlFor="sprint" className="block text-sm font-medium text-gray-700">Sprint</label>
                         <Select
                             id="sprint"
-                            {...register('sprint', { required: 'Sprint is required' })}
+                            {...register('sprint', { required: !isKanban && 'Sprint is required' })}
                         >
                             <option value="">Select Sprint</option>
                             {Array.isArray(sprints) && sprints.map(sprint => (
@@ -252,12 +291,17 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             id="start_date"
                             {...register('start_date', {
                                 validate: value => {
-                                    if (!isBacklog && value && minDate && value < minDate) return 'Task start date cannot be before the sprint\'s start date.';
+                                    if (isKanban && sprintContext?.start_date && value && value < sprintContext.start_date) {
+                                        return 'Task start date cannot be before the sprint\'s start date.';
+                                    }
+                                    if (isBacklog && minDate && value && value < minDate) {
+                                        return 'Task start date cannot be before the milestone\'s start date.';
+                                    }
                                     return true;
                                 }
                             })}
-                            min={!isBacklog ? minDate : undefined}
-                            max={!isBacklog ? maxDate : undefined}
+                            min={minDate || undefined}
+                            max={maxDate || undefined}
                             className={errors.start_date ? 'border-red-500' : ''}
                         />
                         {errors.start_date && <p className="text-red-500 text-sm mt-1">{errors.start_date.message}</p>}
@@ -269,12 +313,17 @@ export default function CreateTaskModal({ isOpen, onClose, mode, task, sprints, 
                             id="end_date"
                             {...register('end_date', {
                                 validate: value => {
-                                    if (!isBacklog && value && maxDate && value > maxDate) return 'Task end date cannot be after the sprint\'s end date.';
+                                    if (isKanban && sprintContext?.end_date && value && value > sprintContext.end_date) {
+                                        return 'Task end date cannot be after the sprint\'s end date.';
+                                    }
+                                    if (isBacklog && maxDate && value && value > maxDate) {
+                                        return 'Task end date cannot be after the milestone\'s due date.';
+                                    }
                                     return true;
                                 }
                             })}
-                            min={!isBacklog ? minDate : undefined}
-                            max={!isBacklog ? maxDate : undefined}
+                            min={minDate || undefined}
+                            max={maxDate || undefined}
                             className={errors.end_date ? 'border-red-500' : ''}
                         />
                         {errors.end_date && <p className="text-red-500 text-sm mt-1">{errors.end_date.message}</p>}

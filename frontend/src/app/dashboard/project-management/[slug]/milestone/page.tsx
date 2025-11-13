@@ -8,5 +8,5 @@ export default function MilestonePage() {
 
     if (!project) return null;
 
-    return <MilestoneSection projectSlug={project.slug} />;
+    return <MilestoneSection />;
 }

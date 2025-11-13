@@ -5,6 +5,7 @@ import { assignTaskToSprint, createTask, deleteTask, getSprint, getSprints, getT
 import type { Sprint, Task, UserTenant, Milestone } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import { useProject } from '@/context/ProjectContext';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -14,13 +15,13 @@ import ViewTaskModal from './ViewTaskModal';
 import CreateTaskModal from '@/components/shared/CreateTaskModal';
 
 interface KanbanSectionProps {
-    projectSlug: string;
     sprintSlug: string;
     onBack?: () => void;
 }
 
-export default function KanbanSection({ projectSlug, sprintSlug, onBack }: KanbanSectionProps) {
+export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps) {
     const router = useRouter();
+    const { project } = useProject();
     const [sprint, setSprint] = useState<Sprint | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('access_token');
         console.log('Token:', token ? 'present' : 'missing');
-        console.log('KanbanSection fetchData called with projectSlug:', projectSlug, 'sprintSlug:', sprintSlug);
+        console.log('KanbanSection fetchData called with projectId:', project?.id, 'sprintSlug:', sprintSlug);
         if (!token) {
             setError('No access token found. Redirecting to login...');
             setLoading(false);
@@ -57,7 +58,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
             const sprint = await getSprint(token, sprintSlug);
 
             // Fetch tasks for this sprint
-            const tasksData = await getTasks(token, { projectSlug, sprintSlug: sprintSlug });
+            const tasksData = await getTasks(token, { projectId: project?.id, sprintSlug: sprintSlug });
 
             // Calculate sprint progress as average of task progress (inheriting backend pattern)
             const calculatedSprintProgress = tasksData.results.length > 0
@@ -72,7 +73,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
         } finally {
             setLoading(false);
         }
-    }, [sprintSlug, router]);
+    }, [sprintSlug, router, project?.id]);
 
     useEffect(() => {
         if (sprintSlug) {
@@ -86,10 +87,10 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
             if (!token) return;
             try {
                 const [sprintsData, milestonesData, usersData, backlogData] = await Promise.all([
-                    getSprints(token, { projectSlug }),
-                    getMilestones(token, { projectSlug }),
+                    getSprints(token, { projectId: project?.id }),
+                    getMilestones(token, { projectId: project?.id }),
                     getUserTenants(token),
-                    getTasks(token, { projectSlug, backlog: true }) // backlog=true
+                    getTasks(token, { projectId: project?.id, backlog: true }) // backlog=true
                 ]);
                 setSprints(sprintsData.results);
                 setMilestones(milestonesData.results);
@@ -102,13 +103,13 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
             }
         };
         fetchModalData();
-    }, [projectSlug, sprintSlug, sprint]);
+    }, [project?.id, sprintSlug, sprint]);
 
     const handleBack = () => {
         if (onBack) {
             onBack();
         } else {
-            router.push(`/dashboard/project-management/${projectSlug}/sprint`);
+            router.push(`/dashboard/project-management/${project?.slug}/sprint`);
         }
     };
 
@@ -241,7 +242,7 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
 
         try {
             // Sprint is already set correctly by the modal
-            await createTask(token, projectSlug, data);
+            await createTask(token, project?.id || 0, data);
             setCreateModalOpen(false);
             // Refetch tasks and update sprint progress
             await fetchData();
@@ -318,7 +319,8 @@ export default function KanbanSection({ projectSlug, sprintSlug, onBack }: Kanba
                     milestones={milestones}
                     assignees={users}
                     onSave={handleSaveTask}
-                    defaultSprintId={sprintSlug}
+                    isKanban={true}
+                    sprintContext={sprint}
                 />
                 {addModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center">
