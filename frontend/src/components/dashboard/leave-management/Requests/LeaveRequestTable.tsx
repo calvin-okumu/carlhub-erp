@@ -1,11 +1,11 @@
 "use client";
 
+import { Check, Clock, X } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import type { LeaveRequest } from '../../../../api/types';
 import Loader from '../../../shared/Loader';
 import Button from '../../../ui/Button';
 import Table from '../../../ui/Table';
-import { Check, X, Clock } from 'lucide-react';
-import { useCallback, useMemo, useState } from 'react';
 
 interface LeaveRequestTableProps {
     leaveRequests: LeaveRequest[];
