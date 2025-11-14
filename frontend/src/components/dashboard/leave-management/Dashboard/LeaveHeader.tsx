@@ -1,12 +1,10 @@
-import { Calendar, Clock, User, UserRoundMinus, Users } from "lucide-react";
+import { Calendar, User, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
     { key: "requests", label: "Requests", icon: User },
     { key: "calendar", label: "Calendar", icon: Calendar },
-    { key: "approvals", label: "Approvals", icon: Clock },
-    { key: "balance", label: "Balance", icon: UserRoundMinus },
     { key: "policies", label: "Policies", icon: Users },
 ] as const;
 
