@@ -44,28 +44,28 @@ class UserSpecificAccessControlTests(TestCase):
             tenant=self.tenant,
             is_owner=True,
             is_approved=True,
-            role='owner'
+            role='Tenant Owner'
         )
         self.admin_tenant = UserTenant.objects.create(
             user=self.admin,
             tenant=self.tenant,
             is_owner=False,
             is_approved=True,
-            role='admin'
+            role='Manager'
         )
         self.employee1_tenant = UserTenant.objects.create(
             user=self.employee1,
             tenant=self.tenant,
             is_owner=False,
             is_approved=True,
-            role='employee'
+            role='Employee'
         )
         self.employee2_tenant = UserTenant.objects.create(
             user=self.employee2,
             tenant=self.tenant,
             is_owner=False,
             is_approved=True,
-            role='employee'
+            role='Employee'
         )
         
         # Create leave policies for different types
@@ -333,7 +333,7 @@ class UserSpecificAccessControlTests(TestCase):
             tenant=self.tenant,
             is_owner=False,
             is_approved=False,  # Not approved
-            role='employee'
+            role='Employee'
         )
         
         view = LeaveRequestViewSet.as_view({'get': 'list'})

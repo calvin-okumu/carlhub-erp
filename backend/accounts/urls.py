@@ -3,10 +3,12 @@ from rest_framework.routers import DefaultRouter
 from . import views
 from .views import AuditLogListView
 from .views_permissions import CustomPermissionViewSet, PermissionGroupViewSet, UserPermissionViewSet
+from .views_departments import DepartmentViewSet
 
 router = DefaultRouter()
 router.register(r'permissions', CustomPermissionViewSet, basename='permission')
 router.register(r'permission-groups', PermissionGroupViewSet, basename='permission-group')
+router.register(r'departments', DepartmentViewSet, basename='department')
 
 urlpatterns = [
     path('', include(router.urls)),

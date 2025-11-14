@@ -50,7 +50,7 @@ class LeaveManagementModelTests(TestCase):
         self.assertEqual(leave_request.tenant, self.tenant)
         self.assertEqual(leave_request.leave_type, 'annual_leave')
         self.assertEqual(leave_request.days_requested, Decimal('5.0'))
-        self.assertEqual(leave_request.status, 'pending')
+        self.assertEqual(leave_request.status, 'pending_department_manager')
 
     def test_leave_balance_creation(self):
         """Test creating a leave balance."""
@@ -180,7 +180,7 @@ class LeaveManagementAPITests(APITestCase):
             print(f"Response data: {response.data}")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(LeaveRequest.objects.count(), 1)
-        self.assertEqual(LeaveRequest.objects.first().status, 'pending')
+        self.assertEqual(LeaveRequest.objects.first().status, 'pending_department_manager')
 
     def test_list_leave_requests(self):
         """Test listing leave requests."""
