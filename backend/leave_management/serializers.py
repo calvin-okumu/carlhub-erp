@@ -2,7 +2,9 @@ from rest_framework import serializers
 
 from accounts.models import CustomUser, Tenant, UserTenant, Invitation
 
-from .models import LeaveBalance, LeavePolicy, LeaveRequest
+from .models import LeaveBalance, LeavePolicy, LeaveRequest, LeaveApproval
+from .services import LeaveApprovalWorkflowService, LeaveApproval
+from .services import LeaveApprovalWorkflowService
 
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
@@ -11,7 +13,15 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
     employee_name = serializers.CharField(source='employee.get_full_name', read_only=True, help_text='Full name of the employee')
     tenant_name = serializers.CharField(source='tenant.name', read_only=True, help_text='Name of the tenant organization')
     approved_by_name = serializers.CharField(source='approved_by.get_full_name', read_only=True, help_text='Name of the approver')
+    final_approver_name = serializers.CharField(source='final_approver.get_full_name', read_only=True, help_text='Name of the final approver')
     duration_display = serializers.CharField(read_only=True, help_text='Human-readable duration')
+    
+    # Workflow fields
+    workflow_status = serializers.SerializerMethodField(help_text='Current workflow status information')
+    approval_history = serializers.SerializerMethodField(help_text='Complete approval history')
+    current_approver = serializers.SerializerMethodField(help_text='Current approver in the workflow')
+    can_approve = serializers.SerializerMethodField(help_text='Whether current user can approve this request')
+    next_approval_level = serializers.CharField(read_only=True, help_text='Next approval level in workflow')
 
     class Meta:
         model = LeaveRequest
@@ -19,12 +29,16 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             'id', 'slug', 'employee', 'employee_name', 'tenant', 'tenant_name',
             'leave_type', 'start_date', 'end_date', 'days_requested', 'reason',
             'status', 'applied_date', 'approved_by', 'approved_by_name',
-            'approved_date', 'approval_notes', 'duration_display',
+            'final_approver', 'final_approver_name', 'approved_date', 'approval_notes', 
+            'duration_display', 'current_approval_level', 'next_approval_level',
+            'workflow_status', 'approval_history', 'current_approver', 'can_approve',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'slug', 'employee', 'employee_name', 'tenant', 'tenant_name', 'days_requested',
-            'approved_by_name', 'duration_display', 'created_at', 'updated_at'
+            'approved_by_name', 'final_approver_name', 'duration_display', 'current_approval_level',
+            'next_approval_level', 'workflow_status', 'approval_history', 'current_approver', 
+            'can_approve', 'created_at', 'updated_at'
         ]
         help_texts = {
             'employee': 'Employee requesting leave',
@@ -36,9 +50,11 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             'reason': 'Reason for the leave request',
             'status': 'Current status of the leave request',
             'applied_date': 'When the leave request was submitted (auto-set)',
-            'approved_by': 'Manager who approved/rejected the request',
+            'approved_by': 'Manager who approved/rejected the request (legacy field)',
+            'final_approver': 'Final approver in the workflow chain',
             'approved_date': 'When the request was approved/rejected',
             'approval_notes': 'Notes from the approver',
+            'current_approval_level': 'Current approval level in workflow',
         }
 
     def validate(self, data):
@@ -69,6 +85,45 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
 
         return data
 
+    def get_workflow_status(self, obj):
+        """Get comprehensive workflow status."""
+        return LeaveApprovalWorkflowService.get_workflow_status(obj)
+
+    def get_approval_history(self, obj):
+        """Get approval history with approver details."""
+        history = obj.get_approval_history()
+        return [
+            {
+                'id': approval.id,
+                'level': approval.approval_level,
+                'level_display': approval.get_approval_level_display(),
+                'approver': approval.approver.get_full_name() if approval.approver else None,
+                'status': approval.status,
+                'approved_date': approval.approved_date,
+                'notes': approval.notes,
+                'order': approval.order
+            }
+            for approval in history
+        ]
+
+    def get_current_approver(self, obj):
+        """Get current approver in workflow."""
+        current_approver = obj.get_current_approver()
+        return current_approver.get_full_name() if current_approver else None
+
+    def get_can_approve(self, obj):
+        """Check if current user can approve this request."""
+        request = self.context.get('request')
+        if not request or not request.user:
+            return False
+        
+        if obj.is_pending:
+            can_approve, _ = LeaveApprovalWorkflowService.can_approve_at_level(
+                request.user, obj, obj.current_approval_level
+            )
+            return can_approve
+        return False
+
     def _can_create_for_others(self, user):
         """Check if user can create leave requests for others."""
         # Superusers can create for anyone
@@ -78,7 +133,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         # Check if user has tenant admin/owner role
         try:
             user_tenant = user.usertenant
-            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner'])
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
         except:
             return False
 
@@ -138,7 +193,13 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             except Exception as e:
                 raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
 
-        return super().create(validated_data)
+        # Create the leave request
+        leave_request = super().create(validated_data)
+        
+        # Initialize the approval workflow
+        LeaveApprovalWorkflowService.initialize_workflow(leave_request)
+        
+        return leave_request
 
 
 class LeaveBalanceSerializer(serializers.ModelSerializer):
@@ -234,3 +295,57 @@ class LeavePolicySerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
 
         return super().create(validated_data)
+
+
+class LeaveApprovalSerializer(serializers.ModelSerializer):
+    """Serializer for leave approval records with workflow information."""
+    
+    approver_name = serializers.CharField(source='approver.get_full_name', read_only=True, help_text='Name of the approver')
+    level_display = serializers.CharField(source='get_approval_level_display', read_only=True, help_text='Display name of approval level')
+    
+    class Meta:
+        model = LeaveApproval
+        fields = [
+            'id', 'slug', 'leave_request', 'approval_level', 'level_display',
+            'approver', 'approver_name', 'status', 'approved_date', 'notes', 'order',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'slug', 'approver_name', 'level_display', 'approved_date', 
+            'created_at', 'updated_at'
+        ]
+        help_texts = {
+            'leave_request': 'Leave request being approved',
+            'approval_level': 'Level in the approval chain',
+            'approver': 'User who performed the approval',
+            'status': 'Approval status (pending/approved/rejected)',
+            'notes': 'Notes from the approver',
+            'order': 'Order in the approval sequence',
+        }
+
+
+class LeaveApprovalActionSerializer(serializers.Serializer):
+    """Serializer for leave approval actions."""
+    
+    action = serializers.ChoiceField(
+        choices=['approve', 'reject'],
+        help_text='Action to perform on the leave request'
+    )
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=500,
+        help_text='Optional notes explaining the decision'
+    )
+    
+    def validate(self, data):
+        """Validate approval action data."""
+        action = data.get('action')
+        notes = data.get('notes', '')
+        
+        if action == 'reject' and not notes.strip():
+            raise serializers.ValidationError(
+                "Notes are required when rejecting a leave request."
+            )
+        
+        return data

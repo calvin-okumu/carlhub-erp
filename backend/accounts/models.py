@@ -184,7 +184,31 @@ class UserTenant(models.Model):
     tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE, db_index=True)
     is_owner = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=True)  # Default True for owners, False for invited members
-    role = models.CharField(max_length=100, default='Employee')
+    
+    ROLE_CHOICES = [
+        ('Employee', 'Employee'),
+        ('Department Manager', 'Department Manager'),
+        ('HR Manager', 'HR Manager'),
+        ('General Manager', 'General Manager'),
+        ('Tenant Owner', 'Tenant Owner'),
+    ]
+    
+    role = models.CharField(
+        max_length=100,
+        choices=ROLE_CHOICES,
+        default='Employee',
+        help_text="User role within the tenant"
+    )
+    
+    # Department assignment
+    department = models.ForeignKey(
+        'accounts.Department',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='members',
+        help_text="Department this user belongs to"
+    )
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -511,27 +535,95 @@ class PermissionGroup(models.Model):
     description = models.TextField(blank=True)
     is_system_group = models.BooleanField(default=False)  # Prevent deletion of system groups
     custom_permissions = models.ManyToManyField(CustomPermission, blank=True)
-    # Keep existing groups relationship
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='permission_groups', blank=True)
-    tenant = models.ForeignKey('accounts.Tenant', on_delete=models.CASCADE, db_index=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_groups')
+
+
+class Department(models.Model):
+    """
+    Model for organizing employees into departments with hierarchical management.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    
+    name = models.CharField(
+        max_length=100,
+        help_text="Department name"
+    )
+    tenant = models.ForeignKey(
+        'accounts.Tenant',
+        on_delete=models.CASCADE,
+        related_name='departments',
+        db_index=True,
+        help_text="Company/tenant this department belongs to"
+    )
+    
+    # Management structure
+    manager = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='managed_departments',
+        help_text="Department manager (typically Department Manager role)"
+    )
+    
+    # Department details
+    description = models.TextField(
+        blank=True,
+        help_text="Department description and responsibilities"
+    )
+    parent_department = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='sub_departments',
+        help_text="Parent department for hierarchical structure"
+    )
+    
+    # Status and metadata
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this department is currently active"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['tenant', 'name']
+        unique_together = ['name', 'tenant']
+        indexes = [
+            models.Index(fields=['tenant', 'is_active']),
+            models.Index(fields=['manager']),
+            models.Index(fields=['parent_department']),
+        ]
+
     def save(self, *args, **kwargs):
+        # Generate slug if not present
         if not self.slug:
             from django.utils.text import slugify
-            base_slug = slugify(self.name)
-            self.slug = base_slug
+            base_slug = f"dept-{self.tenant.id}-{self.name}"
+            self.slug = slugify(base_slug)
+            
+            # Ensure uniqueness
+            original_slug = self.slug
             counter = 1
-            while PermissionGroup.objects.filter(slug=self.slug).exists():
-                self.slug = f"{base_slug}-{counter}"
+            while Department.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
                 counter += 1
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.tenant.name}: {self.name}"
 
-    class Meta:
-        ordering = ['tenant', 'name']
-        unique_together = ['name', 'tenant']
+    @property
+    def employee_count(self):
+        """Get the number of employees in this department."""
+        return UserTenant.objects.filter(department=self, is_approved=True).count()
+
+    def get_all_sub_departments(self):
+        """Get all sub-departments recursively."""
+        sub_depts = list(self.sub_departments.all())
+        for sub_dept in sub_depts[:]:  # Copy list to avoid modification during iteration
+            sub_depts.extend(sub_dept.get_all_sub_departments())
+        return sub_depts

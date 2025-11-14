@@ -652,7 +652,7 @@ class PermissionTests(APITestCase):
         # Create UserTenant relationships for the test users
         from accounts.models import UserTenant
         UserTenant.objects.create(user=self.client_manager, tenant=self.org, is_owner=True, is_approved=True, role='Tenant Owner')
-        UserTenant.objects.create(user=self.project_manager, tenant=self.org, is_owner=False, is_approved=True, role='Project Manager')
+        UserTenant.objects.create(user=self.project_manager, tenant=self.org, is_owner=False, is_approved=True, role='Manager')
         UserTenant.objects.create(user=self.api_manager, tenant=self.org, is_owner=True, is_approved=True, role='Tenant Owner')
         # regular_user has no UserTenant relationship - should have no access
 
