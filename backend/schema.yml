@@ -124,6 +124,302 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedAuditLogList'
           description: ''
+  /api/accounts/departments/:
+    get:
+      operationId: accounts_departments_list
+      description: |-
+        ViewSet for managing departments.
+
+        Tenant Owners/Admins can:
+        - Create, view, update, delete departments
+
+        Department Managers can:
+        - View departments
+        - Create sub-departments
+        - Update their own department
+
+        Employees can:
+        - View departments only
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: parent_department
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: tenant
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDepartmentList'
+          description: ''
+    post:
+      operationId: accounts_departments_create
+      description: |-
+        ViewSet for managing departments.
+
+        Tenant Owners/Admins can:
+        - Create, view, update, delete departments
+
+        Department Managers can:
+        - View departments
+        - Create sub-departments
+        - Update their own department
+
+        Employees can:
+        - View departments only
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/accounts/departments/{slug}/:
+    get:
+      operationId: accounts_departments_retrieve
+      description: |-
+        ViewSet for managing departments.
+
+        Tenant Owners/Admins can:
+        - Create, view, update, delete departments
+
+        Department Managers can:
+        - View departments
+        - Create sub-departments
+        - Update their own department
+
+        Employees can:
+        - View departments only
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    put:
+      operationId: accounts_departments_update
+      description: |-
+        ViewSet for managing departments.
+
+        Tenant Owners/Admins can:
+        - Create, view, update, delete departments
+
+        Department Managers can:
+        - View departments
+        - Create sub-departments
+        - Update their own department
+
+        Employees can:
+        - View departments only
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    patch:
+      operationId: accounts_departments_partial_update
+      description: |-
+        ViewSet for managing departments.
+
+        Tenant Owners/Admins can:
+        - Create, view, update, delete departments
+
+        Department Managers can:
+        - View departments
+        - Create sub-departments
+        - Update their own department
+
+        Employees can:
+        - View departments only
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedDepartment'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+    delete:
+      operationId: accounts_departments_destroy
+      description: |-
+        ViewSet for managing departments.
+
+        Tenant Owners/Admins can:
+        - Create, view, update, delete departments
+
+        Department Managers can:
+        - View departments
+        - Create sub-departments
+        - Update their own department
+
+        Employees can:
+        - View departments only
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounts/departments/{slug}/assign_manager/:
+    post:
+      operationId: accounts_departments_assign_manager_create
+      description: Assign a new manager to this department.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Department'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Department'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Department'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
+  /api/accounts/departments/{slug}/employees/:
+    get:
+      operationId: accounts_departments_employees_retrieve
+      description: Get all employees in this department (including sub-departments).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Department'
+          description: ''
   /api/accounts/documents/:
     get:
       operationId: accounts_documents_list
@@ -278,6 +574,382 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/accounts/permission-groups/:
+    get:
+      operationId: accounts_permission_groups_list
+      description: CRUD operations for permission groups
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPermissionGroupList'
+          description: ''
+    post:
+      operationId: accounts_permission_groups_create
+      description: CRUD operations for permission groups
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionGroup'
+          description: ''
+  /api/accounts/permission-groups/{id}/:
+    get:
+      operationId: accounts_permission_groups_retrieve
+      description: CRUD operations for permission groups
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionGroup'
+          description: ''
+    put:
+      operationId: accounts_permission_groups_update
+      description: CRUD operations for permission groups
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionGroup'
+          description: ''
+    patch:
+      operationId: accounts_permission_groups_partial_update
+      description: CRUD operations for permission groups
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPermissionGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPermissionGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPermissionGroup'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionGroup'
+          description: ''
+    delete:
+      operationId: accounts_permission_groups_destroy
+      description: CRUD operations for permission groups
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounts/permission-groups/{id}/assign_permissions/:
+    post:
+      operationId: accounts_permission_groups_assign_permissions_create
+      description: Assign custom permissions to this group
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionGroup'
+          description: ''
+  /api/accounts/permission-groups/{id}/assign_users/:
+    post:
+      operationId: accounts_permission_groups_assign_users_create
+      description: Assign users to this permission group
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PermissionGroup'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionGroup'
+          description: ''
+  /api/accounts/permissions/:
+    get:
+      operationId: accounts_permissions_list
+      description: CRUD operations for custom permissions
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomPermissionList'
+          description: ''
+    post:
+      operationId: accounts_permissions_create
+      description: CRUD operations for custom permissions
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPermission'
+          description: ''
+  /api/accounts/permissions/{id}/:
+    get:
+      operationId: accounts_permissions_retrieve
+      description: CRUD operations for custom permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPermission'
+          description: ''
+    put:
+      operationId: accounts_permissions_update
+      description: CRUD operations for custom permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPermission'
+          description: ''
+    patch:
+      operationId: accounts_permissions_partial_update
+      description: CRUD operations for custom permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomPermission'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPermission'
+          description: ''
+    delete:
+      operationId: accounts_permissions_destroy
+      description: CRUD operations for custom permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/accounts/profile/:
     get:
       operationId: accounts_profile_retrieve
@@ -346,6 +1018,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserProfile'
           description: ''
+  /api/accounts/users/{user_id}/permissions/:
+    get:
+      operationId: accounts_users_permissions_retrieve
+      description: Get user's current permissions
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: accounts_users_permissions_create
+      description: Assign permissions directly to user
+      parameters:
+      - in: path
+        name: user_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - accounts
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/approve-member/:
     post:
       operationId: approve_member_create
@@ -382,6 +1089,79 @@ paths:
             application/json:
               schema:
                 description: Permission denied
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/assign-admin/:
+    post:
+      operationId: assign_admin_create
+      description: Assign or remove admin (owner) role to/from an approved tenant
+        member. Only current owners can perform this action.
+      summary: Assign admin role to tenant member
+      tags:
+      - assign-admin
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user to assign/remove admin role
+                assign_admin:
+                  type: boolean
+                  description: True to assign admin role, False to remove
+              required:
+              - user_id
+              - assign_admin
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Admin role assigned/removed successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    type: string
+                  role:
+                    type: string
+                  is_owner:
+                    type: boolean
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Bad request - invalid user or assignment not allowed
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Forbidden - only owners can assign admin roles
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: User not found
                 type: object
                 properties:
                   error:
@@ -625,6 +1405,36 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/clients/bulk_delete_clients/:
+    post:
+      operationId: clients_bulk_delete_clients_create
+      description: |-
+        Bulk delete multiple clients.
+        Expects: {"client_ids": [1, 2, 3]}
+      tags:
+      - clients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Client'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Client'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Client'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+          description: ''
   /api/confirm-invitation/:
     get:
       operationId: confirm_invitation_retrieve
@@ -730,6 +1540,149 @@ paths:
           content:
             application/json:
               schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/database-backup/:
+    post:
+      operationId: database_backup_create
+      description: Create a timestamped database backup. Only superusers can perform
+        this action.
+      summary: Create database backup
+      tags:
+      - database-backup
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Backup created successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+                  backup_file:
+                    type: string
+                  created_at:
+                    type: string
+                    format: date-time
+                  size:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Forbidden - only superusers can create backups
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/excel-export/:
+    get:
+      operationId: excel_export_retrieve
+      description: Export clients, projects, or tasks to Excel format
+      summary: Export data to Excel
+      parameters:
+      - in: query
+        name: model
+        schema:
+          type: string
+          enum:
+          - clients
+          - projects
+          - tasks
+        description: Model to export (clients, projects, tasks)
+        required: true
+      tags:
+      - excel-export
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Excel file download
+                content:
+                  application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+                    schema:
+                      type: string
+                      format: binary
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid model type
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+  /api/excel-import/:
+    post:
+      operationId: excel_import_create
+      description: Import clients, projects, or tasks from Excel file
+      summary: Import data from Excel
+      tags:
+      - excel-import
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel file to import
+                model:
+                  type: string
+                  enum:
+                  - clients
+                  - projects
+                  - tasks
+                  description: Model type to import
+              required:
+              - file
+              - model
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Import completed
+                type: object
+                properties:
+                  imported:
+                    type: integer
+                  updated:
+                    type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+                  warnings:
+                    type: array
+                    items:
+                      type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Invalid request or file format
                 type: object
                 properties:
                   error:
@@ -977,6 +1930,16 @@ paths:
                   token:
                     type: string
           description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Bad request - user already a member or invalid data
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
         '403':
           content:
             application/json:
@@ -1173,6 +2136,870 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/leave/balances/:
+    get:
+      operationId: leave_balances_list
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: query
+        name: employee
+        schema:
+          type: integer
+      - in: query
+        name: leave_type
+        schema:
+          type: string
+          enum:
+          - annual_leave
+          - emergency_leave
+          - maternity_leave
+          - personal_leave
+          - sick_leave
+          - unpaid_leave
+        description: |-
+          Type of leave this balance applies to
+
+          * `annual_leave` - Annual Leave
+          * `sick_leave` - Sick Leave
+          * `personal_leave` - Personal Leave
+          * `maternity_leave` - Maternity/Paternity Leave
+          * `emergency_leave` - Emergency Leave
+          * `unpaid_leave` - Unpaid Leave
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: year
+        schema:
+          type: integer
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeaveBalanceList'
+          description: ''
+    post:
+      operationId: leave_balances_create
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+  /api/leave/balances/{slug}/:
+    get:
+      operationId: leave_balances_retrieve
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+    put:
+      operationId: leave_balances_update
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveBalance'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+    patch:
+      operationId: leave_balances_partial_update
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveBalance'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveBalance'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveBalance'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveBalance'
+          description: ''
+    delete:
+      operationId: leave_balances_destroy
+      description: |-
+        ViewSet for managing leave balances.
+
+        HR/Admin users can manage leave balances for employees.
+        Employees can view their own balances.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/policies/:
+    get:
+      operationId: leave_policies_list
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: leave_type
+        schema:
+          type: string
+          enum:
+          - annual_leave
+          - emergency_leave
+          - maternity_leave
+          - personal_leave
+          - sick_leave
+          - unpaid_leave
+        description: |-
+          Type of leave this policy applies to
+
+          * `annual_leave` - Annual Leave
+          * `sick_leave` - Sick Leave
+          * `personal_leave` - Personal Leave
+          * `maternity_leave` - Maternity/Paternity Leave
+          * `emergency_leave` - Emergency Leave
+          * `unpaid_leave` - Unpaid Leave
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeavePolicyList'
+          description: ''
+    post:
+      operationId: leave_policies_create
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+  /api/leave/policies/{slug}/:
+    get:
+      operationId: leave_policies_retrieve
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+    put:
+      operationId: leave_policies_update
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeavePolicy'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+    patch:
+      operationId: leave_policies_partial_update
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeavePolicy'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeavePolicy'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeavePolicy'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeavePolicy'
+          description: ''
+    delete:
+      operationId: leave_policies_destroy
+      description: |-
+        ViewSet for managing leave policies.
+
+        Only tenant admins can manage leave policies.
+        All tenant users can view active policies.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/requests/:
+    get:
+      operationId: leave_requests_list
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers and Tenant Owners can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: query
+        name: approved_by
+        schema:
+          type: integer
+      - in: query
+        name: employee
+        schema:
+          type: integer
+      - in: query
+        name: leave_type
+        schema:
+          type: string
+          enum:
+          - annual_leave
+          - emergency_leave
+          - maternity_leave
+          - personal_leave
+          - sick_leave
+          - unpaid_leave
+        description: |-
+          Type of leave being requested
+
+          * `annual_leave` - Annual Leave
+          * `sick_leave` - Sick Leave
+          * `personal_leave` - Personal Leave
+          * `maternity_leave` - Maternity/Paternity Leave
+          * `emergency_leave` - Emergency Leave
+          * `unpaid_leave` - Unpaid Leave
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - approved
+          - cancelled
+          - pending_department_manager
+          - pending_general_manager
+          - pending_hr_manager
+          - rejected
+          - taken
+        description: |-
+          Current status of leave request
+
+          * `pending_department_manager` - Pending Department Manager
+          * `pending_hr_manager` - Pending HR Manager
+          * `pending_general_manager` - Pending General Manager
+          * `approved` - Approved
+          * `rejected` - Rejected
+          * `cancelled` - Cancelled
+          * `taken` - Leave Taken
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeaveRequestList'
+          description: ''
+    post:
+      operationId: leave_requests_create
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers and Tenant Owners can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{slug}/:
+    get:
+      operationId: leave_requests_retrieve
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers and Tenant Owners can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    put:
+      operationId: leave_requests_update
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers and Tenant Owners can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    patch:
+      operationId: leave_requests_partial_update
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers and Tenant Owners can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+    delete:
+      operationId: leave_requests_destroy
+      description: |-
+        ViewSet for managing leave requests.
+
+        Employees can:
+        - View their own leave requests
+        - Create new leave requests
+        - Update their pending requests
+
+        Managers and Tenant Owners can:
+        - View all requests in their tenant
+        - Approve/reject requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/requests/{slug}/approve/:
+    post:
+      operationId: leave_requests_approve_create
+      description: Approve a leave request (legacy endpoint for backward compatibility).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{slug}/approve_level/:
+    post:
+      operationId: leave_requests_approve_level_create
+      description: Approve a leave request at the current workflow level.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{slug}/cancel/:
+    post:
+      operationId: leave_requests_cancel_create
+      description: Cancel a leave request (only by the employee who created it).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{slug}/reject/:
+    post:
+      operationId: leave_requests_reject_create
+      description: Reject a leave request (legacy endpoint for backward compatibility).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{slug}/reject_level/:
+    post:
+      operationId: leave_requests_reject_level_create
+      description: Reject a leave request at the current workflow level.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/requests/{slug}/workflow_status/:
+    get:
+      operationId: leave_requests_workflow_status_retrieve
+      description: Get detailed workflow status for a leave request.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+          description: ''
   /api/login/:
     post:
       operationId: login_create
@@ -1261,6 +3088,20 @@ paths:
         name: role
         schema:
           type: string
+          enum:
+          - Department Manager
+          - Employee
+          - General Manager
+          - HR Manager
+          - Tenant Owner
+        description: |-
+          User role within the tenant
+
+          * `Employee` - Employee
+          * `Department Manager` - Department Manager
+          * `HR Manager` - HR Manager
+          * `General Manager` - General Manager
+          * `Tenant Owner` - Tenant Owner
       - name: search
         required: false
         in: query
@@ -1886,401 +3727,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Project'
           description: ''
-  /api/projects/{project_slug}/sprints/:
-    get:
-      operationId: projects_sprints_list
-      description: Retrieve a list of sprints for the current tenant with task count
-        and progress.
-      summary: List sprints
-      parameters:
-      - in: query
-        name: milestone
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: milestone__project
-        schema:
-          type: string
-          format: uuid
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - name: search
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      - in: query
-        name: status
-        schema:
-          type: string
-          enum:
-          - active
-          - canceled
-          - completed
-          - planned
-        description: |-
-          * `planned` - Planned
-          * `active` - Active
-          * `completed` - Completed
-          * `canceled` - Canceled
-      tags:
-      - projects
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedSprintList'
-          description: ''
-    post:
-      operationId: projects_sprints_create
-      description: Create a new sprint for a milestone.
-      summary: Create sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      tags:
-      - projects
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
-  /api/projects/{project_slug}/sprints/{slug}/:
-    get:
-      operationId: projects_sprints_retrieve
-      description: Retrieve details of a specific sprint including tasks count and
-        progress.
-      summary: Retrieve sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - projects
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
-    put:
-      operationId: projects_sprints_update
-      description: Update an existing sprint's information.
-      summary: Update sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - projects
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
-    patch:
-      operationId: projects_sprints_partial_update
-      description: Partially update a sprint's information.
-      summary: Partially update sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - projects
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedSprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedSprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedSprint'
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
-    delete:
-      operationId: projects_sprints_destroy
-      description: Delete a sprint and unassign all associated tasks.
-      summary: Delete sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - projects
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/projects/{project_slug}/sprints/{slug}/assign_task/:
-    post:
-      operationId: projects_sprints_assign_task_create
-      description: Assign an existing task to this sprint.
-      summary: Assign task to sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - projects
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
-  /api/projects/{project_slug}/sprints/{slug}/create_task/:
-    post:
-      operationId: projects_sprints_create_task_create
-      description: Create a new task directly assigned to this sprint.
-      summary: Create task in sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - projects
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
-  /api/projects/{project_slug}/sprints/{slug}/unassign_task/:
-    post:
-      operationId: projects_sprints_unassign_task_create
-      description: Remove a task from this sprint.
-      summary: Unassign task from sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - projects
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
-  /api/projects/{project_slug}/sprints/bulk_update_sprints/:
-    post:
-      operationId: projects_sprints_bulk_update_sprints_create
-      description: |-
-        Bulk update multiple sprints with the same status.
-        Expects: {"sprint_ids": [1, 2, 3], "status": "active"}
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      tags:
-      - projects
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
   /api/projects/{slug}/:
     get:
       operationId: projects_retrieve
@@ -2402,6 +3848,72 @@ paths:
         schema:
           type: string
         required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/{slug}/restore/:
+    post:
+      operationId: projects_restore_create
+      description: |-
+        Restore a soft-deleted project.
+        Only administrators can restore projects.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Project'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Project'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/bulk_delete_projects/:
+    post:
+      operationId: projects_bulk_delete_projects_create
+      description: |-
+        Bulk delete multiple projects.
+        Expects: {"project_ids": [1, 2, 3]}
       tags:
       - projects
       requestBody:
@@ -2580,8 +4092,7 @@ paths:
   /api/sprints/:
     get:
       operationId: sprints_list
-      description: Retrieve a list of sprints for the current tenant with task count
-        and progress.
+      description: Retrieve a list of sprints for the current tenant.
       summary: List sprints
       parameters:
       - in: query
@@ -2646,7 +4157,7 @@ paths:
           description: ''
     post:
       operationId: sprints_create
-      description: Create a new sprint for a milestone.
+      description: Create a new sprint.
       summary: Create sprint
       parameters:
       - in: path
@@ -2682,9 +4193,8 @@ paths:
   /api/sprints/{slug}/:
     get:
       operationId: sprints_retrieve
-      description: Retrieve details of a specific sprint including tasks count and
-        progress.
-      summary: Retrieve sprint
+      description: Retrieve detailed information about a specific sprint.
+      summary: Get sprint details
       parameters:
       - in: path
         name: project_slug
@@ -2853,47 +4363,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/Sprint'
           description: ''
-  /api/sprints/{slug}/create_task/:
-    post:
-      operationId: sprints_create_task_create
-      description: Create a new task directly assigned to this sprint.
-      summary: Create task in sprint
-      parameters:
-      - in: path
-        name: project_slug
-        schema:
-          type: string
-        description: Project slug for filtering sprints within a specific project
-        required: true
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - sprints
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Sprint'
-          description: ''
   /api/sprints/{slug}/unassign_task/:
     post:
       operationId: sprints_unassign_task_create
@@ -2936,8 +4405,8 @@ paths:
                 $ref: '#/components/schemas/Sprint'
           description: ''
   /api/sprints/bulk_update_sprints/:
-    post:
-      operationId: sprints_bulk_update_sprints_create
+    patch:
+      operationId: sprints_bulk_update_sprints_partial_update
       description: |-
         Bulk update multiple sprints with the same status.
         Expects: {"sprint_ids": [1, 2, 3], "status": "active"}
@@ -2954,14 +4423,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Sprint'
+              $ref: '#/components/schemas/PatchedSprint'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Sprint'
+              $ref: '#/components/schemas/PatchedSprint'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Sprint'
-        required: true
+              $ref: '#/components/schemas/PatchedSprint'
       security:
       - tokenAuth: []
       - cookieAuth: []
@@ -3180,6 +4648,72 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/tasks/{slug}/restore/:
+    post:
+      operationId: tasks_restore_create
+      description: |-
+        Restore a soft-deleted task.
+        Only administrators can restore tasks.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
+  /api/tasks/bulk_delete_tasks/:
+    post:
+      operationId: tasks_bulk_delete_tasks_create
+      description: |-
+        Bulk delete multiple tasks.
+        Expects: {"task_ids": [1, 2, 3]}
+      tags:
+      - tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Task'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Task'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Task'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+          description: ''
   /api/tasks/bulk_update_tasks/:
     post:
       operationId: tasks_bulk_update_tasks_create
@@ -3217,7 +4751,6 @@ paths:
         ViewSet for managing tenant organizations.
 
         Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
-        In multi-tenant mode, automatically scopes data to the current tenant.
       parameters:
       - in: query
         name: name
@@ -3259,7 +4792,6 @@ paths:
         ViewSet for managing tenant organizations.
 
         Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
-        In multi-tenant mode, automatically scopes data to the current tenant.
       tags:
       - tenants
       requestBody:
@@ -3291,7 +4823,6 @@ paths:
         ViewSet for managing tenant organizations.
 
         Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
-        In multi-tenant mode, automatically scopes data to the current tenant.
       parameters:
       - in: path
         name: slug
@@ -3316,7 +4847,6 @@ paths:
         ViewSet for managing tenant organizations.
 
         Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
-        In multi-tenant mode, automatically scopes data to the current tenant.
       parameters:
       - in: path
         name: slug
@@ -3353,7 +4883,6 @@ paths:
         ViewSet for managing tenant organizations.
 
         Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
-        In multi-tenant mode, automatically scopes data to the current tenant.
       parameters:
       - in: path
         name: slug
@@ -3389,7 +4918,6 @@ paths:
         ViewSet for managing tenant organizations.
 
         Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
-        In multi-tenant mode, automatically scopes data to the current tenant.
       parameters:
       - in: path
         name: slug
@@ -3404,6 +4932,73 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/transfer-ownership/:
+    post:
+      operationId: transfer_ownership_create
+      description: Transfer ownership of a tenant from current owner to another approved
+        member. Only current owners can perform this action.
+      summary: Transfer tenant ownership
+      tags:
+      - transfer-ownership
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                to_user_id:
+                  type: integer
+                  description: ID of the user to transfer ownership to
+              required:
+              - to_user_id
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Ownership transferred successfully
+                type: object
+                properties:
+                  message:
+                    type: string
+                  from_user:
+                    type: string
+                  to_user:
+                    type: string
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                description: Bad request - invalid user or transfer not allowed
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Forbidden - only owners can transfer ownership
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                description: User not found
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
   /api/users/:
     get:
       operationId: users_list
@@ -3473,7 +5068,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CustomUser'
           description: ''
-  /api/users/{id}/:
+  /api/users/{slug}/:
     get:
       operationId: users_retrieve
       description: Retrieve details of a specific user. Users can only access their
@@ -3481,10 +5076,9 @@ paths:
       summary: Retrieve user
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
-          type: integer
-        description: A unique integer value identifying this user.
+          type: string
         required: true
       tags:
       - users
@@ -3504,10 +5098,9 @@ paths:
       summary: Update user
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
-          type: integer
-        description: A unique integer value identifying this user.
+          type: string
         required: true
       tags:
       - users
@@ -3540,10 +5133,9 @@ paths:
       summary: Partially update user
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
-          type: integer
-        description: A unique integer value identifying this user.
+          type: string
         required: true
       tags:
       - users
@@ -3574,10 +5166,9 @@ paths:
       summary: Delete user
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
-          type: integer
-        description: A unique integer value identifying this user.
+          type: string
         required: true
       tags:
       - users
@@ -3587,6 +5178,75 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/users/me/:
+    get:
+      operationId: users_me_retrieve
+      description: Get or update current user's profile.
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+    put:
+      operationId: users_me_update
+      description: Get or update current user's profile.
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomUser'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
+    patch:
+      operationId: users_me_partial_update
+      description: Get or update current user's profile.
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomUser'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomUser'
+          description: ''
 components:
   schemas:
     AccountTypeEnum:
@@ -3691,6 +5351,22 @@ components:
     BlankEnum:
       enum:
       - ''
+    CategoryEnum:
+      enum:
+      - project
+      - leave
+      - crm
+      - finance
+      - admin
+      - custom
+      type: string
+      description: |-
+        * `project` - Project Management
+        * `leave` - Leave Management
+        * `crm` - CRM
+        * `finance` - Finance
+        * `admin` - Administration
+        * `custom` - Custom
     Client:
       type: object
       properties:
@@ -3719,6 +5395,7 @@ components:
         tenant:
           type: string
           format: uuid
+          readOnly: true
           nullable: true
         tenant_name:
           type: string
@@ -3742,6 +5419,7 @@ components:
       - id
       - name
       - projects_count
+      - tenant
       - tenant_name
       - updated_at
     ClientStatusEnum:
@@ -3768,6 +5446,86 @@ components:
         * `51-200` - 51-200 employees
         * `201-1000` - 201-1000 employees
         * `1000+` - 1000+ employees
+    CurrencyEnum:
+      enum:
+      - USD
+      - EUR
+      - GBP
+      - JPY
+      - CAD
+      - AUD
+      - CHF
+      - CNY
+      - INR
+      - BRL
+      - ZAR
+      - KES
+      type: string
+      description: |-
+        * `USD` - US Dollar
+        * `EUR` - Euro
+        * `GBP` - British Pound
+        * `JPY` - Japanese Yen
+        * `CAD` - Canadian Dollar
+        * `AUD` - Australian Dollar
+        * `CHF` - Swiss Franc
+        * `CNY` - Chinese Yuan
+        * `INR` - Indian Rupee
+        * `BRL` - Brazilian Real
+        * `ZAR` - South African Rand
+        * `KES` - Kenyan Shilling
+    CurrentApprovalLevelEnum:
+      enum:
+      - department_manager
+      - hr_manager
+      - general_manager
+      type: string
+      description: |-
+        * `department_manager` - Department Manager
+        * `hr_manager` - HR Manager
+        * `general_manager` - General Manager
+    CustomPermission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        codename:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        app_label:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - codename
+      - created_at
+      - id
+      - name
+      - slug
+      - updated_at
     CustomUser:
       type: object
       properties:
@@ -3800,6 +5558,80 @@ components:
       - email
       - id
       - is_active
+    DefaultCurrencyEnum:
+      enum:
+      - USD
+      - EUR
+      - GBP
+      - JPY
+      - CAD
+      - AUD
+      - CHF
+      - CNY
+      - INR
+      - BRL
+      - ZAR
+      - KES
+      type: string
+      description: |-
+        * `USD` - US Dollar
+        * `EUR` - Euro
+        * `GBP` - British Pound
+        * `JPY` - Japanese Yen
+        * `CAD` - Canadian Dollar
+        * `AUD` - Australian Dollar
+        * `CHF` - Swiss Franc
+        * `CNY` - Chinese Yuan
+        * `INR` - Indian Rupee
+        * `BRL` - Brazilian Real
+        * `ZAR` - South African Rand
+        * `KES` - Kenyan Shilling
+    Department:
+      type: object
+      description: Serializer for Department model with slug support
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          description: Department name
+          maxLength: 100
+        description:
+          type: string
+          description: Department description and responsibilities
+        manager:
+          type: integer
+          nullable: true
+          description: Department manager (typically Department Manager role)
+        manager_name:
+          type: string
+          readOnly: true
+        employee_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - employee_count
+      - id
+      - manager_name
+      - name
+      - slug
+      - updated_at
     EmployeeDocument:
       type: object
       properties:
@@ -3934,10 +5766,35 @@ components:
           type: string
           format: uuid
           nullable: true
+        currency:
+          nullable: true
+          description: |-
+            Currency for this invoice
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
         issued_at:
           type: string
           format: date-time
@@ -3948,8 +5805,388 @@ components:
       - amount
       - client
       - client_name
+      - formatted_amount
       - id
       - issued_at
+    LeaveBalance:
+      type: object
+      description: Serializer for leave balances with utilization calculations.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          description: Employee whose leave balance this represents
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant the balance belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this balance applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Calendar year for this leave balance
+        total_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Total leave days allocated for this year
+        used_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days already used this year
+        carried_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days carried over from previous year
+        remaining_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Remaining leave days available
+        utilization_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Leave utilization percentage
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - employee
+      - employee_name
+      - id
+      - leave_type
+      - remaining_days
+      - slug
+      - tenant
+      - tenant_name
+      - total_days
+      - updated_at
+      - utilization_percentage
+      - year
+    LeavePolicy:
+      type: object
+      description: Serializer for leave policies with validation.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Company/tenant this policy applies to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this policy applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        annual_entitlement:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          description: Default annual leave entitlement in days
+        max_consecutive_days:
+          type: integer
+          maximum: 365
+          minimum: 1
+          description: Maximum consecutive days allowed for this leave type
+        notice_period_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Minimum notice period required in working days
+        carry_over_allowed:
+          type: boolean
+          description: Whether unused leave can be carried over to next year
+        max_carry_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be carried over (null = unlimited)
+        auto_approve_max_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be auto-approved (null = no auto-approval)
+        is_active:
+          type: boolean
+          description: Whether this policy is currently active
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - annual_entitlement
+      - created_at
+      - id
+      - leave_type
+      - slug
+      - tenant
+      - tenant_name
+      - updated_at
+    LeaveRequest:
+      type: object
+      description: Serializer for leave requests with comprehensive validation and
+        display fields.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          readOnly: true
+          description: Employee requesting leave
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Company/tenant the request belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave being requested
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        start_date:
+          type: string
+          format: date
+          description: First day of leave
+        end_date:
+          type: string
+          format: date
+          description: Last day of leave
+        days_requested:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Total number of leave days requested
+        reason:
+          type: string
+          description: Reason for the leave request
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveRequestStatusEnum'
+          description: |-
+            Current status of leave request
+
+            * `pending_department_manager` - Pending Department Manager
+            * `pending_hr_manager` - Pending HR Manager
+            * `pending_general_manager` - Pending General Manager
+            * `approved` - Approved
+            * `rejected` - Rejected
+            * `cancelled` - Cancelled
+            * `taken` - Leave Taken
+        applied_date:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the leave request was submitted
+        approved_by:
+          type: integer
+          nullable: true
+          description: Manager who approved/rejected the request
+        approved_by_name:
+          type: string
+          readOnly: true
+          description: Name of the approver
+        final_approver:
+          type: integer
+          nullable: true
+          description: Final approver who completed the workflow
+        final_approver_name:
+          type: string
+          readOnly: true
+          description: Name of the final approver
+        approved_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the request was approved/rejected
+        approval_notes:
+          type: string
+          description: Notes from approver
+        duration_display:
+          type: string
+          readOnly: true
+          description: Human-readable duration
+        current_approval_level:
+          allOf:
+          - $ref: '#/components/schemas/CurrentApprovalLevelEnum'
+          readOnly: true
+          description: |-
+            Current approval level in workflow
+
+            * `department_manager` - Department Manager
+            * `hr_manager` - HR Manager
+            * `general_manager` - General Manager
+        next_approval_level:
+          type: string
+          readOnly: true
+          description: Next approval level in workflow
+        workflow_status:
+          type: string
+          readOnly: true
+          description: Current workflow status information
+        approval_history:
+          type: string
+          readOnly: true
+          description: Complete approval history
+        current_approver:
+          type: string
+          readOnly: true
+          description: Current approver in the workflow
+        can_approve:
+          type: string
+          readOnly: true
+          description: Whether current user can approve this request
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - applied_date
+      - approval_history
+      - approved_by_name
+      - can_approve
+      - created_at
+      - current_approval_level
+      - current_approver
+      - days_requested
+      - duration_display
+      - employee
+      - employee_name
+      - end_date
+      - final_approver_name
+      - id
+      - leave_type
+      - next_approval_level
+      - slug
+      - start_date
+      - tenant
+      - tenant_name
+      - updated_at
+      - workflow_status
+    LeaveRequestStatusEnum:
+      enum:
+      - pending_department_manager
+      - pending_hr_manager
+      - pending_general_manager
+      - approved
+      - rejected
+      - cancelled
+      - taken
+      type: string
+      description: |-
+        * `pending_department_manager` - Pending Department Manager
+        * `pending_hr_manager` - Pending HR Manager
+        * `pending_general_manager` - Pending General Manager
+        * `approved` - Approved
+        * `rejected` - Rejected
+        * `cancelled` - Cancelled
+        * `taken` - Leave Taken
+    LeaveTypeEnum:
+      enum:
+      - annual_leave
+      - sick_leave
+      - personal_leave
+      - maternity_leave
+      - emergency_leave
+      - unpaid_leave
+      type: string
+      description: |-
+        * `annual_leave` - Annual Leave
+        * `sick_leave` - Sick Leave
+        * `personal_leave` - Personal Leave
+        * `maternity_leave` - Maternity/Paternity Leave
+        * `emergency_leave` - Emergency Leave
+        * `unpaid_leave` - Unpaid Leave
     Milestone:
       type: object
       properties:
@@ -3991,7 +6228,7 @@ components:
           description: Milestone progress percentage (0-100)
         project:
           type: string
-          format: uuid
+          description: Project slug
         project_name:
           type: string
           readOnly: true
@@ -4022,6 +6259,9 @@ components:
         * `planning` - Planning
         * `active` - Active
         * `completed` - Completed
+    NullEnum:
+      enum:
+      - null
     PaginatedAuditLogList:
       type: object
       required:
@@ -4068,6 +6308,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Client'
+    PaginatedCustomPermissionList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomPermission'
     PaginatedCustomUserList:
       type: object
       required:
@@ -4091,6 +6354,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CustomUser'
+    PaginatedDepartmentList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Department'
     PaginatedEmployeeDocumentList:
       type: object
       required:
@@ -4160,6 +6446,75 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Invoice'
+    PaginatedLeaveBalanceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveBalance'
+    PaginatedLeavePolicyList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeavePolicy'
+    PaginatedLeaveRequestList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveRequest'
     PaginatedMilestoneList:
       type: object
       required:
@@ -4206,6 +6561,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Payment'
+    PaginatedPermissionGroupList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionGroup'
     PaginatedProjectList:
       type: object
       required:
@@ -4349,6 +6727,7 @@ components:
         tenant:
           type: string
           format: uuid
+          readOnly: true
           nullable: true
         tenant_name:
           type: string
@@ -4358,6 +6737,41 @@ components:
           type: integer
           readOnly: true
           description: Number of projects associated with this client
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedCustomPermission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        codename:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        app_label:
+          type: string
+          maxLength: 100
+        is_active:
+          type: boolean
         created_at:
           type: string
           format: date-time
@@ -4390,6 +6804,44 @@ components:
           description: Designates whether this user should be treated as active. Unselect
             this instead of deleting accounts.
         date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedDepartment:
+      type: object
+      description: Serializer for Department model with slug support
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          description: Department name
+          maxLength: 100
+        description:
+          type: string
+          description: Department description and responsibilities
+        manager:
+          type: integer
+          nullable: true
+          description: Department manager (typically Department Manager role)
+        manager_name:
+          type: string
+          readOnly: true
+        employee_count:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -4490,16 +6942,340 @@ components:
           type: string
           format: uuid
           nullable: true
+        currency:
+          nullable: true
+          description: |-
+            Currency for this invoice
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
         issued_at:
           type: string
           format: date-time
           readOnly: true
         paid:
           type: boolean
+    PatchedLeaveBalance:
+      type: object
+      description: Serializer for leave balances with utilization calculations.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          description: Employee whose leave balance this represents
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant the balance belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this balance applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        year:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          description: Calendar year for this leave balance
+        total_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Total leave days allocated for this year
+        used_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days already used this year
+        carried_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          description: Days carried over from previous year
+        remaining_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Remaining leave days available
+        utilization_percentage:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,4}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Leave utilization percentage
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedLeavePolicy:
+      type: object
+      description: Serializer for leave policies with validation.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Company/tenant this policy applies to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave this policy applies to
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        annual_entitlement:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          description: Default annual leave entitlement in days
+        max_consecutive_days:
+          type: integer
+          maximum: 365
+          minimum: 1
+          description: Maximum consecutive days allowed for this leave type
+        notice_period_days:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+          description: Minimum notice period required in working days
+        carry_over_allowed:
+          type: boolean
+          description: Whether unused leave can be carried over to next year
+        max_carry_over:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be carried over (null = unlimited)
+        auto_approve_max_days:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,2}(?:\.\d{0,1})?$
+          nullable: true
+          description: Maximum days that can be auto-approved (null = no auto-approval)
+        is_active:
+          type: boolean
+          description: Whether this policy is currently active
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedLeaveRequest:
+      type: object
+      description: Serializer for leave requests with comprehensive validation and
+        display fields.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          readOnly: true
+          description: Employee requesting leave
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          readOnly: true
+          description: Company/tenant the request belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          allOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          description: |-
+            Type of leave being requested
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+        start_date:
+          type: string
+          format: date
+          description: First day of leave
+        end_date:
+          type: string
+          format: date
+          description: Last day of leave
+        days_requested:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          readOnly: true
+          description: Total number of leave days requested
+        reason:
+          type: string
+          description: Reason for the leave request
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveRequestStatusEnum'
+          description: |-
+            Current status of leave request
+
+            * `pending_department_manager` - Pending Department Manager
+            * `pending_hr_manager` - Pending HR Manager
+            * `pending_general_manager` - Pending General Manager
+            * `approved` - Approved
+            * `rejected` - Rejected
+            * `cancelled` - Cancelled
+            * `taken` - Leave Taken
+        applied_date:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the leave request was submitted
+        approved_by:
+          type: integer
+          nullable: true
+          description: Manager who approved/rejected the request
+        approved_by_name:
+          type: string
+          readOnly: true
+          description: Name of the approver
+        final_approver:
+          type: integer
+          nullable: true
+          description: Final approver who completed the workflow
+        final_approver_name:
+          type: string
+          readOnly: true
+          description: Name of the final approver
+        approved_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the request was approved/rejected
+        approval_notes:
+          type: string
+          description: Notes from approver
+        duration_display:
+          type: string
+          readOnly: true
+          description: Human-readable duration
+        current_approval_level:
+          allOf:
+          - $ref: '#/components/schemas/CurrentApprovalLevelEnum'
+          readOnly: true
+          description: |-
+            Current approval level in workflow
+
+            * `department_manager` - Department Manager
+            * `hr_manager` - HR Manager
+            * `general_manager` - General Manager
+        next_approval_level:
+          type: string
+          readOnly: true
+          description: Next approval level in workflow
+        workflow_status:
+          type: string
+          readOnly: true
+          description: Current workflow status information
+        approval_history:
+          type: string
+          readOnly: true
+          description: Complete approval history
+        current_approver:
+          type: string
+          readOnly: true
+          description: Current approver in the workflow
+        can_approve:
+          type: string
+          readOnly: true
+          description: Whether current user can approve this request
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedMilestone:
       type: object
       properties:
@@ -4541,7 +7317,7 @@ components:
           description: Milestone progress percentage (0-100)
         project:
           type: string
-          format: uuid
+          description: Project slug
         project_name:
           type: string
           readOnly: true
@@ -4569,17 +7345,67 @@ components:
         invoice:
           type: string
           format: uuid
+          nullable: true
         invoice_id:
           type: integer
           readOnly: true
           description: ID of the associated invoice
+        currency:
+          nullable: true
+          description: |-
+            Currency for this payment
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
         paid_at:
           type: string
           format: date-time
+          readOnly: true
+    PatchedPermissionGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_system_group:
+          type: boolean
+        custom_permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomPermission'
           readOnly: true
     PatchedProject:
       type: object
@@ -4671,7 +7497,7 @@ components:
           nullable: true
         milestone:
           type: string
-          format: uuid
+          description: Milestone slug
         milestone_name:
           type: string
           readOnly: true
@@ -4711,15 +7537,15 @@ components:
           $ref: '#/components/schemas/TaskStatusEnum'
         milestone:
           type: string
-          format: uuid
+          description: Milestone slug
         milestone_name:
           type: string
           readOnly: true
           description: Name of the parent milestone
         sprint:
           type: string
-          format: uuid
           nullable: true
+          description: Sprint slug (optional)
         sprint_name:
           type: string
           readOnly: true
@@ -4797,6 +7623,24 @@ components:
           oneOf:
           - $ref: '#/components/schemas/CompanySizeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+        default_currency:
+          allOf:
+          - $ref: '#/components/schemas/DefaultCurrencyEnum'
+          description: |-
+            Default currency for invoices and payments
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
         created_at:
           type: string
           format: date-time
@@ -4808,8 +7652,14 @@ components:
     PatchedUserProfile:
       type: object
       properties:
-        id:
+        user:
           type: integer
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
           readOnly: true
         job_title:
           type: string
@@ -4897,9 +7747,6 @@ components:
           type: string
           format: date-time
           readOnly: true
-        user:
-          type: integer
-          readOnly: true
     PatchedUserTenant:
       type: object
       properties:
@@ -4938,8 +7785,16 @@ components:
         is_approved:
           type: boolean
         role:
-          type: string
-          maxLength: 100
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          description: |-
+            User role within the tenant
+
+            * `Employee` - Employee
+            * `Department Manager` - Department Manager
+            * `HR Manager` - HR Manager
+            * `General Manager` - General Manager
+            * `Tenant Owner` - Tenant Owner
     Payment:
       type: object
       properties:
@@ -4955,24 +7810,79 @@ components:
         invoice:
           type: string
           format: uuid
+          nullable: true
         invoice_id:
           type: integer
           readOnly: true
           description: ID of the associated invoice
+        currency:
+          nullable: true
+          description: |-
+            Currency for this payment
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        formatted_amount:
+          type: string
+          readOnly: true
+          description: Amount formatted with currency symbol
         paid_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - amount
+      - formatted_amount
       - id
-      - invoice
       - invoice_id
       - paid_at
+    PermissionGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        is_system_group:
+          type: boolean
+        custom_permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CustomPermission'
+          readOnly: true
+      required:
+      - custom_permissions
+      - id
+      - name
+      - slug
     PriorityEnum:
       enum:
       - low
@@ -5084,6 +7994,20 @@ components:
         * `tenant` - Tenant
         * `profile` - User Profile
         * `bulk_invitation` - Bulk Invitation
+    RoleEnum:
+      enum:
+      - Employee
+      - Department Manager
+      - HR Manager
+      - General Manager
+      - Tenant Owner
+      type: string
+      description: |-
+        * `Employee` - Employee
+        * `Department Manager` - Department Manager
+        * `HR Manager` - HR Manager
+        * `General Manager` - General Manager
+        * `Tenant Owner` - Tenant Owner
     Sprint:
       type: object
       properties:
@@ -5111,7 +8035,7 @@ components:
           nullable: true
         milestone:
           type: string
-          format: uuid
+          description: Milestone slug
         milestone_name:
           type: string
           readOnly: true
@@ -5171,15 +8095,15 @@ components:
           $ref: '#/components/schemas/TaskStatusEnum'
         milestone:
           type: string
-          format: uuid
+          description: Milestone slug
         milestone_name:
           type: string
           readOnly: true
           description: Name of the parent milestone
         sprint:
           type: string
-          format: uuid
           nullable: true
+          description: Sprint slug (optional)
         sprint_name:
           type: string
           readOnly: true
@@ -5281,6 +8205,24 @@ components:
           oneOf:
           - $ref: '#/components/schemas/CompanySizeEnum'
           - $ref: '#/components/schemas/BlankEnum'
+        default_currency:
+          allOf:
+          - $ref: '#/components/schemas/DefaultCurrencyEnum'
+          description: |-
+            Default currency for invoices and payments
+
+            * `USD` - US Dollar
+            * `EUR` - Euro
+            * `GBP` - British Pound
+            * `JPY` - Japanese Yen
+            * `CAD` - Canadian Dollar
+            * `AUD` - Australian Dollar
+            * `CHF` - Swiss Franc
+            * `CNY` - Chinese Yuan
+            * `INR` - Indian Rupee
+            * `BRL` - Brazilian Real
+            * `ZAR` - South African Rand
+            * `KES` - Kenyan Shilling
         created_at:
           type: string
           format: date-time
@@ -5296,8 +8238,14 @@ components:
     UserProfile:
       type: object
       properties:
-        id:
+        user:
           type: integer
+          readOnly: true
+        first_name:
+          type: string
+          readOnly: true
+        last_name:
+          type: string
           readOnly: true
         job_title:
           type: string
@@ -5385,12 +8333,10 @@ components:
           type: string
           format: date-time
           readOnly: true
-        user:
-          type: integer
-          readOnly: true
       required:
       - created_at
-      - id
+      - first_name
+      - last_name
       - updated_at
       - user
     UserTenant:
@@ -5431,8 +8377,16 @@ components:
         is_approved:
           type: boolean
         role:
-          type: string
-          maxLength: 100
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          description: |-
+            User role within the tenant
+
+            * `Employee` - Employee
+            * `Department Manager` - Department Manager
+            * `HR Manager` - HR Manager
+            * `General Manager` - General Manager
+            * `Tenant Owner` - Tenant Owner
       required:
       - id
       - tenant
