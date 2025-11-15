@@ -10,7 +10,7 @@ from accounts.email_service import EmailService
 from accounts.models import CustomUser
 from saasCRM.pagination import CustomPageNumberPagination
 
-from .models import LeaveBalance, LeavePolicy, LeaveRequest
+from .models import LeaveBalance, LeavePolicy, LeaveRequest, LeaveApproval
 from .permissions import (
     CanApproveLeaves,
     CanManageLeaveBalances,
@@ -18,10 +18,13 @@ from .permissions import (
     CanManageLeaveRequests,
 )
 from .serializers import (
+    LeaveApprovalActionSerializer,
+    LeaveApprovalSerializer,
     LeaveBalanceSerializer,
     LeavePolicySerializer,
     LeaveRequestSerializer,
 )
+from .services import LeaveApprovalWorkflowService
 
 
 class LeaveRequestViewSet(viewsets.ModelViewSet):
@@ -33,7 +36,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     - Create new leave requests
     - Update their pending requests
 
-    Managers can:
+    Managers and Tenant Owners can:
     - View all requests in their tenant
     - Approve/reject requests
     """
@@ -45,9 +48,10 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     search_fields = ['reason', 'approval_notes']
     ordering_fields = ['applied_date', 'start_date', 'end_date', 'status']
     ordering = ['-applied_date']
+    lookup_field = 'slug'
 
     def get_queryset(self):
-        """Filter queryset based on user permissions."""
+        """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
         queryset = LeaveRequest.objects.select_related('employee', 'tenant', 'approved_by')
 
@@ -55,8 +59,8 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         if not user or user.is_anonymous:
             return queryset.none()
 
-        # If user has permission to view all requests, return all for their tenant
-        if user.has_perm('leave_management.view_leaverequest'):
+        # Check if user can view all requests (admin/owner/special permissions)
+        if self._can_view_all_requests(user):
             if hasattr(self.request, 'tenant') and self.request.tenant:
                 return queryset.filter(tenant=self.request.tenant)
             return queryset
@@ -64,58 +68,167 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         # Otherwise, only show user's own requests
         return queryset.filter(employee=user)
 
+    def _can_view_all_requests(self, user):
+        """Check if user can view all leave requests in the tenant."""
+        # Superusers can view all
+        if user.is_superuser:
+            return True
+        
+        # Check for explicit permission
+        if user.has_perm('leave_management.view_leaverequest'):
+            return True
+        
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
+        except:
+            return False
+
     def perform_create(self, serializer):
         """Set the employee and tenant when creating a request."""
         serializer.save()
 
     @action(detail=True, methods=['post'], permission_classes=[CanApproveLeaves])
-    def approve(self, request, pk=None):
-        """Approve a leave request."""
+    def approve(self, request, slug=None):
+        """Approve a leave request (legacy endpoint for backward compatibility)."""
         leave_request = self.get_object()
 
-        if leave_request.status != 'pending':
+        if not leave_request.is_pending:
             return Response(
                 {'error': 'Only pending requests can be approved.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        leave_request.status = 'approved'
-        leave_request.approved_by = request.user
-        leave_request.approved_date = timezone.now()
-        leave_request.approval_notes = request.data.get('notes', '')
-        leave_request.save()
+        # Use workflow service for approval
+        result = LeaveApprovalWorkflowService.process_approval(
+            leave_request, request.user, 'approve', 
+            request.data.get('notes', '')
+        )
 
-        # Update leave balance if approved
-        self._update_leave_balance(leave_request)
+        if result['success']:
+            # Update leave balance if fully approved
+            if leave_request.is_approved:
+                self._update_leave_balance(leave_request)
+                EmailService.send_leave_approved_email(leave_request)
 
-        # Send approval email notification
-        EmailService.send_leave_approved_email(leave_request)
-
-        serializer = self.get_serializer(leave_request)
-        return Response(serializer.data)
+            serializer = self.get_serializer(leave_request)
+            return Response({
+                'message': result['message'],
+                'data': serializer.data
+            })
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=True, methods=['post'], permission_classes=[CanApproveLeaves])
-    def reject(self, request, pk=None):
-        """Reject a leave request."""
+    def reject(self, request, slug=None):
+        """Reject a leave request (legacy endpoint for backward compatibility)."""
         leave_request = self.get_object()
 
-        if leave_request.status != 'pending':
+        if not leave_request.is_pending:
             return Response(
                 {'error': 'Only pending requests can be rejected.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        leave_request.status = 'rejected'
-        leave_request.approved_by = request.user
-        leave_request.approved_date = timezone.now()
-        leave_request.approval_notes = request.data.get('notes', '')
-        leave_request.save()
+        # Use workflow service for rejection
+        result = LeaveApprovalWorkflowService.process_approval(
+            leave_request, request.user, 'reject',
+            request.data.get('notes', '')
+        )
 
-        # Send rejection email notification
-        EmailService.send_leave_rejected_email(leave_request)
+        if result['success']:
+            EmailService.send_leave_rejected_email(leave_request)
+            serializer = self.get_serializer(leave_request)
+            return Response({
+                'message': result['message'],
+                'data': serializer.data
+            })
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-        serializer = self.get_serializer(leave_request)
-        return Response(serializer.data)
+    @action(detail=True, methods=['post'], permission_classes=[CanApproveLeaves])
+    def approve_level(self, request, pk=None):
+        """Approve a leave request at the current workflow level."""
+        leave_request = self.get_object()
+
+        # Validate action data
+        action_serializer = LeaveApprovalActionSerializer(data=request.data)
+        if not action_serializer.is_valid():
+            return Response(action_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Process approval through workflow
+        result = LeaveApprovalWorkflowService.process_approval(
+            leave_request, request.user, 'approve',
+            action_serializer.validated_data.get('notes', '')
+        )
+
+        if result['success']:
+            # Update leave balance if fully approved
+            if leave_request.is_approved:
+                self._update_leave_balance(leave_request)
+                EmailService.send_leave_approved_email(leave_request)
+
+            serializer = self.get_serializer(leave_request)
+            return Response({
+                'message': result['message'],
+                'data': serializer.data,
+                'next_level': result.get('next_level')
+            })
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['post'], permission_classes=[CanApproveLeaves])
+    def reject_level(self, request, pk=None):
+        """Reject a leave request at the current workflow level."""
+        leave_request = self.get_object()
+
+        # Validate action data
+        action_serializer = LeaveApprovalActionSerializer(data=request.data)
+        if not action_serializer.is_valid():
+            return Response(action_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Process rejection through workflow
+        result = LeaveApprovalWorkflowService.process_approval(
+            leave_request, request.user, 'reject',
+            action_serializer.validated_data.get('notes', '')
+        )
+
+        if result['success']:
+            EmailService.send_leave_rejected_email(leave_request)
+            serializer = self.get_serializer(leave_request)
+            return Response({
+                'message': result['message'],
+                'data': serializer.data
+            })
+        else:
+            return Response(
+                {'error': result['message']},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['get'])
+    def workflow_status(self, request, pk=None):
+        """Get detailed workflow status for a leave request."""
+        leave_request = self.get_object()
+        
+        workflow_status = LeaveApprovalWorkflowService.get_workflow_status(leave_request)
+        
+        return Response({
+            'workflow_status': workflow_status,
+            'approval_history': LeaveApprovalSerializer(
+                leave_request.get_approval_history(), many=True
+            ).data
+        })
 
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
@@ -200,9 +313,10 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
     filterset_fields = ['employee', 'leave_type', 'year']
     ordering_fields = ['year', 'leave_type', 'employee']
     ordering = ['-year', 'leave_type']
+    lookup_field = 'slug'
 
     def get_queryset(self):
-        """Filter queryset based on user permissions."""
+        """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
         queryset = LeaveBalance.objects.select_related('employee', 'tenant')
 
@@ -210,14 +324,31 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
         if not user or user.is_anonymous:
             return queryset.none()
 
-        # If user has permission to view all balances, return all for their tenant
-        if user.has_perm('leave_management.view_leavebalance'):
+        # Check if user can view all balances (admin/owner/special permissions)
+        if self._can_view_all_balances(user):
             if hasattr(self.request, 'tenant') and self.request.tenant:
                 return queryset.filter(tenant=self.request.tenant)
             return queryset
 
         # Otherwise, only show user's own balances
         return queryset.filter(employee=user)
+
+    def _can_view_all_balances(self, user):
+        """Check if user can view all leave balances in the tenant."""
+        # Superusers can view all
+        if user.is_superuser:
+            return True
+        
+        # Check for explicit permission
+        if user.has_perm('leave_management.view_leavebalance'):
+            return True
+        
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
+        except:
+            return False
 
 
 class LeavePolicyViewSet(viewsets.ModelViewSet):
@@ -234,9 +365,10 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
     filterset_fields = ['leave_type', 'is_active']
     ordering_fields = ['leave_type', 'is_active']
     ordering = ['leave_type']
+    lookup_field = 'slug'
 
     def get_queryset(self):
-        """Filter queryset based on user permissions."""
+        """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
         queryset = LeavePolicy.objects.select_related('tenant')
 
@@ -244,8 +376,8 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
         if not user or user.is_anonymous:
             return queryset.none()
 
-        # If user has permission to view all policies, return all for their tenant
-        if user.has_perm('leave_management.view_leavepolicy'):
+        # Check if user can view all policies (admin/owner/special permissions)
+        if self._can_view_all_policies(user):
             if hasattr(self.request, 'tenant') and self.request.tenant:
                 return queryset.filter(tenant=self.request.tenant)
             return queryset
@@ -255,3 +387,20 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
             return queryset.filter(tenant=self.request.tenant, is_active=True)
 
         return queryset.none()
+
+    def _can_view_all_policies(self, user):
+        """Check if user can view all leave policies in the tenant."""
+        # Superusers can view all
+        if user.is_superuser:
+            return True
+        
+        # Check for explicit permission
+        if user.has_perm('leave_management.view_leavepolicy'):
+            return True
+        
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
+        except:
+            return False

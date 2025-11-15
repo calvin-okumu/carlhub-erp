@@ -1,11 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
-import { createUser, updateUser } from '@/api/users';
+import { createMember, updateUser, getCurrentUser } from '@/api/users';
 import type { UserProfile } from '@/api/types';
 
 interface EmployeeModalProps {
@@ -18,50 +16,34 @@ interface EmployeeModalProps {
 
 export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave }: EmployeeModalProps) {
     const [formData, setFormData] = useState({
-        // Basic Information
         first_name: '',
         last_name: '',
         email: '',
-        phone: '',
-        job_title: '',
-
-        // Employment Details
-        employee_id: '',
-        employee_number: '',
-        hire_date: '',
-
-        // Address Information
-        street_address: '',
-        city: '',
-        state_province: '',
-        postal_code: '',
-        country: '',
-
-        // Emergency Contact
-        emergency_contact: '',
-        emergency_phone: '',
-
-        // Medical Information
-        medical_aid_provider: '',
-        medical_aid_plan: '',
-        medical_aid_number: '',
-        medical_conditions: '',
-        allergies: '',
-        medications: '',
-
-        // Banking Information
-        bank_name: '',
-        account_number: '',
-        branch_code: '',
-        account_type: '',
-        routing_number: '',
-        swift_code: '',
-
-        // Status
-        is_active: true,
+        password: '',
+        company_name: '',
     });
 
     const [loading, setLoading] = useState(false);
+    const [currentUserOrg, setCurrentUserOrg] = useState('');
+
+    // Fetch current user's organization
+    useEffect(() => {
+        const fetchCurrentUserOrg = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    const currentUser = await getCurrentUser(token);
+                    setCurrentUserOrg(currentUser.organization || '');
+                }
+            } catch (error) {
+                console.error('Failed to fetch current user organization:', error);
+            }
+        };
+
+        if (isOpen) {
+            fetchCurrentUserOrg();
+        }
+    }, [isOpen]);
 
     // Initialize form data when modal opens or employee changes
     React.useEffect(() => {
@@ -70,37 +52,8 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
                 first_name: employee.first_name || '',
                 last_name: employee.last_name || '',
                 email: employee.email || '',
-                phone: employee.phone || '',
-                job_title: employee.job_title || '',
-
-                employee_id: employee.employee_id || '',
-                employee_number: employee.employee_number || '',
-                hire_date: employee.hire_date || '',
-
-                street_address: employee.street_address || '',
-                city: employee.city || '',
-                state_province: employee.state_province || '',
-                postal_code: employee.postal_code || '',
-                country: employee.country || '',
-
-                emergency_contact: employee.emergency_contact || '',
-                emergency_phone: employee.emergency_phone || '',
-
-                medical_aid_provider: employee.medical_aid_provider || '',
-                medical_aid_plan: employee.medical_aid_plan || '',
-                medical_aid_number: employee.medical_aid_number || '',
-                medical_conditions: employee.medical_conditions || '',
-                allergies: employee.allergies || '',
-                medications: employee.medications || '',
-
-                bank_name: employee.bank_name || '',
-                account_number: employee.account_number || '',
-                branch_code: employee.branch_code || '',
-                account_type: employee.account_type || '',
-                routing_number: employee.routing_number || '',
-                swift_code: employee.swift_code || '',
-
-                is_active: employee.is_active ?? true,
+                password: '', // Password not shown in edit mode
+                company_name: currentUserOrg,
             });
         } else if (mode === 'add') {
             // Reset form for add mode
@@ -108,34 +61,11 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
                 first_name: '',
                 last_name: '',
                 email: '',
-                phone: '',
-                job_title: '',
-                employee_id: '',
-                employee_number: '',
-                hire_date: '',
-                street_address: '',
-                city: '',
-                state_province: '',
-                postal_code: '',
-                country: '',
-                emergency_contact: '',
-                emergency_phone: '',
-                medical_aid_provider: '',
-                medical_aid_plan: '',
-                medical_aid_number: '',
-                medical_conditions: '',
-                allergies: '',
-                medications: '',
-                bank_name: '',
-                account_number: '',
-                branch_code: '',
-                account_type: '',
-                routing_number: '',
-                swift_code: '',
-                is_active: true,
+                password: '',
+                company_name: currentUserOrg,
             });
         }
-    }, [mode, employee, isOpen]);
+    }, [mode, employee, isOpen, currentUserOrg]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -144,7 +74,7 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
             setLoading(true);
 
             // Validate required fields
-            if (!formData.first_name || !formData.last_name || !formData.email || !formData.phone || !formData.job_title) {
+            if (!formData.first_name || !formData.last_name || !formData.email || !formData.password) {
                 alert('Please fill in all required fields');
                 return;
             }
@@ -157,14 +87,63 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
 
             let result;
             if (mode === 'add') {
-                result = await createUser(token, formData);
+                result = await createMember(token, {
+                    email: formData.email,
+                    password: formData.password,
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                });
             } else if (mode === 'edit' && employee?.id) {
-                result = await updateUser(token, employee.id, formData);
+                // For edit mode, we still use updateUser but with simplified data
+                result = await updateUser(token, employee.id, {
+                    first_name: formData.first_name,
+                    last_name: formData.last_name,
+                    email: formData.email,
+                });
             }
 
             // Call the onSave callback if provided
             if (onSave && result) {
-                onSave(result as UserProfile);
+                // Convert User to UserProfile format with default values
+                const userProfile: UserProfile = {
+                    id: result.id,
+                    user: result.id,
+                    first_name: result.first_name,
+                    last_name: result.last_name,
+                    email: result.email,
+                    job_title: '',
+                    phone: '',
+                    linkedin_profile: '',
+                    employee_id: '',
+                    employee_number: '',
+                    tax_number: '',
+                    hire_date: '',
+                    street_address: '',
+                    city: '',
+                    state_province: '',
+                    postal_code: '',
+                    country: '',
+                    emergency_contact: '',
+                    emergency_phone: '',
+                    medical_aid_provider: '',
+                    medical_aid_plan: '',
+                    medical_aid_number: '',
+                    medical_conditions: '',
+                    allergies: '',
+                    medications: '',
+                    bank_name: '',
+                    account_number: '',
+                    branch_code: '',
+                    account_type: '',
+                    routing_number: '',
+                    swift_code: '',
+                    created_at: '',
+                    updated_at: '',
+                    is_active: true,
+                    date_joined: result.date_joined,
+                    organization: result.organization,
+                };
+                onSave(userProfile);
             }
 
             alert(`Employee ${mode === 'add' ? 'created' : 'updated'} successfully!`);
@@ -172,7 +151,35 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
 
         } catch (error) {
             console.error('Error submitting employee data:', error);
-            alert(`Failed to ${mode === 'add' ? 'create' : 'update'} employee. Please try again.`);
+
+            // Try to parse backend validation errors
+            let errorMessage = `Failed to ${mode === 'add' ? 'create' : 'update'} employee. Please try again.`;
+
+            if (error instanceof Error) {
+                // Check if it's a backend validation error
+                try {
+                    const errorData = JSON.parse(error.message);
+                    if (errorData && typeof errorData === 'object') {
+                        const fieldErrors = Object.entries(errorData)
+                            .filter(([key, value]) => Array.isArray(value))
+                            .map(([key, value]) => `${key}: ${(value as string[]).join(', ')}`)
+                            .join('\n');
+
+                        if (fieldErrors) {
+                            errorMessage = `Validation errors:\n${fieldErrors}`;
+                        } else if (errorData.detail) {
+                            errorMessage = errorData.detail;
+                        } else if (errorData.error) {
+                            errorMessage = errorData.error;
+                        }
+                    }
+                } catch {
+                    // If parsing fails, use the original error message
+                    errorMessage = error.message || errorMessage;
+                }
+            }
+
+            alert(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -181,10 +188,10 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={mode === 'add' ? 'Add Employee' : 'Edit Employee'}>
             <div className="p-6 max-h-[80vh] overflow-y-auto">
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Basic Information Section */}
                     <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic Information</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Employee Information</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -220,310 +227,30 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
                                     required
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Phone *
-                                </label>
-                                <Input
-                                    placeholder="Enter phone number"
-                                    value={formData.phone}
-                                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                    required
-                                />
-                            </div>
+                            {mode === 'add' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Password *
+                                    </label>
+                                    <Input
+                                        placeholder="Enter password"
+                                        type="password"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                            )}
                             <div className="col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Job Title *
+                                    Company
                                 </label>
                                 <Input
-                                    placeholder="Enter job title"
-                                    value={formData.job_title}
-                                    onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
-                                    required
+                                    placeholder="Company name"
+                                    value={formData.company_name}
+                                    readOnly
+                                    className="bg-gray-100"
                                 />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Employment Details Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Employment Details</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Employee ID
-                                </label>
-                                <Input
-                                    placeholder="Enter employee ID"
-                                    value={formData.employee_id}
-                                    onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Employee Number
-                                </label>
-                                <Input
-                                    placeholder="Enter employee number"
-                                    value={formData.employee_number}
-                                    onChange={(e) => setFormData({ ...formData, employee_number: e.target.value })}
-                                />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Hire Date
-                                </label>
-                                <Input
-                                    placeholder="Select hire date"
-                                    type="date"
-                                    value={formData.hire_date}
-                                    onChange={(e) => setFormData({ ...formData, hire_date: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Address Information Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Address Information</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Street Address
-                                </label>
-                                <Input
-                                    placeholder="Enter street address"
-                                    value={formData.street_address}
-                                    onChange={(e) => setFormData({ ...formData, street_address: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    City
-                                </label>
-                                <Input
-                                    placeholder="Enter city"
-                                    value={formData.city}
-                                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    State/Province
-                                </label>
-                                <Input
-                                    placeholder="Enter state or province"
-                                    value={formData.state_province}
-                                    onChange={(e) => setFormData({ ...formData, state_province: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Postal Code
-                                </label>
-                                <Input
-                                    placeholder="Enter postal code"
-                                    value={formData.postal_code}
-                                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Country
-                                </label>
-                                <Input
-                                    placeholder="Enter country"
-                                    value={formData.country}
-                                    onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Emergency Contact Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Emergency Contact</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Emergency Contact Name
-                                </label>
-                                <Input
-                                    placeholder="Enter emergency contact name"
-                                    value={formData.emergency_contact}
-                                    onChange={(e) => setFormData({ ...formData, emergency_contact: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Emergency Contact Phone
-                                </label>
-                                <Input
-                                    placeholder="Enter emergency contact phone"
-                                    value={formData.emergency_phone}
-                                    onChange={(e) => setFormData({ ...formData, emergency_phone: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Medical Information Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Medical Information</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Medical Aid Provider
-                                </label>
-                                <Input
-                                    placeholder="Enter medical aid provider"
-                                    value={formData.medical_aid_provider}
-                                    onChange={(e) => setFormData({ ...formData, medical_aid_provider: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Medical Aid Plan
-                                </label>
-                                <Input
-                                    placeholder="Enter medical aid plan"
-                                    value={formData.medical_aid_plan}
-                                    onChange={(e) => setFormData({ ...formData, medical_aid_plan: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Medical Aid Number
-                                </label>
-                                <Input
-                                    placeholder="Enter medical aid number"
-                                    value={formData.medical_aid_number}
-                                    onChange={(e) => setFormData({ ...formData, medical_aid_number: e.target.value })}
-                                />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Medical Conditions
-                                </label>
-                                <Textarea
-                                    placeholder="Enter any medical conditions"
-                                    value={formData.medical_conditions}
-                                    onChange={(e) => setFormData({ ...formData, medical_conditions: e.target.value })}
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Allergies
-                                </label>
-                                <Textarea
-                                    placeholder="Enter any allergies"
-                                    value={formData.allergies}
-                                    onChange={(e) => setFormData({ ...formData, allergies: e.target.value })}
-                                    rows={3}
-                                />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Medications
-                                </label>
-                                <Textarea
-                                    placeholder="Enter current medications"
-                                    value={formData.medications}
-                                    onChange={(e) => setFormData({ ...formData, medications: e.target.value })}
-                                    rows={3}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Banking Information Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Banking Information</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Bank Name
-                                </label>
-                                <Input
-                                    placeholder="Enter bank name"
-                                    value={formData.bank_name}
-                                    onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Account Number
-                                </label>
-                                <Input
-                                    placeholder="Enter account number"
-                                    value={formData.account_number}
-                                    onChange={(e) => setFormData({ ...formData, account_number: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Branch Code
-                                </label>
-                                <Input
-                                    placeholder="Enter branch code"
-                                    value={formData.branch_code}
-                                    onChange={(e) => setFormData({ ...formData, branch_code: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Account Type
-                                </label>
-                                <Select
-                                    value={formData.account_type}
-                                    onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
-                                >
-                                    <option value="">Select account type</option>
-                                    <option value="checking">Checking</option>
-                                    <option value="savings">Savings</option>
-                                    <option value="business">Business</option>
-                                </Select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Routing Number
-                                </label>
-                                <Input
-                                    placeholder="Enter routing number"
-                                    value={formData.routing_number}
-                                    onChange={(e) => setFormData({ ...formData, routing_number: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    SWIFT Code
-                                </label>
-                                <Input
-                                    placeholder="Enter SWIFT code"
-                                    value={formData.swift_code}
-                                    onChange={(e) => setFormData({ ...formData, swift_code: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Status Section */}
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Status</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Employment Status *
-                                </label>
-                                <Select
-                                    value={formData.is_active ? 'active' : 'inactive'}
-                                    onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'active' })}
-                                    required
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </Select>
                             </div>
                         </div>
                     </div>
@@ -532,8 +259,8 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
                         <Button type="button" onClick={onClose} variant='secondary'>
                             Cancel
                         </Button>
-                        <Button type="submit" className="bg-blue-600 text-white">
-                            {mode === 'add' ? 'Add Employee' : 'Update Employee'}
+                        <Button type="submit" disabled={loading} className="bg-blue-600 text-white">
+                            {loading ? 'Processing...' : (mode === 'add' ? 'Add Employee' : 'Update Employee')}
                         </Button>
                     </div>
                 </form>

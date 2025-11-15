@@ -196,21 +196,22 @@ export async function createUser(token: string, userData: {
   // First, create the user account (assuming there's a user creation endpoint)
   // If not, this might need to be done through signup or another endpoint
   const createUserUrl = `${API_BASE}/users/`;
-  const userResponse = await fetch(createUserUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Token ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      first_name: userData.first_name,
-      last_name: userData.last_name,
-      email: userData.email,
-      phone: userData.phone,
-      job_title: userData.job_title,
-      is_active: userData.is_active ?? true,
-    }),
-  });
+   const userResponse = await fetch(createUserUrl, {
+     method: "POST",
+     headers: {
+       Authorization: `Token ${token}`,
+       "Content-Type": "application/json",
+     },
+     body: JSON.stringify({
+       username: userData.email, // Use email as username for uniqueness
+       first_name: userData.first_name,
+       last_name: userData.last_name,
+       email: userData.email,
+       phone: userData.phone,
+       job_title: userData.job_title,
+       is_active: userData.is_active ?? true,
+     }),
+   });
 
   if (!userResponse.ok) {
     const errorData = await userResponse.json().catch(() => ({}));
@@ -220,32 +221,33 @@ export async function createUser(token: string, userData: {
   const userDataResponse = await userResponse.json();
 
   // Then create/update the profile with additional employee details
-  const profileData = {
-    job_title: userData.job_title || '',
-    phone: userData.phone || '',
-    employee_id: userData.employee_id || '',
-    employee_number: userData.employee_number || '',
-    hire_date: userData.hire_date || '',
-    street_address: userData.street_address || '',
-    city: userData.city || '',
-    state_province: userData.state_province || '',
-    postal_code: userData.postal_code || '',
-    country: userData.country || '',
-    emergency_contact: userData.emergency_contact || '',
-    emergency_phone: userData.emergency_phone || '',
-    medical_aid_provider: userData.medical_aid_provider || '',
-    medical_aid_plan: userData.medical_aid_plan || '',
-    medical_aid_number: userData.medical_aid_number || '',
-    medical_conditions: userData.medical_conditions || '',
-    allergies: userData.allergies || '',
-    medications: userData.medications || '',
-    bank_name: userData.bank_name || '',
-    account_number: userData.account_number || '',
-    branch_code: userData.branch_code || '',
-    account_type: userData.account_type || '',
-    routing_number: userData.routing_number || '',
-    swift_code: userData.swift_code || '',
-  };
+  const profileData: Record<string, string> = {};
+
+  // Only include fields that have actual values (not empty strings)
+  if (userData.job_title?.trim()) profileData.job_title = userData.job_title.trim();
+  if (userData.phone?.trim()) profileData.phone = userData.phone.trim();
+  if (userData.employee_id?.trim()) profileData.employee_id = userData.employee_id.trim();
+  if (userData.employee_number?.trim()) profileData.employee_number = userData.employee_number.trim();
+  if (userData.hire_date?.trim()) profileData.hire_date = userData.hire_date.trim();
+  if (userData.street_address?.trim()) profileData.street_address = userData.street_address.trim();
+  if (userData.city?.trim()) profileData.city = userData.city.trim();
+  if (userData.state_province?.trim()) profileData.state_province = userData.state_province.trim();
+  if (userData.postal_code?.trim()) profileData.postal_code = userData.postal_code.trim();
+  if (userData.country?.trim()) profileData.country = userData.country.trim();
+  if (userData.emergency_contact?.trim()) profileData.emergency_contact = userData.emergency_contact.trim();
+  if (userData.emergency_phone?.trim()) profileData.emergency_phone = userData.emergency_phone.trim();
+  if (userData.medical_aid_provider?.trim()) profileData.medical_aid_provider = userData.medical_aid_provider.trim();
+  if (userData.medical_aid_plan?.trim()) profileData.medical_aid_plan = userData.medical_aid_plan.trim();
+  if (userData.medical_aid_number?.trim()) profileData.medical_aid_number = userData.medical_aid_number.trim();
+  if (userData.medical_conditions?.trim()) profileData.medical_conditions = userData.medical_conditions.trim();
+  if (userData.allergies?.trim()) profileData.allergies = userData.allergies.trim();
+  if (userData.medications?.trim()) profileData.medications = userData.medications.trim();
+  if (userData.bank_name?.trim()) profileData.bank_name = userData.bank_name.trim();
+  if (userData.account_number?.trim()) profileData.account_number = userData.account_number.trim();
+  if (userData.branch_code?.trim()) profileData.branch_code = userData.branch_code.trim();
+  if (userData.account_type?.trim()) profileData.account_type = userData.account_type.trim();
+  if (userData.routing_number?.trim()) profileData.routing_number = userData.routing_number.trim();
+  if (userData.swift_code?.trim()) profileData.swift_code = userData.swift_code.trim();
 
   // Update profile if user was created successfully
   if (userDataResponse.id) {
@@ -295,15 +297,16 @@ export async function updateUser(token: string, id: number, userData: Partial<{
   swift_code: string;
   is_active: boolean;
 }>): Promise<User> {
-  // Update user basic info
-  const userUpdateData = {
-    first_name: userData.first_name,
-    last_name: userData.last_name,
-    email: userData.email,
-    phone: userData.phone,
-    job_title: userData.job_title,
-    is_active: userData.is_active,
-  };
+   // Update user basic info
+   const userUpdateData = {
+     username: userData.email, // Update username to match email if email changed
+     first_name: userData.first_name,
+     last_name: userData.last_name,
+     email: userData.email,
+     phone: userData.phone,
+     job_title: userData.job_title,
+     is_active: userData.is_active,
+   };
 
   // Remove undefined values
   Object.keys(userUpdateData).forEach(key => {
@@ -330,39 +333,33 @@ export async function updateUser(token: string, id: number, userData: Partial<{
   }
 
   // Update profile with employee details
-  const profileUpdateData = {
-    job_title: userData.job_title,
-    phone: userData.phone,
-    employee_id: userData.employee_id,
-    employee_number: userData.employee_number,
-    hire_date: userData.hire_date,
-    street_address: userData.street_address,
-    city: userData.city,
-    state_province: userData.state_province,
-    postal_code: userData.postal_code,
-    country: userData.country,
-    emergency_contact: userData.emergency_contact,
-    emergency_phone: userData.emergency_phone,
-    medical_aid_provider: userData.medical_aid_provider,
-    medical_aid_plan: userData.medical_aid_plan,
-    medical_aid_number: userData.medical_aid_number,
-    medical_conditions: userData.medical_conditions,
-    allergies: userData.allergies,
-    medications: userData.medications,
-    bank_name: userData.bank_name,
-    account_number: userData.account_number,
-    branch_code: userData.branch_code,
-    account_type: userData.account_type,
-    routing_number: userData.routing_number,
-    swift_code: userData.swift_code,
-  };
+  const profileUpdateData: Record<string, string> = {};
 
-  // Remove undefined values
-  Object.keys(profileUpdateData).forEach(key => {
-    if (profileUpdateData[key as keyof typeof profileUpdateData] === undefined) {
-      delete profileUpdateData[key as keyof typeof profileUpdateData];
-    }
-  });
+  // Only include fields that have actual values (not empty strings or undefined)
+  if (userData.job_title?.trim()) profileUpdateData.job_title = userData.job_title.trim();
+  if (userData.phone?.trim()) profileUpdateData.phone = userData.phone.trim();
+  if (userData.employee_id?.trim()) profileUpdateData.employee_id = userData.employee_id.trim();
+  if (userData.employee_number?.trim()) profileUpdateData.employee_number = userData.employee_number.trim();
+  if (userData.hire_date?.trim()) profileUpdateData.hire_date = userData.hire_date.trim();
+  if (userData.street_address?.trim()) profileUpdateData.street_address = userData.street_address.trim();
+  if (userData.city?.trim()) profileUpdateData.city = userData.city.trim();
+  if (userData.state_province?.trim()) profileUpdateData.state_province = userData.state_province.trim();
+  if (userData.postal_code?.trim()) profileUpdateData.postal_code = userData.postal_code.trim();
+  if (userData.country?.trim()) profileUpdateData.country = userData.country.trim();
+  if (userData.emergency_contact?.trim()) profileUpdateData.emergency_contact = userData.emergency_contact.trim();
+  if (userData.emergency_phone?.trim()) profileUpdateData.emergency_phone = userData.emergency_phone.trim();
+  if (userData.medical_aid_provider?.trim()) profileUpdateData.medical_aid_provider = userData.medical_aid_provider.trim();
+  if (userData.medical_aid_plan?.trim()) profileUpdateData.medical_aid_plan = userData.medical_aid_plan.trim();
+  if (userData.medical_aid_number?.trim()) profileUpdateData.medical_aid_number = userData.medical_aid_number.trim();
+  if (userData.medical_conditions?.trim()) profileUpdateData.medical_conditions = userData.medical_conditions.trim();
+  if (userData.allergies?.trim()) profileUpdateData.allergies = userData.allergies.trim();
+  if (userData.medications?.trim()) profileUpdateData.medications = userData.medications.trim();
+  if (userData.bank_name?.trim()) profileUpdateData.bank_name = userData.bank_name.trim();
+  if (userData.account_number?.trim()) profileUpdateData.account_number = userData.account_number.trim();
+  if (userData.branch_code?.trim()) profileUpdateData.branch_code = userData.branch_code.trim();
+  if (userData.account_type?.trim()) profileUpdateData.account_type = userData.account_type.trim();
+  if (userData.routing_number?.trim()) profileUpdateData.routing_number = userData.routing_number.trim();
+  if (userData.swift_code?.trim()) profileUpdateData.swift_code = userData.swift_code.trim();
 
   if (Object.keys(profileUpdateData).length > 0) {
     await updateUserProfile(token, id, profileUpdateData);
@@ -370,6 +367,42 @@ export async function updateUser(token: string, id: number, userData: Partial<{
 
   // Return updated user
   return await getUser(token, id);
+}
+
+export async function createMember(token: string, memberData: {
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+}): Promise<User> {
+  const url = `${API_BASE}/members/`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Token ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(memberData),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to create member: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  // Return the created member as User
+  return {
+    id: data.user,
+    email: data.user_email,
+    first_name: data.user_first_name,
+    last_name: data.user_last_name,
+    is_active: true,
+    date_joined: '',
+    organization: data.tenant_name,
+    job: data.role,
+  };
 }
 
 export async function deleteUser(token: string, id: number): Promise<void> {

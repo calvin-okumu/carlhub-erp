@@ -25,7 +25,9 @@ class LeaveRequest(models.Model):
     ]
 
     STATUS_CHOICES = [
-        ("pending", "Pending Approval"),
+        ("pending_department_manager", "Pending Department Manager"),
+        ("pending_hr_manager", "Pending HR Manager"),
+        ("pending_general_manager", "Pending General Manager"),
         ("approved", "Approved"),
         ("rejected", "Rejected"),
         ("cancelled", "Cancelled"),
@@ -68,11 +70,23 @@ class LeaveRequest(models.Model):
 
     # Status and workflow
     status = models.CharField(
-        max_length=20,
+        max_length=30,
         choices=STATUS_CHOICES,
-        default='pending',
+        default='pending_department_manager',
         db_index=True,
-        help_text="Current status of the leave request"
+        help_text="Current status of leave request"
+    )
+    
+    # Workflow tracking
+    current_approval_level = models.CharField(
+        max_length=20,
+        choices=[
+            ('department_manager', 'Department Manager'),
+            ('hr_manager', 'HR Manager'),
+            ('general_manager', 'General Manager'),
+        ],
+        default='department_manager',
+        help_text="Current approval level in workflow"
     )
     applied_date = models.DateTimeField(
         auto_now_add=True,
@@ -95,7 +109,29 @@ class LeaveRequest(models.Model):
     )
     approval_notes = models.TextField(
         blank=True,
-        help_text="Notes from the approver"
+        help_text="Notes from approver"
+    )
+    
+    # Workflow tracking fields
+    current_approval_level = models.CharField(
+        max_length=20,
+        choices=[
+            ('department_manager', 'Department Manager'),
+            ('hr_manager', 'HR Manager'),
+            ('general_manager', 'General Manager'),
+        ],
+        default='department_manager',
+        help_text="Current approval level in workflow"
+    )
+    
+    # Keep for backward compatibility - final approver
+    final_approver = models.ForeignKey(
+        'accounts.CustomUser',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='final_approved_leave_requests',
+        help_text="Final approver who completed the workflow"
     )
 
     # Audit fields
@@ -176,6 +212,112 @@ class LeaveRequest(models.Model):
             return f"{int(self.days_requested)} days"
         else:
             return f"{self.days_requested} days"
+
+    @property
+    def is_pending(self):
+        """Check if request is pending at any level."""
+        return self.status.startswith('pending_')
+
+    @property
+    def is_approved(self):
+        """Check if request is fully approved."""
+        return self.status == 'approved'
+
+    @property
+    def is_rejected(self):
+        """Check if request is rejected."""
+        return self.status == 'rejected'
+
+    def get_workflow_status_display(self):
+        """Get human-readable workflow status."""
+        status_map = {
+            'pending_department_manager': 'Pending Department Manager Approval',
+            'pending_hr_manager': 'Pending HR Manager Approval',
+            'pending_general_manager': 'Pending General Manager Approval',
+            'approved': 'Approved',
+            'rejected': 'Rejected',
+            'cancelled': 'Cancelled',
+            'taken': 'Leave Taken',
+        }
+        return status_map.get(self.status, self.status)
+
+    def get_current_approver(self):
+        """Get the user who should approve at current level."""
+        if not self.is_pending:
+            return None
+            
+        # Get employee's department
+        try:
+            employee_tenant = self.employee.usertenant
+            department = employee_tenant.department
+        except:
+            return None
+        
+        if not department:
+            return None
+            
+        # Return appropriate approver based on current level
+        if self.current_approval_level == 'department_manager':
+            return department.manager
+        elif self.current_approval_level == 'hr_manager':
+            # Find HR manager in tenant
+            try:
+                hr_manager_tenant = self.tenant.usertenant_set.filter(
+                    role='HR Manager', 
+                    is_approved=True
+                ).first()
+                return hr_manager_tenant.user if hr_manager_tenant else None
+            except:
+                return None
+        elif self.current_approval_level == 'general_manager':
+            # Find general manager in tenant
+            try:
+                general_manager_tenant = self.tenant.usertenant_set.filter(
+                    role='General Manager',
+                    is_approved=True
+                ).first()
+                return general_manager_tenant.user if general_manager_tenant else None
+            except:
+                return None
+        
+        return None
+
+    def get_approval_history(self):
+        """Get all approval steps for this request."""
+        return self.approvals.all().order_by('order')
+
+    def can_be_approved_by(self, user):
+        """Check if user can approve this request at current level."""
+        if not self.is_pending:
+            return False
+            
+        current_approver = self.get_current_approver()
+        if not current_approver:
+            return False
+            
+        # User can approve if they are the current approver or have higher privileges
+        try:
+            user_tenant = user.usertenant
+            if user_tenant.tenant != self.tenant:
+                return False
+                
+            # Check if user is the designated approver
+            if current_approver == user:
+                return True
+                
+            # Check for higher-level approval rights
+            if user_tenant.role in ['General Manager', 'Tenant Owner']:
+                return True
+                
+            # HR managers can approve department manager level
+            if (user_tenant.role == 'HR Manager' and 
+                self.current_approval_level == 'department_manager'):
+                return True
+                
+        except:
+            return False
+            
+        return False
 
 
 class LeaveBalance(models.Model):
@@ -383,3 +525,118 @@ class LeavePolicy(models.Model):
         if not self.auto_approve_max_days:
             return False
         return days_requested <= self.auto_approve_max_days
+
+class LeaveApproval(models.Model):
+    """
+    Model for tracking multi-level approval workflow for leave requests.
+    Each leave request can have multiple approval steps.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+    
+    # Relationship to leave request
+    leave_request = models.ForeignKey(
+        'LeaveRequest',
+        on_delete=models.CASCADE,
+        related_name='approvals',
+        help_text="Leave request being approved"
+    )
+    
+    # Approval details
+    approver = models.ForeignKey(
+        'accounts.CustomUser',
+        on_delete=models.CASCADE,
+        related_name='leave_approvals',
+        help_text="User who performed this approval step"
+    )
+    
+    APPROVAL_LEVEL_CHOICES = [
+        ('department_manager', 'Department Manager'),
+        ('hr_manager', 'HR Manager'),
+        ('general_manager', 'General Manager'),
+    ]
+    
+    approval_level = models.CharField(
+        max_length=20,
+        choices=APPROVAL_LEVEL_CHOICES,
+        help_text="Approval level in the workflow"
+    )
+    
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending',
+        help_text="Status of this approval step"
+    )
+    
+    # Approval metadata
+    approved_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When this approval step was completed"
+    )
+    notes = models.TextField(
+        blank=True,
+        help_text="Notes or comments from approver"
+    )
+    order = models.IntegerField(
+        help_text="Order in approval sequence (1=first, 2=second, 3=final)"
+    )
+    
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['leave_request', 'order']
+        unique_together = ['leave_request', 'approval_level']
+        indexes = [
+            models.Index(fields=['leave_request', 'status']),
+            models.Index(fields=['approver']),
+            models.Index(fields=['approval_level', 'status']),
+        ]
+
+    def save(self, *args, **kwargs):
+        # Generate slug if not present
+        if not self.slug:
+            from django.utils.text import slugify
+            base_slug = f"approval-{self.leave_request.id}-{self.approval_level}"
+            self.slug = slugify(base_slug)
+            
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while LeaveApproval.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+        
+        # Set approved_date when status changes to approved/rejected
+        if self.status in ['approved', 'rejected'] and not self.approved_date:
+            from django.utils import timezone
+            self.approved_date = timezone.now()
+        
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.leave_request} - {self.get_approval_level_display()} ({self.get_status_display()})"
+
+    @property
+    def is_pending(self):
+        """Check if this approval step is pending."""
+        return self.status == 'pending'
+
+    @property
+    def is_approved(self):
+        """Check if this approval step is approved."""
+        return self.status == 'approved'
+
+    @property
+    def is_rejected(self):
+        """Check if this approval step is rejected."""
+        return self.status == 'rejected'

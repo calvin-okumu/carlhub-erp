@@ -8,5 +8,5 @@ export default function SprintPage() {
 
     if (!project) return null;
 
-    return <SprintSection projectSlug={project.slug} />;
+    return <SprintSection />;
 }

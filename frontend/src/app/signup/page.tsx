@@ -58,16 +58,8 @@ export default function SignUpPage() {
         try {
             const result = await signup(data.email, data.password, data.first_name, data.last_name, invitationToken ? undefined : data.company_name, invitationToken || undefined);
 
-            localStorage.setItem("access_token", result.token);
-            localStorage.setItem("user", JSON.stringify({
-                id: result.user_id,
-                email: result.email,
-                first_name: result.first_name,
-                last_name: result.last_name,
-            }));
-
-            setSuccess("Account created successfully! Redirecting...");
-            setTimeout(() => router.push("/dashboard"), 100);
+            setSuccess("Account created successfully! Please log in with your credentials.");
+            setTimeout(() => router.push("/login"), 100);
         } catch (err: unknown) {
             if (err && typeof err === 'object' && 'response' in err) {
                 const error = err as { response?: { status?: number; data?: { message?: string } } };

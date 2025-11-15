@@ -61,15 +61,14 @@ class CustomPermissionSerializer(serializers.ModelSerializer):
 
 class PermissionGroupSerializer(serializers.ModelSerializer):
     custom_permissions = CustomPermissionSerializer(many=True, read_only=True)
-    user_count = serializers.SerializerMethodField()
 
     class Meta:
         model = PermissionGroup
         fields = [
             'id', 'slug', 'name', 'description', 'is_system_group',
-            'custom_permissions', 'users', 'user_count', 'tenant',
-            'created_at', 'updated_at'
+            'custom_permissions'
         ]
+
         read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'user_count', 'tenant']
 
     def get_user_count(self, obj) -> int:

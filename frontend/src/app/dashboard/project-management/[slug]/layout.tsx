@@ -35,8 +35,8 @@ import CompletedTasksSection from '@/components/dashboard/project-management/com
                   return <SprintSection projectSlug={project.slug} />;
               case 'documents':
                   return <div className="p-6 text-center text-gray-500">Documents section coming soon.</div>;
-                 case 'completed-tasks':
-                     return <CompletedTasksSection projectSlug={project.slug} />;
+                  case 'completed-tasks':
+                      return <CompletedTasksSection />;
               default:
                   return <OverviewSection project={project} />;
          }

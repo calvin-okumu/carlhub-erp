@@ -37,17 +37,17 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
 
     useEffect(() => {
         if (mode === 'edit' && sprint) {
+            const milestoneObj = milestones.find(m => m.id === sprint.milestone);
             setFormData({
                 name: sprint.name,
                 status: sprint.status,
                 start_date: sprint.start_date || '',
                 end_date: sprint.end_date || '',
-                milestone: sprint.milestone || '',
+                milestone: milestoneObj?.slug || '',
             });
-            const milestone = milestones.find(m => m.id === sprint.milestone);
-            if (milestone) {
-                setMinDate(milestone.planned_start || '');
-                setMaxDate(milestone.due_date || '');
+            if (milestoneObj) {
+                setMinDate(milestoneObj.planned_start || '');
+                setMaxDate(milestoneObj.due_date || '');
             }
         } else {
             setFormData({
@@ -67,7 +67,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         if (name === 'milestone') {
-            const milestone = milestones.find(m => m.id === value);
+            const milestone = milestones.find(m => m.slug === value);
             if (milestone) {
                 setMinDate(milestone.planned_start || '');
                 setMaxDate(milestone.due_date || '');
@@ -167,11 +167,11 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                             required
                         >
                             <option value="">Select Milestone</option>
-                            {Array.isArray(milestones) && milestones.map(milestone => (
-                                <option key={milestone.id} value={milestone.id}>
-                                    {milestone.name}
-                                </option>
-                            ))}
+                             {Array.isArray(milestones) && milestones.map(milestone => (
+                                 <option key={milestone.id} value={milestone.slug}>
+                                     {milestone.name}
+                                 </option>
+                             ))}
                         </Select>
                     </div>
 

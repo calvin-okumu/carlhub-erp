@@ -200,9 +200,9 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                     <Button onClick={onClose} variant='secondary'>
                         Cancel
                     </Button>
-                    <Button>
-                        {mode === 'add' ? 'Add Project' : 'Update Project'}
-                    </Button>
+                     <Button type="submit">
+                         {mode === 'add' ? 'Add Project' : 'Update Project'}
+                     </Button>
                 </div>
             </form>
         </Modal>
