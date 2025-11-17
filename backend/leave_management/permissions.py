@@ -12,7 +12,7 @@ def is_tenant_admin_or_owner(user):
     # Check tenant admin/owner role
     try:
         user_tenant = user.usertenant
-        return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['admin', 'owner'])
+        return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
     except:
         return False
 
@@ -80,7 +80,7 @@ class CanManageLeaveRequests(permissions.BasePermission):
         if action == 'change':
             if obj.employee == request.user and obj.status == 'pending':
                 return True
-            # Managers/admins can approve/reject any request
+            # Managers and Tenant Owners can approve/reject any request
             return request.user.has_perm('leave_management.change_leaverequest') or is_tenant_admin_or_owner(request.user)
 
         # Only admins can delete requests
@@ -104,7 +104,7 @@ class CanManageLeaveRequests(permissions.BasePermission):
 class CanApproveLeaves(permissions.BasePermission):
     """
     Permission for leave approval actions.
-    Only managers and admins can approve/reject leave requests.
+    Only Managers and Tenant Owners can approve/reject leave requests.
     """
     def has_permission(self, request, view) -> bool:
         # Check tenant access first

@@ -13,6 +13,8 @@ A comprehensive multi-tenant Customer Relationship Management system built with 
 - **Progress Calculation**: Automatic progress aggregation from tasks → sprints → milestones → projects
 - **Date Validation**: Hierarchical date constraints ensuring logical timelines across all entities
 - **Financial Management**: Complete invoice and payment processing with client billing
+- **Leave Management**: Comprehensive leave request system with approval workflow and balance tracking
+- **User-Specific Access Control**: Role-based data access with employee self-service and admin override capabilities
 
 ### User Management & Security
 - **Default User Groups**: 5 pre-configured groups with automatic assignment:
@@ -22,14 +24,19 @@ A comprehensive multi-tenant Customer Relationship Management system built with 
   - Clients (limited read-only access)
   - Administrators (system-wide admin access)
 - **Role-based Access Control**: Granular permissions based on user groups and tenant ownership
+- **User-Specific Data Access**: Employees can only access their own leave data; admins/owners have override access
+- **Leave Request Security**: Employees can only create leave requests for themselves; admins can create for others
+- **Tenant Isolation**: All data is properly scoped by tenant with approval status validation
 - **Multiple Authentication**: Token-based auth + OAuth integration (Google, GitHub)
 - **Invitation System**: Secure user invitation and onboarding process
 
 ### API & Integration
 - **RESTful API**: Complete CRUD operations for all entities with comprehensive documentation
 - **Interactive API Docs**: Swagger/OpenAPI documentation with live testing capabilities
-- **Comprehensive Testing**: 48 tests covering all functionality with 100% pass rate
+- **Comprehensive Testing**: 60+ tests covering all functionality including user access control with 100% pass rate
 - **Sample Data Generation**: Realistic test data generation for development and demos
+- **Leave Management API**: Full leave request lifecycle with approval workflow and balance tracking
+- **Access Control Testing**: Comprehensive test suite for user-specific data access and permissions
 
 ## 🛠️ Tech Stack
 
@@ -324,6 +331,38 @@ docker-compose exec db pg_isready -U saascrm_user -d saascrm_db
 
 
 
+## 🏖️ Leave Management System
+
+DjangoCRM includes a comprehensive leave management system with user-specific access control and approval workflows.
+
+### Features
+- **Leave Requests**: Employees can submit leave requests with automatic business day calculation
+- **Approval Workflow**: Multi-level approval system with admin/owner override capabilities
+- **Leave Balances**: Automatic balance tracking by year and leave type
+- **Leave Policies**: Configurable company-wide policies with entitlement rules
+- **User-Specific Access**: Employees can only access their own data; admins have full access
+- **Business Day Calculation**: Automatic calculation excluding weekends for leave duration
+- **Tenant Isolation**: All leave data is properly scoped by tenant
+
+### Access Control Rules
+- **Employees**: Can only view/create/update their own leave requests and balances
+- **Admins/Owners**: Can access all tenant leave data and create requests for others
+- **Superusers**: Full system access across all tenants
+- **Unapproved Users**: No access until tenant membership is approved
+
+### API Endpoints
+- `/api/leave-requests/` - Leave request CRUD with approval workflow
+- `/api/leave-balances/` - Employee balance tracking by year and type
+- `/api/leave-policies/` - Company-wide leave policy management
+
+### Testing
+The leave management system includes comprehensive test coverage:
+- **12 User Access Control Tests**: Verify employee self-only access and admin override
+- **Core Functionality Tests**: Validate leave request lifecycle and business rules
+- **Permission Tests**: Ensure proper role-based access control
+
+Run tests with: `python manage.py test leave_management`
+
 ## 📖 API Documentation
 
 Complete API documentation is available in [docs/API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md)
@@ -371,9 +410,11 @@ The DjangoCRM application is fully implemented and production-ready with compreh
 - **Date Management**: Hierarchical date constraints ensuring logical timelines across projects, milestones, sprints, and tasks
 - **Sprint Task Management**: Full agile workflow with task assignment and sprint management
 - **Financial Management**: Invoice and payment processing with client billing
+- **Leave Management**: Complete leave request system with approval workflow, balance tracking, and user-specific access control
+- **Access Control**: User-specific data access with employee self-service and admin override capabilities
 - **Sample Data**: Generate realistic test data with `python manage.py generate_sample_data`
 - **Admin Interface**: Django admin panel for data management
-- **Comprehensive Testing**: 48 tests covering all functionality with 100% pass rate
+- **Comprehensive Testing**: 60+ tests covering all functionality including user access control with 100% pass rate
 - **API Documentation**: Complete Swagger/OpenAPI documentation with interactive testing
 - **Automated Setup System**: One-command setup with environment detection, Docker integration, and CI/CD pipeline
 
@@ -394,6 +435,7 @@ Running `python manage.py generate_sample_data` creates:
 - **50 Tasks** with status-based progress, dates, estimated hours, and assignments
 - **5 Users** with different permission levels across various groups
 - **1 Superuser** (admin@example.com / admin123)
+- **Leave Management Data**: Leave policies, balances, and sample requests for testing access control
 
 **Default Groups (Auto-created on migration):**
 - **Tenant Owners**: Full tenant management and administrative access
@@ -417,6 +459,17 @@ DjangoCRM/
 │   │       └── setup_groups.py  # Management command for user groups
 │   ├── tests.py            # Tests for accounts app
 │   └── views.py            # Account-related views (currently empty)
+├── leave_management/        # Leave management system with access control
+│   ├── models.py           # LeaveRequest, LeaveBalance, LeavePolicy models
+│   ├── views.py            # API views with user-specific filtering
+│   ├── serializers.py      # DRF serializers with validation logic
+│   ├── permissions.py      # Custom permissions with admin/owner override
+│   ├── tests.py            # Core leave management tests
+│   ├── test_user_access_control.py  # User access control test suite
+│   ├── urls.py             # URL patterns for leave management
+│   ├── migrations/         # Database migrations
+│   └── management/
+│       └── commands/       # Management commands
 ├── project/                # Main Django app for CRM functionality
 │   ├── models.py           # Database models (Client, Project, Milestone, etc.)
 │   ├── views.py            # API views with tenant filtering and authentication
@@ -461,8 +514,29 @@ python check_env.py  # Validate your .env configuration
 
 ### Running Tests
 ```bash
+# Run all tests
 python manage.py test
+
+# Run specific app tests
+python manage.py test leave_management
+python manage.py test project
+python manage.py test accounts
+
+# Run specific test class
+python manage.py test leave_management.test_user_access_control
+
+# Run with verbose output
+python manage.py test --verbosity=2
 ```
+
+### Test Coverage
+The application includes comprehensive test coverage:
+- **60+ Total Tests** covering all functionality
+- **Leave Management Tests**: Core functionality and user access control
+- **Project Management Tests**: CRUD operations and business logic
+- **Account Management Tests**: Authentication and tenant management
+- **User Access Control Tests**: Role-based permissions and data isolation
+- **Integration Tests**: End-to-end workflows and API interactions
 
 ### Testing the API
 ```bash
