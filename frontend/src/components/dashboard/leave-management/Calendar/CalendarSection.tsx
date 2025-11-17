@@ -1,106 +1,134 @@
 "use client";
 
-import { useState } from 'react';
-import { startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth } from 'date-fns';
-import CalendarHeader from './CalendarHeader';
-import LeaveDay from './LeaveDay';
-import LeaveDetailsModal from './LeaveDetailsModal';
-import { useLeaveRequests } from './hooks/useLeaveRequests';
-import type { LeaveRequest } from '../../../../api/types';
+import type { LeaveRequest } from "@/api/types";
+import {
+    eachDayOfInterval,
+    endOfMonth,
+    isSameMonth,
+    isValid,
+    startOfMonth,
+} from "date-fns";
+import { useMemo, useState } from "react";
+import CalendarHeader from "./CalendarHeader";
+import LeaveDay from "./LeaveDay";
+import LeaveDetailsModal from "./LeaveDetailsModal";
+import { useLeaveRequests } from "./hooks/useLeaveRequests";
 
 const CalendarSection = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedLeave, setSelectedLeave] = useState<LeaveRequest | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedLeaves, setSelectedLeaves] = useState<LeaveRequest[]>([]);
+    const [showDetails, setShowDetails] = useState(false);
 
-  const { leaveRequests, isLoading, error } = useLeaveRequests({
-    month: currentDate.getMonth() + 1,
-    year: currentDate.getFullYear()
-  });
-
-  // Generate calendar days
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const calendarDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
-
-  // Helper: get leave requests for a specific day
-  const getLeaveForDay = (day: Date): LeaveRequest[] => {
-    return leaveRequests.filter(request => {
-      const start = new Date(request.start_date);
-      const end = new Date(request.end_date);
-      return day >= start && day <= end;
+    const { leaveRequests, isLoading, error } = useLeaveRequests({
+        month: currentDate.getMonth() + 1,
+        year: currentDate.getFullYear(),
     });
-  };
 
-  // Handle day click
-  const handleDayClick = (day: Date, dayLeaveRequests: LeaveRequest[]) => {
-    if (dayLeaveRequests.length > 0) {
-      setSelectedLeave(dayLeaveRequests[0]); // Show first leave, or handle multiple
-      setShowDetails(true);
+    /** 
+     * Helper: safely convert API dates.
+     */
+    const parseDate = (value: string): Date | null => {
+        const d = new Date(value);
+        return isValid(d) ? d : null;
+    };
+
+    /**
+     * Memoize calendar days so we don't regenerate unnecessarily.
+     */
+    const calendarDays = useMemo(() => {
+        const start = startOfMonth(currentDate);
+        const end = endOfMonth(currentDate);
+        return eachDayOfInterval({ start, end });
+    }, [currentDate]);
+
+    /**
+     * Helper: find leaves matching a given day.
+     */
+    const getLeavesForDay = (day: Date): LeaveRequest[] => {
+        return leaveRequests.filter((req) => {
+            const start = parseDate(req.start_date);
+            const end = parseDate(req.end_date);
+
+            if (!start || !end) return false;
+            return day >= start && day <= end;
+        });
+    };
+
+    /**
+     * Handle clicking on a day.
+     * Show all leaves for that day (better UX than forcing index 0 only).
+     */
+    const handleDayClick = (day: Date, leavesForDay: LeaveRequest[]) => {
+        if (leavesForDay.length === 0) return;
+
+        setSelectedLeaves(leavesForDay);
+        setShowDetails(true);
+    };
+
+    if (error) {
+        return (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-800 text-sm font-medium">
+                    Failed to load leave calendar.
+                </p>
+                <p className="text-red-700 text-xs">{String(error)}</p>
+            </div>
+        );
     }
-  };
 
-  if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <div className="text-red-800">
-          Error loading calendar: {error}
-        </div>
-      </div>
-    );
-  }
+        <div className="calendar-section">
+            <CalendarHeader
+                currentDate={currentDate}
+                onDateChange={setCurrentDate}
+                leaveRequests={leaveRequests}
+            />
 
-  return (
-    <div className="calendar-section">
-      <CalendarHeader
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-        leaveRequests={leaveRequests}
-      />
+            {isLoading ? (
+                <div className="flex items-center justify-center h-96">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+            ) : (
+                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                    {/* Day headers */}
+                    <div className="grid grid-cols-7 bg-gray-50 border-b select-none">
+                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                            <div
+                                key={d}
+                                className="p-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wide"
+                            >
+                                {d}
+                            </div>
+                        ))}
+                    </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          {/* Day headers */}
-          <div className="grid grid-cols-7 bg-gray-50 border-b">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
-              <div key={day} className="p-4 text-center text-sm font-medium text-gray-700">
-                {day}
-              </div>
-            ))}
-          </div>
+                    {/* Calendar days */}
+                    <div className="grid grid-cols-7">
+                        {calendarDays.map((day) => {
+                            const dayLeaves = getLeavesForDay(day);
 
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7">
-            {calendarDays.map(day => {
-              const dayLeave = getLeaveForDay(day);
-              const isCurrentMonth = isSameMonth(day, currentDate);
+                            return (
+                                <LeaveDay
+                                    key={day.toISOString()}
+                                    day={day}
+                                    leaveRequests={dayLeaves}
+                                    isCurrentMonth={isSameMonth(day, currentDate)}
+                                    onClick={handleDayClick}
+                                />
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
 
-              return (
-                <LeaveDay
-                  key={day.toISOString()}
-                  day={day}
-                  leaveRequests={dayLeave}
-                  isCurrentMonth={isCurrentMonth}
-                  onClick={handleDayClick}
+            {showDetails && (
+                <LeaveDetailsModal
+                    leaveRequests={selectedLeaves}
+                    onClose={() => setShowDetails(false)}
                 />
-              );
-            })}
-          </div>
+            )}
         </div>
-      )}
-
-      {showDetails && (
-        <LeaveDetailsModal
-          leaveRequest={selectedLeave}
-          onClose={() => setShowDetails(false)}
-        />
-      )}
-    </div>
-  );
+    );
 };
 
 export default CalendarSection;
