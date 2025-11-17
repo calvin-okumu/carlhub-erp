@@ -29,27 +29,24 @@ export default function AuthLayout({ children, title, subtitle }: AuthLayoutProp
 
             {/* Main */}
             <main className="flex flex-1">
-                {/* Left illustration */}
-                <div className="hidden md:flex w-1/2 bg-gradient-to-br from-indigo-100 via-white to-indigo-50 items-center justify-center p-8">
-                    <div className="max-w-md text-center">
-                        <Image
-                            src="/bg.png"
-                            alt="Authentication Illustration"
-                            width={600}
-                            height={500}
-                            priority
-                            className="rounded-lg shadow-md"
-                        />
-                        <p className="mt-6 text-gray-600 text-sm">
-                            Streamline your operations, manage your team, and grow your business with confidence.
-                        </p>
-                    </div>
+                {/* Left illustration - Full hero image */}
+                <div className="hidden md:block relative w-1/2">
+                    <Image
+                        src="/bg.png"
+                        alt="Authentication Illustration"
+                        fill
+                        priority
+                        className="object-cover"
+                    />
+
+                    {/* Gradient overlay for style */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-700/10 to-white/40" />
                 </div>
 
                 {/* Right form */}
-                <div className="flex flex-1 items-center justify-center p-6 bg-white">
+                <div className="flex flex-1 items-center justify-center p-10 bg-white">
                     <div className="w-full max-w-md">
-                        {title && <h2 className="text-2xl font-semibold mb-2">{title}</h2>}
+                        {title && <h2 className="text-3xl font-semibold mb-2">{title}</h2>}
                         {subtitle && <p className="text-gray-500 mb-6">{subtitle}</p>}
                         {children}
                     </div>

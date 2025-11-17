@@ -214,10 +214,6 @@ class UserTenant(models.Model):
         help_text="Department this user belongs to"
     )
 
-    # Timestamps
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
     def save(self, *args, **kwargs):
         if not self.slug:
             from django.utils.text import slugify
@@ -567,8 +563,6 @@ class PermissionGroup(models.Model):
     description = models.TextField(blank=True)
     is_system_group = models.BooleanField(default=False)  # Prevent deletion of system groups
     custom_permissions = models.ManyToManyField(CustomPermission, blank=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Department(models.Model):
@@ -650,14 +644,6 @@ class Department(models.Model):
     def __str__(self):
         return f"{self.tenant.name}: {self.name}"
 
-
-    class Meta:
-        ordering = ['tenant', 'name']
-        unique_together = ['name', 'tenant']
-
-
-
-
     @property
     def employee_count(self):
         """Get the number of employees in this department."""
@@ -669,4 +655,3 @@ class Department(models.Model):
         for sub_dept in sub_depts[:]:  # Copy list to avoid modification during iteration
             sub_depts.extend(sub_dept.get_all_sub_departments())
         return sub_depts
-

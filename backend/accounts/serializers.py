@@ -68,9 +68,4 @@ class PermissionGroupSerializer(serializers.ModelSerializer):
             'id', 'slug', 'name', 'description', 'is_system_group',
             'custom_permissions'
         ]
-
-        read_only_fields = ['id', 'slug', 'created_at', 'updated_at', 'user_count', 'tenant']
-
-    def get_user_count(self, obj) -> int:
-        """Return the number of users in this permission group."""
-        return obj.users.count()
+        read_only_fields = ['id', 'slug']

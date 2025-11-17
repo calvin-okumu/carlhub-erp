@@ -77,8 +77,6 @@ const leaveItems = [
     { name: "Leave Overview", href: "/dashboard/leave", icon: Calendar },
     { name: "Leave Requests", href: "/dashboard/leave/requests", icon: FileText },
     { name: "Leave Calendar", href: "/dashboard/leave/calendar", icon: Calendar },
-    { name: "Leave Balance", href: "/dashboard/leave/balance", icon: DollarSign },
-    { name: "Leave Approvals", href: "/dashboard/leave/approvals", icon: UserCheck },
     { name: "Leave Policies", href: "/dashboard/leave/policies", icon: StickyNote },
 ];
 
@@ -397,10 +395,10 @@ export default function Sidebar() {
                                     LEAVE MANAGEMENT
                                 </div>
                                 <div className="ml-6 mt-1 space-y-1">
-                                     {leaveItems.map((item) => {
-                                         const isActive = pathname === item.href;
+                                    {leaveItems.map((item) => {
+                                        const isActive = pathname === item.href;
 
-                                         return (
+                                        return (
                                             <Link
                                                 key={item.name}
                                                 href={item.href}

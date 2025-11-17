@@ -7,11 +7,15 @@ interface StatCardProps {
   icon: LucideIcon;
   color?: string;
   className?: string;
+  onClick?: () => void;
 }
 
-export default function StatCard({ title, value, icon: Icon, color = 'border-gray-200', className = '' }: StatCardProps) {
+export default function StatCard({ title, value, icon: Icon, color = 'border-gray-200', className = '', onClick }: StatCardProps) {
   return (
-    <div className={`bg-white border ${color} rounded-lg p-4 ${className}`}>
+    <div
+      className={`bg-white border ${color} rounded-lg p-4 ${onClick ? 'cursor-pointer hover:bg-gray-50' : ''} ${className}`}
+      onClick={onClick}
+    >
       <div className="flex items-center">
         <div className="flex-shrink-0">
           <Icon className="h-8 w-8 text-gray-400" />
