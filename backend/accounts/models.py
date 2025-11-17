@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager, Group
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -173,6 +174,7 @@ class Tenant(models.Model):
         help_text='User who originally created this tenant during signup'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = models.Manager()  # Default manager
 
@@ -211,6 +213,10 @@ class UserTenant(models.Model):
         related_name='members',
         help_text="Department this user belongs to"
     )
+
+    # Timestamps
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -367,6 +373,7 @@ class EmployeeDocument(models.Model):
     description = models.TextField(blank=True)
     document_file = models.FileField(upload_to='employee_documents/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # File metadata
     file_size = models.PositiveIntegerField(default=0)
@@ -560,6 +567,8 @@ class PermissionGroup(models.Model):
     description = models.TextField(blank=True)
     is_system_group = models.BooleanField(default=False)  # Prevent deletion of system groups
     custom_permissions = models.ManyToManyField(CustomPermission, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
 
 class Department(models.Model):

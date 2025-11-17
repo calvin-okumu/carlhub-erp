@@ -80,8 +80,8 @@ class UserTenantViewSet(OptimizedTenantScopedMixin, OptimizedViewSetMixin, views
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["is_owner", "is_approved", "role"]
     search_fields = ["user__email", "user__first_name", "user__last_name"]
-    ordering_fields = ["created_at", "user__email"]
-    ordering = ['created_at']
+    ordering_fields = ["created_at", "user__email", "role"]
+    ordering = ['-created_at']
     lookup_field = 'slug'
 
     def get_queryset(self):
