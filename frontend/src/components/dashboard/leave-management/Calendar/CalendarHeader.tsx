@@ -1,99 +1,123 @@
-import { useMemo } from 'react';
-import { format, subMonths, addMonths } from 'date-fns';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import type { LeaveRequest } from '../../../../api/types';
+import type { LeaveRequest } from "@/api/types";
+import { addMonths, format, isValid, subMonths } from "date-fns";
+import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useMemo } from "react";
 
 interface CalendarHeaderProps {
-  currentDate: Date;
-  onDateChange: (date: Date) => void;
-  leaveRequests: LeaveRequest[];
+    currentDate: Date;
+    onDateChange: (date: Date) => void;
+    leaveRequests: LeaveRequest[];
 }
 
-const CalendarHeader = ({ currentDate, onDateChange, leaveRequests }: CalendarHeaderProps) => {
-  const goToPreviousMonth = () => {
-    onDateChange(subMonths(currentDate, 1));
-  };
+const getMonthSummary = (requests: LeaveRequest[], date: Date) => {
+    if (!isValid(date)) return { totalDays: 0, byType: {} };
 
-  const goToNextMonth = () => {
-    onDateChange(addMonths(currentDate, 1));
-  };
+    const month = date.getMonth();
+    const year = date.getFullYear();
 
-  const goToToday = () => {
-    onDateChange(new Date());
-  };
+    const relevant = requests.filter((r) => {
+        const start = new Date(r.start_date);
+        const end = new Date(r.end_date);
 
-  const monthSummary = useMemo(() => {
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-
-    const monthLeave = leaveRequests.filter(request => {
-      const startDate = new Date(request.start_date);
-      const endDate = new Date(request.end_date);
-      return (startDate.getMonth() === currentMonth && startDate.getFullYear() === currentYear) ||
-             (endDate.getMonth() === currentMonth && endDate.getFullYear() === currentYear);
+        return (
+            isValid(start) &&
+            isValid(end) &&
+            ((start.getMonth() === month && start.getFullYear() === year) ||
+                (end.getMonth() === month && end.getFullYear() === year))
+        );
     });
 
-    const totalDays = monthLeave.reduce((sum, request) => sum + request.days_requested, 0);
+    const totalDays = relevant.reduce((sum, r) => sum + r.days_requested, 0);
 
-    const byType = monthLeave.reduce((acc, request) => {
-      acc[request.leave_type] = (acc[request.leave_type] || 0) + request.days_requested;
-      return acc;
+    const byType = relevant.reduce((acc, r) => {
+        acc[r.leave_type] = (acc[r.leave_type] || 0) + r.days_requested;
+        return acc;
     }, {} as Record<string, number>);
 
     return { totalDays, byType };
-  }, [leaveRequests, currentDate]);
+};
 
-  return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-      {/* Month Navigation */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={goToPreviousMonth}
-            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-            aria-label="Previous month"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+const CalendarHeader = ({
+    currentDate,
+    onDateChange,
+    leaveRequests,
+}: CalendarHeaderProps) => {
+    const changeMonth = useCallback(
+        (direction: "prev" | "next") => {
+            const fn = direction === "prev" ? subMonths : addMonths;
+            onDateChange(fn(currentDate, 1));
+        },
+        [currentDate, onDateChange]
+    );
 
-          <h2 className="text-2xl font-semibold text-gray-900">
-            {format(currentDate, 'MMMM yyyy')}
-          </h2>
+    const goToToday = () => onDateChange(new Date());
 
-          <button
-            onClick={goToNextMonth}
-            className="p-2 hover:bg-gray-100 rounded-md transition-colors"
-            aria-label="Next month"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+    const monthSummary = useMemo(
+        () => getMonthSummary(leaveRequests, currentDate),
+        [leaveRequests, currentDate]
+    );
+
+    const hasSummary = monthSummary.totalDays > 0;
+
+    return (
+        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
+            {/* Header Controls */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => changeMonth("prev")}
+                        className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-md transition"
+                        aria-label="Previous month"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </button>
+
+                    <h2 className="text-2xl font-semibold text-gray-900 select-none">
+                        {format(currentDate, "MMMM yyyy")}
+                    </h2>
+
+                    <button
+                        onClick={() => changeMonth("next")}
+                        className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-md transition"
+                        aria-label="Next month"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <button
+                    onClick={goToToday}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 active:bg-blue-800 transition"
+                >
+                    <Calendar className="w-4 h-4" />
+                    Today
+                </button>
+            </div>
+
+            {/* Summary */}
+            <div className="border-t pt-4">
+                {!hasSummary ? (
+                    <p className="text-gray-500 text-sm italic">
+                        No leave records for this month.
+                    </p>
+                ) : (
+                    <div className="flex flex-wrap gap-6">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-600">Total Leave Days:</span>
+                            <span className="text-lg font-semibold">{monthSummary.totalDays}</span>
+                        </div>
+
+                        {Object.entries(monthSummary.byType).map(([type, days]) => (
+                            <div key={type} className="flex items-center gap-2">
+                                <span className="text-sm text-gray-600">{type}:</span>
+                                <span className="text-lg font-semibold">{days} days</span>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
-
-        <button
-          onClick={goToToday}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-        >
-          <Calendar className="w-4 h-4" />
-          Today
-        </button>
-      </div>
-
-      {/* Month Summary */}
-      <div className="flex flex-wrap gap-6">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-600">Total Leave Days:</span>
-          <span className="text-lg font-semibold text-gray-900">{monthSummary.totalDays}</span>
-        </div>
-
-        {(Object.entries(monthSummary.byType) as [string, number][]).map(([type, days]) => (
-          <div key={type} className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-600">{type}:</span>
-            <span className="text-lg font-semibold text-gray-900">{days} days</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+    );
 };
 
 export default CalendarHeader;

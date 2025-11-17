@@ -1,9 +1,10 @@
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import type { LeaveRequest } from '../../../../api/types';
 import SearchInput from '../../../shared/SearchInput';
 import Button from '../../../ui/Button';
 import LeaveRequestModal from './LeaveRequestModal';
-import type { LeaveRequest } from '../../../../api/types';
+
 interface RequestHeaderProps {
     onSearchChange: (value: string) => void;
     onRequestSuccess?: () => void;
@@ -12,6 +13,7 @@ interface RequestHeaderProps {
     editingRequest?: LeaveRequest | null;
     onEditClose?: () => void;
 }
+
 export const RequestHeader = ({
     onSearchChange,
     onRequestSuccess,
@@ -28,23 +30,15 @@ export const RequestHeader = ({
             onCreateRequest(() => setIsModalOpen(true));
         }
     }, [onCreateRequest]);
+
     const handleSearchChange = (value: string) => {
         setSearchValue(value);
         onSearchChange(value);
     };
-    const handleNewRequest = () => {
-        setIsModalOpen(true);
-    };
-    const handleModalClose = () => {
-        setIsModalOpen(false);
-    };
-    const handleRequestSuccess = () => {
-        onRequestSuccess?.();
-        setIsModalOpen(false);
-    };
+
     return (
         <>
-            <div className="flex items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-4 bg-white/60 backdrop-blur border rounded-xl shadow-sm mb-6">
                 <div className="flex-1 max-w-md">
                     <SearchInput
                         value={searchValue}
@@ -52,25 +46,31 @@ export const RequestHeader = ({
                         placeholder={searchPlaceholder}
                     />
                 </div>
+
                 <Button
-                    onClick={handleNewRequest}
+                    onClick={() => setIsModalOpen(true)}
                     variant="gradient"
                     size="md"
-                    className="flex items-center gap-2 whitespace-nowrap"
+                    className="flex items-center gap-2 whitespace-nowrap shadow-sm"
                 >
                     <Plus size={16} />
-                    New Leave Request
+                    Request Leave
                 </Button>
             </div>
+
             <LeaveRequestModal
                 isOpen={isModalOpen}
-                onClose={handleModalClose}
-                onSuccess={handleRequestSuccess}
+                onClose={() => setIsModalOpen(false)}
+                onSuccess={() => {
+                    onRequestSuccess?.();
+                    setIsModalOpen(false);
+                }}
             />
+
             {editingRequest && (
                 <LeaveRequestModal
                     isOpen={!!editingRequest}
-                    onClose={() => onEditClose?.()}
+                    onClose={onEditClose}
                     onSuccess={() => {
                         onRequestSuccess?.();
                         onEditClose?.();
