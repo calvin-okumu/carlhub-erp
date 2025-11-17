@@ -4,17 +4,16 @@ Performance testing script for DjangoCRM user management features.
 Tests the impact of audit logging on API performance.
 """
 
-import time
-import requests
 import statistics
-from concurrent.futures import ThreadPoolExecutor
-from django.conf import settings
-from django.test.utils import override_settings
+import time
+
+import requests
 
 # Test configuration
-BASE_URL = 'http://127.0.0.1:8000/api'
+BASE_URL = "http://127.0.0.1:8000/api"
 NUM_REQUESTS = 50
 CONCURRENT_REQUESTS = 5
+
 
 def time_request(func, *args, **kwargs):
     """Time a single request."""
@@ -22,6 +21,7 @@ def time_request(func, *args, **kwargs):
     response = func(*args, **kwargs)
     end_time = time.time()
     return end_time - start_time, response
+
 
 def run_performance_test():
     """Run performance tests for user management endpoints."""
@@ -31,19 +31,19 @@ def run_performance_test():
 
     # Test endpoints
     endpoints = [
-        ('GET', '/health/', 'Health Check'),
-        ('POST', '/auth-methods/', 'Auth Methods'),
+        ("GET", "/health/", "Health Check"),
+        ("POST", "/auth-methods/", "Auth Methods"),
     ]
 
     # Get auth token first
     try:
-        login_response = requests.post(f"{BASE_URL}/login/", json={
-            'email': 'user1@tenant1.sample.com',
-            'password': 'password123'
-        })
+        login_response = requests.post(
+            f"{BASE_URL}/login/",
+            json={"email": "user1@tenant1.sample.com", "password": "password123"},
+        )
         if login_response.status_code == 200:
-            token = login_response.json()['token']
-            headers = {'Authorization': f'Token {token}'}
+            token = login_response.json()["token"]
+            headers = {"Authorization": f"Token {token}"}
             print("✓ Authentication successful")
         else:
             print("✗ Authentication failed, using no auth for tests")
@@ -62,10 +62,12 @@ def run_performance_test():
 
         def make_request():
             try:
-                if method == 'GET':
+                if method == "GET":
                     return requests.get(f"{BASE_URL}{endpoint}", headers=headers, timeout=10)
-                elif method == 'POST':
-                    return requests.post(f"{BASE_URL}{endpoint}", headers=headers, json={}, timeout=10)
+                elif method == "POST":
+                    return requests.post(
+                        f"{BASE_URL}{endpoint}", headers=headers, json={}, timeout=10
+                    )
             except Exception as e:
                 print(f"Request failed: {e}")
                 return None
@@ -88,12 +90,12 @@ def run_performance_test():
             success_rate = len(response_times) / NUM_REQUESTS * 100
 
             results[name] = {
-                'avg_time': avg_time,
-                'median_time': median_time,
-                'min_time': min_time,
-                'max_time': max_time,
-                'success_rate': success_rate,
-                'total_requests': NUM_REQUESTS
+                "avg_time": avg_time,
+                "median_time": median_time,
+                "min_time": min_time,
+                "max_time": max_time,
+                "success_rate": success_rate,
+                "total_requests": NUM_REQUESTS,
             }
 
             print(f"Average response time: {avg_time:.3f}s")
@@ -119,5 +121,6 @@ def run_performance_test():
     else:
         print("✗ No performance data collected")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     run_performance_test()

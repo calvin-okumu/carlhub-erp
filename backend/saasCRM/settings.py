@@ -4,20 +4,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-
-
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-if os.getenv('DOCKER_CONTAINER') == 'true':
-    load_dotenv(dotenv_path=BASE_DIR.parent / '.env')  # Root .env for Docker
-else:
-    load_dotenv(dotenv_path=BASE_DIR / '.env')  # Backend .env for local
-
 # Import logging configuration after BASE_DIR is defined
 import importlib.util
-import logging
 
 # Load logging configuration module
 logging_config_path = BASE_DIR / "saasCRM" / "logging.py"
@@ -31,19 +22,58 @@ if logging_config_path.exists():
         # Fallback function
         def setup_logging(base_dir):
             return {
-                'version': 1,
-                'disable_existing_loggers': False,
-                'handlers': {'console': {'class': 'logging.StreamHandler'}},
-                'root': {'handlers': ['console'], 'level': 'INFO'},
+                "version": 1,
+                "disable_existing_loggers": False,
+                "handlers": {"console": {"class": "logging.StreamHandler"}},
+                "root": {"handlers": ["console"], "level": "INFO"},
             }
+
 else:
     # Fallback function if file doesn't exist
     def setup_logging(base_dir):
         return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'handlers': {'console': {'class': 'logging.StreamHandler'}},
-            'root': {'handlers': ['console'], 'level': 'INFO'},
+            "version": 1,
+            "disable_existing_loggers": False,
+            "handlers": {"console": {"class": "logging.StreamHandler"}},
+            "root": {"handlers": ["console"], "level": "INFO"},
+        }
+
+
+# Load environment variables from .env file
+if os.getenv("DOCKER_CONTAINER") == "true":
+    load_dotenv(dotenv_path=BASE_DIR.parent / ".env")  # Root .env for Docker
+else:
+    load_dotenv(dotenv_path=BASE_DIR / ".env")  # Backend .env for local
+
+# Import logging configuration after BASE_DIR is defined
+import importlib.util
+
+# Load logging configuration module
+logging_config_path = BASE_DIR / "saasCRM" / "logging.py"
+if logging_config_path.exists():
+    spec = importlib.util.spec_from_file_location("logging_config", logging_config_path)
+    if spec and spec.loader:
+        logging_config = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(logging_config)
+        setup_logging = logging_config.setup_logging
+    else:
+        # Fallback function
+        def setup_logging(base_dir):
+            return {
+                "version": 1,
+                "disable_existing_loggers": False,
+                "handlers": {"console": {"class": "logging.StreamHandler"}},
+                "root": {"handlers": ["console"], "level": "INFO"},
+            }
+
+else:
+    # Fallback function if file doesn't exist
+    def setup_logging(base_dir):
+        return {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "handlers": {"console": {"class": "logging.StreamHandler"}},
+            "root": {"handlers": ["console"], "level": "INFO"},
         }
 
 
@@ -110,11 +140,13 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-
     "drf_spectacular",
     "drf_spectacular_sidecar",
     "corsheaders",
 ]
+
+if DEBUG:
+    INSTALLED_APPS.append("debug_toolbar")
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
@@ -140,6 +172,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
 ]
+
+if DEBUG:
+    MIDDLEWARE.insert(0, "debug_toolbar.middleware.DebugToolbarMiddleware")
 
 ROOT_URLCONF = "saasCRM.urls"
 
@@ -170,30 +205,30 @@ try:
     import psycopg2  # Test if psycopg2 is available
 
     # Check for DATABASE_URL environment variable (for production/staging)
-    database_url = os.getenv('DATABASE_URL')
+    database_url = os.getenv("DATABASE_URL")
     if database_url:
         # Parse DATABASE_URL manually for production/staging environments
         # Expected format: postgresql://user:password@host:port/database
         try:
             # Simple DATABASE_URL parsing
-            if database_url.startswith('postgresql://'):
+            if database_url.startswith("postgresql://"):
                 # Remove protocol
-                db_string = database_url.replace('postgresql://', '')
+                db_string = database_url.replace("postgresql://", "")
                 # Split user:pass@host:port/db
-                if '@' in db_string and '/' in db_string:
-                    credentials, rest = db_string.split('@', 1)
-                    host_port_db, db_name = rest.split('/', 1)
-                    user, password = credentials.split(':', 1)
-                    host, port = host_port_db.split(':', 1)
+                if "@" in db_string and "/" in db_string:
+                    credentials, rest = db_string.split("@", 1)
+                    host_port_db, db_name = rest.split("/", 1)
+                    user, password = credentials.split(":", 1)
+                    host, port = host_port_db.split(":", 1)
 
                     DATABASES = {
-                        'default': {
-                            'ENGINE': 'django.db.backends.postgresql',
-                            'NAME': db_name,
-                            'USER': user,
-                            'PASSWORD': password,
-                            'HOST': host,
-                            'PORT': port,
+                        "default": {
+                            "ENGINE": "django.db.backends.postgresql",
+                            "NAME": db_name,
+                            "USER": user,
+                            "PASSWORD": password,
+                            "HOST": host,
+                            "PORT": port,
                         }
                     }
                 else:
@@ -201,7 +236,9 @@ try:
             else:
                 raise ValueError("Only PostgreSQL DATABASE_URL is supported")
         except Exception as e:
-            print(f"Warning: Could not parse DATABASE_URL ({e}), falling back to environment variables")
+            print(
+                f"Warning: Could not parse DATABASE_URL ({e}), falling back to environment variables"
+            )
             DATABASES = {
                 "default": {
                     "ENGINE": "django.db.backends.postgresql",
@@ -235,15 +272,15 @@ except ImportError:
 
 # Test database configuration
 # Use SQLite for tests to avoid needing PostgreSQL setup
-if 'test' in sys.argv:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+if "test" in sys.argv:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
     }
 else:
     # Django automatically creates test databases with 'test_' prefix
     TEST = {
-        'NAME': 'saascrm_db',  # Use same db for tests
+        "NAME": "saascrm_db",  # Use same db for tests
     }
 
 
@@ -291,9 +328,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # Email Configuration
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 
 # SMTP Configuration (for Gmail, Outlook, etc.)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
@@ -373,33 +408,38 @@ REST_FRAMEWORK = {
     },
 }
 
-use_redis = os.getenv('USE_REDIS_CACHE', 'false').lower() == 'true'
+use_redis = os.getenv("USE_REDIS_CACHE", "false").lower() == "true"
 
-if 'test' in sys.argv or (DEBUG and not use_redis):
+if "test" in sys.argv or (DEBUG and not use_redis):
     CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         }
     }
 else:
     CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'IGNORE_EXCEPTIONS': True,
-            }
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+            },
         }
     }
 
     # Check Redis availability and warn if not running
     try:
         import redis
-        r = redis.Redis(host='127.0.0.1', port=6379, db=1)
+
+        r = redis.Redis(host="127.0.0.1", port=6379, db=1)
         r.ping()
     except Exception:
         print("Warning: Redis is not running or unreachable. Caching will be disabled.")
+
+    # Use Redis for sessions
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "default"
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "DjangoCRM API",
@@ -450,6 +490,13 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+# Django Debug Toolbar
+if DEBUG:
+    INTERNAL_IPS = [
+        "127.0.0.1",
+        "localhost",
+    ]
 
 # Logging configuration
 LOGGING = setup_logging(BASE_DIR)

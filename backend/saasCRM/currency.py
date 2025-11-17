@@ -3,42 +3,43 @@ Currency utilities for multi-currency support in DjangoCRM.
 Provides exchange rate handling and currency conversion functionality.
 """
 
-from decimal import Decimal, ROUND_HALF_UP
 import logging
+from decimal import ROUND_HALF_UP, Decimal
 
 logger = logging.getLogger(__name__)
 
 # Supported currencies with their symbols
 CURRENCY_CHOICES = [
-    ('USD', 'US Dollar ($)'),
-    ('EUR', 'Euro (€)'),
-    ('GBP', 'British Pound (£)'),
-    ('JPY', 'Japanese Yen (¥)'),
-    ('CAD', 'Canadian Dollar (C$)'),
-    ('AUD', 'Australian Dollar (A$)'),
-    ('CHF', 'Swiss Franc (CHF)'),
-    ('CNY', 'Chinese Yuan (¥)'),
-    ('INR', 'Indian Rupee (₹)'),
-    ('BRL', 'Brazilian Real (R$)'),
-    ('ZAR', 'South African Rand (R)'),
-    ('KES', 'Kenyan Shilling (KSh)'),
+    ("USD", "US Dollar ($)"),
+    ("EUR", "Euro (€)"),
+    ("GBP", "British Pound (£)"),
+    ("JPY", "Japanese Yen (¥)"),
+    ("CAD", "Canadian Dollar (C$)"),
+    ("AUD", "Australian Dollar (A$)"),
+    ("CHF", "Swiss Franc (CHF)"),
+    ("CNY", "Chinese Yuan (¥)"),
+    ("INR", "Indian Rupee (₹)"),
+    ("BRL", "Brazilian Real (R$)"),
+    ("ZAR", "South African Rand (R)"),
+    ("KES", "Kenyan Shilling (KSh)"),
 ]
 
 # Currency symbols mapping
 CURRENCY_SYMBOLS = {
-    'USD': '$',
-    'EUR': '€',
-    'GBP': '£',
-    'JPY': '¥',
-    'CAD': 'C$',
-    'AUD': 'A$',
-    'CHF': 'CHF',
-    'CNY': '¥',
-    'INR': '₹',
-    'BRL': 'R$',
-    'ZAR': 'R',
-    'KES': 'KSh',
+    "USD": "$",
+    "EUR": "€",
+    "GBP": "£",
+    "JPY": "¥",
+    "CAD": "C$",
+    "AUD": "A$",
+    "CHF": "CHF",
+    "CNY": "¥",
+    "INR": "₹",
+    "BRL": "R$",
+    "ZAR": "R",
+    "KES": "KSh",
 }
+
 
 class CurrencyConverter:
     """
@@ -46,17 +47,18 @@ class CurrencyConverter:
     Uses fixer.io API for real-time rates, with caching.
     """
 
-    CACHE_KEY = 'currency_rates'
+    CACHE_KEY = "currency_rates"
     CACHE_TIMEOUT = 3600  # 1 hour
 
     @classmethod
-    def get_exchange_rates(cls, base_currency='USD'):
+    def get_exchange_rates(cls, base_currency="USD"):
         """
         Get exchange rates from cache or API.
         Returns rates relative to base_currency.
         """
         try:
             from django.core.cache import cache
+
             cache_key = f"{cls.CACHE_KEY}_{base_currency}"
             rates = cache.get(cache_key)
 
@@ -71,19 +73,20 @@ class CurrencyConverter:
             return cls._get_fallback_rates(base_currency)
 
     @classmethod
-    def _fetch_exchange_rates(cls, base_currency='USD'):
+    def _fetch_exchange_rates(cls, base_currency="USD"):
         """
         Fetch exchange rates from external API.
         """
         try:
             import requests
+
             # Using exchangerate-api.com (free tier)
             url = f"https://api.exchangerate-api.com/v4/latest/{base_currency}"
             response = requests.get(url, timeout=10)
 
             if response.status_code == 200:
                 data = response.json()
-                return data.get('rates', {})
+                return data.get("rates", {})
             else:
                 logger.warning(f"Failed to fetch exchange rates: {response.status_code}")
                 return cls._get_fallback_rates(base_currency)
@@ -93,32 +96,32 @@ class CurrencyConverter:
             return cls._get_fallback_rates(base_currency)
 
     @classmethod
-    def _get_fallback_rates(cls, base_currency='USD'):
+    def _get_fallback_rates(cls, base_currency="USD"):
         """
         Provide fallback exchange rates when API is unavailable.
         These are approximate rates and should be updated periodically.
         """
         # Fallback rates relative to USD (as of 2024)
         fallback_rates = {
-            'USD': Decimal('1.0'),
-            'EUR': Decimal('0.85'),
-            'GBP': Decimal('0.73'),
-            'JPY': Decimal('110.0'),
-            'CAD': Decimal('1.25'),
-            'AUD': Decimal('1.35'),
-            'CHF': Decimal('0.92'),
-            'CNY': Decimal('6.45'),
-            'INR': Decimal('74.5'),
-            'BRL': Decimal('5.2'),
-            'ZAR': Decimal('14.8'),
-            'KES': Decimal('129.0'),
+            "USD": Decimal("1.0"),
+            "EUR": Decimal("0.85"),
+            "GBP": Decimal("0.73"),
+            "JPY": Decimal("110.0"),
+            "CAD": Decimal("1.25"),
+            "AUD": Decimal("1.35"),
+            "CHF": Decimal("0.92"),
+            "CNY": Decimal("6.45"),
+            "INR": Decimal("74.5"),
+            "BRL": Decimal("5.2"),
+            "ZAR": Decimal("14.8"),
+            "KES": Decimal("129.0"),
         }
 
-        if base_currency == 'USD':
+        if base_currency == "USD":
             return fallback_rates
         else:
             # Convert to base_currency rates
-            base_rate = fallback_rates.get(base_currency, Decimal('1.0'))
+            base_rate = fallback_rates.get(base_currency, Decimal("1.0"))
             return {currency: rate / base_rate for currency, rate in fallback_rates.items()}
 
     @classmethod
@@ -141,21 +144,23 @@ class CurrencyConverter:
         if not isinstance(amount, Decimal):
             amount = Decimal(str(amount))
 
-        rates = cls.get_exchange_rates('USD')
+        rates = cls.get_exchange_rates("USD")
 
         # Convert to USD first, then to target currency
         usd_amount = amount
-        if from_currency != 'USD':
+        if from_currency != "USD":
             from_rate = rates.get(from_currency)
             if from_rate:
                 usd_amount = amount / Decimal(str(from_rate))
 
-        if to_currency == 'USD':
+        if to_currency == "USD":
             return usd_amount
 
         to_rate = rates.get(to_currency)
         if to_rate:
-            return (usd_amount * Decimal(str(to_rate))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            return (usd_amount * Decimal(str(to_rate))).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
 
         # If conversion fails, return original amount
         logger.warning(f"Currency conversion failed: {from_currency} to {to_currency}")
@@ -178,7 +183,7 @@ class CurrencyConverter:
             amount = Decimal(str(amount))
 
         # Format based on currency
-        if currency_code in ['JPY', 'KRW']:
+        if currency_code in ["JPY", "KRW"]:
             # No decimal places for these currencies
             formatted_amount = f"{amount.quantize(Decimal('1')):,}"
         else:
@@ -209,6 +214,6 @@ def get_tenant_default_currency(tenant):
     """
     Get the default currency for a tenant.
     """
-    if tenant and hasattr(tenant, 'default_currency'):
+    if tenant and hasattr(tenant, "default_currency"):
         return tenant.default_currency
-    return 'USD'
+    return "USD"

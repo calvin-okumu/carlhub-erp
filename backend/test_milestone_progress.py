@@ -4,50 +4,40 @@ Test milestone progress calculation
 """
 import os
 import sys
+
 import django
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saasCRM.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "saasCRM.settings")
 sys.path.insert(0, os.path.dirname(__file__))
 django.setup()
 
-from project.models import Project, Milestone, Sprint, Task, Client
-from accounts.models import Tenant, CustomUser
+from accounts.models import CustomUser, Tenant
+from project.models import Client, Milestone, Project, Sprint
+
 
 def test_progress_calculation():
     # Create test tenant
-    tenant, _ = Tenant.objects.get_or_create(
-        name="Test Tenant",
-        defaults={'domain': 'test.com'}
-    )
+    tenant, _ = Tenant.objects.get_or_create(name="Test Tenant", defaults={"domain": "test.com"})
 
     # Create test user
     user, _ = CustomUser.objects.get_or_create(
-        email="test@example.com",
-        defaults={'first_name': 'Test', 'last_name': 'User'}
+        email="test@example.com", defaults={"first_name": "Test", "last_name": "User"}
     )
 
     # Create test client
     client, _ = Client.objects.get_or_create(
-        name="Test Client",
-        email="client@test.com",
-        tenant=tenant
+        name="Test Client", email="client@test.com", tenant=tenant
     )
 
     # Create test project
     project, _ = Project.objects.get_or_create(
-        name="Test Project",
-        client=client,
-        tenant=tenant,
-        defaults={'status': 'active'}
+        name="Test Project", client=client, tenant=tenant, defaults={"status": "active"}
     )
 
     # Create test milestone
     milestone, _ = Milestone.objects.get_or_create(
-        name="Test Milestone",
-        project=project,
-        tenant=tenant,
-        defaults={'status': 'active'}
+        name="Test Milestone", project=project, tenant=tenant, defaults={"status": "active"}
     )
 
     print(f"Created milestone: {milestone.name}")
@@ -56,10 +46,7 @@ def test_progress_calculation():
     sprints = []
     for i in range(3):
         sprint, _ = Sprint.objects.get_or_create(
-            name=f"Sprint {i+1}",
-            milestone=milestone,
-            tenant=tenant,
-            defaults={'status': 'planned'}
+            name=f"Sprint {i+1}", milestone=milestone, tenant=tenant, defaults={"status": "planned"}
         )
         sprints.append(sprint)
 
@@ -70,19 +57,19 @@ def test_progress_calculation():
     print(f"Initial milestone progress: {initial_progress}%")
 
     # Complete first sprint
-    sprints[0].status = 'completed'
+    sprints[0].status = "completed"
     sprints[0].save()
     progress_after_first = milestone.calculate_progress()
     print(f"Progress after completing 1/3 sprints: {progress_after_first}%")
 
     # Complete second sprint
-    sprints[1].status = 'completed'
+    sprints[1].status = "completed"
     sprints[1].save()
     progress_after_second = milestone.calculate_progress()
     print(f"Progress after completing 2/3 sprints: {progress_after_second}%")
 
     # Complete third sprint
-    sprints[2].status = 'completed'
+    sprints[2].status = "completed"
     sprints[2].save()
     progress_after_third = milestone.calculate_progress()
     print(f"Progress after completing 3/3 sprints: {progress_after_third}%")
@@ -101,12 +88,16 @@ def test_progress_calculation():
 
     # Test serializer output
     from project.serializers import MilestoneSerializer
+
     serializer = MilestoneSerializer(milestone)
     serialized_data = serializer.data
     print(f"Serialized milestone progress: {serialized_data['progress']}%")
-    assert serialized_data['progress'] == 100, f"Serializer should return calculated progress 100, got {serialized_data['progress']}"
+    assert (
+        serialized_data["progress"] == 100
+    ), f"Serializer should return calculated progress 100, got {serialized_data['progress']}"
 
     print("✅ Serializer returns calculated progress correctly!")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     test_progress_calculation()

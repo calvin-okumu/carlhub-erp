@@ -17,12 +17,13 @@ class PrependingRotatingFileHandler(logging.handlers.RotatingFileHandler):
     Custom RotatingFileHandler that prepends new log entries to the top of the file.
     This ensures the latest logs appear first.
     """
+
     def emit(self, record):
         if self.shouldRollover(record):
             self.doRollover()
-        msg = self.format(record) + '\n'
+        msg = self.format(record) + "\n"
         try:
-            with open(self.baseFilename, 'r+') as f:
+            with open(self.baseFilename, "r+") as f:
                 existing_content = f.read()
                 f.seek(0)
                 f.write(msg + existing_content)
@@ -43,7 +44,7 @@ def setup_logging(base_dir: Path) -> dict:
     """
 
     # Ensure logs directory exists
-    logs_dir = base_dir.parent / 'logs' / 'backend'
+    logs_dir = base_dir.parent / "logs" / "backend"
     logs_dir.mkdir(parents=True, exist_ok=True)
 
     # Get environment info
@@ -51,165 +52,157 @@ def setup_logging(base_dir: Path) -> dict:
 
     # Logging formatters
     formatters = {
-        'verbose': {
-            'format': f'{env_info} [%(correlation_id)s] %(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(process)d %(thread)d %(message)s',
-            'style': '%',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
+        "verbose": {
+            "format": f"{env_info} {{levelname}} {{asctime}} {{module}} {{filename}} {{lineno:d}} {{funcName}} {{process:d}} {{thread:d}} {{message}}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-        'simple': {
-            'format': f'{env_info} [%(correlation_id)s] %(levelname)s %(asctime)s %(module)s %(message)s',
-            'style': '%',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
-        'correlation': {
-            'format': f'{env_info} [%(correlation_id)s] %(levelname)s %(asctime)s %(module)s %(filename)s %(lineno)d %(funcName)s %(user_email)s %(tenant_id)s %(message)s',
-            'style': '%',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
+        "simple": {
+            "format": f"{env_info} {{levelname}} {{asctime}} {{module}} {{message}}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
     }
 
     # Logging filters for level separation
     filters = {
-        'info_only': {
-            '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.levelno == 20,  # INFO
+        "info_only": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: record.levelno == 20,  # INFO
         },
-        'warning_only': {
-            '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.levelno == 30,  # WARNING
+        "warning_only": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: record.levelno == 30,  # WARNING
         },
-        'error_only': {
-            '()': 'django.utils.log.CallbackFilter',
-            'callback': lambda record: record.levelno >= 40,  # ERROR and above
+        "error_only": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: record.levelno >= 40,  # ERROR and above
         },
     }
 
     # Logging handlers
     handlers = {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-            'level': 'INFO',
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "level": "INFO",
         },
-        'info_file': {
-            'level': 'INFO',
-            'class': 'saasCRM.logging.PrependingRotatingFileHandler',
-            'filename': logs_dir / 'info.log',
-            'formatter': 'correlation',
-            'filters': ['info_only'],
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
+        "info_file": {
+            "level": "INFO",
+            "class": "saasCRM.logging.PrependingRotatingFileHandler",
+            "filename": logs_dir / "info.log",
+            "formatter": "verbose",
+            "filters": ["info_only"],
+            "maxBytes": 10485760,  # 10MB
+            "backupCount": 5,
         },
-        'warning_file': {
-            'level': 'WARNING',
-            'class': 'saasCRM.logging.PrependingRotatingFileHandler',
-            'filename': logs_dir / 'warning.log',
-            'formatter': 'correlation',
-            'filters': ['warning_only'],
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
+        "warning_file": {
+            "level": "WARNING",
+            "class": "saasCRM.logging.PrependingRotatingFileHandler",
+            "filename": logs_dir / "warning.log",
+            "formatter": "verbose",
+            "filters": ["warning_only"],
+            "maxBytes": 10485760,  # 10MB
+            "backupCount": 5,
         },
-        'error_file': {
-            'level': 'ERROR',
-            'class': 'saasCRM.logging.PrependingRotatingFileHandler',
-            'filename': logs_dir / 'error.log',
-            'formatter': 'correlation',
-            'filters': ['error_only'],
-            'maxBytes': 10485760,  # 10MB
-            'backupCount': 5,
+        "error_file": {
+            "level": "ERROR",
+            "class": "saasCRM.logging.PrependingRotatingFileHandler",
+            "filename": logs_dir / "error.log",
+            "formatter": "verbose",
+            "filters": ["error_only"],
+            "maxBytes": 10485760,  # 10MB
+            "backupCount": 5,
         },
     }
 
     # Logging loggers for specific components
     loggers = {
         # Django framework loggers
-        'django': {
-            'handlers': ['console', 'info_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "django": {
+            "handlers": ["console", "info_file"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'django.request': {
-            'handlers': ['warning_file', 'error_file'],
-            'level': 'WARNING',
-            'propagate': False,
+        "django.request": {
+            "handlers": ["warning_file", "error_file"],
+            "level": "WARNING",
+            "propagate": False,
         },
-        'django.template': {
-            'handlers': ['error_file'],
-            'level': 'ERROR',
-            'propagate': False,
+        "django.template": {
+            "handlers": ["error_file"],
+            "level": "ERROR",
+            "propagate": False,
         },
-        'django.server': {
-            'handlers': ['console', 'info_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "django.server": {
+            "handlers": ["console", "info_file"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'django.db.backends': {
-            'handlers': ['warning_file', 'error_file'],
-            'level': 'WARNING',
-            'propagate': False,
+        "django.db.backends": {
+            "handlers": ["warning_file", "error_file"],
+            "level": "WARNING",
+            "propagate": False,
         },
-
         # Django REST Framework loggers
-        'rest_framework': {
-            'handlers': ['info_file', 'warning_file', 'error_file'],
-            'level': 'WARNING',
-            'propagate': False,
+        "rest_framework": {
+            "handlers": ["info_file", "warning_file", "error_file"],
+            "level": "WARNING",
+            "propagate": False,
         },
-        'rest_framework.request': {
-            'handlers': ['warning_file', 'error_file'],
-            'level': 'WARNING',
-            'propagate': False,
+        "rest_framework.request": {
+            "handlers": ["warning_file", "error_file"],
+            "level": "WARNING",
+            "propagate": False,
         },
-
         # Application-specific loggers
-        'accounts': {
-            'handlers': ['info_file', 'warning_file', 'error_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "accounts": {
+            "handlers": ["info_file", "warning_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'accounts.email_service': {
-            'handlers': ['info_file', 'warning_file', 'error_file'],
-            'level': 'DEBUG',
-            'propagate': False,
+        "accounts.email_service": {
+            "handlers": ["info_file", "warning_file", "error_file"],
+            "level": "DEBUG",
+            "propagate": False,
         },
-        'project': {
-            'handlers': ['info_file', 'warning_file', 'error_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "project": {
+            "handlers": ["info_file", "warning_file", "error_file"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'project.signals': {
-            'handlers': ['info_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "project.signals": {
+            "handlers": ["info_file"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'project.middleware': {
-            'handlers': ['info_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "project.middleware": {
+            "handlers": ["info_file"],
+            "level": "INFO",
+            "propagate": False,
         },
-
         # Third-party package loggers
-        'allauth': {
-            'handlers': ['info_file'],
-            'level': 'INFO',
-            'propagate': False,
+        "allauth": {
+            "handlers": ["info_file"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'corsheaders': {
-            'handlers': ['warning_file'],
-            'level': 'WARNING',
-            'propagate': False,
+        "corsheaders": {
+            "handlers": ["warning_file"],
+            "level": "WARNING",
+            "propagate": False,
         },
     }
 
     return {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': formatters,
-        'filters': filters,
-        'handlers': handlers,
-        'loggers': loggers,
-        'root': {
-            'handlers': ['console', 'info_file', 'warning_file', 'error_file'],
-            'level': 'INFO',
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": formatters,
+        "filters": filters,
+        "handlers": handlers,
+        "loggers": loggers,
+        "root": {
+            "handlers": ["console", "info_file", "warning_file", "error_file"],
+            "level": "INFO",
         },
     }

@@ -1,14 +1,6 @@
 from django.contrib import admin
 
-from .models import (
-    Client,
-    Invoice,
-    Milestone,
-    Payment,
-    Project,
-    Sprint,
-    Task,
-)
+from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
 
 
 @admin.register(Client)

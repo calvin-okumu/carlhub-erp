@@ -1,5 +1,10 @@
+from typing import Any, Optional
+
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.request import Request
+from rest_framework.response import Response
 from rest_framework.utils.urls import replace_query_param
+
 
 class CustomPageNumberPagination(PageNumberPagination):
     """
@@ -7,16 +12,16 @@ class CustomPageNumberPagination(PageNumberPagination):
     'first' and 'last' page links in the response.
     """
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, data: Any) -> Response:
         """
         Return a paginated style Response object with first and last links added.
         """
         response = super().get_paginated_response(data)
-        response.data['first'] = self.get_first_link()
-        response.data['last'] = self.get_last_link()
+        response.data["first"] = self.get_first_link()  # type: ignore
+        response.data["last"] = self.get_last_link()  # type: ignore
         return response
 
-    def get_first_link(self):
+    def get_first_link(self) -> Optional[str]:
         """
         Return the URL for the first page.
         """
@@ -25,7 +30,7 @@ class CustomPageNumberPagination(PageNumberPagination):
         url = self.request.build_absolute_uri()
         return replace_query_param(url, self.page_query_param, 1)
 
-    def get_last_link(self):
+    def get_last_link(self) -> Optional[str]:
         """
         Return the URL for the last page.
         """

@@ -3,12 +3,12 @@
 DjangoCRM API Testing Script
 Tests all authentication methods and API endpoints
 """
-import json
 import sys
 
 import requests
 
 BASE_URL = "http://127.0.0.1:8000"
+
 
 def test_auth_methods():
     """Test the auth-methods endpoint"""
@@ -28,6 +28,7 @@ def test_auth_methods():
         print(f"❌ Auth methods error: {e}")
         return False
 
+
 def test_traditional_login(email="admin@example.com", password="admin123"):
     """Test traditional email/password login"""
     print(f"\n🔐 Testing traditional login for user: {email}")
@@ -35,12 +36,12 @@ def test_traditional_login(email="admin@example.com", password="admin123"):
         response = requests.post(
             f"{BASE_URL}/api/login/",
             json={"email": email, "password": password},
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         if response.status_code == 200:
             data = response.json()
-            token = data.get('token')
+            token = data.get("token")
             print("✅ Traditional login successful")
             print(f"   Token: {token}")
             return token
@@ -52,16 +53,14 @@ def test_traditional_login(email="admin@example.com", password="admin123"):
         print(f"❌ Traditional login error: {e}")
         return None
 
+
 def test_api_with_token(token, endpoint="/api/tenants/"):
     """Test API endpoint with token authentication"""
     print(f"\n📡 Testing API endpoint: {endpoint}")
     try:
         response = requests.get(
             f"{BASE_URL}{endpoint}",
-            headers={
-                "Authorization": f"Token {token}",
-                "Content-Type": "application/json"
-            }
+            headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
         )
 
         if response.status_code == 200:
@@ -81,6 +80,7 @@ def test_api_with_token(token, endpoint="/api/tenants/"):
         print(f"❌ API test error: {e}")
         return None
 
+
 def test_unauthorized_access(endpoint="/api/tenants/"):
     """Test that unauthorized access is properly blocked"""
     print(f"\n🚫 Testing unauthorized access to: {endpoint}")
@@ -97,6 +97,7 @@ def test_unauthorized_access(endpoint="/api/tenants/"):
         print(f"❌ Unauthorized access test error: {e}")
         return False
 
+
 def test_post_project(token):
     """Test posting a new project"""
     print("\n📝 Testing POST project...")
@@ -107,7 +108,7 @@ def test_post_project(token):
         print("❌ No clients found to associate project with")
         return False
 
-    client_id = clients[0]['id']
+    client_id = clients[0]["id"]
     print(f"   Using client ID: {client_id}")
 
     project_data = {
@@ -119,17 +120,14 @@ def test_post_project(token):
         "end_date": "2024-12-31",
         "budget": 5000,  # Test without decimal places
         "description": "A test project created via API",
-        "tags": "api,test,automation"
+        "tags": "api,test,automation",
     }
 
     try:
         response = requests.post(
             f"{BASE_URL}/api/projects/",
             json=project_data,
-            headers={
-                "Authorization": f"Token {token}",
-                "Content-Type": "application/json"
-            }
+            headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
         )
 
         if response.status_code == 201:
@@ -146,11 +144,12 @@ def test_post_project(token):
         print(f"❌ Project creation error: {e}")
         return False
 
+
 def test_oauth_redirects():
     """Test OAuth login redirects"""
     print("\n🌐 Testing OAuth redirects...")
 
-    providers = ['google', 'github']
+    providers = ["google", "github"]
     for provider in providers:
         try:
             response = requests.get(f"{BASE_URL}/accounts/{provider}/login/", allow_redirects=False)
@@ -161,6 +160,7 @@ def test_oauth_redirects():
         except Exception as e:
             print(f"❌ {provider.capitalize()} OAuth test error: {e}")
 
+
 def create_test_user():
     """Create a test user for testing"""
     print("\n👤 Creating test user...")
@@ -169,7 +169,7 @@ def create_test_user():
 
         import django
 
-        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saasCRM.settings')
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "saasCRM.settings")
         django.setup()
 
         from django.contrib.auth.models import Group
@@ -177,22 +177,22 @@ def create_test_user():
         from accounts.models import CustomUser, Tenant, UserTenant
 
         user, created = CustomUser.objects.get_or_create(
-            email='test@example.com',
-            defaults={
-                'username': 'testuser',
-                'is_staff': True,
-                'is_superuser': True
-            }
+            email="test@example.com",
+            defaults={"username": "testuser", "is_staff": True, "is_superuser": True},
         )
         if created:
-            user.set_password('password123')
+            user.set_password("password123")
             user.save()
             print("✅ Test user created: test@example.com / password123")
         else:
             print("ℹ️  Test user already exists")
 
         # Ensure in required groups
-        groups = ['Client Management Administrators', 'Business Strategy Administrators', 'API Control Administrators']
+        groups = [
+            "Client Management Administrators",
+            "Business Strategy Administrators",
+            "API Control Administrators",
+        ]
         for group_name in groups:
             group, _ = Group.objects.get_or_create(name=group_name)
             if not user.groups.filter(name=group_name).exists():
@@ -201,15 +201,15 @@ def create_test_user():
 
         # Create or get a default tenant and link user to it
         tenant, tenant_created = Tenant.objects.get_or_create(
-            name='Test Tenant',
+            name="Test Tenant",
             defaults={
-                'domain': 'test.example.com',
-                'address': '123 Test St',
-                'phone': '555-1234',
-                'website': 'https://test.example.com',
-                'industry': 'Technology',
-                'company_size': '11-50'
-            }
+                "domain": "test.example.com",
+                "address": "123 Test St",
+                "phone": "555-1234",
+                "website": "https://test.example.com",
+                "industry": "Technology",
+                "company_size": "11-50",
+            },
         )
         if tenant_created:
             print("✅ Default tenant created: Test Tenant")
@@ -220,11 +220,7 @@ def create_test_user():
         user_tenant, ut_created = UserTenant.objects.get_or_create(
             user=user,
             tenant=tenant,
-            defaults={
-                'is_owner': True,
-                'is_approved': True,
-                'role': 'Tenant Owner'
-            }
+            defaults={"is_owner": True, "is_approved": True, "role": "Tenant Owner"},
         )
         if ut_created:
             print("✅ User linked to tenant: Test Tenant")
@@ -233,14 +229,15 @@ def create_test_user():
 
         # Create a test client for the tenant
         from project.models import Client
+
         client, client_created = Client.objects.get_or_create(
-            email='testclient@example.com',
+            email="testclient@example.com",
             defaults={
-                'name': 'Test Client',
-                'phone': '555-5678',
-                'status': 'active',
-                'tenant': tenant
-            }
+                "name": "Test Client",
+                "phone": "555-5678",
+                "status": "active",
+                "tenant": tenant,
+            },
         )
         if client_created:
             print("✅ Test client created: Test Client")
@@ -251,6 +248,7 @@ def create_test_user():
     except Exception as e:
         print(f"❌ Failed to create test user: {e}")
         return False
+
 
 def main():
     """Run all tests"""
@@ -304,5 +302,6 @@ def main():
         print("\n⚠️  Some tests failed. Check the output above for details.")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

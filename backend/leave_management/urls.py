@@ -5,11 +5,11 @@ from .views import LeaveBalanceViewSet, LeavePolicyViewSet, LeaveRequestViewSet
 
 # Create a router for the leave management API
 router = DefaultRouter()
-router.register(r'requests', LeaveRequestViewSet, basename='leaverequest')
-router.register(r'balances', LeaveBalanceViewSet, basename='leavebalance')
-router.register(r'policies', LeavePolicyViewSet, basename='leavepolicy')
+router.register(r"requests", LeaveRequestViewSet, basename="leaverequest")
+router.register(r"balances", LeaveBalanceViewSet, basename="leavebalance")
+router.register(r"policies", LeavePolicyViewSet, basename="leavepolicy")
 
 # URL patterns
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]

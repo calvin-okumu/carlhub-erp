@@ -1,31 +1,29 @@
 from django.conf import settings
-from django.core.exceptions import ImproperlyConfigured
 from django.http import Http404
-from django.shortcuts import redirect
 from django.utils.deprecation import MiddlewareMixin
 
-from accounts.models import Tenant, UserTenant
+from accounts.models import Tenant
 
 
 class TenantMiddleware(MiddlewareMixin):
     def process_request(self, request):
         # Skip middleware for management commands or non-HTTP requests
-        if not hasattr(request, 'get_host'):
+        if not hasattr(request, "get_host"):
             return
 
         # If multi-tenancy is disabled, set tenant to None
-        if not getattr(settings, 'MULTI_TENANCY_ENABLED', False):
+        if not getattr(settings, "MULTI_TENANCY_ENABLED", False):
             request.tenant = None
             return
 
-        host = request.get_host().split(':')[0]  # Remove port
+        host = request.get_host().split(":")[0]  # Remove port
 
         # Allow localhost and 127.0.0.1 for development
-        if host in ['127.0.0.1', 'localhost']:
+        if host in ["127.0.0.1", "localhost"]:
             request.tenant = None
             return
 
-        subdomain = host.split('.')[0] if '.' in host else None
+        subdomain = host.split(".")[0] if "." in host else None
 
         if subdomain:
             try:

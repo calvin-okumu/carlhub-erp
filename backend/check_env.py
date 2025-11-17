@@ -13,20 +13,20 @@ def check_env():
     load_dotenv()
 
     required_vars = [
-        'SECRET_KEY',
-        'DEBUG',
-        'DB_NAME',
-        'DB_USER',
-        'DB_PASSWORD',
-        'DB_HOST',
-        'DB_PORT'
+        "SECRET_KEY",
+        "DEBUG",
+        "DB_NAME",
+        "DB_USER",
+        "DB_PASSWORD",
+        "DB_HOST",
+        "DB_PORT",
     ]
 
     oauth_vars = [
-        'GOOGLE_CLIENT_ID',
-        'GOOGLE_CLIENT_SECRET',
-        'GITHUB_CLIENT_ID',
-        'GITHUB_CLIENT_SECRET'
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
     ]
 
     print("🔍 Checking DjangoCRM Environment Configuration")
@@ -38,7 +38,9 @@ def check_env():
     for var in required_vars:
         value = os.getenv(var)
         if value:
-            print(f"✅ {var}: {'*' * len(value) if 'SECRET' in var or 'PASSWORD' in var else value}")
+            print(
+                f"✅ {var}: {'*' * len(value) if 'SECRET' in var or 'PASSWORD' in var else value}"
+            )
         else:
             print(f"❌ {var}: NOT SET")
             all_required = False
@@ -66,5 +68,6 @@ def check_env():
         print("❌ Some required variables are missing!")
         print("Please check your .env file and ensure all required variables are set.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     check_env()

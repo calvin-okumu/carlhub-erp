@@ -2,63 +2,60 @@
 """
 Test Progress Updates
 """
-import json
 
 import requests
 
 BASE_URL = "http://127.0.0.1:8000"
 
+
 def get_token():
     response = requests.post(
         f"{BASE_URL}/api/login/",
         json={"email": "user1@tenant1.sample.com", "password": "password123"},
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json"},
     )
     if response.status_code == 200:
-        return response.json()['token']
+        return response.json()["token"]
     return None
 
+
 def get_tasks(token):
-    response = requests.get(
-        f"{BASE_URL}/api/tasks/",
-        headers={"Authorization": f"Token {token}"}
-    )
+    response = requests.get(f"{BASE_URL}/api/tasks/", headers={"Authorization": f"Token {token}"})
     if response.status_code == 200:
         return response.json()
     return []
 
+
 def get_sprints(token):
-    response = requests.get(
-        f"{BASE_URL}/api/sprints/",
-        headers={"Authorization": f"Token {token}"}
-    )
+    response = requests.get(f"{BASE_URL}/api/sprints/", headers={"Authorization": f"Token {token}"})
     if response.status_code == 200:
         return response.json()
     return []
+
 
 def get_milestones(token):
     response = requests.get(
-        f"{BASE_URL}/api/milestones/",
-        headers={"Authorization": f"Token {token}"}
+        f"{BASE_URL}/api/milestones/", headers={"Authorization": f"Token {token}"}
     )
     if response.status_code == 200:
         return response.json()
     return []
 
+
 def get_projects(token):
     response = requests.get(
-        f"{BASE_URL}/api/projects/",
-        headers={"Authorization": f"Token {token}"}
+        f"{BASE_URL}/api/projects/", headers={"Authorization": f"Token {token}"}
     )
     if response.status_code == 200:
         return response.json()
     return []
+
 
 def update_task_status(token, task_id, status):
     response = requests.patch(
         f"{BASE_URL}/api/tasks/{task_id}/",
         json={"status": status},
-        headers={"Authorization": f"Token {token}", "Content-Type": "application/json"}
+        headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
     )
     print(f"Update task {task_id} to {status}: {response.status_code}")
     if response.status_code == 200:
@@ -66,6 +63,7 @@ def update_task_status(token, task_id, status):
     else:
         print(f"❌ Failed: {response.text}")
         return None
+
 
 def main():
     token = get_token()
@@ -79,9 +77,9 @@ def main():
         return
 
     task = tasks[0]
-    task_id = task['id']
-    sprint_id = task.get('sprint')
-    milestone_id = task.get('milestone')
+    task_id = task["id"]
+    sprint_id = task.get("sprint")
+    milestone_id = task.get("milestone")
 
     print(f"Testing with task ID: {task_id}, sprint: {sprint_id}, milestone: {milestone_id}")
 
@@ -90,8 +88,8 @@ def main():
     milestones = get_milestones(token)
     projects = get_projects(token)
 
-    sprint = next((s for s in sprints if s['id'] == sprint_id), None)
-    milestone = next((m for m in milestones if m['id'] == milestone_id), None)
+    sprint = next((s for s in sprints if s["id"] == sprint_id), None)
+    milestone = next((m for m in milestones if m["id"] == milestone_id), None)
     project = projects[0] if projects else None  # Assume first project
 
     print(f"Initial task progress: {task['progress']}")
@@ -113,9 +111,9 @@ def main():
         milestones = get_milestones(token)
         projects = get_projects(token)
 
-        task = next((t for t in tasks if t['id'] == task_id), None)
-        sprint = next((s for s in sprints if s['id'] == sprint_id), sprint)
-        milestone = next((m for m in milestones if m['id'] == milestone_id), milestone)
+        task = next((t for t in tasks if t["id"] == task_id), None)
+        sprint = next((s for s in sprints if s["id"] == sprint_id), sprint)
+        milestone = next((m for m in milestones if m["id"] == milestone_id), milestone)
         project = projects[0] if projects else project
 
         print(f"After update - task progress: {task['progress'] if task else 'N/A'}")
@@ -137,9 +135,9 @@ def main():
             milestones = get_milestones(token)
             projects = get_projects(token)
 
-            task = next((t for t in tasks if t['id'] == task_id), None)
-            sprint = next((s for s in sprints if s['id'] == sprint_id), sprint)
-            milestone = next((m for m in milestones if m['id'] == milestone_id), milestone)
+            task = next((t for t in tasks if t["id"] == task_id), None)
+            sprint = next((s for s in sprints if s["id"] == sprint_id), sprint)
+            milestone = next((m for m in milestones if m["id"] == milestone_id), milestone)
             project = projects[0] if projects else project
 
             print(f"Final - task progress: {task['progress'] if task else 'N/A'}")
@@ -150,5 +148,6 @@ def main():
             if project:
                 print(f"Final - project progress: {project['progress']}")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

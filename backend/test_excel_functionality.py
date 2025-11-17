@@ -4,19 +4,26 @@ Test script for Excel import/export functionality
 """
 import os
 import sys
-import django
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
+import django
 
 # Setup Django
 sys.path.insert(0, os.path.dirname(__file__))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'saasCRM.settings')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "saasCRM.settings")
 django.setup()
 
 from django.contrib.auth import get_user_model
-from project.models import Client, Project, Milestone, Task
+
 from accounts.models import Tenant, UserTenant
-from project.excel_utils import ClientExcelHandler, ProjectExcelHandler, TaskExcelHandler
+from project.excel_utils import (
+    ClientExcelHandler,
+    ProjectExcelHandler,
+    TaskExcelHandler,
+)
+from project.models import Client, Milestone, Project, Task
+
 
 def create_test_data():
     """Create test data for Excel testing"""
@@ -24,50 +31,58 @@ def create_test_data():
 
     # Get or create tenant
     tenant, created = Tenant.objects.get_or_create(
-        name="Excel Test Tenant",
-        defaults={'domain': 'excel-test.com'}
+        name="Excel Test Tenant", defaults={"domain": "excel-test.com"}
     )
 
     # Get or create user
     User = get_user_model()
     user, created = User.objects.get_or_create(
-        email='excel-test@example.com',
-        defaults={
-            'first_name': 'Excel',
-            'last_name': 'Test',
-            'is_active': True
-        }
+        email="excel-test@example.com",
+        defaults={"first_name": "Excel", "last_name": "Test", "is_active": True},
     )
 
     # Set password if user was created
     if created:
-        user.set_password('testpass123')
+        user.set_password("testpass123")
         user.save()
 
     # Create UserTenant association
     UserTenant.objects.get_or_create(
-        user=user,
-        tenant=tenant,
-        defaults={'is_owner': True, 'is_approved': True}
+        user=user, tenant=tenant, defaults={"is_owner": True, "is_approved": True}
     )
 
     # Create test clients
     clients_data = [
-        {'name': 'TechCorp Inc', 'email': 'contact@techcorp.com', 'phone': '+1-555-0101', 'status': 'active'},
-        {'name': 'Global Solutions', 'email': 'info@globalsolutions.com', 'phone': '+1-555-0102', 'status': 'prospect'},
-        {'name': 'Innovate Labs', 'email': 'hello@innovatelabs.com', 'phone': '+1-555-0103', 'status': 'active'},
+        {
+            "name": "TechCorp Inc",
+            "email": "contact@techcorp.com",
+            "phone": "+1-555-0101",
+            "status": "active",
+        },
+        {
+            "name": "Global Solutions",
+            "email": "info@globalsolutions.com",
+            "phone": "+1-555-0102",
+            "status": "prospect",
+        },
+        {
+            "name": "Innovate Labs",
+            "email": "hello@innovatelabs.com",
+            "phone": "+1-555-0103",
+            "status": "active",
+        },
     ]
 
     clients = []
     for client_data in clients_data:
         client, created = Client.objects.get_or_create(
-            email=client_data['email'],
+            email=client_data["email"],
             defaults={
-                'name': client_data['name'],
-                'phone': client_data['phone'],
-                'status': client_data['status'],
-                'tenant': tenant
-            }
+                "name": client_data["name"],
+                "phone": client_data["phone"],
+                "status": client_data["status"],
+                "tenant": tenant,
+            },
         )
         clients.append(client)
         print(f"Created client: {client.name}")
@@ -75,66 +90,66 @@ def create_test_data():
     # Create test projects
     projects_data = [
         {
-            'name': 'Website Redesign',
-            'client': clients[0],
-            'status': 'active',
-            'priority': 'high',
-            'budget': Decimal('50000.00'),
-            'start_date': date(2024, 1, 15),
-            'end_date': date(2024, 3, 15)
+            "name": "Website Redesign",
+            "client": clients[0],
+            "status": "active",
+            "priority": "high",
+            "budget": Decimal("50000.00"),
+            "start_date": date(2024, 1, 15),
+            "end_date": date(2024, 3, 15),
         },
         {
-            'name': 'Mobile App Development',
-            'client': clients[1],
-            'status': 'planning',
-            'priority': 'medium',
-            'budget': Decimal('75000.00'),
-            'start_date': date(2024, 2, 1),
-            'end_date': date(2024, 5, 1)
+            "name": "Mobile App Development",
+            "client": clients[1],
+            "status": "planning",
+            "priority": "medium",
+            "budget": Decimal("75000.00"),
+            "start_date": date(2024, 2, 1),
+            "end_date": date(2024, 5, 1),
         },
         {
-            'name': 'Data Analytics Platform',
-            'client': clients[2],
-            'status': 'completed',
-            'priority': 'high',
-            'budget': Decimal('100000.00'),
-            'start_date': date(2023, 10, 1),
-            'end_date': date(2024, 1, 31)
-        }
+            "name": "Data Analytics Platform",
+            "client": clients[2],
+            "status": "completed",
+            "priority": "high",
+            "budget": Decimal("100000.00"),
+            "start_date": date(2023, 10, 1),
+            "end_date": date(2024, 1, 31),
+        },
     ]
 
     projects = []
     for project_data in projects_data:
         project, created = Project.objects.get_or_create(
-            name=project_data['name'],
+            name=project_data["name"],
             tenant=tenant,
             defaults={
-                'client': project_data['client'],
-                'status': project_data['status'],
-                'priority': project_data['priority'],
-                'budget': project_data['budget'],
-                'start_date': project_data['start_date'],
-                'end_date': project_data['end_date']
-            }
+                "client": project_data["client"],
+                "status": project_data["status"],
+                "priority": project_data["priority"],
+                "budget": project_data["budget"],
+                "start_date": project_data["start_date"],
+                "end_date": project_data["end_date"],
+            },
         )
         projects.append(project)
         print(f"Created project: {project.name}")
 
     # Create milestones
     milestones_data = [
-        {'name': 'Planning Phase', 'project': projects[0]},
-        {'name': 'Design Phase', 'project': projects[0]},
-        {'name': 'Development Phase', 'project': projects[1]},
-        {'name': 'Testing Phase', 'project': projects[2]},
+        {"name": "Planning Phase", "project": projects[0]},
+        {"name": "Design Phase", "project": projects[0]},
+        {"name": "Development Phase", "project": projects[1]},
+        {"name": "Testing Phase", "project": projects[2]},
     ]
 
     milestones = []
     for milestone_data in milestones_data:
         milestone, created = Milestone.objects.get_or_create(
-            name=milestone_data['name'],
-            project=milestone_data['project'],
+            name=milestone_data["name"],
+            project=milestone_data["project"],
             tenant=tenant,
-            defaults={'status': 'active'}
+            defaults={"status": "active"},
         )
         milestones.append(milestone)
         print(f"Created milestone: {milestone.name} for {milestone.project.name}")
@@ -142,56 +157,57 @@ def create_test_data():
     # Create tasks
     tasks_data = [
         {
-            'title': 'Create wireframes',
-            'milestone': milestones[0],
-            'status': 'completed',
-            'estimated_hours': 16,
-            'start_date': date(2024, 1, 15),
-            'end_date': date(2024, 1, 22)
+            "title": "Create wireframes",
+            "milestone": milestones[0],
+            "status": "completed",
+            "estimated_hours": 16,
+            "start_date": date(2024, 1, 15),
+            "end_date": date(2024, 1, 22),
         },
         {
-            'title': 'Design homepage mockups',
-            'milestone': milestones[1],
-            'status': 'in_progress',
-            'estimated_hours': 24,
-            'start_date': date(2024, 1, 23),
-            'end_date': date(2024, 2, 5)
+            "title": "Design homepage mockups",
+            "milestone": milestones[1],
+            "status": "in_progress",
+            "estimated_hours": 24,
+            "start_date": date(2024, 1, 23),
+            "end_date": date(2024, 2, 5),
         },
         {
-            'title': 'Setup development environment',
-            'milestone': milestones[2],
-            'status': 'to_do',
-            'estimated_hours': 8,
-            'start_date': date(2024, 2, 1),
-            'end_date': date(2024, 2, 3)
+            "title": "Setup development environment",
+            "milestone": milestones[2],
+            "status": "to_do",
+            "estimated_hours": 8,
+            "start_date": date(2024, 2, 1),
+            "end_date": date(2024, 2, 3),
         },
         {
-            'title': 'Write unit tests',
-            'milestone': milestones[3],
-            'status': 'completed',
-            'estimated_hours': 32,
-            'start_date': date(2024, 1, 15),
-            'end_date': date(2024, 1, 30)
-        }
+            "title": "Write unit tests",
+            "milestone": milestones[3],
+            "status": "completed",
+            "estimated_hours": 32,
+            "start_date": date(2024, 1, 15),
+            "end_date": date(2024, 1, 30),
+        },
     ]
 
     tasks = []
     for task_data in tasks_data:
         task, created = Task.objects.get_or_create(
-            title=task_data['title'],
-            milestone=task_data['milestone'],
+            title=task_data["title"],
+            milestone=task_data["milestone"],
             tenant=tenant,
             defaults={
-                'status': task_data['status'],
-                'estimated_hours': task_data['estimated_hours'],
-                'start_date': task_data['start_date'],
-                'end_date': task_data['end_date']
-            }
+                "status": task_data["status"],
+                "estimated_hours": task_data["estimated_hours"],
+                "start_date": task_data["start_date"],
+                "end_date": task_data["end_date"],
+            },
         )
         tasks.append(task)
         print(f"Created task: {task.title}")
 
     return tenant, clients, projects, milestones, tasks
+
 
 def test_excel_export():
     """Test Excel export functionality"""
@@ -232,6 +248,7 @@ def test_excel_export():
 
     return client_excel, project_excel, task_excel
 
+
 def test_excel_import():
     """Test Excel import functionality"""
     print("\n=== Testing Excel Import ===")
@@ -246,7 +263,7 @@ def test_excel_import():
     print("Note: Using simulated Excel data (pandas not available in test environment)")
 
     # Simulate what pandas would create
-    client_excel_data = b'simulated_excel_data_for_clients'
+    client_excel_data = b"simulated_excel_data_for_clients"
 
     try:
         result = client_handler.import_clients(client_excel_data)
@@ -258,7 +275,7 @@ def test_excel_import():
     print("Testing project import...")
     project_handler = ProjectExcelHandler(tenant)
 
-    project_excel_data = b'simulated_excel_data_for_projects'
+    project_excel_data = b"simulated_excel_data_for_projects"
 
     try:
         result = project_handler.import_projects(project_excel_data)
@@ -270,13 +287,14 @@ def test_excel_import():
     print("Testing task import...")
     task_handler = TaskExcelHandler(tenant)
 
-    task_excel_data = b'simulated_excel_data_for_tasks'
+    task_excel_data = b"simulated_excel_data_for_tasks"
 
     try:
         result = task_handler.import_tasks(task_excel_data)
         print(f"Task import result: {result}")
     except Exception as e:
         print(f"Task import failed (expected due to missing pandas): {e}")
+
 
 def main():
     """Main test function"""
@@ -289,7 +307,9 @@ def main():
     except Exception as e:
         print(f"\n❌ Test failed with error: {e}")
         import traceback
+
         traceback.print_exc()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
