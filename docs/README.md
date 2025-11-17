@@ -49,8 +49,14 @@ This comprehensive documentation provides detailed information about the DjangoC
 # Quick setup
 ./setup.sh
 
-# Start development
+# Start development (includes Redis)
 make dev
+
+# Check server status
+make check-servers
+
+# Stop development servers
+make stop
 
 # Run tests
 make test
@@ -60,7 +66,12 @@ http://localhost:8000/api/schema/swagger-ui/
 
 # Database management
 make db-backup    # Create backup
-make db-reset     # Reset database
+make db-restore   # Restore from backup
+make clean        # Clean build artifacts
+
+# Docker commands
+make docker-up    # Start Docker services
+make docker-down  # Stop Docker services
 ```
 
 ### Key Features

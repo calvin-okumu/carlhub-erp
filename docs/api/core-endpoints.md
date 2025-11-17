@@ -226,7 +226,7 @@ System health check endpoint.
 ```json
 {
   "status": "healthy",
-  "timestamp": "2025-10-27T12:00:00Z",
+  "timestamp": "2025-11-09T23:20:00Z",
   "service": "DjangoCRM API"
 }
 ```

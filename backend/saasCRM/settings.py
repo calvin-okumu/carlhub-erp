@@ -9,44 +9,13 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Import logging configuration after BASE_DIR is defined
-import importlib.util
-import logging
-
-# Load logging configuration module
-logging_config_path = BASE_DIR / "saasCRM" / "logging.py"
-if logging_config_path.exists():
-    spec = importlib.util.spec_from_file_location("logging_config", logging_config_path)
-    if spec and spec.loader:
-        logging_config = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(logging_config)
-        setup_logging = logging_config.setup_logging
-    else:
-        # Fallback function
-        def setup_logging(base_dir):
-            return {
-                'version': 1,
-                'disable_existing_loggers': False,
-                'handlers': {'console': {'class': 'logging.StreamHandler'}},
-                'root': {'handlers': ['console'], 'level': 'INFO'},
-            }
-else:
-    # Fallback function if file doesn't exist
-    def setup_logging(base_dir):
-        return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'handlers': {'console': {'class': 'logging.StreamHandler'}},
-            'root': {'handlers': ['console'], 'level': 'INFO'},
-        }
-
 # Load environment variables from .env file
 if os.getenv('DOCKER_CONTAINER') == 'true':
     load_dotenv(dotenv_path=BASE_DIR.parent / '.env')  # Root .env for Docker
 else:
     load_dotenv(dotenv_path=BASE_DIR / '.env')  # Backend .env for local
 
-# Import logging configuration
+# Import logging configuration after BASE_DIR is defined
 import importlib.util
 import logging
 
@@ -89,8 +58,25 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver").split(",")
+
+# Security settings for production
+if not DEBUG:
+    SECURE_HSTS_SECONDS = os.getenv("SECURE_HSTS_SECONDS", "31536000")
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").lower() == "true"
+    SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "True").lower() == "true"
+    SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").lower() == "true"
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() == "true"
+    CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "True").lower() == "true"
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+else:
+    # Development security settings
+    SECURE_HSTS_SECONDS = 0
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 # Site URL for generating absolute URLs
 SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:8000")
 # Frontend URL for generating frontend links
@@ -139,11 +125,15 @@ AUTHENTICATION_BACKENDS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "saasCRM.security_middleware.SecurityHeadersMiddleware",
+    "saasCRM.security_middleware.APISecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "project.middleware.TenantMiddleware",
+    "saasCRM.correlation_middleware.RequestCorrelationMiddleware",
+    "saasCRM.rate_limiting.EnhancedRateLimitMiddleware",
     "accounts.middleware.AuditMiddleware",
     "accounts.middleware.AuditExceptionMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -362,7 +352,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
+        "saasCRM.jwt_auth.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [

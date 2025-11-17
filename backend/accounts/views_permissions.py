@@ -5,18 +5,29 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import Permission
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from .models import CustomPermission, PermissionGroup, UserTenant
 from .permissions import IsTenantAdmin
 from .serializers import CustomPermissionSerializer, PermissionGroupSerializer
 
 
+@extend_schema(parameters=[
+    OpenApiParameter(
+        name='id',
+        type=OpenApiTypes.UUID,
+        location=OpenApiParameter.PATH,
+        description='UUID of the permission'
+    )
+])
 class CustomPermissionViewSet(ModelViewSet):
     """
     CRUD operations for custom permissions
     """
     serializer_class = CustomPermissionSerializer
     permission_classes = [IsAuthenticated, IsTenantAdmin]
+    lookup_field = 'id'
 
     def get_queryset(self):
         # Only show permissions for current tenant's admin
@@ -30,12 +41,21 @@ class CustomPermissionViewSet(ModelViewSet):
         serializer.save(created_by=self.request.user, app_label=f"tenant_{user_tenant.tenant.id}")
 
 
+@extend_schema(parameters=[
+    OpenApiParameter(
+        name='id',
+        type=OpenApiTypes.UUID,
+        location=OpenApiParameter.PATH,
+        description='UUID of permission group'
+    )
+])
 class PermissionGroupViewSet(ModelViewSet):
     """
     CRUD operations for permission groups
     """
     serializer_class = PermissionGroupSerializer
     permission_classes = [IsAuthenticated, IsTenantAdmin]
+    lookup_field = 'id'
 
     def get_queryset(self):
         user_tenant = get_object_or_404(UserTenant, user=self.request.user, is_approved=True)
@@ -82,6 +102,8 @@ class UserPermissionViewSet(generics.GenericAPIView):
     View and manage user permissions
     """
     permission_classes = [IsAuthenticated, IsTenantAdmin]
+    # Use a simple serializer to satisfy DRF requirements
+    serializer_class = CustomPermissionSerializer
 
     def get(self, request, user_id):
         """Get user's current permissions"""

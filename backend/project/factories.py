@@ -2,8 +2,10 @@ from datetime import timedelta
 import random
 
 import factory
+from factory import fuzzy
 from django.contrib.auth.models import Group
 from faker import Faker
+from decimal import Decimal
 
 from accounts.models import CustomUser, Tenant, UserTenant
 
@@ -70,7 +72,7 @@ class ProjectFactory(factory.django.DjangoModelFactory):
     priority = factory.Iterator(['low', 'medium', 'high'])
     start_date = factory.Faker('date_this_year')
     end_date = factory.LazyAttribute(lambda obj: obj.start_date + timedelta(days=30) if obj.start_date else None)
-    budget = factory.Faker('random_int', min=10000, max=100000)
+    budget = factory.LazyFunction(lambda: Decimal(random.uniform(10000, 100000)).quantize(Decimal('0.01')))
     description = factory.LazyFunction(lambda: fake.text()[:500])
     tags = factory.LazyFunction(lambda: ','.join(fake.words(nb=3))[:500])
     is_deleted = False
@@ -122,7 +124,7 @@ class InvoiceFactory(factory.django.DjangoModelFactory):
     tenant = factory.SelfAttribute('client.tenant')
     client = factory.SubFactory(ClientFactory)
     project = factory.SubFactory(ProjectFactory)
-    amount = factory.Faker('random_int', min=1000, max=50000)
+    amount = factory.LazyFunction(lambda: Decimal(random.uniform(1000, 50000)).quantize(Decimal('0.01')))
     issued_at = factory.Faker('date_this_year')
     paid = factory.Faker('boolean')
     is_deleted = False
@@ -144,3 +146,84 @@ class UserTenantFactory(factory.django.DjangoModelFactory):
     is_owner = factory.Faker('boolean')
     is_approved = factory.LazyAttribute(lambda obj: True if obj.is_owner else factory.Faker('boolean')())
     role = factory.Iterator(['Employee', 'Manager', 'Tenant Owner'])
+
+
+# Specialized factories for specific test scenarios
+class ActiveClientFactory(ClientFactory):
+    """Factory for active clients."""
+    
+    status = 'active'
+
+
+class CompletedProjectFactory(ProjectFactory):
+    """Factory for completed projects."""
+    
+    status = 'completed'
+    progress = 100
+
+
+class HighPriorityTaskFactory(TaskFactory):
+    """Factory for high priority tasks."""
+    
+    priority = 'high'
+    status = 'in_progress'
+
+
+class PaidInvoiceFactory(InvoiceFactory):
+    """Factory for paid invoices."""
+    
+    paid = True
+    paid_at = factory.Faker('date_this_year')
+
+
+class CompletedPaymentFactory(PaymentFactory):
+    """Factory for completed payments."""
+    
+    status = 'completed'
+
+
+class TenantOwnerFactory(UserTenantFactory):
+    """Factory for tenant owners."""
+    
+    is_owner = True
+    is_approved = True
+    role = 'Tenant Owner'
+
+
+class ProjectManagerFactory(UserTenantFactory):
+    """Factory for project managers."""
+    
+    is_owner = False
+    is_approved = True
+    role = 'Project Manager'
+
+
+# Bulk data factories for performance testing
+class BulkClientFactory(factory.django.DjangoModelFactory):
+    """Optimized factory for bulk client creation."""
+    
+    class Meta:
+        model = Client
+        django_get_or_create = ('email', 'tenant')
+    
+    name = factory.Faker('company')
+    email = factory.Faker('email')
+    phone = factory.LazyFunction(generate_valid_phone)
+    status = 'active'
+    tenant = factory.LazyFunction(lambda: Tenant.objects.first() or TenantFactory())
+
+
+class BulkProjectFactory(factory.django.DjangoModelFactory):
+    """Optimized factory for bulk project creation."""
+    
+    class Meta:
+        model = Project
+        django_get_or_create = ('name', 'tenant')
+    
+    name = factory.Faker('sentence', nb_words=3)
+    client = factory.LazyFunction(lambda: Client.objects.order_by('?').first())
+    tenant = factory.SelfAttribute('client.tenant')
+    status = 'active'
+    priority = 'medium'
+    budget = fuzzy.FuzzyDecimal(25000.00, 100000.00, 2)
+    description = factory.Faker('paragraph', nb_sentences=2)

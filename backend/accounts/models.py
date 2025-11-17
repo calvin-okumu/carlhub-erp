@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager, Group
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
@@ -173,6 +174,9 @@ class Tenant(models.Model):
         help_text='User who originally created this tenant during signup'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    objects = models.Manager()  # Default manager
 
     def __str__(self):
         return self.name
@@ -365,10 +369,19 @@ class EmployeeDocument(models.Model):
     description = models.TextField(blank=True)
     document_file = models.FileField(upload_to='employee_documents/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     # File metadata
     file_size = models.PositiveIntegerField(default=0)
     file_type = models.CharField(max_length=10, blank=True, default='')
+
+    # Security constraints
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+    ALLOWED_FILE_TYPES = [
+        'pdf', 'doc', 'docx', 'txt', 'rtf', 'odt',  # Documents
+        'jpg', 'jpeg', 'png', 'gif', 'bmp',  # Images
+        'xls', 'xlsx', 'csv', 'ods'  # Spreadsheets
+    ]
 
     class Meta:
         ordering = ['-uploaded_at']
@@ -376,10 +389,25 @@ class EmployeeDocument(models.Model):
     def __str__(self):
         return f"{self.user.email} - {self.title}"
 
+    def clean(self):
+        """Validate file security constraints"""
+        if self.document_file and hasattr(self.document_file, 'size'):
+            # Check file size
+            if self.document_file.size > self.MAX_FILE_SIZE:
+                raise ValidationError(f'File size cannot exceed {self.MAX_FILE_SIZE // (1024*1024)}MB')
+            
+            # Check file type
+            if self.document_file.name:
+                file_extension = self.document_file.name.split('.')[-1].lower()
+                if file_extension not in self.ALLOWED_FILE_TYPES:
+                    raise ValidationError(f'File type {file_extension} is not allowed. Allowed types: {", ".join(self.ALLOWED_FILE_TYPES)}')
+
     def save(self, *args, **kwargs):
-        if self.document_file:
+        self.clean()
+        if self.document_file and hasattr(self.document_file, 'size'):
             self.file_size = self.document_file.size
-            self.file_type = self.document_file.name.split('.')[-1].lower()
+            if self.document_file.name:
+                self.file_type = self.document_file.name.split('.')[-1].lower()
         super().save(*args, **kwargs)
 
 

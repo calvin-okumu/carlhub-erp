@@ -75,12 +75,18 @@ npm run setup
 ### 4. Start Development
 
 ```bash
-# From project root
+# Start all services (includes Redis)
 make dev
 
-# Or start individually:
+# Or start individually
 make dev-backend   # Django API on http://localhost:8000
 make dev-frontend  # Next.js app on http://localhost:3000
+
+# Check server status
+make check-servers
+
+# Stop all services
+make stop
 ```
 
 ## 🔍 Verify Installation
@@ -176,6 +182,7 @@ After successful setup:
 | **API Docs** | http://localhost:8000/api/schema/swagger-ui/ | Interactive API documentation |
 | **Admin** | http://localhost:8000/admin/ | Django admin interface |
 | **Database** | localhost:5432 | PostgreSQL database |
+| **Redis** | localhost:6379 | Caching and session storage |
 
 ## 🐛 Troubleshooting Quick Start
 

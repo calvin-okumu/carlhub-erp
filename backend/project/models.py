@@ -13,6 +13,7 @@ from django.core.validators import (
     URLValidator,
 )
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 from accounts.models import SoftDeleteMixin
@@ -38,6 +39,11 @@ class Client(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=['tenant', 'status']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['created_at']),
+        ]
         constraints = [
             models.UniqueConstraint(fields=['name', 'tenant'], name='unique_client_name_per_tenant')
         ]
@@ -96,6 +102,7 @@ class Project(SoftDeleteMixin, models.Model):
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
         if self.start_date and self.end_date and self.start_date >= self.end_date:
@@ -124,6 +131,12 @@ class Project(SoftDeleteMixin, models.Model):
         return self.name
 
     class Meta:
+        indexes = [
+            models.Index(fields=['tenant', 'status']),
+            models.Index(fields=['client', 'created_at']),
+            models.Index(fields=['slug']),
+            models.Index(fields=['created_at']),
+        ]
         constraints = [
             models.UniqueConstraint(fields=['name', 'client', 'tenant'], name='unique_project_name_per_client_tenant')
         ]
@@ -160,6 +173,7 @@ class Milestone(SoftDeleteMixin, models.Model):
         Project, on_delete=models.SET_NULL, null=True, blank=True, related_name="milestones", db_index=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
         if self.planned_start and self.due_date and self.planned_start >= self.due_date:
@@ -223,6 +237,7 @@ class Sprint(SoftDeleteMixin, models.Model):
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
         if self.start_date and self.end_date and self.start_date > self.end_date:
@@ -375,6 +390,8 @@ class Invoice(SoftDeleteMixin, models.Model):
     )
     issued_at = models.DateTimeField(auto_now_add=True)
     paid = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -430,6 +447,8 @@ class Payment(SoftDeleteMixin, models.Model):
         max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0'))]
     )
     paid_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:

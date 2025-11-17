@@ -15,14 +15,23 @@ This section provides solutions to common issues encountered when setting up, de
 # Check environment
 make env-check
 
+# Check server status
+make check-servers
+
 # View logs
 docker-compose logs
+
+# Stop development servers
+make stop
 
 # Reset database
 make clean && make setup
 
 # Health check
 curl http://localhost:8000/api/health/
+
+# Docker troubleshooting
+make docker-troubleshoot
 ```
 
 ## Issue Categories
