@@ -41,9 +41,9 @@ else:
 
 # Load environment variables from .env file
 if os.getenv("DOCKER_CONTAINER") == "true":
-    load_dotenv(dotenv_path=BASE_DIR.parent / ".env")  # Root .env for Docker
+    load_dotenv(dotenv_path="../.env")  # Root .env for Docker
 else:
-    load_dotenv(dotenv_path=BASE_DIR / ".env")  # Backend .env for local
+    load_dotenv(dotenv_path=".env")  # Backend .env for local
 
 # Import logging configuration after BASE_DIR is defined
 import importlib.util
@@ -93,12 +93,14 @@ ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "testserver").split(",")
 # Security settings for production
 if not DEBUG:
     SECURE_HSTS_SECONDS = os.getenv("SECURE_HSTS_SECONDS", "31536000")
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").lower() == "true"
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = (
+        os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "True").lower() == "true"
+    )
     SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "True").lower() == "true"
     SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "True").lower() == "true"
     SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "True").lower() == "true"
     CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE", "True").lower() == "true"
-    X_FRAME_OPTIONS = 'DENY'
+    X_FRAME_OPTIONS = "DENY"
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 else:
@@ -200,75 +202,15 @@ WSGI_APPLICATION = "saasCRM.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Default to PostgreSQL, fallback to SQLite if PostgreSQL is not available
-try:
-    import psycopg2  # Test if psycopg2 is available
-
-    # Check for DATABASE_URL environment variable (for production/staging)
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        # Parse DATABASE_URL manually for production/staging environments
-        # Expected format: postgresql://user:password@host:port/database
-        try:
-            # Simple DATABASE_URL parsing
-            if database_url.startswith("postgresql://"):
-                # Remove protocol
-                db_string = database_url.replace("postgresql://", "")
-                # Split user:pass@host:port/db
-                if "@" in db_string and "/" in db_string:
-                    credentials, rest = db_string.split("@", 1)
-                    host_port_db, db_name = rest.split("/", 1)
-                    user, password = credentials.split(":", 1)
-                    host, port = host_port_db.split(":", 1)
-
-                    DATABASES = {
-                        "default": {
-                            "ENGINE": "django.db.backends.postgresql",
-                            "NAME": db_name,
-                            "USER": user,
-                            "PASSWORD": password,
-                            "HOST": host,
-                            "PORT": port,
-                        }
-                    }
-                else:
-                    raise ValueError("Invalid DATABASE_URL format")
-            else:
-                raise ValueError("Only PostgreSQL DATABASE_URL is supported")
-        except Exception as e:
-            print(
-                f"Warning: Could not parse DATABASE_URL ({e}), falling back to environment variables"
-            )
-            DATABASES = {
-                "default": {
-                    "ENGINE": "django.db.backends.postgresql",
-                    "NAME": os.getenv("DB_NAME", "saascrm_db"),
-                    "USER": os.getenv("DB_USER", "postgres"),
-                    "PASSWORD": os.getenv("DB_PASSWORD", ""),
-                    "HOST": os.getenv("DB_HOST", "localhost"),
-                    "PORT": os.getenv("DB_PORT", "5432"),
-                }
-            }
-    else:
-        # Use individual environment variables for PostgreSQL
-        DATABASES = {
-            "default": {
-                "ENGINE": "django.db.backends.postgresql",
-                "NAME": os.getenv("DB_NAME", "saascrm_db"),
-                "USER": os.getenv("DB_USER", "postgres"),
-                "PASSWORD": os.getenv("DB_PASSWORD", ""),
-                "HOST": os.getenv("DB_HOST", "localhost"),
-                "PORT": os.getenv("DB_PORT", "5432"),
-            }
-        }
-except ImportError:
-    # Fallback to SQLite if psycopg2 is not available
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+# Use SQLite for local development
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": str(BASE_DIR / "db.sqlite3"),
     }
+}
+
+# Database configured above
 
 # Test database configuration
 # Use SQLite for tests to avoid needing PostgreSQL setup
