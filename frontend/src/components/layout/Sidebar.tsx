@@ -98,7 +98,7 @@ export default function Sidebar() {
                         height={32}
                         className="mr-2"
                     />
-                    <h1 className="text-2xl font-bold text-blue-600">Carlhub</h1>
+                    <h1 className="h1-title !text-blue-600">Carlhub</h1>
                 </div>
 
                 {/* Navigation */}
