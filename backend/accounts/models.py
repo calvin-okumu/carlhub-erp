@@ -413,7 +413,7 @@ class EmployeeDocument(models.Model):
             # Check file size
             if self.document_file.size > self.MAX_FILE_SIZE:
                 raise ValidationError(f'File size cannot exceed {self.MAX_FILE_SIZE // (1024*1024)}MB')
-            
+
             # Check file type
             if self.document_file.name:
                 file_extension = self.document_file.name.split('.')[-1].lower()
