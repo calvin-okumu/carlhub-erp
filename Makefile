@@ -1,7 +1,7 @@
 # DjangoCRM Project Makefile
 # Unified commands for development, testing, and deployment
 
-.PHONY: help setup setup-backend setup-frontend setup-docker dev dev-backend dev-frontend check-servers stop test test-backend test-frontend lint lint-backend lint-frontend build build-backend build-frontend clean clean-backend clean-frontend docker-up docker-down docker-up-staging docker-down-staging docker-logs install migrate createsuperuser shell dbshell env-check db-backup db-restore ci-setup ci-test ci-build
+.PHONY: help setup setup-backend setup-frontend setup-docker dev dev-backend dev-frontend check-servers stop test test-backend test-frontend lint lint-backend lint-frontend build build-backend build-frontend clean clean-backend clean-frontend docker-up docker-down docker-up-staging docker-down-staging docker-logs install makemigrations migrate createsuperuser shell dbshell env-check db-backup db-restore ci-setup ci-test ci-build docker-troubleshoot docker-status docker-logs-all docker-networks docker-connectivity docker-resources docker-clean docker-restart docker-rebuild
 
 # Default target
 help:
@@ -47,6 +47,7 @@ help:
 	@echo ""
 	@echo "Utility Commands:"
 	@echo "  make install            - Install all dependencies"
+	@echo "  make makemigrations     - Create database migrations"
 	@echo "  make migrate            - Run database migrations"
 	@echo "  make createsuperuser    - Create Django superuser"
 	@echo "  make shell              - Open Django shell"
@@ -115,7 +116,7 @@ dev:
 	@echo "Starting Redis..."
 	@redis-server --daemonize yes 2>/dev/null || echo "Redis already running or not installed"
 	@echo "Preparing backend environment..."
-	@cd backend && . venv/bin/activate && python manage.py migrate
+	@cd backend && . venv/bin/activate && python manage.py makemigrations && python manage.py migrate
 	@echo "Starting backend..."
 	@cd backend && (. venv/bin/activate && python manage.py runserver 0.0.0.0:8000 & echo "Backend started with PID $$!")
 	@echo "Installing frontend dependencies..."
@@ -258,6 +259,10 @@ install:
 	@echo "Installing all dependencies..."
 	@cd backend && . venv/bin/activate && pip install -r requirements.txt
 	@cd frontend && npm install
+
+makemigrations:
+	@echo "Creating database migrations..."
+	@cd backend && . venv/bin/activate && python manage.py makemigrations
 
 migrate:
 	@echo "Running database migrations..."
