@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("project", "0018_remove_client_project_cli_tenant__9f3e6f_idx_and_more"),
     ]

@@ -162,7 +162,6 @@ class EmployeeDocumentAPITests(APITestCase):
         """Test creating a document"""
         from io import BytesIO
 
-
         # Create a simple PDF-like file for testing
         file_content = b"%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n"
         file = BytesIO(file_content)

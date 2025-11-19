@@ -13,7 +13,6 @@ from .serializers import (
 )
 
 
-
 class UserProfileView(generics.RetrieveUpdateAPIView):
     """Get and update user profile"""
 
@@ -23,6 +22,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         # Import service here to avoid import issues
         from .services.user_profile_service import UserProfileService
+
         # Use service to get or create profile
         return UserProfileService.get_or_create_profile(self.request.user)
 
@@ -69,7 +69,6 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         # No need to call super().perform_update as service handles saving
 
 
-
 class EmployeeDocumentListView(generics.ListCreateAPIView):
     """List and create employee documents"""
 
@@ -78,6 +77,7 @@ class EmployeeDocumentListView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         from .services.employee_document_service import EmployeeDocumentService
+
         return EmployeeDocumentService.get_user_documents(self.request.user)
 
     def perform_create(self, serializer):
@@ -105,10 +105,9 @@ class EmployeeDocumentListView(generics.ListCreateAPIView):
             },
             ip_address=get_client_ip(self.request),
         )
-        
+
         # Set the created document on the serializer for response
         serializer.instance = document
-
 
 
 class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -119,14 +118,17 @@ class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         from .services.employee_document_service import EmployeeDocumentService
+
         return EmployeeDocumentService.get_user_documents(self.request.user)
 
     def get_object(self):
-        document_id = self.kwargs.get('pk')
+        document_id = self.kwargs.get("pk")
         from .services.employee_document_service import EmployeeDocumentService
+
         document = EmployeeDocumentService.get_document(self.request.user, document_id)
         if document is None:
             from rest_framework.exceptions import NotFound
+
             raise NotFound("Document not found")
         return document
 
@@ -198,16 +200,16 @@ class AuditLogListView(generics.ListAPIView):
 
     def get_queryset(self):
         from .services.audit_log_service import AuditLogService
-        
+
         # Check if this is for schema generation
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, "swagger_fake_view", False):
             return AuditLog.objects.none()
-        
+
         # Get filters from request
         filters = {}
-        for field in ['action', 'resource_type', 'tenant', 'user']:
+        for field in ["action", "resource_type", "tenant", "user"]:
             if field in self.request.query_params:
                 filters[field] = self.request.query_params[field]
-        
+
         # Use service to get audit logs
         return AuditLogService.get_audit_logs(self.request.user, filters)

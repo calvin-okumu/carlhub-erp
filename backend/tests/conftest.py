@@ -3,12 +3,20 @@ Pytest fixtures and configuration for DjangoCRM project.
 """
 
 import pytest
+
 from accounts.factories import (
-    UserFactory, TenantFactory, UserTenantFactory, TenantOwnerFactory
+    TenantFactory,
+    TenantOwnerFactory,
+    UserFactory,
+    UserTenantFactory,
 )
 from project.factories import (
-    ClientFactory, ProjectFactory, MilestoneFactory, SprintFactory, TaskFactory,
-    InvoiceFactory, PaymentFactory
+    ClientFactory,
+    InvoiceFactory,
+    MilestoneFactory,
+    PaymentFactory,
+    ProjectFactory,
+    TaskFactory,
 )
 
 
@@ -76,12 +84,7 @@ def project_manager():
     """Pytest fixture for creating a project manager."""
     user = UserFactory()
     tenant = TenantFactory()
-    UserTenantFactory(
-        user=user, 
-        tenant=tenant, 
-        is_owner=False, 
-        role='Project Manager'
-    )
+    UserTenantFactory(user=user, tenant=tenant, is_owner=False, role="Project Manager")
     return user, tenant
 
 
@@ -90,12 +93,7 @@ def regular_employee():
     """Pytest fixture for creating a regular employee."""
     user = UserFactory()
     tenant = TenantFactory()
-    UserTenantFactory(
-        user=user, 
-        tenant=tenant, 
-        is_owner=False, 
-        role='Employee'
-    )
+    UserTenantFactory(user=user, tenant=tenant, is_owner=False, role="Employee")
     return user, tenant
 
 
@@ -105,14 +103,8 @@ def bulk_data():
     tenant = TenantFactory()
     clients = ClientFactory.create_batch(5, tenant=tenant)
     projects = []
-    
+
     for client in clients:
-        projects.extend(
-            ProjectFactory.create_batch(2, tenant=tenant, client=client)
-        )
-    
-    return {
-        'tenant': tenant,
-        'clients': clients,
-        'projects': projects
-    }
+        projects.extend(ProjectFactory.create_batch(2, tenant=tenant, client=client))
+
+    return {"tenant": tenant, "clients": clients, "projects": projects}

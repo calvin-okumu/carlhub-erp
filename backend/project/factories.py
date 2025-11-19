@@ -2,10 +2,8 @@ import random
 from datetime import timedelta
 
 import factory
-from factory import fuzzy
 from django.contrib.auth.models import Group
 from faker import Faker
-from decimal import Decimal
 
 from accounts.models import CustomUser, Tenant, UserTenant
 

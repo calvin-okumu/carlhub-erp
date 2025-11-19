@@ -5,13 +5,7 @@ from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from accounts.models import (
-    AuditLog,
-    CustomUser,
-    Invitation,
-    Tenant,
-    UserProfile,
-)
+from accounts.models import AuditLog, CustomUser, Invitation, Tenant, UserProfile
 from leave_management.models import LeaveBalance, LeavePolicy, LeaveRequest
 from project.factories import (
     ClientFactory,
@@ -215,7 +209,6 @@ class Command(BaseCommand):
         import uuid
         from datetime import timedelta
 
-
         if Invitation.objects.count() < 5:
             invitations = []
             for i in range(5 - Invitation.objects.count()):
@@ -240,7 +233,7 @@ class Command(BaseCommand):
 
         # Create sample audit logs using service layer
         if AuditLog.objects.count() < 10:
-            from accounts.services.audit_log_service import AuditLogService
+
             audit_logs = []
             actions = [
                 "user_login",

@@ -5,7 +5,7 @@ This migration adds composite indexes for frequently queried combinations
 to improve query performance.
 """
 
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_client_tenant_name ON project_client(tenant_id, name);",
             reverse_sql="DROP INDEX IF EXISTS idx_client_tenant_name;"
         ),
-        
+
         # Project indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_project_tenant_client ON project_project(tenant_id, client_id);",
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_project_tenant_priority ON project_project(tenant_id, priority);",
             reverse_sql="DROP INDEX IF EXISTS idx_project_tenant_priority;"
         ),
-        
+
         # Milestone indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_milestone_tenant_project ON project_milestone(tenant_id, project_id);",
@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_milestone_project_status ON project_milestone(project_id, status);",
             reverse_sql="DROP INDEX IF EXISTS idx_milestone_project_status;"
         ),
-        
+
         # Sprint indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_sprint_tenant_milestone ON project_sprint(tenant_id, milestone_id);",
@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_sprint_milestone_status ON project_sprint(milestone_id, status);",
             reverse_sql="DROP INDEX IF EXISTS idx_sprint_milestone_status;"
         ),
-        
+
         # Task indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_task_tenant_sprint ON project_task(tenant_id, sprint_id);",
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_task_assignee_status ON project_task(assignee_id, status);",
             reverse_sql="DROP INDEX IF EXISTS idx_task_assignee_status;"
         ),
-        
+
         # Invoice indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_invoice_tenant_client ON project_invoice(tenant_id, client_id);",
@@ -95,7 +95,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_invoice_client_issued ON project_invoice(client_id, issued_at);",
             reverse_sql="DROP INDEX IF EXISTS idx_invoice_client_issued;"
         ),
-        
+
         # Payment indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_payment_tenant_invoice ON project_payment(tenant_id, invoice_id);",
@@ -105,7 +105,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_payment_invoice_paid ON project_payment(invoice_id, paid_at);",
             reverse_sql="DROP INDEX IF EXISTS idx_payment_invoice_paid;"
         ),
-        
+
         # UserTenant indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_usertenant_user_tenant ON accounts_usertenant(user_id, tenant_id);",
@@ -119,7 +119,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_usertenant_tenant_approved ON accounts_usertenant(tenant_id, is_approved);",
             reverse_sql="DROP INDEX IF EXISTS idx_usertenant_tenant_approved;"
         ),
-        
+
         # Invitation indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_invitation_tenant_email ON accounts_invitation(tenant_id, email);",
@@ -133,7 +133,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_invitation_expires ON accounts_invitation(expires_at);",
             reverse_sql="DROP INDEX IF EXISTS idx_invitation_expires;"
         ),
-        
+
         # AuditLog indexes
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_auditlog_tenant_timestamp ON accounts_auditlog(tenant_id, timestamp);",
@@ -147,7 +147,7 @@ class Migration(migrations.Migration):
             "CREATE INDEX IF NOT EXISTS idx_auditlog_resource ON accounts_auditlog(resource_type, resource_id);",
             reverse_sql="DROP INDEX IF EXISTS idx_auditlog_resource;"
         ),
-        
+
         # Custom indexes for complex queries
         migrations.RunSQL(
             "CREATE INDEX IF NOT EXISTS idx_project_complex ON project_project(tenant_id, status, priority, created_at);",

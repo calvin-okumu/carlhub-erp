@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
             model_name='client',
             index=models.Index(fields=['created_at'], name='project_client_created_at_idx'),
         ),
-        
+
         # Add indexes for Project model
         migrations.AddIndex(
             model_name='project',
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
             model_name='project',
             index=models.Index(fields=['created_at'], name='project_project_created_at_idx'),
         ),
-        
+
         # Add indexes for Milestone model
         migrations.AddIndex(
             model_name='milestone',
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
             model_name='milestone',
             index=models.Index(fields=['slug'], name='project_milestone_slug_idx'),
         ),
-        
+
         # Add indexes for Sprint model
         migrations.AddIndex(
             model_name='sprint',
@@ -69,7 +69,7 @@ class Migration(migrations.Migration):
             model_name='sprint',
             index=models.Index(fields=['slug'], name='project_sprint_slug_idx'),
         ),
-        
+
         # Add indexes for Task model
         migrations.AddIndex(
             model_name='task',
@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
             model_name='task',
             index=models.Index(fields=['slug'], name='project_task_slug_idx'),
         ),
-        
+
         # Add indexes for Invoice model
         migrations.AddIndex(
             model_name='invoice',
@@ -106,7 +106,7 @@ class Migration(migrations.Migration):
             model_name='invoice',
             index=models.Index(fields=['slug'], name='project_invoice_slug_idx'),
         ),
-        
+
         # Add indexes for Payment model
         migrations.AddIndex(
             model_name='payment',

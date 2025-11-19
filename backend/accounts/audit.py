@@ -136,9 +136,7 @@ class AuditLogger:
         )
 
     @staticmethod
-    def log_member_approved(
-        member_user_tenant, approved_by: User, ip_address: str | None = None
-    ):
+    def log_member_approved(member_user_tenant, approved_by: User, ip_address: str | None = None):
         """Log member approval event."""
         return AuditLogger.log_event(
             action="member_approved",
@@ -152,9 +150,7 @@ class AuditLogger:
         )
 
     @staticmethod
-    def log_failed_login(
-        email: str, ip_address: str | None = None, user_agent: str | None = None
-    ):
+    def log_failed_login(email: str, ip_address: str | None = None, user_agent: str | None = None):
         """Log failed login attempt."""
         return AuditLogger.log_event(
             action="security_failed_login",
