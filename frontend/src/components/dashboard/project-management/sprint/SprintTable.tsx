@@ -1,12 +1,12 @@
 "use client";
 
 import type { Sprint } from '@/api/types';
+import KanbanSection from '@/components/dashboard/project-management/sprint/kanban/KanbanSection';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { AlertCircle, Columns, Edit, Trash2 } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
-import KanbanSection from '@/components/dashboard/project-management/sprint/kanban/KanbanSection';
 
 interface SprintTableProps {
     sprints: Sprint[];

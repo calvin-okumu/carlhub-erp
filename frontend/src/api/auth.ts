@@ -1,5 +1,5 @@
-import { LoginResponse, SignupResponse } from './types';
-import { API_BASE } from './index';
+import { API_BASE } from "./index";
+import { LoginResponse, SignupResponse } from "./types";
 
 export async function login(
   email: string,
@@ -30,7 +30,14 @@ export async function signup(
   company_name?: string,
   invitation_token?: string,
 ): Promise<SignupResponse> {
-  const body: { email: string; password: string; first_name: string; last_name: string; invitation_token?: string; company_name?: string } = { email, password, first_name, last_name };
+  const body: {
+    email: string;
+    password: string;
+    first_name: string;
+    last_name: string;
+    invitation_token?: string;
+    company_name?: string;
+  } = { email, password, first_name, last_name };
   if (invitation_token) {
     body.invitation_token = invitation_token;
   } else {
@@ -64,13 +71,18 @@ export async function signup(
   return data;
 }
 
-export async function confirmEmail(token: string): Promise<{ message: string }> {
-  const response = await fetch(`${API_BASE}/confirm-invitation/?token=${encodeURIComponent(token)}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
+export async function confirmEmail(
+  token: string,
+): Promise<{ message: string }> {
+  const response = await fetch(
+    `${API_BASE}/confirm-invitation/?token=${encodeURIComponent(token)}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     },
-  });
+  );
 
   const data = await response.json();
 
@@ -81,13 +93,23 @@ export async function confirmEmail(token: string): Promise<{ message: string }> 
   return data;
 }
 
-export async function getInvitationDetails(token: string): Promise<{ invitation: { email: string; tenant_name: string; role: string; expires_at: string } }> {
-  const response = await fetch(`${API_BASE}/confirm-invitation/?token=${encodeURIComponent(token)}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
+export async function getInvitationDetails(token: string): Promise<{
+  invitation: {
+    email: string;
+    tenant_name: string;
+    role: string;
+    expires_at: string;
+  };
+}> {
+  const response = await fetch(
+    `${API_BASE}/confirm-invitation/?token=${encodeURIComponent(token)}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     },
-  });
+  );
 
   const data = await response.json();
 
@@ -98,7 +120,9 @@ export async function getInvitationDetails(token: string): Promise<{ invitation:
   return data;
 }
 
-export async function resendInvitation(token: string): Promise<{ message: string }> {
+export async function resendInvitation(
+  token: string,
+): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE}/resend-invitation/`, {
     method: "POST",
     headers: {
@@ -116,7 +140,10 @@ export async function resendInvitation(token: string): Promise<{ message: string
   return data;
 }
 
-export async function deleteInvitation(token: string, invitationSlug: string): Promise<void> {
+export async function deleteInvitation(
+  token: string,
+  invitationSlug: string,
+): Promise<void> {
   const response = await fetch(`${API_BASE}/invitations/${invitationSlug}/`, {
     method: "DELETE",
     headers: {
@@ -131,14 +158,21 @@ export async function deleteInvitation(token: string, invitationSlug: string): P
   }
 }
 
-export async function changePassword(token: string, currentPassword: string, newPassword: string): Promise<{ message: string }> {
+export async function changePassword(
+  token: string,
+  currentPassword: string,
+  newPassword: string,
+): Promise<{ message: string }> {
   const response = await fetch(`${API_BASE}/change-password/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
   });
 
   const data = await response.json();
@@ -149,3 +183,4 @@ export async function changePassword(token: string, currentPassword: string, new
 
   return data;
 }
+

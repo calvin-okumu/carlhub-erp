@@ -1,9 +1,11 @@
 "use client";
 
+import { useUserRole } from "@/hooks/useUserRole";
 import {
     Archive,
     Building,
     Calendar,
+    CheckSquare2Icon,
     ChevronDown,
     DollarSign,
     FileText,
@@ -14,12 +16,12 @@ import {
     StickyNote,
     Table,
     UserCheck,
-    Users,
+    Users
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const navigation = [
     { name: "Home", href: "/dashboard", icon: Home },
@@ -73,17 +75,23 @@ const assetItems = [
     { name: "Contracts", href: "/dashboard/assets/contracts", icon: FileText },
 ];
 
-const leaveItems = [
-    { name: "Leave Overview", href: "/dashboard/leave", icon: Calendar },
-    { name: "Leave Requests", href: "/dashboard/leave/requests", icon: FileText },
-    { name: "Leave Calendar", href: "/dashboard/leave/calendar", icon: Calendar },
-    { name: "Leave Policies", href: "/dashboard/leave/policies", icon: StickyNote },
-];
+
 
 export default function Sidebar() {
     const pathname = usePathname();
     const [isOrgOpen, setIsOrgOpen] = useState(false);
     const [isPersonalOpen, setIsPersonalOpen] = useState(false);
+    const { canApproveLeave } = useUserRole();
+
+    const leaveItems = useMemo(() => [
+        { name: "Leave Overview", href: "/dashboard/leave", icon: Calendar },
+        { name: "Leave Requests", href: "/dashboard/leave/requests", icon: FileText },
+        ...(canApproveLeave ? [
+            { name: "Leave Approvals", href: "/dashboard/leave/approvals", icon: CheckSquare2Icon }
+        ] : []),
+        { name: "Leave Calendar", href: "/dashboard/leave/calendar", icon: Calendar },
+        { name: "Leave Policies", href: "/dashboard/leave/policies", icon: StickyNote },
+    ], [canApproveLeave]);
 
     return (
         <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
