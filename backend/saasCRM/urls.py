@@ -11,7 +11,8 @@ from drf_spectacular.views import (
 debug_toolbar = None
 try:
     from django.conf import settings
-    if 'debug_toolbar' in settings.INSTALLED_APPS:
+
+    if "debug_toolbar" in settings.INSTALLED_APPS:
         import debug_toolbar
 except (ImportError, AttributeError):
     pass

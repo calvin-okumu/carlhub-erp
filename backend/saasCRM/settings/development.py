@@ -1,5 +1,6 @@
 import os
 import sys
+
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -15,42 +16,43 @@ CSRF_COOKIE_SECURE = False
 
 # Test database configuration
 # Use SQLite for tests to avoid needing PostgreSQL setup
-if 'test' in sys.argv:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': ':memory:',
+if "test" in sys.argv:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
     }
 else:
     # Django automatically creates test databases with 'test_' prefix
     TEST = {
-        'NAME': 'saascrm_db',  # Use same db for tests
+        "NAME": "saascrm_db",  # Use same db for tests
     }
 
 # Cache configuration for development
-use_redis = os.getenv('USE_REDIS_CACHE', 'false').lower() == 'true'
+use_redis = os.getenv("USE_REDIS_CACHE", "false").lower() == "true"
 
-if 'test' in sys.argv or (DEBUG and not use_redis):
+if "test" in sys.argv or (DEBUG and not use_redis):
     CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
         }
     }
 else:
     CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': 'redis://127.0.0.1:6379/1',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'IGNORE_EXCEPTIONS': True,
-            }
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": "redis://127.0.0.1:6379/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "IGNORE_EXCEPTIONS": True,
+            },
         }
     }
 
     # Check Redis availability and warn if not running
     try:
         import redis
-        r = redis.Redis(host='127.0.0.1', port=6379, db=1)
+
+        r = redis.Redis(host="127.0.0.1", port=6379, db=1)
         r.ping()
     except Exception:
         print("Warning: Redis is not running or unreachable. Caching will be disabled.")
@@ -73,48 +75,48 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Logging for development
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'debug.log',
-            'formatter': 'verbose',
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
-    'root': {
-        'handlers': ['console', 'file'],
-        'level': 'INFO',
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "debug.log",
+            "formatter": "verbose",
+        },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console', 'file'],
-            'level': 'INFO',
-            'propagate': False,
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
         },
-        'accounts': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
+        "accounts": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
         },
-        'project': {
-            'handlers': ['console', 'file'],
-            'level': 'DEBUG',
-            'propagate': False,
+        "project": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
 }

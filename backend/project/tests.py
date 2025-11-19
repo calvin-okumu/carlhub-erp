@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -149,11 +150,11 @@ class ModelTests(TestCase):
     def test_unique_constraints(self):
         """Test unique constraints"""
         # Tenant name unique
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             Tenant.objects.create(name="Test Organization")
 
         # Client email unique
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             Client.objects.create(name="Another Client", email="test@example.com", tenant=self.org)
 
 
@@ -168,8 +169,10 @@ class AuthenticationTests(APITestCase):
         data = {"email": "test@example.com", "password": "testpass123"}
         response = self.client.post("/api/login/", data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("token", response.data)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
         self.assertIn("user_id", response.data)
+        self.assertIn("role", response.data)
         self.assertEqual(response.data["email"], "test@example.com")
 
     def test_login_invalid_credentials(self):

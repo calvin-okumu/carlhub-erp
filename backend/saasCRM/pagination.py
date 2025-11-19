@@ -1,7 +1,6 @@
-from typing import Any, Optional
+from typing import Any
 
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.utils.urls import replace_query_param
 
@@ -21,7 +20,7 @@ class CustomPageNumberPagination(PageNumberPagination):
         response.data["last"] = self.get_last_link()  # type: ignore
         return response
 
-    def get_first_link(self) -> Optional[str]:
+    def get_first_link(self) -> str | None:
         """
         Return the URL for the first page.
         """
@@ -30,7 +29,7 @@ class CustomPageNumberPagination(PageNumberPagination):
         url = self.request.build_absolute_uri()
         return replace_query_param(url, self.page_query_param, 1)
 
-    def get_last_link(self) -> Optional[str]:
+    def get_last_link(self) -> str | None:
         """
         Return the URL for the last page.
         """

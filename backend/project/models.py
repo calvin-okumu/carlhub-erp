@@ -4,16 +4,13 @@ from decimal import Decimal
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.core.validators import (
-    MaxValueValidator,
-    MinValueValidator,
-    RegexValidator,
-)
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 
 from accounts.models import SoftDeleteMixin
+from saasCRM.currency import CURRENCY_CHOICES
 
 
 class Client(models.Model):
@@ -48,9 +45,9 @@ class Client(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['tenant', 'status']),
-            models.Index(fields=['slug']),
-            models.Index(fields=['created_at']),
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["created_at"]),
         ]
         constraints = [
             models.UniqueConstraint(fields=["name", "tenant"], name="unique_client_name_per_tenant")
@@ -153,10 +150,10 @@ class Project(SoftDeleteMixin, models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=['tenant', 'status']),
-            models.Index(fields=['client', 'created_at']),
-            models.Index(fields=['slug']),
-            models.Index(fields=['created_at']),
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["client", "created_at"]),
+            models.Index(fields=["slug"]),
+            models.Index(fields=["created_at"]),
         ]
         constraints = [
             models.UniqueConstraint(
@@ -508,20 +505,7 @@ class Invoice(SoftDeleteMixin, models.Model):
         max_length=3,
         null=True,
         blank=True,
-        choices=[
-            ("USD", "US Dollar"),
-            ("EUR", "Euro"),
-            ("GBP", "British Pound"),
-            ("JPY", "Japanese Yen"),
-            ("CAD", "Canadian Dollar"),
-            ("AUD", "Australian Dollar"),
-            ("CHF", "Swiss Franc"),
-            ("CNY", "Chinese Yuan"),
-            ("INR", "Indian Rupee"),
-            ("BRL", "Brazilian Real"),
-            ("ZAR", "South African Rand"),
-            ("KES", "Kenyan Shilling"),
-        ],
+        choices=CURRENCY_CHOICES,
         help_text="Currency for this invoice",
     )
     amount = models.DecimalField(
@@ -579,20 +563,7 @@ class Payment(SoftDeleteMixin, models.Model):
         max_length=3,
         null=True,
         blank=True,
-        choices=[
-            ("USD", "US Dollar"),
-            ("EUR", "Euro"),
-            ("GBP", "British Pound"),
-            ("JPY", "Japanese Yen"),
-            ("CAD", "Canadian Dollar"),
-            ("AUD", "Australian Dollar"),
-            ("CHF", "Swiss Franc"),
-            ("CNY", "Chinese Yuan"),
-            ("INR", "Indian Rupee"),
-            ("BRL", "Brazilian Real"),
-            ("ZAR", "South African Rand"),
-            ("KES", "Kenyan Shilling"),
-        ],
+        choices=CURRENCY_CHOICES,
         help_text="Currency for this payment",
     )
     amount = models.DecimalField(

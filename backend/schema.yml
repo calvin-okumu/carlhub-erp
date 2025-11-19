@@ -8,8 +8,9 @@ info:
     \ management\n    - **Projects**: Project lifecycle management with milestones\
     \ and tasks\n    - **Invoices & Payments**: Financial management and billing\n\
     \    - **Users & Teams**: User management and role-based access control\n\n  \
-    \  ## Authentication\n    - Use `Authorization: Token <token>` header for API\
-    \ requests\n    - Obtain tokens via `/api/login/` or `/api/signup/` endpoints\n\
+    \  ## Authentication\n    - Use `Authorization: Bearer <token>` header for API\
+    \ requests (recommended)\n    - `Authorization: Token <token>` is deprecated but\
+    \ still supported\n    - Obtain tokens via `/api/login/` or `/api/signup/` endpoints\n\
     \    - Session authentication is also supported for web users\n\n    ## Multi-tenancy\n\
     \    In production with multi-tenancy enabled, all data is automatically scoped\
     \ to the current tenant based on the request context.\n    "
@@ -115,7 +116,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -164,7 +165,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -203,7 +204,7 @@ paths:
               $ref: '#/components/schemas/Department'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -237,7 +238,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -282,7 +283,7 @@ paths:
               $ref: '#/components/schemas/Department'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -326,7 +327,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedDepartment'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -359,7 +360,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -389,7 +390,7 @@ paths:
               $ref: '#/components/schemas/Department'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -411,7 +412,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -434,7 +435,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -461,7 +462,7 @@ paths:
               $ref: '#/components/schemas/EmployeeDocument'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -483,7 +484,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -516,7 +517,7 @@ paths:
               $ref: '#/components/schemas/EmployeeDocument'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -548,7 +549,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedEmployeeDocument'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -569,7 +570,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -579,6 +580,13 @@ paths:
       operationId: accounts_permission_groups_list
       description: CRUD operations for permission groups
       parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID of permission group
+        required: true
       - name: page
         required: false
         in: query
@@ -588,7 +596,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -600,6 +608,14 @@ paths:
     post:
       operationId: accounts_permission_groups_create
       description: CRUD operations for permission groups
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID of permission group
+        required: true
       tags:
       - accounts
       requestBody:
@@ -615,7 +631,7 @@ paths:
               $ref: '#/components/schemas/PermissionGroup'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -633,11 +649,13 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of permission group
         required: true
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -654,6 +672,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of permission group
         required: true
       tags:
       - accounts
@@ -670,7 +690,7 @@ paths:
               $ref: '#/components/schemas/PermissionGroup'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -687,6 +707,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of permission group
         required: true
       tags:
       - accounts
@@ -702,7 +724,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPermissionGroup'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -719,11 +741,13 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of permission group
         required: true
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -737,6 +761,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of permission group
         required: true
       tags:
       - accounts
@@ -753,7 +779,7 @@ paths:
               $ref: '#/components/schemas/PermissionGroup'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -771,6 +797,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of permission group
         required: true
       tags:
       - accounts
@@ -787,7 +815,7 @@ paths:
               $ref: '#/components/schemas/PermissionGroup'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -801,6 +829,13 @@ paths:
       operationId: accounts_permissions_list
       description: CRUD operations for custom permissions
       parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the permission
+        required: true
       - name: page
         required: false
         in: query
@@ -810,7 +845,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -822,6 +857,14 @@ paths:
     post:
       operationId: accounts_permissions_create
       description: CRUD operations for custom permissions
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the permission
+        required: true
       tags:
       - accounts
       requestBody:
@@ -837,7 +880,7 @@ paths:
               $ref: '#/components/schemas/CustomPermission'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -855,11 +898,13 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of the permission
         required: true
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -876,6 +921,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of the permission
         required: true
       tags:
       - accounts
@@ -892,7 +939,7 @@ paths:
               $ref: '#/components/schemas/CustomPermission'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -909,6 +956,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of the permission
         required: true
       tags:
       - accounts
@@ -924,7 +973,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCustomPermission'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -941,11 +990,13 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: UUID of the permission
         required: true
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -957,7 +1008,7 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -983,7 +1034,7 @@ paths:
             schema:
               $ref: '#/components/schemas/UserProfile'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1009,7 +1060,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUserProfile'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1031,11 +1082,15 @@ paths:
       tags:
       - accounts
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPermission'
+          description: ''
     post:
       operationId: accounts_users_permissions_create
       description: Assign permissions directly to user
@@ -1047,12 +1102,28 @@ paths:
         required: true
       tags:
       - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CustomPermission'
+        required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomPermission'
+          description: ''
   /api/approve-member/:
     post:
       operationId: approve_member_create
@@ -1071,7 +1142,7 @@ paths:
               required:
               - user_id
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1110,7 +1181,7 @@ paths:
               properties:
                 user_id:
                   type: integer
-                  description: ID of the user to assign/remove admin role
+                  description: ID of user to assign/remove admin role
                 assign_admin:
                   type: boolean
                   description: True to assign admin role, False to remove
@@ -1118,7 +1189,7 @@ paths:
               - user_id
               - assign_admin
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1170,13 +1241,13 @@ paths:
   /api/auth-methods/:
     get:
       operationId: auth_methods_retrieve
-      description: Returns information about supported authentication methods and
-        providers.
+      description: Returns available authentication methods including traditional
+        and OAuth providers.
       summary: Get available authentication methods
       tags:
       - auth-methods
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       - {}
       responses:
@@ -1184,7 +1255,7 @@ paths:
           content:
             application/json:
               schema:
-                description: Authentication methods information
+                description: Available authentication methods
                 type: object
                 properties:
                   traditional:
@@ -1260,7 +1331,7 @@ paths:
       tags:
       - clients
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1288,7 +1359,7 @@ paths:
               $ref: '#/components/schemas/Client'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -1311,7 +1382,7 @@ paths:
       tags:
       - clients
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1345,7 +1416,7 @@ paths:
               $ref: '#/components/schemas/Client'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1378,7 +1449,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedClient'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1389,7 +1460,7 @@ paths:
           description: ''
     delete:
       operationId: clients_destroy
-      description: Delete a client.
+      description: Delete a client from the current tenant.
       summary: Delete client
       parameters:
       - in: path
@@ -1400,7 +1471,7 @@ paths:
       tags:
       - clients
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -1426,7 +1497,7 @@ paths:
               $ref: '#/components/schemas/Client'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1451,7 +1522,7 @@ paths:
       tags:
       - confirm-invitation
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       - {}
       responses:
@@ -1511,7 +1582,7 @@ paths:
               required:
               - token
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       - {}
       responses:
@@ -1548,41 +1619,20 @@ paths:
   /api/database-backup/:
     post:
       operationId: database_backup_create
-      description: Create a timestamped database backup. Only superusers can perform
-        this action.
+      description: Create a backup of the entire database and download it as JSON
+        file.
       summary: Create database backup
       tags:
       - database-backup
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                description: Backup created successfully
-                type: object
-                properties:
-                  message:
-                    type: string
-                  backup_file:
-                    type: string
-                  created_at:
-                    type: string
-                    format: date-time
-                  size:
-                    type: string
-          description: ''
-        '403':
-          content:
-            application/json:
-              schema:
-                description: Forbidden - only superusers can create backups
-                type: object
-                properties:
-                  error:
-                    type: string
+                $ref: '#/components/schemas/BackupResponse'
           description: ''
   /api/excel-export/:
     get:
@@ -1603,7 +1653,7 @@ paths:
       tags:
       - excel-export
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1655,7 +1705,7 @@ paths:
               - file
               - model
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1695,7 +1745,7 @@ paths:
       tags:
       - health
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       - {}
       responses:
@@ -1708,13 +1758,9 @@ paths:
   /api/invitations/:
     get:
       operationId: invitations_list
-      description: Retrieve a list of invitations sent by the current tenant.
+      description: Retrieve a list of invitations for current tenant.
       summary: List invitations
       parameters:
-      - in: query
-        name: is_used
-        schema:
-          type: boolean
       - name: ordering
         required: false
         in: query
@@ -1737,15 +1783,10 @@ paths:
         description: A search term.
         schema:
           type: string
-      - in: query
-        name: tenant
-        schema:
-          type: string
-          format: uuid
       tags:
       - invitations
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1773,7 +1814,7 @@ paths:
               $ref: '#/components/schemas/Invitation'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -1796,7 +1837,7 @@ paths:
       tags:
       - invitations
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1807,7 +1848,7 @@ paths:
           description: ''
     put:
       operationId: invitations_update
-      description: Update an existing invitation's information.
+      description: Update an existing invitation.
       summary: Update invitation
       parameters:
       - in: path
@@ -1830,7 +1871,7 @@ paths:
               $ref: '#/components/schemas/Invitation'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1841,7 +1882,7 @@ paths:
           description: ''
     patch:
       operationId: invitations_partial_update
-      description: Partially update an invitation's information.
+      description: Partially update an invitation.
       summary: Partially update invitation
       parameters:
       - in: path
@@ -1863,7 +1904,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedInvitation'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1885,11 +1926,79 @@ paths:
       tags:
       - invitations
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
           description: No response body
+  /api/invitations/{slug}/cancel_invitation/:
+    post:
+      operationId: invitations_cancel_invitation_create
+      description: Cancel a pending invitation.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invitations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
+  /api/invitations/{slug}/resend_invitation/:
+    post:
+      operationId: invitations_resend_invitation_create
+      description: Resend an invitation email.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invitations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invitation'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
   /api/invite-member/:
     post:
       operationId: invite_member_create
@@ -1915,7 +2024,7 @@ paths:
               required:
               - email
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -1953,7 +2062,7 @@ paths:
   /api/invoices/:
     get:
       operationId: invoices_list
-      description: Retrieve a list of invoices for the current tenant.
+      description: Retrieve a list of invoices for current tenant.
       summary: List invoices
       parameters:
       - in: query
@@ -1961,6 +2070,39 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: currency
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - AUD
+          - BRL
+          - CAD
+          - CHF
+          - CNY
+          - EUR
+          - GBP
+          - INR
+          - JPY
+          - KES
+          - USD
+          - ZAR
+        description: |-
+          Currency for this invoice
+
+          * `USD` - US Dollar ($)
+          * `EUR` - Euro (€)
+          * `GBP` - British Pound (£)
+          * `JPY` - Japanese Yen (¥)
+          * `CAD` - Canadian Dollar (C$)
+          * `AUD` - Australian Dollar (A$)
+          * `CHF` - Swiss Franc (CHF)
+          * `CNY` - Chinese Yuan (¥)
+          * `INR` - Indian Rupee (₹)
+          * `BRL` - Brazilian Real (R$)
+          * `ZAR` - South African Rand (R)
+          * `KES` - Kenyan Shilling (KSh)
       - name: ordering
         required: false
         in: query
@@ -1991,7 +2133,7 @@ paths:
       tags:
       - invoices
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2002,7 +2144,7 @@ paths:
           description: ''
     post:
       operationId: invoices_create
-      description: Create a new invoice for a client and project.
+      description: Create a new invoice for a client/project.
       summary: Create invoice
       tags:
       - invoices
@@ -2019,7 +2161,7 @@ paths:
               $ref: '#/components/schemas/Invoice'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -2042,7 +2184,7 @@ paths:
       tags:
       - invoices
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2076,7 +2218,7 @@ paths:
               $ref: '#/components/schemas/Invoice'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2109,7 +2251,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedInvoice'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2120,7 +2262,7 @@ paths:
           description: ''
     delete:
       operationId: invoices_destroy
-      description: Delete an invoice and associated payments.
+      description: Delete an invoice.
       summary: Delete invoice
       parameters:
       - in: path
@@ -2131,11 +2273,125 @@ paths:
       tags:
       - invoices
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
           description: No response body
+  /api/invoices/{slug}/mark_as_paid/:
+    post:
+      operationId: invoices_mark_as_paid_create
+      description: Mark an invoice as paid and create payment record.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invoices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/invoices/{slug}/mark_as_sent/:
+    post:
+      operationId: invoices_mark_as_sent_create
+      description: Mark an invoice as sent to client.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - invoices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/invoices/bulk_delete_invoices/:
+    post:
+      operationId: invoices_bulk_delete_invoices_create
+      description: |-
+        Bulk delete multiple invoices.
+        Expects: {"invoice_ids": [1, 2, 3]}
+      tags:
+      - invoices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/invoices/overdue_invoices/:
+    get:
+      operationId: invoices_overdue_invoices_retrieve
+      description: Get list of overdue invoices.
+      tags:
+      - invoices
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
   /api/leave/balances/:
     get:
       operationId: leave_balances_list
@@ -2182,7 +2438,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2213,7 +2469,7 @@ paths:
               $ref: '#/components/schemas/LeaveBalance'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -2239,7 +2495,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2276,7 +2532,7 @@ paths:
               $ref: '#/components/schemas/LeaveBalance'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2312,7 +2568,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedLeaveBalance'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2337,7 +2593,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -2384,7 +2640,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2415,7 +2671,7 @@ paths:
               $ref: '#/components/schemas/LeavePolicy'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -2441,7 +2697,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2478,7 +2734,7 @@ paths:
               $ref: '#/components/schemas/LeavePolicy'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2514,7 +2770,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedLeavePolicy'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2539,7 +2795,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -2618,7 +2874,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2655,7 +2911,7 @@ paths:
               $ref: '#/components/schemas/LeaveRequest'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -2687,7 +2943,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2730,7 +2986,7 @@ paths:
               $ref: '#/components/schemas/LeaveRequest'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2772,7 +3028,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedLeaveRequest'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2803,7 +3059,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -2833,7 +3089,7 @@ paths:
               $ref: '#/components/schemas/LeaveRequest'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2867,7 +3123,7 @@ paths:
               $ref: '#/components/schemas/LeaveRequest'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2901,7 +3157,7 @@ paths:
               $ref: '#/components/schemas/LeaveRequest'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2935,7 +3191,7 @@ paths:
               $ref: '#/components/schemas/LeaveRequest'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2969,7 +3225,7 @@ paths:
               $ref: '#/components/schemas/LeaveRequest'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -2991,7 +3247,7 @@ paths:
       tags:
       - leave
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3003,8 +3259,7 @@ paths:
   /api/login/:
     post:
       operationId: login_create
-      description: Authenticate user with email and password, return token and user
-        info.
+      description: Authenticate user and return JWT tokens.
       summary: User login
       tags:
       - login
@@ -3019,12 +3274,11 @@ paths:
                   format: email
                 password:
                   type: string
-                  minLength: 1
               required:
               - email
               - password
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       - {}
       responses:
@@ -3035,8 +3289,14 @@ paths:
                 description: Login successful
                 type: object
                 properties:
-                  token:
+                  access:
                     type: string
+                  refresh:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
                   user_id:
                     type: integer
                   email:
@@ -3045,6 +3305,9 @@ paths:
                     type: string
                   last_name:
                     type: string
+                  role:
+                    type: string
+                    nullable: true
                   message:
                     type: string
           description: ''
@@ -3061,8 +3324,8 @@ paths:
   /api/members/:
     get:
       operationId: members_list
-      description: Retrieve a list of users associated with the current tenant.
-      summary: List tenant members
+      description: Retrieve a list of user-tenant relationships for current tenant.
+      summary: List user-tenant relationships
       parameters:
       - in: query
         name: is_approved
@@ -3108,15 +3371,10 @@ paths:
         description: A search term.
         schema:
           type: string
-      - in: query
-        name: tenant
-        schema:
-          type: string
-          format: uuid
       tags:
       - members
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3127,8 +3385,8 @@ paths:
           description: ''
     post:
       operationId: members_create
-      description: Add a new user to the tenant.
-      summary: Add tenant member
+      description: Add a user to a tenant.
+      summary: Create user-tenant relationship
       tags:
       - members
       requestBody:
@@ -3144,7 +3402,7 @@ paths:
               $ref: '#/components/schemas/UserTenant'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -3156,8 +3414,8 @@ paths:
   /api/members/{slug}/:
     get:
       operationId: members_retrieve
-      description: Retrieve details of a specific tenant member.
-      summary: Retrieve tenant member
+      description: Retrieve details of a specific user-tenant relationship.
+      summary: Retrieve user-tenant relationship
       parameters:
       - in: path
         name: slug
@@ -3167,7 +3425,7 @@ paths:
       tags:
       - members
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3178,8 +3436,8 @@ paths:
           description: ''
     put:
       operationId: members_update
-      description: Update a tenant member's information.
-      summary: Update tenant member
+      description: Update user's role and permissions in tenant.
+      summary: Update user-tenant relationship
       parameters:
       - in: path
         name: slug
@@ -3201,7 +3459,7 @@ paths:
               $ref: '#/components/schemas/UserTenant'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3212,8 +3470,8 @@ paths:
           description: ''
     patch:
       operationId: members_partial_update
-      description: Partially update a tenant member's information.
-      summary: Partially update tenant member
+      description: Partially update user's role and permissions.
+      summary: Partially update user-tenant relationship
       parameters:
       - in: path
         name: slug
@@ -3234,7 +3492,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedUserTenant'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3245,8 +3503,8 @@ paths:
           description: ''
     delete:
       operationId: members_destroy
-      description: Remove a user from the tenant.
-      summary: Remove tenant member
+      description: Remove a user from a tenant.
+      summary: Remove user from tenant
       parameters:
       - in: path
         name: slug
@@ -3256,15 +3514,87 @@ paths:
       tags:
       - members
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
           description: No response body
+  /api/members/{slug}/approve_member/:
+    post:
+      operationId: members_approve_member_create
+      description: |-
+        Approve a pending tenant member.
+        Only tenant owners can approve members.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTenant'
+          description: ''
+  /api/members/{slug}/remove_member/:
+    post:
+      operationId: members_remove_member_create
+      description: |-
+        Remove a member from the tenant.
+        Only tenant owners can remove members.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserTenant'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTenant'
+          description: ''
   /api/milestones/:
     get:
       operationId: milestones_list
-      description: Retrieve a list of milestones for the current tenant with progress
+      description: Retrieve a list of milestones for current tenant with progress
         calculation.
       summary: List milestones
       parameters:
@@ -3306,7 +3636,7 @@ paths:
       tags:
       - milestones
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3334,7 +3664,7 @@ paths:
               $ref: '#/components/schemas/Milestone'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -3358,7 +3688,7 @@ paths:
       tags:
       - milestones
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3392,7 +3722,7 @@ paths:
               $ref: '#/components/schemas/Milestone'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3425,7 +3755,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedMilestone'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3447,7 +3777,7 @@ paths:
       tags:
       - milestones
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -3455,9 +3785,42 @@ paths:
   /api/payments/:
     get:
       operationId: payments_list
-      description: Retrieve a list of payments for the current tenant.
+      description: Retrieve a list of payments for current tenant.
       summary: List payments
       parameters:
+      - in: query
+        name: currency
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - AUD
+          - BRL
+          - CAD
+          - CHF
+          - CNY
+          - EUR
+          - GBP
+          - INR
+          - JPY
+          - KES
+          - USD
+          - ZAR
+        description: |-
+          Currency for this payment
+
+          * `USD` - US Dollar ($)
+          * `EUR` - Euro (€)
+          * `GBP` - British Pound (£)
+          * `JPY` - Japanese Yen (¥)
+          * `CAD` - Canadian Dollar (C$)
+          * `AUD` - Australian Dollar (A$)
+          * `CHF` - Swiss Franc (CHF)
+          * `CNY` - Chinese Yuan (¥)
+          * `INR` - Indian Rupee (₹)
+          * `BRL` - Brazilian Real (R$)
+          * `ZAR` - South African Rand (R)
+          * `KES` - Kenyan Shilling (KSh)
       - in: query
         name: invoice
         schema:
@@ -3484,7 +3847,7 @@ paths:
       tags:
       - payments
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3495,7 +3858,7 @@ paths:
           description: ''
     post:
       operationId: payments_create
-      description: Create a new payment for an invoice.
+      description: Create a new payment record for an invoice.
       summary: Create payment
       tags:
       - payments
@@ -3512,7 +3875,7 @@ paths:
               $ref: '#/components/schemas/Payment'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -3535,7 +3898,7 @@ paths:
       tags:
       - payments
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3569,7 +3932,7 @@ paths:
               $ref: '#/components/schemas/Payment'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3602,7 +3965,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedPayment'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3624,11 +3987,57 @@ paths:
       tags:
       - payments
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
           description: No response body
+  /api/payments/bulk_delete_payments/:
+    post:
+      operationId: payments_bulk_delete_payments_create
+      description: |-
+        Bulk delete multiple payments.
+        Expects: {"payment_ids": [1, 2, 3]}
+      tags:
+      - payments
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payment'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/payments/payment_summary/:
+    get:
+      operationId: payments_payment_summary_retrieve
+      description: Get payment summary statistics.
+      tags:
+      - payments
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
   /api/projects/:
     get:
       operationId: projects_list
@@ -3690,7 +4099,7 @@ paths:
       tags:
       - projects
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3718,7 +4127,7 @@ paths:
               $ref: '#/components/schemas/Project'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -3742,7 +4151,7 @@ paths:
       tags:
       - projects
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3776,7 +4185,7 @@ paths:
               $ref: '#/components/schemas/Project'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3809,7 +4218,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedProject'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3831,7 +4240,7 @@ paths:
       tags:
       - projects
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -3863,7 +4272,7 @@ paths:
               $ref: '#/components/schemas/Project'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3899,7 +4308,7 @@ paths:
               $ref: '#/components/schemas/Project'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3929,7 +4338,7 @@ paths:
               $ref: '#/components/schemas/Project'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -3959,7 +4368,7 @@ paths:
               required:
               - token
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       - {}
       responses:
@@ -4053,7 +4462,7 @@ paths:
               - first_name
               - last_name
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       - {}
       responses:
@@ -4092,7 +4501,7 @@ paths:
   /api/sprints/:
     get:
       operationId: sprints_list
-      description: Retrieve a list of sprints for the current tenant.
+      description: Retrieve a list of sprints for current tenant.
       summary: List sprints
       parameters:
       - in: query
@@ -4146,7 +4555,7 @@ paths:
       tags:
       - sprints
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4181,7 +4590,7 @@ paths:
               $ref: '#/components/schemas/Sprint'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -4210,7 +4619,7 @@ paths:
       tags:
       - sprints
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4250,7 +4659,7 @@ paths:
               $ref: '#/components/schemas/Sprint'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4289,7 +4698,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSprint'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4317,7 +4726,7 @@ paths:
       tags:
       - sprints
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -4354,7 +4763,7 @@ paths:
               $ref: '#/components/schemas/Sprint'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4395,7 +4804,7 @@ paths:
               $ref: '#/components/schemas/Sprint'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4408,7 +4817,7 @@ paths:
     patch:
       operationId: sprints_bulk_update_sprints_partial_update
       description: |-
-        Bulk update multiple sprints with the same status.
+        Bulk update multiple sprints with same status.
         Expects: {"sprint_ids": [1, 2, 3], "status": "active"}
       parameters:
       - in: path
@@ -4431,7 +4840,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedSprint'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4443,7 +4852,7 @@ paths:
   /api/tasks/:
     get:
       operationId: tasks_list
-      description: Retrieve a list of tasks for the current tenant with progress calculation.
+      description: Retrieve a list of tasks for current tenant with progress calculation.
         Use 'backlog=true' to filter backlog tasks, 'backlog=false' for assigned tasks.
       summary: List tasks
       parameters:
@@ -4503,7 +4912,7 @@ paths:
       tags:
       - tasks
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4531,7 +4940,7 @@ paths:
               $ref: '#/components/schemas/Task'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -4554,7 +4963,7 @@ paths:
       tags:
       - tasks
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4588,7 +4997,7 @@ paths:
               $ref: '#/components/schemas/Task'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4621,7 +5030,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedTask'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4643,7 +5052,7 @@ paths:
       tags:
       - tasks
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
@@ -4675,7 +5084,7 @@ paths:
               $ref: '#/components/schemas/Task'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4705,7 +5114,7 @@ paths:
               $ref: '#/components/schemas/Task'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4735,7 +5144,7 @@ paths:
               $ref: '#/components/schemas/Task'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4747,10 +5156,8 @@ paths:
   /api/tenants/:
     get:
       operationId: tenants_list
-      description: |-
-        ViewSet for managing tenant organizations.
-
-        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      description: Retrieve a list of tenant organizations.
+      summary: List tenants
       parameters:
       - in: query
         name: name
@@ -4777,7 +5184,7 @@ paths:
       tags:
       - tenants
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4788,10 +5195,8 @@ paths:
           description: ''
     post:
       operationId: tenants_create
-      description: |-
-        ViewSet for managing tenant organizations.
-
-        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      description: Create a new tenant organization.
+      summary: Create tenant
       tags:
       - tenants
       requestBody:
@@ -4807,7 +5212,7 @@ paths:
               $ref: '#/components/schemas/Tenant'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -4819,10 +5224,8 @@ paths:
   /api/tenants/{slug}/:
     get:
       operationId: tenants_retrieve
-      description: |-
-        ViewSet for managing tenant organizations.
-
-        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      description: Retrieve details of a specific tenant.
+      summary: Retrieve tenant
       parameters:
       - in: path
         name: slug
@@ -4832,7 +5235,7 @@ paths:
       tags:
       - tenants
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4843,10 +5246,8 @@ paths:
           description: ''
     put:
       operationId: tenants_update
-      description: |-
-        ViewSet for managing tenant organizations.
-
-        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      description: Update an existing tenant's information.
+      summary: Update tenant
       parameters:
       - in: path
         name: slug
@@ -4868,7 +5269,7 @@ paths:
               $ref: '#/components/schemas/Tenant'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4879,10 +5280,8 @@ paths:
           description: ''
     patch:
       operationId: tenants_partial_update
-      description: |-
-        ViewSet for managing tenant organizations.
-
-        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      description: Partially update a tenant's information.
+      summary: Partially update tenant
       parameters:
       - in: path
         name: slug
@@ -4903,7 +5302,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedTenant'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -4914,10 +5313,8 @@ paths:
           description: ''
     delete:
       operationId: tenants_destroy
-      description: |-
-        ViewSet for managing tenant organizations.
-
-        Provides CRUD operations for tenants with filtering, searching, and ordering capabilities.
+      description: Delete a tenant.
+      summary: Delete tenant
       parameters:
       - in: path
         name: slug
@@ -4927,11 +5324,58 @@ paths:
       tags:
       - tenants
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
           description: No response body
+  /api/token-refresh/:
+    post:
+      operationId: token_refresh_create
+      description: Refresh JWT access token using refresh token
+      summary: Refresh JWT access token
+      tags:
+      - token-refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+                  description: JWT refresh token
+              required:
+              - refresh
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Token refreshed successfully
+                type: object
+                properties:
+                  access:
+                    type: string
+                  token_type:
+                    type: string
+                  expires_in:
+                    type: integer
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                description: Invalid or expired refresh token
+                type: object
+                properties:
+                  error:
+                    type: string
+          description: ''
   /api/transfer-ownership/:
     post:
       operationId: transfer_ownership_create
@@ -4952,7 +5396,7 @@ paths:
               required:
               - to_user_id
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -5002,12 +5446,15 @@ paths:
   /api/users/:
     get:
       operationId: users_list
-      description: Retrieve a list of users. Regular users can only see their own
-        profile.
+      description: Retrieve a list of users in the system.
       summary: List users
       parameters:
       - in: query
         name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_staff
         schema:
           type: boolean
       - name: ordering
@@ -5031,7 +5478,7 @@ paths:
       tags:
       - users
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -5042,7 +5489,7 @@ paths:
           description: ''
     post:
       operationId: users_create
-      description: Create a new user account. Generally handled through signup process.
+      description: Create a new user account.
       summary: Create user
       tags:
       - users
@@ -5059,7 +5506,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '201':
@@ -5071,8 +5518,7 @@ paths:
   /api/users/{slug}/:
     get:
       operationId: users_retrieve
-      description: Retrieve details of a specific user. Users can only access their
-        own profile.
+      description: Retrieve details of a specific user.
       summary: Retrieve user
       parameters:
       - in: path
@@ -5083,7 +5529,7 @@ paths:
       tags:
       - users
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -5094,7 +5540,7 @@ paths:
           description: ''
     put:
       operationId: users_update
-      description: Update user information. Users can only update their own profile.
+      description: Update an existing user's information.
       summary: Update user
       parameters:
       - in: path
@@ -5117,7 +5563,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -5128,8 +5574,7 @@ paths:
           description: ''
     patch:
       operationId: users_partial_update
-      description: Partially update user information. Users can only update their
-        own profile.
+      description: Partially update a user's information.
       summary: Partially update user
       parameters:
       - in: path
@@ -5151,7 +5596,7 @@ paths:
             schema:
               $ref: '#/components/schemas/PatchedCustomUser'
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -5162,7 +5607,7 @@ paths:
           description: ''
     delete:
       operationId: users_destroy
-      description: Delete a user account. Users can only delete their own account.
+      description: Delete a user account.
       summary: Delete user
       parameters:
       - in: path
@@ -5173,30 +5618,23 @@ paths:
       tags:
       - users
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '204':
           description: No response body
-  /api/users/me/:
-    get:
-      operationId: users_me_retrieve
-      description: Get or update current user's profile.
-      tags:
-      - users
-      security:
-      - tokenAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CustomUser'
-          description: ''
-    put:
-      operationId: users_me_update
-      description: Get or update current user's profile.
+  /api/users/{slug}/assign_admin/:
+    post:
+      operationId: users_assign_admin_create
+      description: |-
+        Assign admin privileges to a user.
+        Only superusers can assign admin privileges.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
       tags:
       - users
       requestBody:
@@ -5212,7 +5650,7 @@ paths:
               $ref: '#/components/schemas/CustomUser'
         required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -5221,24 +5659,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/CustomUser'
           description: ''
-    patch:
-      operationId: users_me_partial_update
-      description: Get or update current user's profile.
+  /api/users/{slug}/remove_admin/:
+    post:
+      operationId: users_remove_admin_create
+      description: |-
+        Remove admin privileges from a user.
+        Only superusers can remove admin privileges.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
       tags:
       - users
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PatchedCustomUser'
+              $ref: '#/components/schemas/CustomUser'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/PatchedCustomUser'
+              $ref: '#/components/schemas/CustomUser'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/PatchedCustomUser'
+              $ref: '#/components/schemas/CustomUser'
+        required: true
       security:
-      - tokenAuth: []
+      - JWTAuthentication: []
       - cookieAuth: []
       responses:
         '200':
@@ -5348,6 +5796,24 @@ components:
       - tenant_name
       - timestamp
       - user_email
+    BackupResponse:
+      type: object
+      description: Serializer for backup database response
+      properties:
+        message:
+          type: string
+        backup_file:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        size:
+          type: string
+      required:
+      - backup_file
+      - message
+      - size
+      - timestamp
     BlankEnum:
       enum:
       - ''
@@ -5462,18 +5928,18 @@ components:
       - KES
       type: string
       description: |-
-        * `USD` - US Dollar
-        * `EUR` - Euro
-        * `GBP` - British Pound
-        * `JPY` - Japanese Yen
-        * `CAD` - Canadian Dollar
-        * `AUD` - Australian Dollar
-        * `CHF` - Swiss Franc
-        * `CNY` - Chinese Yuan
-        * `INR` - Indian Rupee
-        * `BRL` - Brazilian Real
-        * `ZAR` - South African Rand
-        * `KES` - Kenyan Shilling
+        * `USD` - US Dollar ($)
+        * `EUR` - Euro (€)
+        * `GBP` - British Pound (£)
+        * `JPY` - Japanese Yen (¥)
+        * `CAD` - Canadian Dollar (C$)
+        * `AUD` - Australian Dollar (A$)
+        * `CHF` - Swiss Franc (CHF)
+        * `CNY` - Chinese Yuan (¥)
+        * `INR` - Indian Rupee (₹)
+        * `BRL` - Brazilian Real (R$)
+        * `ZAR` - South African Rand (R)
+        * `KES` - Kenyan Shilling (KSh)
     CurrentApprovalLevelEnum:
       enum:
       - department_manager
@@ -5574,18 +6040,18 @@ components:
       - KES
       type: string
       description: |-
-        * `USD` - US Dollar
-        * `EUR` - Euro
-        * `GBP` - British Pound
-        * `JPY` - Japanese Yen
-        * `CAD` - Canadian Dollar
-        * `AUD` - Australian Dollar
-        * `CHF` - Swiss Franc
-        * `CNY` - Chinese Yuan
-        * `INR` - Indian Rupee
-        * `BRL` - Brazilian Real
-        * `ZAR` - South African Rand
-        * `KES` - Kenyan Shilling
+        * `USD` - US Dollar ($)
+        * `EUR` - Euro (€)
+        * `GBP` - British Pound (£)
+        * `JPY` - Japanese Yen (¥)
+        * `CAD` - Canadian Dollar (C$)
+        * `AUD` - Australian Dollar (A$)
+        * `CHF` - Swiss Franc (CHF)
+        * `CNY` - Chinese Yuan (¥)
+        * `INR` - Indian Rupee (₹)
+        * `BRL` - Brazilian Real (R$)
+        * `ZAR` - South African Rand (R)
+        * `KES` - Kenyan Shilling (KSh)
     Department:
       type: object
       description: Serializer for Department model with slug support
@@ -5650,6 +6116,10 @@ components:
           type: string
           format: date-time
           readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
         file_size:
           type: integer
           readOnly: true
@@ -5665,6 +6135,7 @@ components:
       - file_type
       - id
       - title
+      - updated_at
       - uploaded_at
       - user
     HealthCheck:
@@ -5771,18 +6242,18 @@ components:
           description: |-
             Currency for this invoice
 
-            * `USD` - US Dollar
-            * `EUR` - Euro
-            * `GBP` - British Pound
-            * `JPY` - Japanese Yen
-            * `CAD` - Canadian Dollar
-            * `AUD` - Australian Dollar
-            * `CHF` - Swiss Franc
-            * `CNY` - Chinese Yuan
-            * `INR` - Indian Rupee
-            * `BRL` - Brazilian Real
-            * `ZAR` - South African Rand
-            * `KES` - Kenyan Shilling
+            * `USD` - US Dollar ($)
+            * `EUR` - Euro (€)
+            * `GBP` - British Pound (£)
+            * `JPY` - Japanese Yen (¥)
+            * `CAD` - Canadian Dollar (C$)
+            * `AUD` - Australian Dollar (A$)
+            * `CHF` - Swiss Franc (CHF)
+            * `CNY` - Chinese Yuan (¥)
+            * `INR` - Indian Rupee (₹)
+            * `BRL` - Brazilian Real (R$)
+            * `ZAR` - South African Rand (R)
+            * `KES` - Kenyan Shilling (KSh)
           oneOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
@@ -6107,21 +6578,23 @@ components:
           readOnly: true
           description: Next approval level in workflow
         workflow_status:
-          type: string
-          readOnly: true
+          type: object
+          additionalProperties: {}
           description: Current workflow status information
-        approval_history:
-          type: string
           readOnly: true
+        approval_history:
+          type: object
+          additionalProperties: {}
           description: Complete approval history
+          readOnly: true
         current_approver:
           type: string
-          readOnly: true
           description: Current approver in the workflow
-        can_approve:
-          type: string
           readOnly: true
+        can_approve:
+          type: boolean
           description: Whether current user can approve this request
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -6863,6 +7336,10 @@ components:
           type: string
           format: date-time
           readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
         file_size:
           type: integer
           readOnly: true
@@ -6947,18 +7424,18 @@ components:
           description: |-
             Currency for this invoice
 
-            * `USD` - US Dollar
-            * `EUR` - Euro
-            * `GBP` - British Pound
-            * `JPY` - Japanese Yen
-            * `CAD` - Canadian Dollar
-            * `AUD` - Australian Dollar
-            * `CHF` - Swiss Franc
-            * `CNY` - Chinese Yuan
-            * `INR` - Indian Rupee
-            * `BRL` - Brazilian Real
-            * `ZAR` - South African Rand
-            * `KES` - Kenyan Shilling
+            * `USD` - US Dollar ($)
+            * `EUR` - Euro (€)
+            * `GBP` - British Pound (£)
+            * `JPY` - Japanese Yen (¥)
+            * `CAD` - Canadian Dollar (C$)
+            * `AUD` - Australian Dollar (A$)
+            * `CHF` - Swiss Franc (CHF)
+            * `CNY` - Chinese Yuan (¥)
+            * `INR` - Indian Rupee (₹)
+            * `BRL` - Brazilian Real (R$)
+            * `ZAR` - South African Rand (R)
+            * `KES` - Kenyan Shilling (KSh)
           oneOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
@@ -7253,21 +7730,23 @@ components:
           readOnly: true
           description: Next approval level in workflow
         workflow_status:
-          type: string
-          readOnly: true
+          type: object
+          additionalProperties: {}
           description: Current workflow status information
-        approval_history:
-          type: string
           readOnly: true
+        approval_history:
+          type: object
+          additionalProperties: {}
           description: Complete approval history
+          readOnly: true
         current_approver:
           type: string
-          readOnly: true
           description: Current approver in the workflow
-        can_approve:
-          type: string
           readOnly: true
+        can_approve:
+          type: boolean
           description: Whether current user can approve this request
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -7355,18 +7834,18 @@ components:
           description: |-
             Currency for this payment
 
-            * `USD` - US Dollar
-            * `EUR` - Euro
-            * `GBP` - British Pound
-            * `JPY` - Japanese Yen
-            * `CAD` - Canadian Dollar
-            * `AUD` - Australian Dollar
-            * `CHF` - Swiss Franc
-            * `CNY` - Chinese Yuan
-            * `INR` - Indian Rupee
-            * `BRL` - Brazilian Real
-            * `ZAR` - South African Rand
-            * `KES` - Kenyan Shilling
+            * `USD` - US Dollar ($)
+            * `EUR` - Euro (€)
+            * `GBP` - British Pound (£)
+            * `JPY` - Japanese Yen (¥)
+            * `CAD` - Canadian Dollar (C$)
+            * `AUD` - Australian Dollar (A$)
+            * `CHF` - Swiss Franc (CHF)
+            * `CNY` - Chinese Yuan (¥)
+            * `INR` - Indian Rupee (₹)
+            * `BRL` - Brazilian Real (R$)
+            * `ZAR` - South African Rand (R)
+            * `KES` - Kenyan Shilling (KSh)
           oneOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
@@ -7624,24 +8103,12 @@ components:
           - $ref: '#/components/schemas/CompanySizeEnum'
           - $ref: '#/components/schemas/BlankEnum'
         default_currency:
-          allOf:
-          - $ref: '#/components/schemas/DefaultCurrencyEnum'
-          description: |-
-            Default currency for invoices and payments
-
-            * `USD` - US Dollar
-            * `EUR` - Euro
-            * `GBP` - British Pound
-            * `JPY` - Japanese Yen
-            * `CAD` - Canadian Dollar
-            * `AUD` - Australian Dollar
-            * `CHF` - Swiss Franc
-            * `CNY` - Chinese Yuan
-            * `INR` - Indian Rupee
-            * `BRL` - Brazilian Real
-            * `ZAR` - South African Rand
-            * `KES` - Kenyan Shilling
+          $ref: '#/components/schemas/DefaultCurrencyEnum'
         created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -7820,18 +8287,18 @@ components:
           description: |-
             Currency for this payment
 
-            * `USD` - US Dollar
-            * `EUR` - Euro
-            * `GBP` - British Pound
-            * `JPY` - Japanese Yen
-            * `CAD` - Canadian Dollar
-            * `AUD` - Australian Dollar
-            * `CHF` - Swiss Franc
-            * `CNY` - Chinese Yuan
-            * `INR` - Indian Rupee
-            * `BRL` - Brazilian Real
-            * `ZAR` - South African Rand
-            * `KES` - Kenyan Shilling
+            * `USD` - US Dollar ($)
+            * `EUR` - Euro (€)
+            * `GBP` - British Pound (£)
+            * `JPY` - Japanese Yen (¥)
+            * `CAD` - Canadian Dollar (C$)
+            * `AUD` - Australian Dollar (A$)
+            * `CHF` - Swiss Franc (CHF)
+            * `CNY` - Chinese Yuan (¥)
+            * `INR` - Indian Rupee (₹)
+            * `BRL` - Brazilian Real (R$)
+            * `ZAR` - South African Rand (R)
+            * `KES` - Kenyan Shilling (KSh)
           oneOf:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
@@ -8206,24 +8673,12 @@ components:
           - $ref: '#/components/schemas/CompanySizeEnum'
           - $ref: '#/components/schemas/BlankEnum'
         default_currency:
-          allOf:
-          - $ref: '#/components/schemas/DefaultCurrencyEnum'
-          description: |-
-            Default currency for invoices and payments
-
-            * `USD` - US Dollar
-            * `EUR` - Euro
-            * `GBP` - British Pound
-            * `JPY` - Japanese Yen
-            * `CAD` - Canadian Dollar
-            * `AUD` - Australian Dollar
-            * `CHF` - Swiss Franc
-            * `CNY` - Chinese Yuan
-            * `INR` - Indian Rupee
-            * `BRL` - Brazilian Real
-            * `ZAR` - South African Rand
-            * `KES` - Kenyan Shilling
+          $ref: '#/components/schemas/DefaultCurrencyEnum'
         created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -8235,6 +8690,7 @@ components:
       - created_at
       - id
       - name
+      - updated_at
     UserProfile:
       type: object
       properties:
@@ -8396,15 +8852,14 @@ components:
       - user_first_name
       - user_last_name
   securitySchemes:
+    JWTAuthentication:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
     cookieAuth:
       type: apiKey
       in: cookie
       name: sessionid
-    tokenAuth:
-      type: apiKey
-      in: header
-      name: Authorization
-      description: Token-based authentication with required prefix "Token"
 tags:
 - name: tenants
   description: Tenant organization management

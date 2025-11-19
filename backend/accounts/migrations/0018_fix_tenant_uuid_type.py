@@ -15,9 +15,9 @@ class Migration(migrations.Migration):
             model_name='auditlog',
             name='tenant',
             field=models.ForeignKey(
-                'accounts.Tenant', 
-                on_delete=models.CASCADE, 
-                null=True, 
+                'accounts.Tenant',
+                on_delete=models.CASCADE,
+                null=True,
                 blank=True,
                 db_index=True
             ),

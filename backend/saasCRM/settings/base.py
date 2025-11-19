@@ -364,8 +364,7 @@ SPECTACULAR_SETTINGS = {
         },
     ],
     "ENUM_NAME_OVERRIDES": {
-        "CurrencyEnum": "CurrencyChoice",
-        "DefaultCurrencyEnum": "DefaultCurrencyChoice",
+        "accounts.Tenant.default_currency": "CurrencyEnum",
     },
 }
 
