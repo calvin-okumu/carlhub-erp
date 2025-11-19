@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -8,14 +7,13 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load environment variables from .env file
-if os.getenv('DOCKER_CONTAINER') == 'true':
-    load_dotenv(dotenv_path=BASE_DIR.parent / '.env')  # Root .env for Docker
+if os.getenv("DOCKER_CONTAINER") == "true":
+    load_dotenv(dotenv_path=BASE_DIR.parent / ".env")  # Root .env for Docker
 else:
-    load_dotenv(dotenv_path=BASE_DIR / '.env')  # Backend .env for local
+    load_dotenv(dotenv_path=BASE_DIR / ".env")  # Backend .env for local
 
 # Import logging configuration after BASE_DIR is defined
 import importlib.util
-import logging
 
 # Load logging configuration module
 logging_config_path = BASE_DIR / "saasCRM" / "logging.py"
@@ -29,20 +27,22 @@ if logging_config_path.exists():
         # Fallback function
         def setup_logging(base_dir):
             return {
-                'version': 1,
-                'disable_existing_loggers': False,
-                'handlers': {'console': {'class': 'logging.StreamHandler'}},
-                'root': {'handlers': ['console'], 'level': 'INFO'},
+                "version": 1,
+                "disable_existing_loggers": False,
+                "handlers": {"console": {"class": "logging.StreamHandler"}},
+                "root": {"handlers": ["console"], "level": "INFO"},
             }
+
 else:
     # Fallback function if file doesn't exist
     def setup_logging(base_dir):
         return {
-            'version': 1,
-            'disable_existing_loggers': False,
-            'handlers': {'console': {'class': 'logging.StreamHandler'}},
-            'root': {'handlers': ['console'], 'level': 'INFO'},
+            "version": 1,
+            "disable_existing_loggers": False,
+            "handlers": {"console": {"class": "logging.StreamHandler"}},
+            "root": {"handlers": ["console"], "level": "INFO"},
         }
+
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -135,30 +135,30 @@ try:
     import psycopg2  # Test if psycopg2 is available
 
     # Check for DATABASE_URL environment variable (for production/staging)
-    database_url = os.getenv('DATABASE_URL')
+    database_url = os.getenv("DATABASE_URL")
     if database_url:
         # Parse DATABASE_URL manually for production/staging environments
         # Expected format: postgresql://user:password@host:port/database
         try:
             # Simple DATABASE_URL parsing
-            if database_url.startswith('postgresql://'):
+            if database_url.startswith("postgresql://"):
                 # Remove protocol
-                db_string = database_url.replace('postgresql://', '')
+                db_string = database_url.replace("postgresql://", "")
                 # Split user:pass@host:port/db
-                if '@' in db_string and '/' in db_string:
-                    credentials, rest = db_string.split('@', 1)
-                    host_port_db, db_name = rest.split('/', 1)
-                    user, password = credentials.split(':', 1)
-                    host, port = host_port_db.split(':', 1)
+                if "@" in db_string and "/" in db_string:
+                    credentials, rest = db_string.split("@", 1)
+                    host_port_db, db_name = rest.split("/", 1)
+                    user, password = credentials.split(":", 1)
+                    host, port = host_port_db.split(":", 1)
 
                     DATABASES = {
-                        'default': {
-                            'ENGINE': 'django.db.backends.postgresql',
-                            'NAME': db_name,
-                            'USER': user,
-                            'PASSWORD': password,
-                            'HOST': host,
-                            'PORT': port,
+                        "default": {
+                            "ENGINE": "django.db.backends.postgresql",
+                            "NAME": db_name,
+                            "USER": user,
+                            "PASSWORD": password,
+                            "HOST": host,
+                            "PORT": port,
                         }
                     }
                 else:
@@ -166,7 +166,9 @@ try:
             else:
                 raise ValueError("Only PostgreSQL DATABASE_URL is supported")
         except Exception as e:
-            print(f"Warning: Could not parse DATABASE_URL ({e}), falling back to environment variables")
+            print(
+                f"Warning: Could not parse DATABASE_URL ({e}), falling back to environment variables"
+            )
             DATABASES = {
                 "default": {
                     "ENGINE": "django.db.backends.postgresql",
@@ -240,9 +242,7 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 # Email Configuration
-EMAIL_BACKEND = os.getenv(
-    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
-)
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 
 # SMTP Configuration (for Gmail, Outlook, etc.)
 EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
@@ -355,11 +355,16 @@ SPECTACULAR_SETTINGS = {
         {"name": "authentication", "description": "User authentication and signup"},
     ],
     "SECURITY_SCHEMES": [
-        {"name": "JWTAuthentication", "type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
+        {
+            "name": "JWTAuthentication",
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        },
     ],
     "ENUM_NAME_OVERRIDES": {
         "CurrencyEnum": "CurrencyChoice",
-        "DefaultCurrencyEnum": "CurrencyChoice",
+        "DefaultCurrencyEnum": "DefaultCurrencyChoice",
     },
 }
 

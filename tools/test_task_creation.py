@@ -2,10 +2,11 @@
 """
 Test task creation via sprint endpoint
 """
+
 import requests
-import json
 
 BASE_URL = "http://127.0.0.1:8000"
+
 
 def test_task_creation():
     """Test task creation via sprint create_task endpoint"""
@@ -15,7 +16,7 @@ def test_task_creation():
     login_response = requests.post(
         f"{BASE_URL}/api/login/",
         json={"email": "user1@tenant1.sample.com", "password": "password123"},
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json"},
     )
 
     if login_response.status_code != 200:
@@ -23,16 +24,13 @@ def test_task_creation():
         print(f"Response: {login_response.text}")
         return False
 
-    token = login_response.json()['token']
+    token = login_response.json()["token"]
     print("✅ Login successful")
 
     # Get a sprint
     sprints_response = requests.get(
         f"{BASE_URL}/api/sprints/",
-        headers={
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json"
-        }
+        headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
     )
 
     if sprints_response.status_code != 200:
@@ -44,23 +42,20 @@ def test_task_creation():
         print("❌ No sprints found")
         return False
 
-    sprint_id = sprints[0]['id']
+    sprint_id = sprints[0]["id"]
     print(f"✅ Using sprint ID: {sprint_id}")
 
     # Create task via sprint endpoint
     task_data = {
         "title": "Test Task",
         "description": "Test task description",
-        "status": "to_do"
+        "status": "to_do",
     }
 
     task_response = requests.post(
         f"{BASE_URL}/api/sprints/{sprint_id}/create_task/",
-        headers={
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json"
-        },
-        json=task_data
+        headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
+        json=task_data,
     )
 
     if task_response.status_code == 201:
@@ -77,6 +72,7 @@ def test_task_creation():
         print(f"❌ Task creation failed: {task_response.status_code}")
         print(f"Response: {task_response.text}")
         return False
+
 
 if __name__ == "__main__":
     success = test_task_creation()

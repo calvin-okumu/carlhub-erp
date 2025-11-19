@@ -2,10 +2,11 @@
 """
 Test task status update functionality
 """
+
 import requests
-import json
 
 BASE_URL = "http://127.0.0.1:8000"
+
 
 def test_task_status_update():
     """Test updating task status"""
@@ -15,7 +16,7 @@ def test_task_status_update():
     login_response = requests.post(
         f"{BASE_URL}/api/login/",
         json={"email": "user1@tenant1.sample.com", "password": "password123"},
-        headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json"},
     )
 
     if login_response.status_code != 200:
@@ -23,16 +24,13 @@ def test_task_status_update():
         print(f"Response: {login_response.text}")
         return False
 
-    token = login_response.json()['token']
+    token = login_response.json()["token"]
     print("✅ Login successful")
 
     # Get a sprint first
     sprints_response = requests.get(
         f"{BASE_URL}/api/sprints/",
-        headers={
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json"
-        }
+        headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
     )
 
     if sprints_response.status_code != 200:
@@ -44,23 +42,20 @@ def test_task_status_update():
         print("❌ No sprints found")
         return False
 
-    sprint_id = sprints[0]['id']
+    sprint_id = sprints[0]["id"]
     print(f"✅ Using sprint ID: {sprint_id}")
 
     # Create a test task
     task_data = {
         "title": "Status Update Test Task",
         "description": "Test task for status updates",
-        "status": "to_do"
+        "status": "to_do",
     }
 
     create_response = requests.post(
         f"{BASE_URL}/api/sprints/{sprint_id}/create_task/",
-        headers={
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json"
-        },
-        json=task_data
+        headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
+        json=task_data,
     )
 
     if create_response.status_code != 201:
@@ -76,11 +71,8 @@ def test_task_status_update():
 
     update_response = requests.patch(
         f"{BASE_URL}/api/tasks/{task['id']}/",
-        headers={
-            "Authorization": f"Token {token}",
-            "Content-Type": "application/json"
-        },
-        json={"status": "in_progress"}
+        headers={"Authorization": f"Token {token}", "Content-Type": "application/json"},
+        json={"status": "in_progress"},
     )
 
     if update_response.status_code == 200:
@@ -93,6 +85,7 @@ def test_task_status_update():
         print(f"❌ Task status update failed: {update_response.status_code}")
         print(f"Response: {update_response.text}")
         return False
+
 
 if __name__ == "__main__":
     success = test_task_status_update()

@@ -9,10 +9,7 @@ from rest_framework.test import APIRequestFactory
 from accounts.models import CustomUser, Tenant, UserTenant
 from leave_management.models import LeaveBalance, LeavePolicy, LeaveRequest
 from leave_management.serializers import LeaveRequestSerializer
-from leave_management.views import (
-    LeaveBalanceViewSet,
-    LeaveRequestViewSet,
-)
+from leave_management.views import LeaveBalanceViewSet, LeaveRequestViewSet
 
 
 class UserSpecificAccessControlTests(TestCase):
@@ -42,7 +39,11 @@ class UserSpecificAccessControlTests(TestCase):
             role="Tenant Owner",
         )
         self.admin_tenant = UserTenant.objects.create(
-            user=self.admin, tenant=self.tenant, is_owner=False, is_approved=True, role="Manager"
+            user=self.admin,
+            tenant=self.tenant,
+            is_owner=False,
+            is_approved=True,
+            role="Manager",
         )
         self.employee1_tenant = UserTenant.objects.create(
             user=self.employee1,
@@ -120,7 +121,7 @@ class UserSpecificAccessControlTests(TestCase):
         view = LeaveRequestViewSet.as_view({"get": "list"})
 
         # Employee1 should only see their own request
-        request = self.factory.get("/api/leave-requests/")
+        request = self.factory.get("/api/leave/requests/")
         request.user = self.employee1
         request.tenant = self.tenant
 
@@ -136,7 +137,7 @@ class UserSpecificAccessControlTests(TestCase):
         """Test that admins can view all leave requests in the tenant."""
         view = LeaveRequestViewSet.as_view({"get": "list"})
 
-        request = self.factory.get("/api/leave-requests/")
+        request = self.factory.get("/api/leave/requests/")
         request.user = self.admin
         request.tenant = self.tenant
 
@@ -152,7 +153,7 @@ class UserSpecificAccessControlTests(TestCase):
         """Test that owners can view all leave requests in the tenant."""
         view = LeaveRequestViewSet.as_view({"get": "list"})
 
-        request = self.factory.get("/api/leave-requests/")
+        request = self.factory.get("/api/leave/requests/")
         request.user = self.owner
         request.tenant = self.tenant
 
@@ -169,7 +170,7 @@ class UserSpecificAccessControlTests(TestCase):
         view = LeaveBalanceViewSet.as_view({"get": "list"})
 
         # Employee1 should only see their own balance
-        request = self.factory.get("/api/leave-balances/")
+        request = self.factory.get("/api/leave/balances/")
         request.user = self.employee1
         request.tenant = self.tenant
 
@@ -185,7 +186,7 @@ class UserSpecificAccessControlTests(TestCase):
         """Test that admins can view all leave balances in the tenant."""
         view = LeaveBalanceViewSet.as_view({"get": "list"})
 
-        request = self.factory.get("/api/leave-balances/")
+        request = self.factory.get("/api/leave/balances/")
         request.user = self.admin
         request.tenant = self.tenant
 
@@ -212,7 +213,7 @@ class UserSpecificAccessControlTests(TestCase):
             "reason": "Test request for someone else",
         }
 
-        request = self.factory.post("/api/leave-requests/", request_data)
+        request = self.factory.post("/api/leave/requests/", request_data)
         request.user = self.employee1
         request.tenant = self.tenant
 
@@ -238,7 +239,7 @@ class UserSpecificAccessControlTests(TestCase):
             "reason": "Admin creating request for employee",
         }
 
-        request = self.factory.post("/api/leave-requests/", request_data)
+        request = self.factory.post("/api/leave/requests/", request_data)
         request.user = self.admin
         request.tenant = self.tenant
 
@@ -257,7 +258,7 @@ class UserSpecificAccessControlTests(TestCase):
             "reason": "Owner creating request for employee",
         }
 
-        request = self.factory.post("/api/leave-requests/", request_data)
+        request = self.factory.post("/api/leave/requests/", request_data)
         request.user = self.owner
         request.tenant = self.tenant
 
@@ -269,13 +270,13 @@ class UserSpecificAccessControlTests(TestCase):
         view = LeaveRequestViewSet.as_view({"post": "cancel"})
 
         # Employee1 trying to cancel employee2's request should fail
-        request = self.factory.post(f"/api/leave-requests/{self.leave_request2.id}/cancel/")
+        request = self.factory.post(f"/api/leave/requests/{self.leave_request2.slug}/cancel/")
         request.user = self.employee1
         request.tenant = self.tenant
 
         # Mock get_object to return employee2's request
         with patch.object(view, "get_object", return_value=self.leave_request2):
-            response = view(request, pk=self.leave_request2.id)
+            response = view(request, pk=self.leave_request2.slug)
             self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
             self.assertIn("You can only cancel your own leave requests", str(response.data))
 
@@ -283,7 +284,7 @@ class UserSpecificAccessControlTests(TestCase):
         """Test that admins can cancel any leave request."""
         view = LeaveRequestViewSet.as_view({"post": "cancel"})
 
-        request = self.factory.post(f"/api/leave-requests/{self.leave_request1.id}/cancel/")
+        request = self.factory.post(f"/api/leave/requests/{self.leave_request1.slug}/cancel/")
         request.user = self.admin
         request.tenant = self.tenant
 
@@ -302,7 +303,7 @@ class UserSpecificAccessControlTests(TestCase):
 
         view = LeaveRequestViewSet.as_view({"get": "list"})
 
-        request = self.factory.get("/api/leave-requests/")
+        request = self.factory.get("/api/leave/requests/")
         request.user = superuser
         request.tenant = self.tenant
 
@@ -330,7 +331,7 @@ class UserSpecificAccessControlTests(TestCase):
 
         view = LeaveRequestViewSet.as_view({"get": "list"})
 
-        request = self.factory.get("/api/leave-requests/")
+        request = self.factory.get("/api/leave/requests/")
         request.user = unapproved_user
         request.tenant = self.tenant
 
