@@ -2,6 +2,7 @@ import { getLeaveRequests } from '@/api/leave';
 import type { LeaveRequest } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Card from '@/components/ui/Card';
+import { STORAGE_KEYS } from '@/constants/storage';
 import { FileText } from 'lucide-react';
 import Table from '@/components/ui/Table';
 import { useEffect, useState } from 'react';
@@ -20,7 +21,7 @@ export const LeaveSummaryTable = () => {
         const fetchSummary = async () => {
             try {
                 // Get current user ID from localStorage
-                const userData = localStorage.getItem('user');
+                const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
                 let employeeId: number | undefined;
 
                 if (userData) {

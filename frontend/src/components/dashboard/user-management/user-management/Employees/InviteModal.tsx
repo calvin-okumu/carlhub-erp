@@ -3,6 +3,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { API_BASE } from '@/api';
+import { getAccessToken } from '@/utils/auth';
 
 interface Group {
     id: number;
@@ -61,7 +62,7 @@ export default function InviteModal({ isOpen, onClose, groups = [], onInviteSent
             return;
         }
 
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) {
             alert('You must be logged in to send invitations');
             return;

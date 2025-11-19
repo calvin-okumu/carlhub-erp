@@ -12,9 +12,7 @@ import {
     PaginatedResponse,
 } from "../api";
 
-function getToken(): string | null {
-  return localStorage.getItem("access_token");
-}
+
 
 export function useClients() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -24,16 +22,13 @@ export function useClients() {
   const [pagination, setPagination] = useState<{ count: number; next: string | null; previous: string | null } | null>(null);
 
   const fetchClients = useCallback(async (params?: { page?: number; limit?: number; search?: string; ordering?: string; status?: string }) => {
-    const token = getToken();
-    if (!token) return;
-
     setLoading(true);
     try {
-      const tenants = await getUserTenants(token);
+      const tenants = await getUserTenants();
       const ownerTenant = Array.isArray(tenants) ? tenants.find((t) => t.is_owner) || tenants[0] : tenants;
       setCurrentTenant(ownerTenant || null);
 
-      const data = await getClients(token, { ordering: '-created_at', ...params });
+      const data = await getClients({ ordering: '-created_at', ...params });
       if (params?.page || params?.limit) {
         // Paginated response
         const paginatedData = data as PaginatedResponse<Client>;
@@ -62,8 +57,7 @@ export function useClients() {
   // }, [fetchClients]);
 
   const addClient = async (data: CreateClientData) => {
-    const token = getToken();
-    if (!token || !currentTenant) return;
+    if (!currentTenant) return;
 
     // Temporary client for optimistic update
     const tempClient: Client = {
@@ -84,7 +78,7 @@ export function useClients() {
 
     setLoading(true);
     try {
-      const newClient = await createClient(token, { ...data, tenant: currentTenant.tenant });
+      const newClient = await createClient({ ...data, tenant: currentTenant.tenant });
       setClients(prev => prev.map(c => c.id === tempClient.id ? newClient : c));
     } catch (err) {
       setClients(prev => prev.filter(c => c.id !== tempClient.id));
@@ -95,9 +89,6 @@ export function useClients() {
   };
 
   const editClient = async (slug: string, data: UpdateClientData) => {
-    const token = getToken();
-    if (!token) return;
-
     const originalClient = clients.find(c => c.slug === slug);
     if (!originalClient) return;
 
@@ -106,7 +97,7 @@ export function useClients() {
 
     setLoading(true);
     try {
-      const updatedClient = await updateClient(token, slug, data);
+      const updatedClient = await updateClient(slug, data);
       setClients(prev => prev.map(c => c.slug === slug ? updatedClient : c));
     } catch (err) {
       // Revert on error
@@ -118,9 +109,6 @@ export function useClients() {
   };
 
   const removeClient = async (slug: string) => {
-    const token = getToken();
-    if (!token) return;
-
     const clientToRemove = clients.find(c => c.slug === slug);
     if (!clientToRemove) return;
 
@@ -128,7 +116,7 @@ export function useClients() {
 
     setLoading(true);
     try {
-      await deleteClient(token, slug);
+      await deleteClient(slug);
     } catch (err) {
       setClients((prev) => [...prev, clientToRemove]);
       setError(err instanceof Error ? err.message : "Failed to delete client.");

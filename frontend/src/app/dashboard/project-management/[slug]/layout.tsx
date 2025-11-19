@@ -3,6 +3,8 @@
  import { useState } from 'react';
  import { usePathname } from 'next/navigation';
  import { ProjectProvider } from '@/context/ProjectContext';
+ import { SprintsProvider } from '@/context/SprintsContext';
+ import { MilestonesProvider } from '@/context/MilestonesContext';
  import ProjectLayout from '@/components/dashboard/project-management/ProjectLayout';
  import { useProject } from '@/context/ProjectContext';
  import Loader from '@/components/shared/Loader';
@@ -53,10 +55,14 @@ import CompletedTasksSection from '@/components/dashboard/project-management/com
      );
  }
 
-  export default function Layout({ children }: { children: React.ReactNode }) {
-      return (
-          <ProjectProvider activeTab="" onTabChange={() => {}}>
-              <ProjectLayoutWrapper>{children}</ProjectLayoutWrapper>
-          </ProjectProvider>
-      );
-  }
+   export default function Layout({ children }: { children: React.ReactNode }) {
+       return (
+           <ProjectProvider activeTab="" onTabChange={() => {}}>
+               <SprintsProvider>
+                   <MilestonesProvider>
+                       <ProjectLayoutWrapper>{children}</ProjectLayoutWrapper>
+                   </MilestonesProvider>
+               </SprintsProvider>
+           </ProjectProvider>
+       );
+   }

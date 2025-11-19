@@ -7,6 +7,7 @@ import type {
   ApproveLeaveRequestData,
   PaginatedResponse
 } from "./types";
+import { apiCall } from "./api-wrapper";
 
 // Leave Requests API
 export const getLeaveRequests = async (
@@ -28,132 +29,55 @@ export const getLeaveRequests = async (
     });
   }
 
-  const response = await fetch(`${API_BASE}/leave/requests/?${searchParams}`, {
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
+  return await apiCall<PaginatedResponse<LeaveRequest>>(`${API_BASE}/leave/requests/?${searchParams}`, {
+    method: "GET",
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch leave requests');
-  }
-
-  return response.json();
 };
 
 export const getLeaveRequest = async (id: string): Promise<LeaveRequest> => {
-  const response = await fetch(`${API_BASE}/leave/requests/${id}/`, {
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
+  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/`, {
+    method: "GET",
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch leave request');
-  }
-
-  return response.json();
 };
 
 export const createLeaveRequest = async (data: CreateLeaveRequestData): Promise<LeaveRequest> => {
-  const response = await fetch(`${API_BASE}/leave/requests/`, {
+  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/`, {
     method: "POST",
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.detail || errorData.error || errorData.non_field_errors?.[0] || 'Failed to create leave request';
-    throw new Error(errorMessage);
-  }
-
-  return response.json();
 };
 
 export const updateLeaveRequest = async (id: string, data: Partial<CreateLeaveRequestData>): Promise<LeaveRequest> => {
-  const response = await fetch(`${API_BASE}/leave/requests/${id}/`, {
+  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/`, {
     method: "PATCH",
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to update leave request');
-  }
-
-  return response.json();
 };
 
 export const deleteLeaveRequest = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_BASE}/leave/requests/${id}/`, {
+  await apiCall<void>(`${API_BASE}/leave/requests/${id}/`, {
     method: "DELETE",
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-    },
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to delete leave request');
-  }
 };
 
 export const approveLeaveRequest = async (id: string, data?: ApproveLeaveRequestData): Promise<LeaveRequest> => {
-  const response = await fetch(`${API_BASE}/leave/requests/${id}/approve/`, {
+  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/approve/`, {
     method: "POST",
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data || {}),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to approve leave request');
-  }
-
-  return response.json();
 };
 
 export const rejectLeaveRequest = async (id: string, data?: ApproveLeaveRequestData): Promise<LeaveRequest> => {
-  const response = await fetch(`${API_BASE}/leave/requests/${id}/reject/`, {
+  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/reject/`, {
     method: "POST",
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
     body: JSON.stringify(data || {}),
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to reject leave request');
-  }
-
-  return response.json();
 };
 
 export const cancelLeaveRequest = async (id: string): Promise<LeaveRequest> => {
-  const response = await fetch(`${API_BASE}/leave/requests/${id}/cancel/`, {
+  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/cancel/`, {
     method: "POST",
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to cancel leave request');
-  }
-
-  return response.json();
 };
 
 // Leave Balances API
@@ -175,33 +99,15 @@ export const getLeaveBalances = async (
     });
   }
 
-  const response = await fetch(`${API_BASE}/leave/balances/?${searchParams}`, {
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
+  return await apiCall<PaginatedResponse<LeaveBalance>>(`${API_BASE}/leave/balances/?${searchParams}`, {
+    method: "GET",
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch leave balances');
-  }
-
-  return response.json();
 };
 
 export const getLeaveBalance = async (id: string): Promise<LeaveBalance> => {
-  const response = await fetch(`${API_BASE}/leave/balances/${id}/`, {
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
+  return await apiCall<LeaveBalance>(`${API_BASE}/leave/balances/${id}/`, {
+    method: "GET",
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch leave balance');
-  }
-
-  return response.json();
 };
 
 // Leave Policies API
@@ -222,31 +128,13 @@ export const getLeavePolicies = async (
     });
   }
 
-  const response = await fetch(`${API_BASE}/leave/policies/?${searchParams}`, {
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
+  return await apiCall<PaginatedResponse<LeavePolicy>>(`${API_BASE}/leave/policies/?${searchParams}`, {
+    method: "GET",
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch leave policies');
-  }
-
-  return response.json();
 };
 
 export const getLeavePolicy = async (id: string): Promise<LeavePolicy> => {
-  const response = await fetch(`${API_BASE}/leave/policies/${id}/`, {
-    headers: {
-      'Authorization': `Token ${localStorage.getItem('access_token')}`,
-      'Content-Type': 'application/json',
-    },
+  return await apiCall<LeavePolicy>(`${API_BASE}/leave/policies/${id}/`, {
+    method: "GET",
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch leave policy');
-  }
-
-  return response.json();
 };

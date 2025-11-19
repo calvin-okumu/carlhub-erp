@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { API_BASE } from "@/api";
+import { STORAGE_KEYS } from "@/constants/storage";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function AuthCallbackPage() {
     const router = useRouter();
@@ -17,8 +18,9 @@ export default function AuthCallbackPage() {
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem("access_token", data.token);
-                    localStorage.setItem("user", JSON.stringify({
+                    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, data.token);
+                    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, data.refresh);
+                    localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify({
                         id: data.user_id,
                         username: data.username,
                     }));

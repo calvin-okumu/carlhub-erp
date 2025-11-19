@@ -2,6 +2,7 @@
 
 import { login } from "@/api";
 import AuthLayout from "@/components/AuthLayout";
+import { STORAGE_KEYS } from "@/constants/storage";
 import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -28,8 +29,9 @@ export default function LoginPage() {
         try {
             const result = await login(data.email, data.password);
 
-            localStorage.setItem("access_token", result.token);
-            localStorage.setItem("user", JSON.stringify({
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, result.access);
+            localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, result.refresh);
+            localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify({
                 id: result.user_id,
                 email: result.email,
                 first_name: result.first_name,

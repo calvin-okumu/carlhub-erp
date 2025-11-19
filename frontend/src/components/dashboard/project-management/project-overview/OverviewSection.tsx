@@ -4,58 +4,35 @@ import MetricsGrid from './MetricsGrid';
 import ProjectTimeline from './ProjectTimeline';
 import ProjectHealth from './ProjectHealth';
 import ProjectInformation from './ProjectInformation';
-import { getSprints, getTasks, getMilestones } from '@/api/project_mgmt';
-import type { Project, Milestone } from '@/api/types';
+import { getTasks } from '@/api/project_mgmt';
+import { useSprintsContext } from '@/context/SprintsContext';
+import { useMilestonesContext } from '@/context/MilestonesContext';
+import { getAccessToken } from '@/utils/auth';
+import type { Project } from '@/api/types';
 
  interface OverviewSectionProps {
      project: Project;
  }
 
 export default function OverviewSection({ project }: OverviewSectionProps) {
-      const [sprintsCount, setSprintsCount] = useState(0);
-      const [tasksCount, setTasksCount] = useState(0);
-      const [milestones, setMilestones] = useState<Milestone[]>([]);
+       const { sprints } = useSprintsContext();
+       const { milestones } = useMilestonesContext();
+       const [tasksCount, setTasksCount] = useState(0);
 
-       useEffect(() => {
-           const fetchSprintsCount = async () => {
-               const token = localStorage.getItem('access_token');
-               if (!token) return;
+        useEffect(() => {
+             const fetchTasksCount = async () => {
+                 const token = getAccessToken();
+                 if (!token) return;
 
-                 try {
-                     const sprints = await getSprints(token, { projectId: project.id });
-                     setSprintsCount(sprints.results.length);
-                 } catch (err) {
-                     console.error('Failed to fetch sprints count:', err);
-                 }
-            };
+                  try {
+                      const tasks = await getTasks(token, { projectId: project.id });
+                      setTasksCount(tasks.results.length);
+                  } catch (err) {
+                      console.error('Failed to fetch tasks count:', err);
+                  }
+             };
 
-            const fetchTasksCount = async () => {
-                const token = localStorage.getItem('access_token');
-                if (!token) return;
-
-                 try {
-                     const tasks = await getTasks(token, { projectId: project.id });
-                     setTasksCount(tasks.results.length);
-                 } catch (err) {
-                     console.error('Failed to fetch tasks count:', err);
-                 }
-            };
-
-            const fetchMilestones = async () => {
-                const token = localStorage.getItem('access_token');
-                if (!token) return;
-
-                 try {
-                     const milestonesData = await getMilestones(token, { projectId: project.id });
-                     setMilestones(milestonesData.results);
-                 } catch (err) {
-                     console.error('Failed to fetch milestones:', err);
-                 }
-            };
-
-            fetchSprintsCount();
-            fetchTasksCount();
-            fetchMilestones();
+             fetchTasksCount();
         }, [project.id]);
 
        // Calculate project progress as average of milestone progress
@@ -67,12 +44,12 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
 
     return (
         <div className="space-y-6">
-             <MetricsGrid
-                 milestonesCount={project.milestones_count}
-                 tasksCount={tasksCount}
-                 sprintsCount={sprintsCount}
-                 teamMembersCount={project.team_members.length}
-             />
+              <MetricsGrid
+                  milestonesCount={project.milestones_count}
+                  tasksCount={tasksCount}
+                  sprintsCount={sprints.length}
+                  teamMembersCount={project.team_members.length}
+              />
             <ProjectProgress progress={calculateProjectProgress()} />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

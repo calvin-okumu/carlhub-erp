@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Project } from "../api/types";
+import { STORAGE_KEYS } from "../constants/storage";
 import {
     getProjects,
     createProject,
@@ -9,7 +10,7 @@ import {
 import { getUserTenants } from "../api/crm";
 
 function getToken(): string | null {
-  return localStorage.getItem("access_token");
+  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 }
 
 export function useProjects() {

@@ -1,8 +1,9 @@
 import { Client, CreateClientData, UpdateClientData, UserTenant } from './types';
 import { API_BASE } from './index';
 import { PaginatedResponse } from './types';
+import { apiCall } from './api-wrapper';
 
-export async function getClients(token: string, params?: { search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[] | PaginatedResponse<Client>> {
+export async function getClients(params?: { search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[] | PaginatedResponse<Client>> {
   const query = new URLSearchParams();
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
@@ -11,19 +12,9 @@ export async function getClients(token: string, params?: { search?: string; orde
   if (params?.limit) query.append('limit', params.limit.toString());
 
   const url = `${API_BASE}/clients/?${query.toString()}`;
-  const response = await fetch(url, {
+  const data = await apiCall<Client[] | PaginatedResponse<Client>>(url, {
     method: "GET",
-    headers: {
-      Authorization: `Token ${token}`,
-      "Content-Type": "application/json",
-    },
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Failed to fetch clients");
-  }
 
   // If pagination params are provided, return paginated response
   if (params?.page || params?.limit) {
@@ -31,77 +22,42 @@ export async function getClients(token: string, params?: { search?: string; orde
   }
 
   // Otherwise, return just the results array
-  return data.results || data;
+  return (data as any).results || data;
 }
 
-export async function createClient(token: string, clientData: CreateClientData): Promise<Client> {
-  const response = await fetch(`${API_BASE}/clients/`, {
+export async function createClient(clientData: CreateClientData): Promise<Client> {
+  const url = `${API_BASE}/clients/`;
+  const data = await apiCall<Client>(url, {
     method: "POST",
-    headers: {
-      Authorization: `Token ${token}`,
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(clientData),
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Failed to create client");
-  }
 
   return data;
 }
 
-export async function updateClient(token: string, clientSlug: string, clientData: UpdateClientData): Promise<Client> {
-  const response = await fetch(`${API_BASE}/clients/${clientSlug}/`, {
+export async function updateClient(clientSlug: string, clientData: UpdateClientData): Promise<Client> {
+  const url = `${API_BASE}/clients/${clientSlug}/`;
+  const data = await apiCall<Client>(url, {
     method: "PUT",
-    headers: {
-      Authorization: `Token ${token}`,
-      "Content-Type": "application/json",
-    },
     body: JSON.stringify(clientData),
   });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Failed to update client");
-  }
 
   return data;
 }
 
-export async function deleteClient(token: string, clientSlug: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/clients/${clientSlug}/`, {
+export async function deleteClient(clientSlug: string): Promise<void> {
+  const url = `${API_BASE}/clients/${clientSlug}/`;
+  await apiCall<void>(url, {
     method: "DELETE",
-    headers: {
-      Authorization: `Token ${token}`,
-      "Content-Type": "application/json",
-    },
   });
-
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.error || "Failed to delete client");
-  }
 }
 
-export async function getUserTenants(token: string): Promise<UserTenant[]> {
-  const response = await fetch(`${API_BASE}/members/`, {
+export async function getUserTenants(): Promise<UserTenant[]> {
+  const url = `${API_BASE}/members/`;
+  const data = await apiCall<UserTenant[]>(url, {
     method: "GET",
-    headers: {
-      Authorization: `Token ${token}`,
-      "Content-Type": "application/json",
-    },
   });
 
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Failed to fetch user tenants");
-  }
-
-  return data.results || data;
+  return (data as any).results || data;
 }
 

@@ -3,6 +3,7 @@
 import { getLeaveRequests } from '@/api/leave';
 import type { LeaveRequest } from '@/api/types';
 import StatCard from '@/components/ui/StatCard';
+import { STORAGE_KEYS } from '@/constants/storage';
 import { Calendar, CheckCircle, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -23,7 +24,7 @@ export const LeaveCards = ({
         const fetchAllRequests = async () => {
             try {
                 // Get current user ID from localStorage
-                const userData = localStorage.getItem('user');
+                const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
                 let employeeId: number | undefined;
 
                 if (userData) {

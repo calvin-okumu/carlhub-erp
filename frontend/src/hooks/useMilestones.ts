@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Milestone } from "../api/types";
+import { STORAGE_KEYS } from "../constants/storage";
 import {
   createMilestone,
   deleteMilestone,
@@ -8,7 +9,7 @@ import {
 } from "../api/project_mgmt";
 
 function getToken(): string | null {
-  return localStorage.getItem("access_token");
+  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 }
 
 export function useMilestones(projectId: number, tenant?: number) {

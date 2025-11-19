@@ -15,6 +15,7 @@ import InviteModal from "./Employees/InviteModal";
 import { useEmployees } from "@/hooks/useEmployees";
 import { getUsers } from "@/api/users";
 import { API_BASE, resendInvitation, deleteInvitation } from "@/api";
+import { getAccessToken } from "@/utils/auth";
 import type { UserTenant, User, UserProfile } from "@/api/types";
 
 export const UserSection = () => {
@@ -68,7 +69,7 @@ export const UserSection = () => {
     const fetchUsers = async () => {
         try {
             setUsersLoading(true);
-            const token = localStorage.getItem("access_token");
+            const token = getAccessToken();
             if (!token) return;
 
             const fetchedUsers = await getUsers(token);
@@ -94,7 +95,7 @@ export const UserSection = () => {
     const fetchInvites = async () => {
         try {
             setInvitesLoading(true);
-            const token = localStorage.getItem("access_token");
+            const token = getAccessToken();
             if (!token) return;
 
             const response = await fetch(`${API_BASE}/invitations/`, {
@@ -216,7 +217,7 @@ export const UserSection = () => {
     const handleDeleteInvite = async (inviteId: number) => {
         if (confirm('Are you sure you want to delete this invitation?')) {
             try {
-                const token = localStorage.getItem("access_token");
+                const token = getAccessToken();
                 const invite = invites.find(i => i.id === inviteId);
                 if (!invite || !token) {
                     alert('Invitation or authentication token not found');

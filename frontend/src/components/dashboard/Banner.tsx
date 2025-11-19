@@ -4,12 +4,13 @@
 // Logo is now used from /logo.png
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { STORAGE_KEYS } from "@/constants/storage";
 
 export default function Banner() {
     const [firstName, setFirstName] = useState("User");
 
     useEffect(() => {
-        const user = localStorage.getItem("user");
+        const user = localStorage.getItem(STORAGE_KEYS.USER_DATA);
         if (user) {
             const parsed = JSON.parse(user);
             const name = parsed.first_name || (parsed.email ? parsed.email.split('@')[0] : "User");

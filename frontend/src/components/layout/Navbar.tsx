@@ -3,6 +3,7 @@
 import { Bell, Building, LogOut, Menu, Search, User, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { STORAGE_KEYS } from "@/constants/storage";
 
 export default function Header() {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -127,9 +128,9 @@ export default function Header() {
                                         <div className="border-t border-gray-100"></div>
                                         <button
                                             onClick={() => {
-                                                localStorage.removeItem("access_token");
-                                                localStorage.removeItem("refresh_token");
-                                                localStorage.removeItem("user");
+                                                localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+                                                localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+                                                localStorage.removeItem(STORAGE_KEYS.USER_DATA);
                                                 setIsProfileMenuOpen(false);
                                                 router.push("/login");
                                             }}

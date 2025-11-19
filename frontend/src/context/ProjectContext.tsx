@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { getProject } from '@/api/project_mgmt';
+import { getAccessToken } from '@/utils/auth';
 import type { Project } from '@/api/types';
 
 interface ProjectContextType {
@@ -24,7 +25,7 @@ export function ProjectProvider({ children, activeTab, onTabChange }: { children
     const [error, setError] = useState<string | null>(null);
 
     const fetchProject = useCallback(async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) {
             setError('No access token');
             setLoading(false);
