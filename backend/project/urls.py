@@ -28,6 +28,7 @@ from .views_utils import (
     backup_database_view,
     excel_export_view,
     excel_import_view,
+    token_refresh_view,
 )
 
 # Register ViewSets with router
@@ -59,4 +60,5 @@ urlpatterns = [
     path("database-backup/", backup_database_view, name="database_backup"),
     path("excel-export/", excel_export_view, name="excel_export"),
     path("excel-import/", excel_import_view, name="excel_import"),
+    path("token-refresh/", token_refresh_view, name="token_refresh"),
 ]
