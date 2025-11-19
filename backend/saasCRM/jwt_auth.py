@@ -52,8 +52,7 @@ class JWTAuthentication(BaseAuthentication):
         except User.DoesNotExist:
             raise AuthenticationFailed("User not found")
 
-    def authenticate_header(self, request):
-        return "Bearer"
+
 
 
 class JWTTokenManager:
@@ -64,12 +63,12 @@ class JWTTokenManager:
     @staticmethod
     def generate_access_token(user):
         """
-        Generate an access token with short expiration
+        Generate an access token with longer expiration
         """
         access_payload = {
             "user_id": user.id,
             "email": user.email,
-            "exp": datetime.utcnow() + timedelta(minutes=60),  # 1 hour
+            "exp": datetime.utcnow() + timedelta(hours=24),  # 24 hours
             "iat": datetime.utcnow(),
             "type": "access",
         }
@@ -96,7 +95,7 @@ class JWTTokenManager:
         return {
             "access": JWTTokenManager.generate_access_token(user),
             "refresh": JWTTokenManager.generate_refresh_token(user),
-            "expires_in": 3600,  # 1 hour in seconds
+            "expires_in": 86400,  # 24 hours in seconds
         }
 
     @staticmethod

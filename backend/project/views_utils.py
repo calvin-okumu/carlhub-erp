@@ -595,7 +595,7 @@ def token_refresh_view(request):
         return Response({
             'access': access_token,
             'token_type': 'Bearer',
-            'expires_in': 3600  # 1 hour
+            'expires_in': 86400  # 24 hours
         }, status=status.HTTP_200_OK)
         
     except AuthenticationFailed as e:
