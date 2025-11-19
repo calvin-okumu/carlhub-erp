@@ -1,22 +1,30 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from accounts.models import Invitation, UserTenant
 
 from .models import LeaveApproval, LeaveBalance, LeavePolicy, LeaveRequest
-from .services import LeaveApproval, LeaveApprovalWorkflowService
+from .services import LeaveApprovalWorkflowService
 
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
     """Serializer for leave requests with comprehensive validation and display fields."""
 
     employee_name = serializers.CharField(
-        source="employee.get_full_name", read_only=True, help_text="Full name of the employee"
+        source="employee.get_full_name",
+        read_only=True,
+        help_text="Full name of the employee",
     )
     tenant_name = serializers.CharField(
-        source="tenant.name", read_only=True, help_text="Name of the tenant organization"
+        source="tenant.name",
+        read_only=True,
+        help_text="Name of the tenant organization",
     )
     approved_by_name = serializers.CharField(
-        source="approved_by.get_full_name", read_only=True, help_text="Name of the approver"
+        source="approved_by.get_full_name",
+        read_only=True,
+        help_text="Name of the approver",
     )
     final_approver_name = serializers.CharField(
         source="final_approver.get_full_name",
@@ -113,7 +121,6 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         """Validate leave request data."""
         start_date = data.get("start_date")
         end_date = data.get("end_date")
-        leave_type = data.get("leave_type")
 
         if start_date and end_date:
             if start_date > end_date:
@@ -139,10 +146,12 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
 
         return data
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_workflow_status(self, obj):
         """Get comprehensive workflow status."""
         return LeaveApprovalWorkflowService.get_workflow_status(obj)
 
+    @extend_schema_field(OpenApiTypes.OBJECT)
     def get_approval_history(self, obj):
         """Get approval history with approver details."""
         history = obj.get_approval_history()
@@ -151,7 +160,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
                 "id": approval.id,
                 "level": approval.approval_level,
                 "level_display": approval.get_approval_level_display(),
-                "approver": approval.approver.get_full_name() if approval.approver else None,
+                "approver": (approval.approver.get_full_name() if approval.approver else None),
                 "status": approval.status,
                 "approved_date": approval.approved_date,
                 "notes": approval.notes,
@@ -160,11 +169,13 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             for approval in history
         ]
 
+    @extend_schema_field(OpenApiTypes.STR)
     def get_current_approver(self, obj):
         """Get current approver in workflow."""
         current_approver = obj.get_current_approver()
         return current_approver.get_full_name() if current_approver else None
 
+    @extend_schema_field(OpenApiTypes.BOOL)
     def get_can_approve(self, obj):
         """Check if current user can approve this request."""
         request = self.context.get("request")
@@ -190,7 +201,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             return user_tenant.is_approved and (
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             )
-        except:
+        except Exception:
             return False
 
     def create(self, validated_data):
@@ -261,16 +272,26 @@ class LeaveBalanceSerializer(serializers.ModelSerializer):
     """Serializer for leave balances with utilization calculations."""
 
     employee_name = serializers.CharField(
-        source="employee.get_full_name", read_only=True, help_text="Full name of the employee"
+        source="employee.get_full_name",
+        read_only=True,
+        help_text="Full name of the employee",
     )
     tenant_name = serializers.CharField(
-        source="tenant.name", read_only=True, help_text="Name of the tenant organization"
+        source="tenant.name",
+        read_only=True,
+        help_text="Name of the tenant organization",
     )
     remaining_days = serializers.DecimalField(
-        max_digits=5, decimal_places=1, read_only=True, help_text="Remaining leave days available"
+        max_digits=5,
+        decimal_places=1,
+        read_only=True,
+        help_text="Remaining leave days available",
     )
     utilization_percentage = serializers.DecimalField(
-        max_digits=5, decimal_places=1, read_only=True, help_text="Leave utilization percentage"
+        max_digits=5,
+        decimal_places=1,
+        read_only=True,
+        help_text="Leave utilization percentage",
     )
 
     class Meta:
@@ -317,7 +338,9 @@ class LeavePolicySerializer(serializers.ModelSerializer):
     """Serializer for leave policies with validation."""
 
     tenant_name = serializers.CharField(
-        source="tenant.name", read_only=True, help_text="Name of the tenant organization"
+        source="tenant.name",
+        read_only=True,
+        help_text="Name of the tenant organization",
     )
 
     class Meta:
@@ -338,7 +361,14 @@ class LeavePolicySerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "slug", "tenant", "tenant_name", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "slug",
+            "tenant",
+            "tenant_name",
+            "created_at",
+            "updated_at",
+        ]
         help_texts = {
             "tenant": "Company/tenant this policy applies to",
             "leave_type": "Type of leave this policy applies to",
@@ -394,7 +424,9 @@ class LeaveApprovalSerializer(serializers.ModelSerializer):
     """Serializer for leave approval records with workflow information."""
 
     approver_name = serializers.CharField(
-        source="approver.get_full_name", read_only=True, help_text="Name of the approver"
+        source="approver.get_full_name",
+        read_only=True,
+        help_text="Name of the approver",
     )
     level_display = serializers.CharField(
         source="get_approval_level_display",
@@ -442,7 +474,8 @@ class LeaveApprovalActionSerializer(serializers.Serializer):
     """Serializer for leave approval actions."""
 
     action = serializers.ChoiceField(
-        choices=["approve", "reject"], help_text="Action to perform on the leave request"
+        choices=["approve", "reject"],
+        help_text="Action to perform on the leave request",
     )
     notes = serializers.CharField(
         required=False,

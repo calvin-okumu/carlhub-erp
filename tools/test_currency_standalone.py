@@ -2,12 +2,14 @@
 """
 Standalone test for currency functionality without Django dependencies
 """
-import sys
+
 import os
+import sys
 from decimal import Decimal
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'backend'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
+
 
 def test_currency_constants():
     """Test currency constants and basic functionality"""
@@ -18,18 +20,26 @@ def test_currency_constants():
         print("✅ Currency constants imported successfully")
 
         # Test currency choices
-        assert len(CURRENCY_CHOICES) == 12, f"Expected 12 currencies, got {len(CURRENCY_CHOICES)}"
+        assert (
+            len(CURRENCY_CHOICES) == 12
+        ), f"Expected 12 currencies, got {len(CURRENCY_CHOICES)}"
         print(f"✅ Currency choices: {len(CURRENCY_CHOICES)} currencies loaded")
 
         # Test currency symbols
-        assert len(CURRENCY_SYMBOLS) == 12, f"Expected 12 symbols, got {len(CURRENCY_SYMBOLS)}"
+        assert (
+            len(CURRENCY_SYMBOLS) == 12
+        ), f"Expected 12 symbols, got {len(CURRENCY_SYMBOLS)}"
         print(f"✅ Currency symbols: {len(CURRENCY_SYMBOLS)} symbols loaded")
 
         # Test specific currencies
-        assert ('USD', 'US Dollar ($)') in CURRENCY_CHOICES, "USD not found in choices"
-        assert ('EUR', 'Euro (€)') in CURRENCY_CHOICES, "EUR not found in choices"
-        assert CURRENCY_SYMBOLS['USD'] == '$', f"USD symbol should be $, got {CURRENCY_SYMBOLS['USD']}"
-        assert CURRENCY_SYMBOLS['EUR'] == '€', f"EUR symbol should be €, got {CURRENCY_SYMBOLS['EUR']}"
+        assert ("USD", "US Dollar ($)") in CURRENCY_CHOICES, "USD not found in choices"
+        assert ("EUR", "Euro (€)") in CURRENCY_CHOICES, "EUR not found in choices"
+        assert (
+            CURRENCY_SYMBOLS["USD"] == "$"
+        ), f"USD symbol should be $, got {CURRENCY_SYMBOLS['USD']}"
+        assert (
+            CURRENCY_SYMBOLS["EUR"] == "€"
+        ), f"EUR symbol should be €, got {CURRENCY_SYMBOLS['EUR']}"
         print("✅ Currency data validation passed")
 
         return True
@@ -38,6 +48,7 @@ def test_currency_constants():
         print(f"❌ Currency constants test failed: {e}")
         return False
 
+
 def test_tenant_default_function():
     """Test the get_tenant_default_currency function"""
     try:
@@ -45,16 +56,16 @@ def test_tenant_default_function():
 
         # Test with None tenant
         default = get_tenant_default_currency(None)
-        assert default == 'USD', f"Expected USD for None tenant, got {default}"
+        assert default == "USD", f"Expected USD for None tenant, got {default}"
         print("✅ Default currency for None tenant: USD")
 
         # Test with mock tenant
         class MockTenant:
-            default_currency = 'EUR'
+            default_currency = "EUR"
 
         tenant = MockTenant()
         default = get_tenant_default_currency(tenant)
-        assert default == 'EUR', f"Expected EUR for tenant, got {default}"
+        assert default == "EUR", f"Expected EUR for tenant, got {default}"
         print("✅ Default currency for tenant: EUR")
 
         return True
@@ -62,6 +73,7 @@ def test_tenant_default_function():
     except Exception as e:
         print(f"❌ Tenant default function test failed: {e}")
         return False
+
 
 def test_currency_converter_static_methods():
     """Test CurrencyConverter static methods that don't require network or Django"""
@@ -76,7 +88,7 @@ def test_currency_converter_static_methods():
                 amount = Decimal(str(amount))
 
             # Format based on currency
-            if currency_code in ['JPY', 'KRW']:
+            if currency_code in ["JPY", "KRW"]:
                 formatted_amount = f"{amount.quantize(Decimal('1')):,}"
             else:
                 formatted_amount = f"{amount.quantize(Decimal('0.01')):,}"
@@ -85,19 +97,21 @@ def test_currency_converter_static_methods():
             return f"{symbol}{formatted_amount}"
 
         # Test format_currency
-        amount = Decimal('1234.56')
-        formatted = format_currency(amount, 'USD')
-        assert formatted == '$1,234.56', f"Expected '$1,234.56', got '{formatted}'"
+        amount = Decimal("1234.56")
+        formatted = format_currency(amount, "USD")
+        assert formatted == "$1,234.56", f"Expected '$1,234.56', got '{formatted}'"
         print(f"✅ Currency formatting USD: {formatted}")
 
         # Test format_currency with EUR
-        formatted_eur = format_currency(amount, 'EUR')
-        assert formatted_eur == '€1,234.56', f"Expected '€1,234.56', got '{formatted_eur}'"
+        formatted_eur = format_currency(amount, "EUR")
+        assert (
+            formatted_eur == "€1,234.56"
+        ), f"Expected '€1,234.56', got '{formatted_eur}'"
         print(f"✅ Currency formatting EUR: {formatted_eur}")
 
         # Test format_currency with JPY (no decimals)
-        formatted_jpy = format_currency(Decimal('1234'), 'JPY')
-        assert formatted_jpy == '¥1,234', f"Expected '¥1,234', got '{formatted_jpy}'"
+        formatted_jpy = format_currency(Decimal("1234"), "JPY")
+        assert formatted_jpy == "¥1,234", f"Expected '¥1,234', got '{formatted_jpy}'"
         print(f"✅ Currency formatting JPY: {formatted_jpy}")
 
         # Test get_supported_currencies logic
@@ -109,8 +123,8 @@ def test_currency_converter_static_methods():
         def is_valid_currency(currency_code):
             return currency_code in [code for code, name in CURRENCY_CHOICES]
 
-        assert is_valid_currency('USD') == True, "USD should be valid"
-        assert is_valid_currency('INVALID') == False, "INVALID should not be valid"
+        assert is_valid_currency("USD") == True, "USD should be valid"
+        assert is_valid_currency("INVALID") == False, "INVALID should not be valid"
         print("✅ Currency validation working")
 
         return True
@@ -118,8 +132,10 @@ def test_currency_converter_static_methods():
     except Exception as e:
         print(f"❌ CurrencyConverter static methods test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """Run all tests"""
@@ -149,5 +165,6 @@ def main():
         print("❌ Some tests failed")
         return 1
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

@@ -301,7 +301,8 @@ Employees submit leave requests specifying:
 List leave requests with filtering and search.
 
 **Query Parameters:**
-- `status` - Filter by status (pending, approved, rejected, cancelled)
+- `status` - Filter by status (pending_department_manager, pending_hr_manager, pending_general_manager, approved, rejected, cancelled, taken)
+- `status__in` - Filter by multiple statuses (e.g., pending_department_manager,pending_hr_manager)
 - `leave_type` - Filter by leave type (annual_leave, sick_leave, etc.)
 - `employee` - Filter by employee UUID
 - `approved_by` - Filter by approver UUID
@@ -339,7 +340,34 @@ List leave requests with filtering and search.
       "updated_at": "2024-01-10T09:00:00Z"
     }
   ]
+
 }
+```
+
+#### Get Pending Approvals for Managers
+**GET** `/api/leave/requests/?status__in=pending_department_manager,pending_hr_manager,pending_general_manager`
+
+Managers can retrieve leave requests pending their approval using status filters. The response includes a `can_approve` field indicating which requests the current user has authority to approve.
+
+**Query Parameters for Pending Approvals:**
+- `status=pending_department_manager` - Requests pending department manager approval
+- `status=pending_hr_manager` - Requests pending HR manager approval
+- `status=pending_general_manager` - Requests pending general manager approval
+- `status__in=pending_department_manager,pending_hr_manager,pending_general_manager` - All pending requests
+
+**Role-Based Access:**
+- **Department Managers**: Can approve requests from employees in their department
+- **HR Managers**: Can approve department-level and HR-level requests
+- **General Managers/Tenant Owners**: Can approve requests at all levels
+
+**Response includes:**
+- `can_approve`: Boolean indicating if current user can approve this request
+- `current_approver`: Name of the designated approver
+- `workflow_status`: Detailed approval workflow information
+
+**Example - Get all pending approvals:**
+```
+GET /api/leave/requests/?status__in=pending_department_manager,pending_hr_manager,pending_general_manager
 ```
 
 #### Create Leave Request
@@ -380,22 +408,22 @@ Create a new leave request.
 ```
 
 #### Get Leave Request
-**GET** `/api/leave/requests/{id}/`
+**GET** `/api/leave/requests/{slug}/`
 
 Get detailed leave request information.
 
 #### Update Leave Request
-**PUT/PATCH** `/api/leave/requests/{id}/`
+**PUT/PATCH** `/api/leave/requests/{slug}/`
 
 Update leave request (only by employee, only if pending).
 
 #### Delete Leave Request
-**DELETE** `/api/leave/requests/{id}/`
+**DELETE** `/api/leave/requests/{slug}/`
 
 Delete leave request (only by employee, only if pending).
 
 #### Approve Leave Request
-**POST** `/api/leave/requests/{id}/approve/`
+**POST** `/api/leave/requests/{slug}/approve/`
 
 Approve a leave request (managers only).
 
@@ -418,7 +446,7 @@ Approve a leave request (managers only).
 ```
 
 #### Reject Leave Request
-**POST** `/api/leave/requests/{id}/reject/`
+**POST** `/api/leave/requests/{slug}/reject/`
 
 Reject a leave request (managers only).
 
@@ -430,9 +458,73 @@ Reject a leave request (managers only).
 ```
 
 #### Cancel Leave Request
-**POST** `/api/leave/requests/{id}/cancel/`
+**POST** `/api/leave/requests/{slug}/cancel/`
 
 Cancel a leave request (only by the employee who created it).
+
+#### Approve at Current Level
+**POST** `/api/leave/requests/{slug}/approve_level/`
+
+Approve a leave request at the current workflow level (managers only).
+
+**Request:**
+```json
+{
+  "notes": "Approved for vacation"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Approved at department_manager level. Now pending hr_manager approval.",
+  "data": {...},
+  "next_level": "hr_manager"
+}
+```
+
+#### Reject at Current Level
+**POST** `/api/leave/requests/{slug}/reject_level/`
+
+Reject a leave request at the current workflow level (managers only).
+
+**Request:**
+```json
+{
+  "notes": "Insufficient notice period"
+}
+```
+
+#### Get Workflow Status
+**GET** `/api/leave/requests/{slug}/workflow_status/`
+
+Get detailed workflow status and approval history for a leave request.
+
+**Response:**
+```json
+{
+  "workflow_status": {
+    "current_status": "Pending Department Manager Approval",
+    "current_level": "department_manager",
+    "is_pending": true,
+    "is_approved": false,
+    "is_rejected": false,
+    "steps": [
+      {
+        "level": "department_manager",
+        "level_display": "Department Manager",
+        "approver": "John Manager",
+        "status": "pending",
+        "approved_date": null,
+        "notes": "",
+        "order": 1
+      }
+    ],
+    "next_approver": "John Manager"
+  },
+  "approval_history": [...]
+}
+```
 
 ### Leave Balances
 
@@ -476,12 +568,12 @@ List leave balances for employees.
 ```
 
 #### Get Leave Balance
-**GET** `/api/leave/balances/{id}/`
+**GET** `/api/leave/balances/{slug}/`
 
 Get specific leave balance details.
 
 #### Update Leave Balance
-**PUT/PATCH** `/api/leave/balances/{id}/`
+**PUT/PATCH** `/api/leave/balances/{slug}/`
 
 Update leave balance (HR/admin only).
 
@@ -520,7 +612,7 @@ List leave policies for the tenant.
 ```
 
 #### Get Leave Policy
-**GET** `/api/leave/policies/{id}/`
+**GET** `/api/leave/policies/{slug}/`
 
 Get specific leave policy details.
 
@@ -540,12 +632,12 @@ Create new leave policy (admin only).
 ```
 
 #### Update Leave Policy
-**PUT/PATCH** `/api/leave/policies/{id}/`
+**PUT/PATCH** `/api/leave/policies/{slug}/`
 
 Update leave policy (admin only).
 
 #### Delete Leave Policy
-**DELETE** `/api/leave/policies/{id}/`
+**DELETE** `/api/leave/policies/{slug}/`
 
 Delete leave policy (admin only).
 
@@ -578,4 +670,3 @@ Generate HR reports on leave usage and compliance.
 - `--tenant` - Specific tenant slug
 - `--output` - Output file path
 - `--summary` - Summary report only
-
