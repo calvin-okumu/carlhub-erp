@@ -5,6 +5,7 @@ import type { Client } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import StatCard from '@/components/ui/StatCard';
+import { getAccessToken } from '@/utils/auth';
 import { UserCheck, UserPlus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -20,7 +21,7 @@ export default function ClientHeader({ onAddClient, searchValue, onSearchChange 
 
     useEffect(() => {
         const fetchAllClients = async () => {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             if (!token) return;
 
             try {

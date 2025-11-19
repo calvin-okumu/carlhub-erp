@@ -1,6 +1,7 @@
 import { User } from "@/api/types";
 import { createUser, deleteUser, getUsers, updateUser } from "@/api/users";
 import { useEffect, useState } from "react";
+import { STORAGE_KEYS } from "@/constants/storage";
 
 interface Employee extends User {
   role: string;
@@ -18,7 +19,7 @@ export function useEmployees() {
       setLoading(true);
       // Note: This uses getUsers which fetches from /api/members/
       // We'll need to filter for employees or create a separate API call
-      const users = await getUsers(localStorage.getItem("access_token") || "");
+      const users = await getUsers(localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || "");
       // Filter for employees - this is a temporary solution
       // Ideally we'd have a dedicated employee endpoint
       const employeeUsers = users.filter(
@@ -38,7 +39,7 @@ export function useEmployees() {
 
   const createEmployee = async (employeeData: Partial<Employee>) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
       if (!token) throw new Error("No access token");
 
       // First create the user
@@ -59,7 +60,7 @@ export function useEmployees() {
     employeeData: Partial<Employee>,
   ) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
       if (!token) throw new Error("No access token");
 
       await updateUser(token, id, employeeData);
@@ -71,7 +72,7 @@ export function useEmployees() {
 
   const deleteEmployee = async (id: number) => {
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
       if (!token) throw new Error("No access token");
 
       await deleteUser(token, id);

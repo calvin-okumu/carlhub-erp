@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Eye, EyeOff, Check, X } from 'lucide-react';
 import { changePassword } from '@/api/auth';
+import { getAccessToken } from '@/utils/auth';
 
 interface PasswordForm {
     current: string;
@@ -34,7 +35,7 @@ export default function PasswordChangeCard() {
         }
 
         try {
-            const token = localStorage.getItem("access_token");
+            const token = getAccessToken();
             if (!token) {
                 throw new Error("No access token found. Please log in.");
             }

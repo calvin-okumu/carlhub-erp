@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Sprint } from "../api/types";
+import { STORAGE_KEYS } from "../constants/storage";
 import {
   createSprint,
   deleteSprint,
@@ -9,7 +10,7 @@ import {
 } from "../api/project_mgmt";
 
 function getToken(): string | null {
-  return localStorage.getItem("access_token");
+  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 }
 
 export function useSprints(projectId: number) {

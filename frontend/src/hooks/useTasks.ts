@@ -7,9 +7,7 @@ import {
   updateTask,
 } from "../api/project_mgmt";
 
-function getToken(): string | null {
-  return localStorage.getItem("access_token");
-}
+
 
 export function useTasks(projectId: string, backlog: boolean = false) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -17,12 +15,9 @@ export function useTasks(projectId: string, backlog: boolean = false) {
   const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
-
     setLoading(true);
     try {
-      const data = await getTasks(token, { projectId, backlog, ordering: '-created_at' });
+      const data = await getTasks({ projectId, backlog, ordering: '-created_at' });
       setTasks(data.results);
     } catch (err) {
       console.error(err);
@@ -47,9 +42,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
      end_date?: string;
      estimated_hours?: number;
    }) => {
-     const taskData = { ...data, project: projectId };
-    const token = getToken();
-    if (!token) return;
+const taskData = { ...data, project: projectId };
 
     // Temporary task for optimistic update
     const tempTask: Task = {
@@ -76,7 +69,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
 
      setLoading(true);
       try {
-        const newTask = await createTask(token, projectId, taskData);
+        const newTask = await createTask(projectId, taskData);
        console.log("Created task:", newTask);
       setTasks((prev) => prev.map((t) => (t.id === tempTask.id ? newTask : t)));
     } catch (err) {
@@ -101,7 +94,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
       estimated_hours: number;
     }>,
   ) => {
-    const token = getToken();
+    
     if (!token) return;
 
     const originalTask = tasks.find((t) => t.id === id);
@@ -124,8 +117,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
   };
 
    const removeTask = async (id: string) => {
-     const token = getToken();
-     if (!token) return;
+     
 
      const taskToRemove = tasks.find((t) => t.id === id);
      if (!taskToRemove) return;

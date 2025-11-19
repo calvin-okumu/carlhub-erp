@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import Card from '@/components/ui/Card';
 import { useProject } from '@/context/ProjectContext';
+import { getAccessToken } from '@/utils/auth';
 import { Trash2 } from 'lucide-react';
 
 export default function CompletedTasksSection() {
@@ -18,7 +19,7 @@ export default function CompletedTasksSection() {
 
     useEffect(() => {
         const fetchCompletedTasks = async () => {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             if (!token) {
                 setError('No access token found');
                 setLoading(false);
@@ -46,7 +47,7 @@ export default function CompletedTasksSection() {
     const handleDeleteTask = async (taskSlug: string) => {
         if (!confirm('Are you sure you want to delete this completed task?')) return;
 
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         try {

@@ -147,7 +147,7 @@ export async function deleteInvitation(
   const response = await fetch(`${API_BASE}/invitations/${invitationSlug}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -166,7 +166,7 @@ export async function changePassword(
   const response = await fetch(`${API_BASE}/change-password/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -183,4 +183,3 @@ export async function changePassword(
 
   return data;
 }
-

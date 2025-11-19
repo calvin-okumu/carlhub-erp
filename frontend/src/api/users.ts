@@ -1,5 +1,7 @@
 import { User, UserTenant, UserProfile } from './types';
 import { API_BASE } from './index';
+import { apiCall } from './api-wrapper';
+import { STORAGE_KEYS } from '../constants/storage';
 
 // Type for API response that might contain nested arrays
 interface ApiResponse {
@@ -11,27 +13,21 @@ interface ApiResponse {
   [key: string]: unknown; // For any other properties
 }
 
-export async function getUsers(token: string): Promise<User[]> {
+export async function getUsers(): Promise<User[]> {
   const url = `${API_BASE}/members/`;
   const response = await fetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
   });
 
-  let data: unknown;
-  try {
-    data = await response.json();
-  } catch {
-    throw new Error(`Members endpoint not available at ${url}: ${response.status} ${response.statusText}`);
-  }
-
   if (!response.ok) {
-    const errorData = data as {error?: string};
+    const errorData = await response.json() as {error?: string};
     throw new Error(errorData.error || `Failed to fetch members from ${url}: ${response.status} ${response.statusText}`);
   }
+
+  const data = await response.json();
 
   // Handle different response formats
   let usersArray: UserTenant[] | undefined;
@@ -67,9 +63,9 @@ export async function getUsers(token: string): Promise<User[]> {
   }));
 }
 
-export async function getUser(token: string, id: number): Promise<User> {
+export async function getUser(id: number): Promise<User> {
    // Since backend doesn't have /users/{id}, fetch all members and find the one
-   const users = await getUsers(token);
+   const users = await getUsers();
    const user = users.find(u => u.id === id);
    if (!user) {
      throw new Error(`User with id ${id} not found`);
@@ -77,31 +73,27 @@ export async function getUser(token: string, id: number): Promise<User> {
    return user;
 }
 
-export async function getCurrentUser(token: string): Promise<User> {
+export async function getCurrentUser(): Promise<User> {
     // Get user ID from localStorage or assume it's stored there
-    const userStr = localStorage.getItem("user");
+    const userStr = localStorage.getItem(STORAGE_KEYS.USER_DATA);
     if (!userStr) {
       throw new Error("No user found in localStorage");
     }
     const user = JSON.parse(userStr);
-    return getUser(token, user.id);
+    return getUser(user.id);
 }
 
-export async function getUserProfile(token: string, id: number): Promise<UserProfile> {
+export async function getUserProfile( id: number): Promise<UserProfile> {
   const url = `${API_BASE}/accounts/profile/`;
-  const response = await fetch(url, {
+  return await apiCall(url, {
     method: "GET",
-    headers: {
-      Authorization: `Token ${token}`,
-      "Content-Type": "application/json",
-    },
   });
 
   if (!response.ok) {
     throw new Error('Failed to fetch profile');
   }
 
-  const data = await response.json();
+  
   // Transform backend data to match UserProfile type
   return {
     id: data.id,
@@ -143,12 +135,12 @@ export async function getUserProfile(token: string, id: number): Promise<UserPro
   };
 }
 
-export async function updateUserProfile(token: string, id: number, profileData: Partial<UserProfile>): Promise<UserProfile> {
+export async function updateUserProfile( id: number, profileData: Partial<UserProfile>): Promise<UserProfile> {
   const url = `${API_BASE}/accounts/profile/`;
-  const response = await fetch(url, {
+  return await apiCall(url, {
     method: "PATCH",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(profileData),
@@ -158,12 +150,12 @@ export async function updateUserProfile(token: string, id: number, profileData: 
     throw new Error('Failed to update profile');
   }
 
-  const data = await response.json();
+  
   // Return the updated profile
   return await getUserProfile(token, id);
 }
 
-export async function createUser(token: string, userData: {
+export async function createUser( userData: {
   first_name: string;
   last_name: string;
   email: string;
@@ -199,7 +191,7 @@ export async function createUser(token: string, userData: {
    const userResponse = await fetch(createUserUrl, {
      method: "POST",
      headers: {
-       Authorization: `Token ${token}`,
+       Authorization: `Bearer ${token}`,
        "Content-Type": "application/json",
      },
      body: JSON.stringify({
@@ -267,7 +259,7 @@ export async function createUser(token: string, userData: {
   };
 }
 
-export async function updateUser(token: string, id: number, userData: Partial<{
+export async function updateUser( id: number, userData: Partial<{
   first_name: string;
   last_name: string;
   email: string;
@@ -320,7 +312,7 @@ export async function updateUser(token: string, id: number, userData: Partial<{
     const userResponse = await fetch(userUrl, {
       method: "PATCH",
       headers: {
-        Authorization: `Token ${token}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(userUpdateData),
@@ -369,17 +361,17 @@ export async function updateUser(token: string, id: number, userData: Partial<{
   return await getUser(token, id);
 }
 
-export async function createMember(token: string, memberData: {
+export async function createMember( memberData: {
   email: string;
   password: string;
   first_name: string;
   last_name: string;
 }): Promise<User> {
   const url = `${API_BASE}/members/`;
-  const response = await fetch(url, {
+  return await apiCall(url, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(memberData),
@@ -390,7 +382,7 @@ export async function createMember(token: string, memberData: {
     throw new Error(errorData.error || `Failed to create member: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
+  
 
   // Return the created member as User
   return {
@@ -405,12 +397,12 @@ export async function createMember(token: string, memberData: {
   };
 }
 
-export async function deleteUser(token: string, id: number): Promise<void> {
+export async function deleteUser( id: number): Promise<void> {
   const url = `${API_BASE}/users/${id}/`;
-  const response = await fetch(url, {
+  return await apiCall(url, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 

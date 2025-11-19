@@ -4,6 +4,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { createMember, updateUser, getCurrentUser } from '@/api/users';
+import { getAccessToken } from '@/utils/auth';
 import type { UserProfile } from '@/api/types';
 
 interface EmployeeModalProps {
@@ -30,7 +31,7 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
     useEffect(() => {
         const fetchCurrentUserOrg = async () => {
             try {
-                const token = localStorage.getItem('access_token');
+                const token = getAccessToken();
                 if (token) {
                     const currentUser = await getCurrentUser(token);
                     setCurrentUserOrg(currentUser.organization || '');
@@ -79,7 +80,7 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
                 return;
             }
 
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             if (!token) {
                 alert('No access token found. Please log in again.');
                 return;

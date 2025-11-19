@@ -1,49 +1,45 @@
 "use client";
 
 import { getUserTenants } from '@/api/crm';
-import { getMilestones, getSprints } from '@/api/project_mgmt';
-import type { Milestone, Sprint, Task, UserTenant } from '@/api/types';
+import type { Task, UserTenant } from '@/api/types';
 import CreateTaskModal from '@/components/shared/CreateTaskModal';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
 import { useProject } from '@/context/ProjectContext';
+import { useSprintsContext } from '@/context/SprintsContext';
+import { useMilestonesContext } from '@/context/MilestonesContext';
 import { useTasks } from '@/hooks/useTasks';
+import { getAccessToken } from '@/utils/auth';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import BacklogTable from './BacklogTable';
 
 export default function BacklogSection() {
     const { project } = useProject();
+    const { sprints } = useSprintsContext();
+    const { milestones } = useMilestonesContext();
     const { tasks, loading, error, addTask, editTask, removeTask } = useTasks(project?.id || '', true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchValue, setSearchValue] = useState('');
-    const [milestones, setMilestones] = useState<Milestone[]>([]);
-    const [sprints, setSprints] = useState<Sprint[]>([]);
     const [users, setUsers] = useState<UserTenant[]>([]);
 
     useEffect(() => {
-        const fetchData = async () => {
-            const token = localStorage.getItem('access_token');
+        const fetchUsers = async () => {
+            const token = getAccessToken();
             if (!token) return;
 
             try {
-                const [milestonesData, sprintsData, usersData] = await Promise.all([
-                    getMilestones(token, { projectId: project?.id }),
-                    getSprints(token, { projectId: project?.id }),
-                    getUserTenants(token)
-                ]);
-                setMilestones(milestonesData.results);
-                setSprints(sprintsData.results);
+                const usersData = await getUserTenants(token);
                 setUsers(usersData);
             } catch (err) {
-                console.error('Failed to fetch data:', err);
+                console.error('Failed to fetch users:', err);
             }
         };
 
-        fetchData();
-    }, [project?.id]);
+        fetchUsers();
+    }, []);
 
     const handleAddTask = () => {
         setModalMode('add');

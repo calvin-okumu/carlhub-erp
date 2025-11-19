@@ -4,6 +4,7 @@ import { LeaveSort } from './LeaveSort';
 import { RequestHeader } from './RequestHeader';
 import LeaveRequestTable from './LeaveRequestTable';
 import { getLeaveRequests, getLeaveRequest, cancelLeaveRequest, deleteLeaveRequest } from '../../../../api/leave';
+import { STORAGE_KEYS } from '../../../../constants/storage';
 import type { LeaveRequest, PaginatedResponse } from '../../../../api/types';
 import type { LeaveType, SortOption } from './LeaveSort';
 
@@ -25,7 +26,7 @@ export const RequestSection = () => {
             setError(null);
 
             // Get current user ID from localStorage
-            const userData = localStorage.getItem('user');
+            const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
             let employeeId: number | undefined;
 
             if (userData) {

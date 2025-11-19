@@ -1,11 +1,14 @@
 "use client";
 
 import { getUserTenants } from '@/api/crm';
-import { assignTaskToSprint, createTask, deleteTask, getSprint, getSprints, getTasks, updateTask, getMilestones } from '@/api/project_mgmt';
-import type { Sprint, Task, UserTenant, Milestone } from '@/api/types';
+import { assignTaskToSprint, createTask, deleteTask, getSprint, getTasks, updateTask } from '@/api/project_mgmt';
+import type { Sprint, Task, UserTenant } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import { useProject } from '@/context/ProjectContext';
+import { useSprintsContext } from '@/context/SprintsContext';
+import { useMilestonesContext } from '@/context/MilestonesContext';
+import { getAccessToken } from '@/utils/auth';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -22,6 +25,8 @@ interface KanbanSectionProps {
 export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps) {
     const router = useRouter();
     const { project } = useProject();
+    const { sprints } = useSprintsContext();
+    const { milestones } = useMilestonesContext();
     const [sprint, setSprint] = useState<Sprint | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
@@ -34,13 +39,11 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     const [addModalOpen, setAddModalOpen] = useState(false);
     const [backlogTasks, setBacklogTasks] = useState<Task[]>([]);
     const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-    const [sprints, setSprints] = useState<Sprint[]>([]);
-    const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [users, setUsers] = useState<UserTenant[]>([]);
     const [addError, setAddError] = useState<string | null>(null);
 
     const fetchData = useCallback(async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         console.log('Token:', token ? 'present' : 'missing');
         console.log('KanbanSection fetchData called with projectId:', project?.id, 'sprintSlug:', sprintSlug);
         if (!token) {
@@ -76,14 +79,30 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     }, [sprintSlug, router, project?.id]);
 
     useEffect(() => {
-        if (sprintSlug) {
-            fetchData();
-        }
+        const fetchModalData = async () => {
+            const token = getAccessToken();
+            if (!token) return;
+            try {
+                const [usersData, backlogData] = await Promise.all([
+                    getUserTenants(token),
+                    getTasks(token, { projectId: project?.id, backlog: true }) // backlog=true
+                ]);
+                setUsers(usersData);
+                // Filter out tasks that are already in this sprint (safety check)
+                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
+                setBacklogTasks(filteredBacklog);
+            } catch (error) {
+                console.error('Error fetching modal data:', error);
+                setAddError(error instanceof Error ? error.message : 'Failed to fetch data');
+            }
+        };
+
+        fetchModalData();
     }, [sprintSlug, fetchData]);
 
     useEffect(() => {
         const fetchModalData = async () => {
-            const token = localStorage.getItem('access_token');
+            const token = getAccessToken();
             if (!token) return;
             try {
                 const [sprintsData, milestonesData, usersData, backlogData] = await Promise.all([
@@ -126,7 +145,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     // Sprint progress calculated on frontend as average of task progress (inheriting backend averaging pattern)
 
     const handleStatusChange = async (taskSlug: string, newStatus: string) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         try {
@@ -171,7 +190,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     };
 
     const handleDeleteTask = async (taskSlug: string) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         if (!confirm('Are you sure you want to delete this task?')) return;
@@ -207,7 +226,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     };
 
     const handleAddSelectedTasks = async () => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         setAddError(null);
@@ -237,7 +256,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
         end_date?: string;
         estimated_hours?: number;
     }) => {
-        const token = localStorage.getItem('access_token');
+        const token = getAccessToken();
         if (!token) return;
 
         try {

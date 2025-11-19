@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from "react";
 import { getUserProfile, updateUserProfile } from '@/api/users';
 import { User, UserProfile } from '@/api/types';
+import { STORAGE_KEYS } from '@/constants/storage';
 
 export function useProfile() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -10,8 +11,8 @@ export function useProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("access_token");
-        const userStr = localStorage.getItem("user");
+        const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const userStr = localStorage.getItem(STORAGE_KEYS.USER_DATA);
         if (!token) {
           throw new Error("No access token found. Please log in.");
         }
@@ -35,8 +36,8 @@ export function useProfile() {
   const updateProfile = async (profileData: Partial<UserProfile>) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("access_token");
-      const userStr = localStorage.getItem("user");
+      const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+      const userStr = localStorage.getItem(STORAGE_KEYS.USER_DATA);
       if (!token || !userStr) {
         throw new Error("No access token or user data found");
       }
