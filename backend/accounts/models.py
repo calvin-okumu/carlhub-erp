@@ -7,6 +7,8 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from saasCRM.currency import CURRENCY_CHOICES
+
 
 class SoftDeleteManager(models.Manager):
     """
@@ -157,21 +159,7 @@ class Tenant(models.Model):
     default_currency = models.CharField(
         max_length=3,
         default="USD",
-        choices=[
-            ("USD", "US Dollar"),
-            ("EUR", "Euro"),
-            ("GBP", "British Pound"),
-            ("JPY", "Japanese Yen"),
-            ("CAD", "Canadian Dollar"),
-            ("AUD", "Australian Dollar"),
-            ("CHF", "Swiss Franc"),
-            ("CNY", "Chinese Yuan"),
-            ("INR", "Indian Rupee"),
-            ("BRL", "Brazilian Real"),
-            ("ZAR", "South African Rand"),
-            ("KES", "Kenyan Shilling"),
-        ],
-        help_text="Default currency for invoices and payments",
+        choices=CURRENCY_CHOICES,
     )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -396,9 +384,21 @@ class EmployeeDocument(models.Model):
     # Security constraints
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
     ALLOWED_FILE_TYPES = [
-        'pdf', 'doc', 'docx', 'txt', 'rtf', 'odt',  # Documents
-        'jpg', 'jpeg', 'png', 'gif', 'bmp',  # Images
-        'xls', 'xlsx', 'csv', 'ods'  # Spreadsheets
+        "pdf",
+        "doc",
+        "docx",
+        "txt",
+        "rtf",
+        "odt",  # Documents
+        "jpg",
+        "jpeg",
+        "png",
+        "gif",
+        "bmp",  # Images
+        "xls",
+        "xlsx",
+        "csv",
+        "ods",  # Spreadsheets
     ]
 
     class Meta:
@@ -409,20 +409,24 @@ class EmployeeDocument(models.Model):
 
     def clean(self):
         """Validate file security constraints"""
-        if self.document_file and hasattr(self.document_file, 'size'):
+        if self.document_file and hasattr(self.document_file, "size"):
             # Check file size
             if self.document_file.size > self.MAX_FILE_SIZE:
-                raise ValidationError(f'File size cannot exceed {self.MAX_FILE_SIZE // (1024*1024)}MB')
+                raise ValidationError(
+                    f"File size cannot exceed {self.MAX_FILE_SIZE // (1024*1024)}MB"
+                )
 
             # Check file type
             if self.document_file.name:
-                file_extension = self.document_file.name.split('.')[-1].lower()
+                file_extension = self.document_file.name.split(".")[-1].lower()
                 if file_extension not in self.ALLOWED_FILE_TYPES:
-                    raise ValidationError(f'File type {file_extension} is not allowed. Allowed types: {", ".join(self.ALLOWED_FILE_TYPES)}')
+                    raise ValidationError(
+                        f'File type {file_extension} is not allowed. Allowed types: {", ".join(self.ALLOWED_FILE_TYPES)}'
+                    )
 
     def save(self, *args, **kwargs):
         self.clean()
-        if self.document_file and hasattr(self.document_file, 'size'):
+        if self.document_file and hasattr(self.document_file, "size"):
             self.file_size = self.document_file.size
             self.file_type = self.document_file.name.split(".")[-1].lower()
         super().save(*args, **kwargs)
