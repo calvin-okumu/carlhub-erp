@@ -224,6 +224,10 @@ class UserTenant(models.Model):
         help_text="Department this user belongs to",
     )
 
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     def save(self, *args, **kwargs):
         if not self.slug:
             from django.utils.text import slugify
@@ -409,7 +413,7 @@ class EmployeeDocument(models.Model):
             # Check file size
             if self.document_file.size > self.MAX_FILE_SIZE:
                 raise ValidationError(f'File size cannot exceed {self.MAX_FILE_SIZE // (1024*1024)}MB')
-            
+
             # Check file type
             if self.document_file.name:
                 file_extension = self.document_file.name.split('.')[-1].lower()

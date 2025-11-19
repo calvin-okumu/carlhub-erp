@@ -396,7 +396,8 @@ SPECTACULAR_SETTINGS = {
     - **Users & Teams**: User management and role-based access control
 
     ## Authentication
-    - Use `Authorization: Token <token>` header for API requests
+    - Use `Authorization: Bearer <token>` header for API requests (recommended)
+    - `Authorization: Token <token>` is deprecated but still supported
     - Obtain tokens via `/api/login/` or `/api/signup/` endpoints
     - Session authentication is also supported for web users
 
