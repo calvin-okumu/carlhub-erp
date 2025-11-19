@@ -16,10 +16,16 @@ class JWTAuthentication(BaseAuthentication):
     
     def authenticate(self, request):
         auth_header = request.META.get('HTTP_AUTHORIZATION')
-        if not auth_header or not auth_header.startswith('Bearer '):
+        if not auth_header:
             return None
-            
-        token = auth_header.split(' ')[1]
+
+        # Support both Bearer and Token prefixes for backward compatibility
+        if auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        elif auth_header.startswith('Token '):
+            token = auth_header.split(' ')[1]
+        else:
+            return None
         
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
@@ -120,7 +126,7 @@ class JWTAuthenticationScheme(OpenApiAuthenticationExtension):
     """
     target_class = 'saasCRM.jwt_auth.JWTAuthentication'
     name = 'JWTAuthentication'
-    
+
     def get_security_definition(self, auto_schema):
         return build_bearer_security_scheme_object(
             header_name='Authorization',

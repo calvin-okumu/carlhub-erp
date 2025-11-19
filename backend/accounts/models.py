@@ -224,6 +224,10 @@ class UserTenant(models.Model):
         help_text="Department this user belongs to",
     )
 
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     def save(self, *args, **kwargs):
         if not self.slug:
             from django.utils.text import slugify
