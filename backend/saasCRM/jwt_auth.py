@@ -1,11 +1,12 @@
-import jwt
 from datetime import datetime, timedelta
+
+import jwt
 from django.conf import settings
-from rest_framework.authentication import BaseAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import get_user_model
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from drf_spectacular.plumbing import build_bearer_security_scheme_object
+from rest_framework.authentication import BaseAuthentication
+from rest_framework.exceptions import AuthenticationFailed
 
 User = get_user_model()
 
@@ -17,6 +18,7 @@ class JWTAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
         import warnings
+
         auth_header = request.META.get("HTTP_AUTHORIZATION")
         if not auth_header:
             return None
@@ -29,7 +31,7 @@ class JWTAuthentication(BaseAuthentication):
             warnings.warn(
                 "The 'Token' prefix is deprecated. Use 'Bearer' prefix instead for JWT authentication.",
                 DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
             token = auth_header.split(" ")[1]
         else:
@@ -51,8 +53,6 @@ class JWTAuthentication(BaseAuthentication):
             raise AuthenticationFailed("Token is invalid")
         except User.DoesNotExist:
             raise AuthenticationFailed("User not found")
-
-
 
 
 class JWTTokenManager:
