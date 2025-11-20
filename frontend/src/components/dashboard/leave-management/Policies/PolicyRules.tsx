@@ -1,11 +1,13 @@
 "use client";
 
-import Card from "@/components/ui/Card";
-import { ChevronDown, Plus, Edit, Trash2, AlertCircle, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
-import { useLeavePolicies } from "@/hooks/useLeavePolicies";
-import { useUserRole } from "@/hooks/useUserRole";
-import { LeavePolicy } from "@/api/types";
+import { useState } from 'react';
+import { Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import Card from '@/components/ui/Card';
+import Button from '@/components/ui/Button';
+import { useLeavePolicies } from '@/hooks/useLeavePolicies';
+import { useUserRole } from '@/hooks/useUserRole';
+import PolicyModal, { PolicyFormData } from './PolicyModal';
+import PolicyCard from './PolicyCard';
 
 const DropdownCard = ({ title, children }: { title: string; children: React.ReactNode }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -17,336 +19,64 @@ const DropdownCard = ({ title, children }: { title: string; children: React.Reac
                 onClick={() => setIsOpen(!isOpen)}
             >
                 <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-                <ChevronDown
-                    className={`w-5 h-5 text-gray-500 transition-transform ${isOpen ? "rotate-180" : ""
-                        }`}
-                />
+                <div className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                    <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
             </div>
 
-            <div
-                className={`overflow-hidden transition-all duration-300 ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-                    }`}
-            >
+            <div className={`overflow-hidden transition-all duration-300 ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
                 <div className="px-4 pb-4">{children}</div>
             </div>
         </Card>
     );
 };
 
-const PolicyCard = ({
-    policy,
-    onEdit,
-    onDelete,
-    canManage
-}: {
-    policy: LeavePolicy;
-    onEdit: (policy: LeavePolicy) => void;
-    onDelete: (slug: string) => void;
-    canManage: boolean;
-}) => {
-    return (
-        <Card className="p-4">
-            <div className="flex items-start justify-between">
-                <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900 capitalize">
-                            {policy.leave_type.replace('_', ' ')}
-                        </h3>
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                            policy.is_active
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                        }`}>
-                            {policy.is_active ? 'Active' : 'Inactive'}
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                        <div>
-                            <span className="font-medium">Annual Entitlement:</span> {policy.annual_entitlement} days
-                        </div>
-                        <div>
-                            <span className="font-medium">Max Consecutive:</span> {policy.max_consecutive_days} days
-                        </div>
-                        <div>
-                            <span className="font-medium">Notice Period:</span> {policy.notice_period_days} days
-                        </div>
-                        <div>
-                            <span className="font-medium">Carry Over:</span> {policy.carry_over_allowed ? 'Yes' : 'No'}
-                            {policy.carry_over_allowed && policy.max_carry_over && ` (max ${policy.max_carry_over})`}
-                        </div>
-                        {policy.auto_approve_max_days && (
-                            <div className="col-span-2">
-                                <span className="font-medium">Auto Approve:</span> ≤{policy.auto_approve_max_days} days
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {canManage && (
-                    <div className="flex gap-2 ml-4">
-                        <button
-                            onClick={() => onEdit(policy)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Edit Policy"
-                        >
-                            <Edit size={16} />
-                        </button>
-                        <button
-                            onClick={() => onDelete(policy.slug)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete Policy"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
-                )}
-            </div>
-        </Card>
-    );
-};
-
-const PolicyForm = ({
-    policy,
-    onSave,
-    onCancel,
-    isLoading
-}: {
-    policy?: LeavePolicy;
-    onSave: (data: {
-        leave_type: string;
-        annual_entitlement: number;
-        max_consecutive_days: number;
-        notice_period_days: number;
-        carry_over_allowed: boolean;
-        max_carry_over?: number;
-        auto_approve_max_days?: number;
-        is_active: boolean;
-    } | Partial<LeavePolicy>) => Promise<void>;
-    onCancel: () => void;
-    isLoading: boolean;
-}) => {
-    const [formData, setFormData] = useState({
-        leave_type: policy?.leave_type || '',
-        annual_entitlement: policy?.annual_entitlement || 0,
-        max_consecutive_days: policy?.max_consecutive_days || 0,
-        notice_period_days: policy?.notice_period_days || 0,
-        carry_over_allowed: policy?.carry_over_allowed || false,
-        max_carry_over: policy?.max_carry_over || undefined,
-        auto_approve_max_days: policy?.auto_approve_max_days || undefined,
-        is_active: policy?.is_active ?? true,
-    });
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        await onSave(formData);
-    };
-
-    return (
-        <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">
-                {policy ? 'Edit Leave Policy' : 'Create Leave Policy'}
-            </h3>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Leave Type *
-                        </label>
-                        <select
-                            value={formData.leave_type}
-                            onChange={(e) => setFormData(prev => ({ ...prev, leave_type: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            required
-                        >
-                            <option value="">Select type</option>
-                            <option value="annual">Annual Leave</option>
-                            <option value="sick">Sick Leave</option>
-                            <option value="casual">Casual Leave</option>
-                            <option value="maternity">Maternity Leave</option>
-                            <option value="paternity">Paternity Leave</option>
-                            <option value="unpaid">Unpaid Leave</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Annual Entitlement (days) *
-                        </label>
-                        <input
-                            type="number"
-                            value={formData.annual_entitlement}
-                            onChange={(e) => setFormData(prev => ({ ...prev, annual_entitlement: parseInt(e.target.value) || 0 }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            min="0"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Max Consecutive Days *
-                        </label>
-                        <input
-                            type="number"
-                            value={formData.max_consecutive_days}
-                            onChange={(e) => setFormData(prev => ({ ...prev, max_consecutive_days: parseInt(e.target.value) || 0 }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            min="0"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Notice Period (days) *
-                        </label>
-                        <input
-                            type="number"
-                            value={formData.notice_period_days}
-                            onChange={(e) => setFormData(prev => ({ ...prev, notice_period_days: parseInt(e.target.value) || 0 }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            min="0"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Carry Over Allowed
-                        </label>
-                        <input
-                            type="checkbox"
-                            checked={formData.carry_over_allowed}
-                            onChange={(e) => setFormData(prev => ({ ...prev, carry_over_allowed: e.target.checked }))}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                    </div>
-
-                    {formData.carry_over_allowed && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Max Carry Over (days)
-                            </label>
-                            <input
-                                type="number"
-                                value={formData.max_carry_over || ''}
-                                onChange={(e) => setFormData(prev => ({
-                                    ...prev,
-                                    max_carry_over: e.target.value ? parseInt(e.target.value) : undefined
-                                }))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                min="0"
-                            />
-                        </div>
-                    )}
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Auto Approve ≤ (days)
-                        </label>
-                        <input
-                            type="number"
-                            value={formData.auto_approve_max_days || ''}
-                            onChange={(e) => setFormData(prev => ({
-                                ...prev,
-                                auto_approve_max_days: e.target.value ? parseInt(e.target.value) : undefined
-                            }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            min="0"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Active
-                        </label>
-                        <input
-                            type="checkbox"
-                            checked={formData.is_active}
-                            onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        />
-                    </div>
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {isLoading ? 'Saving...' : (policy ? 'Update Policy' : 'Create Policy')}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </form>
-        </Card>
-    );
-};
-
 export const PolicyRules = () => {
     const { policies, isLoading, error, createPolicy, updatePolicy, deletePolicy } = useLeavePolicies();
-    const { role, canApproveLeave } = useUserRole();
+    const { role } = useUserRole();
 
-    const [showForm, setShowForm] = useState(false);
-    const [editingPolicy, setEditingPolicy] = useState<LeavePolicy | undefined>();
-    const [formLoading, setFormLoading] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [editingPolicy, setEditingPolicy] = useState<any>(null); // TODO: Fix type
+    const [modalLoading, setModalLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
     // Check if user can manage policies (HR or tenant owner)
     const canManagePolicies = role === 'hr' || role === 'Tenant Owner' || role === 'owner';
 
-    const handleCreate = async (data: {
-      leave_type: string;
-      annual_entitlement: number;
-      max_consecutive_days: number;
-      notice_period_days: number;
-      carry_over_allowed: boolean;
-      max_carry_over?: number;
-      auto_approve_max_days?: number;
-      is_active: boolean;
-    }) => {
-        setFormLoading(true);
+    const handleCreate = async (data: PolicyFormData) => {
+        setModalLoading(true);
         try {
             await createPolicy(data);
-            setShowForm(false);
+            setShowModal(false);
             setSuccessMessage('Policy created successfully!');
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {
             console.error('Failed to create policy:', err);
+            throw err; // Re-throw to let modal handle error display
         } finally {
-            setFormLoading(false);
+            setModalLoading(false);
         }
     };
 
-    const handleUpdate = async (data: Partial<LeavePolicy>) => {
+    const handleUpdate = async (data: PolicyFormData) => {
         if (!editingPolicy) return;
-        setFormLoading(true);
+        setModalLoading(true);
         try {
             await updatePolicy(editingPolicy.slug, data);
-            setEditingPolicy(undefined);
+            setEditingPolicy(null);
             setSuccessMessage('Policy updated successfully!');
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {
             console.error('Failed to update policy:', err);
+            throw err; // Re-throw to let modal handle error display
         } finally {
-            setFormLoading(false);
+            setModalLoading(false);
         }
     };
 
     const handleDelete = async (slug: string) => {
-        if (!confirm('Are you sure you want to delete this policy? This action cannot be undone.')) {
-            return;
-        }
-
         try {
             await deletePolicy(slug);
             setSuccessMessage('Policy deleted successfully!');
@@ -354,6 +84,15 @@ export const PolicyRules = () => {
         } catch (err) {
             console.error('Failed to delete policy:', err);
         }
+    };
+
+    const handleEdit = (policy: any) => { // TODO: Fix type
+        setEditingPolicy(policy);
+    };
+
+    const handleModalClose = () => {
+        setShowModal(false);
+        setEditingPolicy(null);
     };
 
     if (isLoading) {
@@ -391,28 +130,24 @@ export const PolicyRules = () => {
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">Leave Policies</h2>
                 {canManagePolicies && (
-                    <button
-                        onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    <Button
+                        variant="gradient"
+                        onClick={() => setShowModal(true)}
                     >
-                        <Plus size={16} />
+                        <Plus size={16} className="mr-2" />
                         Create Policy
-                    </button>
+                    </Button>
                 )}
             </div>
 
-            {/* Create/Edit Form */}
-            {(showForm || editingPolicy) && (
-                <PolicyForm
-                    policy={editingPolicy}
-                    onSave={editingPolicy ? handleUpdate : handleCreate}
-                    onCancel={() => {
-                        setShowForm(false);
-                        setEditingPolicy(undefined);
-                    }}
-                    isLoading={formLoading}
-                />
-            )}
+            {/* Policy Modal */}
+            <PolicyModal
+                isOpen={showModal || !!editingPolicy}
+                onClose={handleModalClose}
+                policy={editingPolicy}
+                onSave={editingPolicy ? handleUpdate : handleCreate}
+                isLoading={modalLoading}
+            />
 
             {/* Policies List */}
             {policies.length === 0 ? (
@@ -425,12 +160,12 @@ export const PolicyRules = () => {
                     )}
                 </Card>
             ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {policies.map((policy) => (
                         <PolicyCard
                             key={policy.slug}
                             policy={policy}
-                            onEdit={setEditingPolicy}
+                            onEdit={handleEdit}
                             onDelete={handleDelete}
                             canManage={canManagePolicies}
                         />

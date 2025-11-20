@@ -1,12 +1,12 @@
 import { apiCall } from "./api-wrapper";
 import { API_BASE } from "./index";
 import type {
-    ApproveLeaveRequestData,
-    CreateLeaveRequestData,
-    LeaveBalance,
-    LeavePolicy,
-    LeaveRequest,
-    PaginatedResponse,
+  ApproveLeaveRequestData,
+  CreateLeaveRequestData,
+  LeaveBalance,
+  LeavePolicy,
+  LeaveRequest,
+  PaginatedResponse,
 } from "./types";
 
 // Leave Requests API
