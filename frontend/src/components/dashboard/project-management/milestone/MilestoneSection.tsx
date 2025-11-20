@@ -1,6 +1,7 @@
 "use client";
 
 import { getUserTenants } from '@/api/crm';
+import { createMilestone } from '@/api/project_mgmt';
 import type { Milestone, UserTenant } from '@/api/types';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
@@ -18,7 +19,7 @@ interface MilestoneSectionProps {
 
 export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
     const { project } = useProject();
-    const { milestones, loading, error, updateMilestoneOptimistically, removeMilestoneOptimistically } = useMilestonesContext();
+    const { milestones, loading, error, updateMilestoneOptimistically, removeMilestoneOptimistically, refetch } = useMilestonesContext();
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
@@ -65,17 +66,24 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
         tenant: number;
     }) => {
         try {
+            const token = getAccessToken();
+            if (!token || !project?.id) {
+                throw new Error('Authentication or project data missing');
+            }
+
             if (modalMode === 'add') {
-                // For add, we'll need to make the API call and then update optimistically
-                // For now, just close the modal - the actual implementation would need the API response
-                console.log('Add milestone:', data);
+                // Call API to create milestone
+                await createMilestone(token, project.id, data);
+                
+                // Refetch milestones to get updated list
+                refetch();
             } else if (selectedMilestone) {
                 updateMilestoneOptimistically(selectedMilestone.slug, data);
             }
             setModalOpen(false);
         } catch (error) {
             console.error('Error saving milestone:', error);
-            // TODO: Show error message
+            // TODO: Show error message to user
         }
     };
 

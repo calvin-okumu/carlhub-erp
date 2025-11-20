@@ -67,11 +67,11 @@ export const deleteLeaveRequest = async (id: string): Promise<void> => {
 };
 
 export const approveLeaveRequest = async (
-  id: string,
+  slug: string,
   data?: ApproveLeaveRequestData,
 ): Promise<LeaveRequest> => {
   return await apiCall<LeaveRequest>(
-    `${API_BASE}/leave/requests/${id}/approve/`,
+    `${API_BASE}/leave/requests/${slug}/approve/`,
     {
       method: "POST",
       body: JSON.stringify(data || {}),
@@ -80,11 +80,11 @@ export const approveLeaveRequest = async (
 };
 
 export const rejectLeaveRequest = async (
-  id: string,
+  slug: string,
   data?: ApproveLeaveRequestData,
 ): Promise<LeaveRequest> => {
   return await apiCall<LeaveRequest>(
-    `${API_BASE}/leave/requests/${id}/reject/`,
+    `${API_BASE}/leave/requests/${slug}/reject/`,
     {
       method: "POST",
       body: JSON.stringify(data || {}),
@@ -92,9 +92,9 @@ export const rejectLeaveRequest = async (
   );
 };
 
-export const cancelLeaveRequest = async (id: string): Promise<LeaveRequest> => {
+export const cancelLeaveRequest = async (slug: string): Promise<LeaveRequest> => {
   return await apiCall<LeaveRequest>(
-    `${API_BASE}/leave/requests/${id}/cancel/`,
+    `${API_BASE}/leave/requests/${slug}/cancel/`,
     {
       method: "POST",
     },
