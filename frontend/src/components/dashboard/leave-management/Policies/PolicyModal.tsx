@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
-import Card from '@/components/ui/Card';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
 import { LeavePolicy } from '@/api/types';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
+import Select from '@/components/ui/Select';
+import { useEffect, useState } from 'react';
 
 interface PolicyModalProps {
     isOpen: boolean;
