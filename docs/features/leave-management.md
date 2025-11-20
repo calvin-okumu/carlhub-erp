@@ -425,8 +425,10 @@ Update leave request (only by employee, only if pending).
 
 Delete leave request (only by employee, only if pending).
 
-#### Approve Leave Request
+#### Approve Leave Request (Legacy)
 **POST** `/api/leave/requests/{slug}/approve/`
+
+**⚠️ Deprecated**: Use `approve_level/` endpoint instead for proper workflow support.
 
 Approve a leave request (managers only).
 
@@ -448,8 +450,10 @@ Approve a leave request (managers only).
 }
 ```
 
-#### Reject Leave Request
+#### Reject Leave Request (Legacy)
 **POST** `/api/leave/requests/{slug}/reject/`
+
+**⚠️ Deprecated**: Use `reject_level/` endpoint instead for proper workflow support.
 
 Reject a leave request (managers only).
 
