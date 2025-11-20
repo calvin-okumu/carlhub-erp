@@ -3,7 +3,7 @@ Core Business Logic Views for DjangoCRM
 
 This module contains ViewSets for the core business entities:
 - Client Management
-- Project Management  
+- Project Management
 - Milestone Management
 - Sprint Management
 - Task Management

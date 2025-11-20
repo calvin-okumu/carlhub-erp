@@ -3,6 +3,7 @@ from rest_framework import generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 
+from .audit import AuditLogger, get_client_ip
 from .models import AuditLog
 from .permissions import IsTenantAdmin
 from .serializers import (
@@ -18,58 +19,21 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     """Get and update user profile"""
 
     serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self):
-        # Import service here to avoid import issues
-        from .services.user_profile_service import UserProfileService
-
-        # Use service to get or create profile
-        return UserProfileService.get_or_create_profile(self.request.user)
-
-    def perform_update(self, serializer):
-        # Import service here to avoid import issues
-        from .services.user_profile_service import UserProfileService
-
-        # Use service to handle profile update with audit logging
-        UserProfileService.update_user_profile(
-            user=self.request.user, profile_data=serializer.validated_data, request=self.request
-        )
-        # No need to call super().perform_update as service handles saving
-
-
-class EmployeeDocumentListView(generics.ListCreateAPIView):
-    """List and create employee documents"""
-
-    serializer_class = EmployeeDocumentSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        return self.request.user.documents.all()
 
     def perform_create(self, serializer):
-        document = serializer.save(user=self.request.user)
-
-        # Get tenant context
-        tenant = None
         try:
             user_tenant = self.request.user.usertenants.filter(is_approved=True).first()
             if user_tenant:
                 tenant = user_tenant.tenant
-        except:
+        except Exception:
             pass
 
         AuditLogger.log_event(
-            action="document_created",
-            resource_type="employee_document",
+            action="user_profile_created",
+            resource_type="user_profile",
             tenant=tenant,
             user=self.request.user,
             resource_id=str(self.request.user.id),  # Use user ID as UUID
-            new_values={
-                "title": document.title,
-                "file_type": document.file_type,
-                "file_size": document.file_size,
-            },
             ip_address=get_client_ip(self.request),
         )
 
@@ -102,7 +66,7 @@ class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
             user_tenant = self.request.user.usertenants.filter(is_approved=True).first()
             if user_tenant:
                 tenant = user_tenant.tenant
-        except:
+        except Exception:
             pass
 
         AuditLogger.log_event(
@@ -123,7 +87,7 @@ class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
             user_tenant = self.request.user.usertenants.filter(is_approved=True).first()
             if user_tenant:
                 tenant = user_tenant.tenant
-        except:
+        except Exception:
             pass
 
         AuditLogger.log_event(
@@ -162,7 +126,7 @@ class AuditLogListView(generics.ListAPIView):
             user_tenant = user.usertenant
             if user_tenant.is_approved:
                 return AuditLog.objects.filter(tenant=user_tenant.tenant)
-        except:
+        except Exception:
             pass
 
         return AuditLog.objects.none()

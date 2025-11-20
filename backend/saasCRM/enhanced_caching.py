@@ -108,24 +108,27 @@ class CacheManager:
         if "test" in sys.argv:
             return 0
 
-        try:
-            # Try Redis pattern deletion first
-            from django_redis import get_redis_connection
+        backend = settings.CACHES["default"]["BACKEND"]
 
-            conn = get_redis_connection("default")
-            keys = conn.keys(pattern)
-            if keys:
-                result = conn.delete(*keys)
-                if settings.DEBUG:
-                    logger.debug(f"Cache DELETE_PATTERN: {pattern} -> {result} keys")
-                return result
-            return 0
-        except ImportError:
-            # Fallback for non-Redis backends (like LocMemCache in tests)
+        if "redis" in backend.lower():
+            try:
+                # Use Redis pattern deletion
+                from django_redis import get_redis_connection
+
+                conn = get_redis_connection("default")
+                keys = conn.keys(pattern)
+                if keys:
+                    result = conn.delete(*keys)
+                    if settings.DEBUG:
+                        logger.debug(f"Cache DELETE_PATTERN: {pattern} -> {result} keys")
+                    return result
+                return 0
+            except Exception as e:
+                logger.error(f"Error deleting cache pattern {pattern}: {e}")
+                return 0
+        else:
+            # Fallback for non-Redis backends (like LocMemCache)
             return cls._fallback_pattern_deletion(pattern)
-        except Exception as e:
-            logger.error(f"Error deleting cache pattern {pattern}: {e}")
-            return 0
 
     @classmethod
     def _fallback_pattern_deletion(cls, pattern: str) -> int:
@@ -474,9 +477,7 @@ def cache_analytics(
     CacheManager.set(key, data, timeout or CacheManager.TIMEOUTS["analytics"])
 
 
-def get_cached_analytics(
-    tenant_id: int, analytics_type: str, period: str
-) -> dict[str, Any] | None:
+def get_cached_analytics(tenant_id: int, analytics_type: str, period: str) -> dict[str, Any] | None:
     """Get cached analytics data."""
     key = CacheManager.get_key("analytics", tenant_id=tenant_id, type=analytics_type, period=period)
     return CacheManager.get(key)

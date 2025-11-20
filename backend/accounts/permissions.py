@@ -22,7 +22,7 @@ class IsTenantAdmin(permissions.BasePermission):
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             ):
                 return True
-        except:
+        except Exception:
             pass
 
         return False
