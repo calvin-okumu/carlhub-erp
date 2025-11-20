@@ -49,10 +49,10 @@ export default function ApprovalsSection() {
         fetchLeaveRequests();
     }, [fetchLeaveRequests]);
 
-    const handleApprove = async (requestId: string) => {
+    const handleApprove = async (requestSlug: string) => {
         try {
-            setApprovingId(requestId);
-            await approveLeaveRequest(requestId);
+            setApprovingId(requestSlug);
+            await approveLeaveRequest(requestSlug);
             await fetchLeaveRequests();
         } catch (error) {
             console.error('Failed to approve request:', error);
@@ -61,10 +61,10 @@ export default function ApprovalsSection() {
         }
     };
 
-    const handleReject = async (requestId: string) => {
+    const handleReject = async (requestSlug: string) => {
         try {
-            setRejectingId(requestId);
-            await rejectLeaveRequest(requestId);
+            setRejectingId(requestSlug);
+            await rejectLeaveRequest(requestSlug);
             await fetchLeaveRequests();
         } catch (error) {
             console.error('Failed to reject request:', error);

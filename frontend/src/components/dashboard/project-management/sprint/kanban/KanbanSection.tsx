@@ -1,7 +1,7 @@
 "use client";
 
 import { getUserTenants } from '@/api/crm';
-import { assignTaskToSprint, createTask, deleteTask, getSprint, getTasks, updateTask } from '@/api/project_mgmt';
+import { assignTaskToSprint, createTask, deleteTask, getSprint, getSprints, getMilestones, getTasks, updateTask } from '@/api/project_mgmt';
 import type { Sprint, Task, UserTenant } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
@@ -44,8 +44,6 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
 
     const fetchData = useCallback(async () => {
         const token = getAccessToken();
-        console.log('Token:', token ? 'present' : 'missing');
-        console.log('KanbanSection fetchData called with projectId:', project?.id, 'sprintSlug:', sprintSlug);
         if (!token) {
             setError('No access token found. Redirecting to login...');
             setLoading(false);
@@ -56,8 +54,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
         }
 
         try {
-            // Fetch the sprint directly by ID
-            console.log('Fetching sprint with slug:', sprintSlug);
+            // Fetch sprint directly by ID
             const sprint = await getSprint(token, sprintSlug);
 
             // Fetch tasks for this sprint
@@ -71,12 +68,15 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             setSprint({ ...sprint, progress: calculatedSprintProgress });
             setTasks(tasksData.results);
         } catch (err) {
-            console.error('Fetch error:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch data. Please check your connection or try again.');
         } finally {
             setLoading(false);
         }
     }, [sprintSlug, router, project?.id]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     useEffect(() => {
         const fetchModalData = async () => {
@@ -92,7 +92,6 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                 const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
                 setBacklogTasks(filteredBacklog);
             } catch (error) {
-                console.error('Error fetching modal data:', error);
                 setAddError(error instanceof Error ? error.message : 'Failed to fetch data');
             }
         };
@@ -118,7 +117,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                 const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
                 setBacklogTasks(filteredBacklog);
             } catch (err) {
-                console.error('Failed to fetch modal data:', err);
+                // Error handled silently
             }
         };
         fetchModalData();
@@ -172,7 +171,6 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             // Refetch to get updated progress from backend
             fetchData();
         } catch (error) {
-            console.error('Error updating task status:', error);
             alert('Failed to update task status. Please try again.');
         }
     };
@@ -200,7 +198,6 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             // Refetch tasks
             fetchData();
         } catch (error) {
-            console.error('Error deleting task:', error);
             // TODO: Show error message
         }
     };
@@ -240,7 +237,6 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             await fetchData();
             // Sprint progress will be updated in fetchData since it gets the latest sprint data
         } catch (error) {
-            console.error('Error adding tasks:', error);
             setAddError(error instanceof Error ? error.message : 'Failed to add tasks');
         }
     };
@@ -267,7 +263,6 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             await fetchData();
             // Sprint progress will be updated in fetchData since it gets the latest sprint data
         } catch (error) {
-            console.error('Error saving task:', error);
             // TODO: Show error message
         }
     };

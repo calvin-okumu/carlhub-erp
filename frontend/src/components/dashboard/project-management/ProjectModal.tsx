@@ -9,6 +9,7 @@ import { useClients } from '@/hooks/useClients';
 import type { ProjectFormData } from '@/types/project';
 import React, { useEffect, useState } from 'react';
 
+
 interface ProjectModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -48,21 +49,29 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                 budget: project.budget || '',
             });
         } else {
-            setFormData({
+            setFormData(prev => ({
+                ...prev,
                 name: '',
-                client: clients.length > 0 ? clients[0].id : '',
+                client: '',
                 status: 'active',
                 priority: 'medium',
                 start_date: '',
                 end_date: '',
                 budget: '',
-            });
+            }));
         }
-    }, [mode, project, clients]);
+    }, [mode, project]);
+
+    // Set default client only when clients load and we're in add mode
+    useEffect(() => {
+        if (mode === 'add' && clients.length > 0 && !formData.client) {
+            setFormData(prev => ({ ...prev, client: clients[0].id }));
+        }
+    }, [clients, mode]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: name === 'client' ? parseInt(value) : value }));
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -117,11 +126,12 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                     <Select
                         id="client"
                         name="client"
-                        value={formData.client.toString()}
+                        value={formData.client}
                         onChange={handleChange}
                         required
                         className="mt-1"
                     >
+                        <option value="">Select a client</option>
                         {clients.map(client => (
                             <option key={client.id} value={client.id}>{client.name}</option>
                         ))}
@@ -200,9 +210,9 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                     <Button onClick={onClose} variant='secondary'>
                         Cancel
                     </Button>
-                     <Button type="submit">
-                         {mode === 'add' ? 'Add Project' : 'Update Project'}
-                     </Button>
+                    <Button type="submit">
+                        {mode === 'add' ? 'Add Project' : 'Update Project'}
+                    </Button>
                 </div>
             </form>
         </Modal>
