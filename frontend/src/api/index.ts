@@ -58,7 +58,9 @@ export {
 export {
   approveLeaveRequest,
   cancelLeaveRequest,
+  createLeavePolicy,
   createLeaveRequest,
+  deleteLeavePolicy,
   deleteLeaveRequest,
   getLeaveBalance,
   getLeaveBalances,
@@ -66,7 +68,9 @@ export {
   getLeavePolicy,
   getLeaveRequest,
   getLeaveRequests,
+  patchLeavePolicy,
   rejectLeaveRequest,
+  updateLeavePolicy,
   updateLeaveRequest,
 } from "./leave";
 

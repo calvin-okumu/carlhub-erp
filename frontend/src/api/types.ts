@@ -268,3 +268,14 @@ export interface CreateLeaveRequestData {
 export interface ApproveLeaveRequestData {
   notes?: string;
 }
+
+export interface CreateLeavePolicy {
+  leave_type: string;
+  annual_entitlement: number;
+  max_consecutive_days: number;
+  notice_period_days: number;
+  carry_over_allowed: boolean;
+  max_carry_over?: number;
+  auto_approve_max_days?: number;
+  is_active: boolean;
+}

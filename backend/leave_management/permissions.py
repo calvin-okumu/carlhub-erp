@@ -194,37 +194,66 @@ class CanManageLeaveBalances(permissions.BasePermission):
 class CanManageLeavePolicies(permissions.BasePermission):
     """
     Permission for leave policy management.
-    Restricted to tenant admins/owners.
+    Restricted to HR and tenant admins/owners.
     """
 
-    def has_permission(self, request, view) -> bool:
+    def has_permission(self, request, view):
         # Check tenant access first
         if not HasTenantAccess().has_permission(request, view):
             return False
 
         action = self._get_action_from_view(view)
-        perm_map = {
-            "view": "leave_management.view_leavepolicy",
-            "add": "leave_management.add_leavepolicy",
-            "change": "leave_management.change_leavepolicy",
-            "delete": "leave_management.delete_leavepolicy",
-        }
-        required_perm = perm_map.get(action)
-        return bool(required_perm and request.user.has_perm(required_perm))
 
-    def has_object_permission(self, request, view, obj) -> bool:
+        # For view actions, allow all tenant users (handled by view logic)
+        if action == "view":
+            return True
+
+        # For modification actions, restrict to HR and tenant owners
+        return self._can_manage_policies(request.user)
+
+    def has_object_permission(self, request, view, obj):
         # Check tenant access first
         if not HasTenantAccess().has_object_permission(request, view, obj):
             return False
 
         action = self._get_action_from_view(view)
-        perm_map = {
-            "view": "leave_management.view_leavepolicy",
-            "change": "leave_management.change_leavepolicy",
-            "delete": "leave_management.delete_leavepolicy",
-        }
-        required_perm = perm_map.get(action)
-        return bool(required_perm and request.user.has_perm(required_perm))
+
+        # For view actions, allow all tenant users
+        if action == "view":
+            return True
+
+        # For modification actions, restrict to HR and tenant owners
+        return self._can_manage_policies(request.user)
+
+    def _can_manage_policies(self, user):
+        """Check if user can manage leave policies (HR or tenant owner)."""
+        # Superusers can manage all
+        if user.is_superuser:
+            return True
+
+        # Check for explicit Django permissions
+        if (
+            user.has_perm("leave_management.add_leavepolicy")
+            or user.has_perm("leave_management.change_leavepolicy")
+            or user.has_perm("leave_management.delete_leavepolicy")
+        ):
+            return True
+
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            if user_tenant.is_approved and (
+                user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
+            ):
+                return True
+
+            # Check for HR role
+            if user_tenant.role == "hr":
+                return True
+        except:
+            pass
+
+        return False
 
     def _get_action_from_view(self, view):
         action_map = {

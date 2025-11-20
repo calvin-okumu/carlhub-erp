@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { getAccessToken } from "../utils/auth";
 import type { Task } from "../api/types";
 import {
   createTask,
@@ -6,8 +7,6 @@ import {
   getTasks,
   updateTask,
 } from "../api/project_mgmt";
-
-
 
 export function useTasks(projectId: string, backlog: boolean = false) {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -17,7 +16,15 @@ export function useTasks(projectId: string, backlog: boolean = false) {
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getTasks({ projectId, backlog, ordering: '-created_at' });
+      const token = getAccessToken();
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+      const data = await getTasks(token, {
+        projectId,
+        backlog,
+        ordering: "-created_at",
+      });
       setTasks(data.results);
     } catch (err) {
       console.error(err);
@@ -27,22 +34,24 @@ export function useTasks(projectId: string, backlog: boolean = false) {
     }
   }, [backlog, projectId]);
 
-    useEffect(() => {
-        fetchTasks();
-    }, [fetchTasks]);
-
   const addTask = async (data: {
-     title: string;
-     description?: string;
-     status: string;
-     milestone: string;
-     sprint?: string;
-     assignee?: number;
-     start_date?: string;
-     end_date?: string;
-     estimated_hours?: number;
-   }) => {
-const taskData = { ...data, project: projectId };
+    title: string;
+    description?: string;
+    status: string;
+    milestone: string;
+    sprint?: string;
+    assignee?: number;
+    start_date?: string;
+    end_date?: string;
+    estimated_hours?: number;
+  }) => {
+    const token = getAccessToken();
+    if (!token) {
+      setError("No authentication token found");
+      return;
+    }
+
+    const taskData = { ...data, project: projectId };
 
     // Temporary task for optimistic update
     const tempTask: Task = {
@@ -65,12 +74,12 @@ const taskData = { ...data, project: projectId };
       updated_at: new Date().toISOString(),
     };
 
-     setTasks((prev) => [...prev, tempTask]);
+    setTasks((prev) => [...prev, tempTask]);
 
-     setLoading(true);
-      try {
-        const newTask = await createTask(projectId, taskData);
-       console.log("Created task:", newTask);
+    setLoading(true);
+    try {
+      const newTask = await createTask(token, projectId, taskData);
+      console.log("Created task:", newTask);
       setTasks((prev) => prev.map((t) => (t.id === tempTask.id ? newTask : t)));
     } catch (err) {
       setTasks((prev) => prev.filter((t) => t.id !== tempTask.id));
@@ -94,7 +103,7 @@ const taskData = { ...data, project: projectId };
       estimated_hours: number;
     }>,
   ) => {
-    
+    const token = getAccessToken();
     if (!token) return;
 
     const originalTask = tasks.find((t) => t.id === id);
@@ -116,25 +125,23 @@ const taskData = { ...data, project: projectId };
     }
   };
 
-   const removeTask = async (id: string) => {
-     
+  const removeTask = async (id: string) => {
+    const taskToRemove = tasks.find((t) => t.id === id);
+    if (!taskToRemove) return;
 
-     const taskToRemove = tasks.find((t) => t.id === id);
-     if (!taskToRemove) return;
+    setTasks((prev) => prev.filter((t) => t.id !== id));
 
-     setTasks((prev) => prev.filter((t) => t.id !== id));
-
-     // Since backend is read-only, don't call API, just keep the optimistic update
-     // setLoading(true);
-     // try {
-     //   await deleteTask(token, id);
-     // } catch (err) {
-     //   setTasks((prev) => [...prev, taskToRemove]);
-     //   setError(err instanceof Error ? err.message : "Failed to delete task.");
-     // } finally {
-     //   setLoading(false);
-     // }
-   };
+    // Since backend is read-only, don't call API, just keep the optimistic update
+    // setLoading(true);
+    // try {
+    //   await deleteTask(token, id);
+    // } catch (err) {
+    //   setTasks((prev) => [...prev, taskToRemove]);
+    //   setError(err instanceof Error ? err.message : "Failed to delete task.");
+    // } finally {
+    //   setLoading(false);
+    // }
+  };
 
   return {
     tasks,
@@ -147,4 +154,3 @@ const taskData = { ...data, project: projectId };
     setError,
   };
 }
-
