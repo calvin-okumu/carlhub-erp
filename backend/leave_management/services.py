@@ -26,7 +26,7 @@ class LeaveApprovalWorkflowService:
         try:
             employee_tenant = leave_request.employee.usertenant
             department = employee_tenant.department
-        except:
+        except Exception:
             # If no department, no approval chain
             return approval_chain
 
@@ -41,7 +41,7 @@ class LeaveApprovalWorkflowService:
             ).first()
             if hr_manager_tenant:
                 approval_chain.append(("hr_manager", hr_manager_tenant.user))
-        except:
+        except Exception:
             pass
 
         # General Manager level
@@ -51,7 +51,7 @@ class LeaveApprovalWorkflowService:
             ).first()
             if general_manager_tenant:
                 approval_chain.append(("general_manager", general_manager_tenant.user))
-        except:
+        except Exception:
             pass
 
         return approval_chain
@@ -79,7 +79,7 @@ class LeaveApprovalWorkflowService:
                     try:
                         employee_dept = leave_request.employee.usertenant.department
                         return employee_dept.manager == user, "User is not the department manager"
-                    except:
+                    except Exception:
                         return False, "Cannot determine department"
 
                 # HR managers and above can approve department level
@@ -141,6 +141,7 @@ class LeaveApprovalWorkflowService:
 
                 if not created:
                     # Update existing approval
+                    approval.approver = approver
                     approval.status = action
                     approval.notes = notes
                     approval.approved_date = timezone.now()
@@ -290,7 +291,7 @@ class LeaveApprovalWorkflowService:
                 else:
                     leave_request.status = "pending_department_manager"
                     leave_request.current_approval_level = "department_manager"
-            except:
+            except Exception:
                 leave_request.status = "pending_department_manager"
                 leave_request.current_approval_level = "department_manager"
         else:
