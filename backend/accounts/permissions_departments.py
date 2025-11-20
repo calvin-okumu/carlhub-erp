@@ -43,7 +43,7 @@ class CanManageDepartments(permissions.BasePermission):
                 return view.action == "create"
 
             return False
-        except:
+        except Exception:
             return False
 
     def has_object_permission(self, request, view, obj):
@@ -80,7 +80,7 @@ class CanManageDepartments(permissions.BasePermission):
                         return True
 
             return False
-        except:
+        except Exception:
             return False
 
     def _is_parent_department(self, potential_parent, child):

@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from ..audit import AuditLogger, get_client_ip
-from ..models import EmployeeDocument
+from ..models import EmployeeDocument, Tenant
 
 User = get_user_model()
 
@@ -158,7 +158,7 @@ class EmployeeDocumentService:
         try:
             user_tenant = user.usertenants.filter(is_approved=True).first()
             return user_tenant.tenant if user_tenant else None
-        except:
+        except Exception:
             return None
 
     @staticmethod

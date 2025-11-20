@@ -3,6 +3,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -246,12 +247,12 @@ class UserTenant(models.Model):
         try:
             from_user_tenant = cls.objects.get(user=from_user, tenant=tenant, is_owner=True)
         except cls.DoesNotExist:
-            raise ValueError("from_user is not an owner of this tenant")
+            raise ValueError("from_user is not an owner of this tenant") from None
 
         try:
             to_user_tenant = cls.objects.get(user=to_user, tenant=tenant, is_approved=True)
         except cls.DoesNotExist:
-            raise ValueError("to_user is not an approved member of this tenant")
+            raise ValueError("to_user is not an approved member of this tenant") from None
 
         # Check if this would leave no owners
         owner_count = cls.objects.filter(tenant=tenant, is_owner=True).count()

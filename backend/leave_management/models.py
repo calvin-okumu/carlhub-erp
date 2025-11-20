@@ -185,14 +185,6 @@ class LeaveRequest(models.Model):
         return f"{self.employee.get_full_name()} - {self.leave_type} ({self.start_date} to {self.end_date})"
 
     @property
-    def is_pending(self):
-        return self.status == "pending"
-
-    @property
-    def is_approved(self):
-        return self.status == "approved"
-
-    @property
     def duration_display(self):
         """Human-readable duration display."""
         if self.days_requested == 1:
@@ -239,7 +231,7 @@ class LeaveRequest(models.Model):
         try:
             employee_tenant = self.employee.usertenant
             department = employee_tenant.department
-        except:
+        except Exception:
             return None
 
         if not department:
@@ -255,7 +247,7 @@ class LeaveRequest(models.Model):
                     role="HR Manager", is_approved=True
                 ).first()
                 return hr_manager_tenant.user if hr_manager_tenant else None
-            except:
+            except Exception:
                 return None
         elif self.current_approval_level == "general_manager":
             # Find general manager in tenant
@@ -264,7 +256,7 @@ class LeaveRequest(models.Model):
                     role="General Manager", is_approved=True
                 ).first()
                 return general_manager_tenant.user if general_manager_tenant else None
-            except:
+            except Exception:
                 return None
 
         return None
@@ -303,7 +295,7 @@ class LeaveRequest(models.Model):
             ):
                 return True
 
-        except:
+        except Exception:
             return False
 
         return False

@@ -30,7 +30,7 @@ class AuditLogService:
                     queryset = AuditLog.objects.filter(tenant=user_tenant.tenant)
                 else:
                     return []
-            except:
+            except Exception:
                 return []
 
         # Apply filters
@@ -66,7 +66,7 @@ class AuditLogService:
             user_tenant = user.usertenant
             if user_tenant.is_approved:
                 return AuditLog.objects.filter(tenant=user_tenant.tenant).order_by("-timestamp")
-        except:
+        except Exception:
             pass
 
         return []
@@ -152,7 +152,7 @@ class AuditLogService:
             ):
                 # Check if user has tenant admin permissions
                 return IsTenantAdmin().has_object_permission(user, user_tenant.tenant)
-        except:
+        except Exception:
             pass
 
         return False
@@ -169,7 +169,7 @@ class AuditLogService:
             user_tenant = user.usertenant
             if user_tenant.is_approved:
                 return AuditLog.objects.filter(tenant=user_tenant.tenant)
-        except:
+        except Exception:
             pass
 
         return AuditLog.objects.none()

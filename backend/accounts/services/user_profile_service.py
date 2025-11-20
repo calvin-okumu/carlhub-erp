@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from ..audit import AuditLogger, get_client_ip
-from ..models import UserProfile, UserTenant
+from ..models import Tenant, UserProfile, UserTenant
 
 User = get_user_model()
 
@@ -108,11 +108,11 @@ class UserProfileService:
         if not profile:
             # Create profile for approved users
             try:
-                user_tenant = UserTenant.objects.get(user=user, is_approved=True)
+                UserTenant.objects.get(user=user, is_approved=True)
                 profile = UserProfileService.create_user_profile(user)
             except UserTenant.DoesNotExist:
                 # User not approved, don't create profile
-                raise ValidationError("User is not approved for any tenant")
+                raise ValidationError("User is not approved for any tenant") from None
 
         return profile
 
@@ -122,7 +122,7 @@ class UserProfileService:
         try:
             user_tenant = user.usertenants.filter(is_approved=True).first()
             return user_tenant.tenant if user_tenant else None
-        except:
+        except Exception:
             return None
 
     @staticmethod
@@ -143,7 +143,7 @@ class UserProfileService:
 
             if user_tenant and target_tenant:
                 return user_tenant.tenant == target_tenant.tenant
-        except:
+        except Exception:
             pass
 
         return False
