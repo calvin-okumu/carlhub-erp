@@ -5,7 +5,6 @@ This middleware adds comprehensive security headers to all HTTP responses
 to protect against common web vulnerabilities.
 """
 
-
 from django.conf import settings
 from django.http import HttpResponse
 from django.utils.deprecation import MiddlewareMixin
