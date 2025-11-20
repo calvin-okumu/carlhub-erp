@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from 'react';
-import { Plus, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, AlertCircle, CheckCircle2, Edit, Trash2 } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { useLeavePolicies } from '@/hooks/useLeavePolicies';
 import { useUserRole } from '@/hooks/useUserRole';
 import PolicyModal, { PolicyFormData } from './PolicyModal';
-import PolicyCard from './PolicyCard';
+import { LeavePolicy } from '@/api/types';
 
 const DropdownCard = ({ title, children }: { title: string; children: React.ReactNode }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -33,12 +33,196 @@ const DropdownCard = ({ title, children }: { title: string; children: React.Reac
     );
 };
 
+const PolicyTable = ({
+    policies,
+    onEdit,
+    onDelete,
+    canManage
+}: {
+    policies: LeavePolicy[];
+    onEdit: (policy: LeavePolicy) => void;
+    onDelete: (slug: string) => void;
+    canManage: boolean;
+}) => {
+    const formatLeaveType = (type: string) => {
+        const typeMap: Record<string, string> = {
+            'annual': 'Annual Leave',
+            'sick': 'Sick Leave',
+            'casual': 'Casual Leave',
+            'maternity': 'Maternity Leave',
+            'paternity': 'Paternity Leave',
+            'unpaid': 'Unpaid Leave'
+        };
+        return typeMap[type] || type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    };
+
+    return (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Leave Type
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Days Allowed
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Max at Once
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Advance Notice
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status
+                            </th>
+                            {canManage && (
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            )}
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {policies.map((policy) => (
+                            <tr key={policy.slug} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm font-medium text-gray-900">
+                                        {formatLeaveType(policy.leave_type)}
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-gray-900">
+                                        {policy.annual_entitlement} days/year
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-gray-900">
+                                        {policy.max_consecutive_days > 0
+                                            ? `${policy.max_consecutive_days} days`
+                                            : 'No limit'
+                                        }
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <div className="text-sm text-gray-900">
+                                        {policy.notice_period_days > 0
+                                            ? `${policy.notice_period_days} days`
+                                            : 'Same day'
+                                        }
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                        policy.is_active
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-red-100 text-red-800'
+                                    }`}>
+                                        {policy.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                {canManage && (
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => onEdit(policy)}
+                                                className="text-blue-600 hover:text-blue-900 transition-colors"
+                                                title="Edit Policy"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => onDelete(policy.slug)}
+                                                className="text-red-600 hover:text-red-900 transition-colors"
+                                                title="Delete Policy"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                )}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Mobile view for small screens */}
+            <div className="md:hidden">
+                <div className="divide-y divide-gray-200">
+                    {policies.map((policy) => (
+                        <div key={policy.slug} className="p-4 hover:bg-gray-50">
+                            <div className="flex justify-between items-start mb-3">
+                                <h3 className="font-medium text-gray-900">
+                                    {formatLeaveType(policy.leave_type)}
+                                </h3>
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    policy.is_active
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
+                                }`}>
+                                    {policy.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 mb-3">
+                                <div>
+                                    <span className="font-medium">Days Allowed:</span>
+                                    <div className="text-gray-900">{policy.annual_entitlement} days/year</div>
+                                </div>
+                                <div>
+                                    <span className="font-medium">Max at Once:</span>
+                                    <div className="text-gray-900">
+                                        {policy.max_consecutive_days > 0
+                                            ? `${policy.max_consecutive_days} days`
+                                            : 'No limit'
+                                        }
+                                    </div>
+                                </div>
+                                <div className="col-span-2">
+                                    <span className="font-medium">Advance Notice:</span>
+                                    <div className="text-gray-900">
+                                        {policy.notice_period_days > 0
+                                            ? `${policy.notice_period_days} days`
+                                            : 'Same day'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                            {canManage && (
+                                <div className="flex gap-3 pt-2 border-t border-gray-200">
+                                    <button
+                                        onClick={() => onEdit(policy)}
+                                        className="flex items-center gap-1 text-blue-600 hover:text-blue-900 text-sm font-medium"
+                                    >
+                                        <Edit size={14} />
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => onDelete(policy.slug)}
+                                        className="flex items-center gap-1 text-red-600 hover:text-red-900 text-sm font-medium"
+                                    >
+                                        <Trash2 size={14} />
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export const PolicyRules = () => {
     const { policies, isLoading, error, createPolicy, updatePolicy, deletePolicy } = useLeavePolicies();
     const { role } = useUserRole();
 
     const [showModal, setShowModal] = useState(false);
-    const [editingPolicy, setEditingPolicy] = useState<any>(null); // TODO: Fix type
+    const [editingPolicy, setEditingPolicy] = useState<LeavePolicy | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -77,6 +261,10 @@ export const PolicyRules = () => {
     };
 
     const handleDelete = async (slug: string) => {
+        if (!confirm('Are you sure you want to delete this policy? This action cannot be undone.')) {
+            return;
+        }
+
         try {
             await deletePolicy(slug);
             setSuccessMessage('Policy deleted successfully!');
@@ -86,7 +274,7 @@ export const PolicyRules = () => {
         }
     };
 
-    const handleEdit = (policy: any) => { // TODO: Fix type
+    const handleEdit = (policy: LeavePolicy) => {
         setEditingPolicy(policy);
     };
 
@@ -149,7 +337,7 @@ export const PolicyRules = () => {
                 isLoading={modalLoading}
             />
 
-            {/* Policies List */}
+            {/* Policies Table */}
             {policies.length === 0 ? (
                 <Card className="p-8 text-center">
                     <p className="text-gray-500">No leave policies found.</p>
@@ -160,17 +348,12 @@ export const PolicyRules = () => {
                     )}
                 </Card>
             ) : (
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {policies.map((policy) => (
-                        <PolicyCard
-                            key={policy.slug}
-                            policy={policy}
-                            onEdit={handleEdit}
-                            onDelete={handleDelete}
-                            canManage={canManagePolicies}
-                        />
-                    ))}
-                </div>
+                <PolicyTable
+                    policies={policies}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    canManage={canManagePolicies}
+                />
             )}
 
             {/* Static General Rules (shown for all users) */}
