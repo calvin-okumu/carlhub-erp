@@ -16,7 +16,7 @@ DjangoCRM provides comprehensive leave management functionality for tracking emp
 
 - **Multiple Leave Types**: Annual leave, sick leave, maternity/paternity leave, emergency leave, and unpaid leave
 
-- **Automated Approval Workflows**: Configurable approval processes with manager oversight
+- **Automated Approval Workflows**: Configurable multi-level approval processes with automatic approver tracking
 
 - **Leave Balance Tracking**: Real-time balance monitoring with carry-over rules
 
@@ -112,7 +112,7 @@ Employees submit leave requests specifying:
 
 2. **Manager Review**: Designated approvers review the request
 
-3. **Approval/Rejection**: Manager approves or rejects with notes
+3. **Approval/Rejection**: Manager approves or rejects with notes (approver automatically recorded as the logged-in user)
 
 4. **Balance Update**: Approved leave deducts from employee balance
 
@@ -412,6 +412,9 @@ Create a new leave request.
 
 Get detailed leave request information.
 
+**Error Responses:**
+- `404 Not Found`: `{"detail": "Leave request not found."}` (if slug doesn't exist)
+
 #### Update Leave Request
 **PUT/PATCH** `/api/leave/requests/{slug}/`
 
@@ -465,7 +468,7 @@ Cancel a leave request (only by the employee who created it).
 #### Approve at Current Level
 **POST** `/api/leave/requests/{slug}/approve_level/`
 
-Approve a leave request at the current workflow level (managers only).
+Approve a leave request at the current workflow level (managers only). The logged-in user is automatically recorded as the approver.
 
 **Request:**
 ```json
@@ -486,7 +489,7 @@ Approve a leave request at the current workflow level (managers only).
 #### Reject at Current Level
 **POST** `/api/leave/requests/{slug}/reject_level/`
 
-Reject a leave request at the current workflow level (managers only).
+Reject a leave request at the current workflow level (managers only). The logged-in user is automatically recorded as the approver.
 
 **Request:**
 ```json
@@ -513,7 +516,7 @@ Get detailed workflow status and approval history for a leave request.
       {
         "level": "department_manager",
         "level_display": "Department Manager",
-        "approver": "John Manager",
+        "approver": "John Manager",  // Shows the actual user who approved (when completed)
         "status": "pending",
         "approved_date": null,
         "notes": "",
