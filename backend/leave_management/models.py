@@ -465,6 +465,16 @@ class LeavePolicy(models.Model):
         help_text="Maximum days that can be auto-approved (null = no auto-approval)",
     )
 
+    # Approval workflow
+    approval_workflow = models.ForeignKey(
+        "LeaveApprovalWorkflow",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leave_policies",
+        help_text="Custom approval workflow for this leave type (null = use default workflow)",
+    )
+
     # Policy status
     is_active = models.BooleanField(
         default=True, help_text="Whether this policy is currently active"
@@ -614,3 +624,231 @@ class LeaveApproval(models.Model):
     def is_rejected(self):
         """Check if this approval step is rejected."""
         return self.status == "rejected"
+
+
+class LeaveApprovalWorkflow(models.Model):
+    """
+    Configurable approval workflow for leave requests.
+    Defines the sequence of approval steps for different leave types.
+    """
+
+    tenant = models.ForeignKey(
+        "accounts.Tenant",
+        on_delete=models.CASCADE,
+        related_name="leave_approval_workflows",
+        help_text="Tenant this workflow belongs to",
+    )
+
+    name = models.CharField(
+        max_length=100,
+        help_text="Descriptive name for the workflow (e.g., 'Standard Approval', 'Executive Approval')",
+    )
+
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of when to use this workflow",
+    )
+
+    is_default = models.BooleanField(
+        default=False,
+        help_text="Whether this is the default workflow for the tenant",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this workflow is available for use",
+    )
+
+    # Auto-generated slug
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+
+    # Audit fields
+    created_by = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_leave_workflows",
+        help_text="User who created this workflow",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ["tenant", "name"]
+        indexes = [
+            models.Index(fields=["tenant", "is_default"]),
+            models.Index(fields=["tenant", "is_active"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        # Generate slug if not present
+        if not self.slug:
+            from django.utils.text import slugify
+
+            base_slug = f"workflow-{self.tenant.id}-{self.name}"
+            self.slug = slugify(base_slug)
+
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while LeaveApprovalWorkflow.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.tenant.name} - {self.name}"
+
+    def clean(self):
+        """Validate workflow configuration."""
+        if self.is_default:
+            # Ensure only one default per tenant
+            existing_default = LeaveApprovalWorkflow.objects.filter(
+                tenant=self.tenant, is_default=True
+            ).exclude(pk=self.pk)
+            if existing_default.exists():
+                raise ValidationError("Only one default workflow allowed per tenant.")
+
+
+class LeaveApprovalStep(models.Model):
+    """
+    Individual step in an approval workflow.
+    Defines who can approve at this level and under what conditions.
+    """
+
+    workflow = models.ForeignKey(
+        LeaveApprovalWorkflow,
+        on_delete=models.CASCADE,
+        related_name="steps",
+        help_text="Workflow this step belongs to",
+    )
+
+    order = models.IntegerField(
+        help_text="Order of this step in the workflow (1, 2, 3...)",
+    )
+
+    APPROVAL_TYPES = [
+        ("user", "Specific User"),
+        ("permission_group", "Permission Group"),
+        ("role", "By Role"),
+        ("department_manager", "Employee's Department Manager"),
+        ("dynamic_hr", "Dynamic HR Selection"),
+        ("dynamic_gm", "Dynamic General Manager Selection"),
+    ]
+
+    approval_type = models.CharField(
+        max_length=20,
+        choices=APPROVAL_TYPES,
+        help_text="How approvers are determined for this step",
+    )
+
+    # For 'user' type
+    specific_user = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="leave_approval_steps",
+        help_text="Specific user who must approve (for 'user' type)",
+    )
+
+    # For 'permission_group' type - reference existing accounts.PermissionGroup
+    permission_group = models.ForeignKey(
+        "accounts.PermissionGroup",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="leave_approval_steps",
+        help_text="Permission group whose members can approve (for 'permission_group' type)",
+    )
+
+    # For 'role' type - use existing user roles
+    required_role = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Required user role for approval (for 'role' type)",
+    )
+
+    # Duplicate prevention and selection
+    max_approvers = models.IntegerField(
+        default=1,
+        help_text="Maximum number of approvers to select (prevents duplicates)",
+    )
+
+    SELECTION_CRITERIA = [
+        ("first", "First by seniority"),
+        ("random", "Random selection"),
+        ("round_robin", "Round robin"),
+    ]
+
+    selection_criteria = models.CharField(
+        max_length=20,
+        choices=SELECTION_CRITERIA,
+        default="first",
+        help_text="How to select approvers when multiple are eligible",
+    )
+
+    # Step metadata
+    name = models.CharField(
+        max_length=100,
+        help_text="Display name for this approval step",
+    )
+
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of this approval step",
+    )
+
+    requires_notes = models.BooleanField(
+        default=False,
+        help_text="Whether approvers must provide notes for this step",
+    )
+
+    # Conditional logic (for future enhancement)
+    min_days_threshold = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Minimum leave days required to trigger this step",
+    )
+
+    leave_types = models.JSONField(
+        default=list,
+        help_text="Specific leave types this step applies to (empty = all types)",
+    )
+
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["workflow", "order"]
+        unique_together = ["workflow", "order"]
+        indexes = [
+            models.Index(fields=["workflow", "order"]),
+            models.Index(fields=["approval_type"]),
+        ]
+
+    def __str__(self):
+        return f"{self.workflow.name} - Step {self.order}: {self.name}"
+
+    def clean(self):
+        """Validate step configuration."""
+        if self.approval_type == "user" and not self.specific_user:
+            raise ValidationError("Specific user is required for 'user' approval type.")
+
+        if self.approval_type == "permission_group" and not self.permission_group:
+            raise ValidationError(
+                "Permission group is required for 'permission_group' approval type."
+            )
+
+        if self.approval_type == "role" and not self.required_role:
+            raise ValidationError("Required role is required for 'role' approval type.")
+
+        if self.max_approvers < 1:
+            raise ValidationError("Maximum approvers must be at least 1.")
