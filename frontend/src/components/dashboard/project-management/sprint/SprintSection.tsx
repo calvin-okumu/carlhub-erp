@@ -1,11 +1,13 @@
 "use client";
 
+import { createSprint } from '@/api/project_mgmt';
 import type { Sprint } from '@/api/types';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
 import { useProject } from '@/context/ProjectContext';
 import { useSprintsContext } from '@/context/SprintsContext';
 import { useMilestonesContext } from '@/context/MilestonesContext';
+import { getAccessToken } from '@/utils/auth';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import SprintModal from './SprintModal';
@@ -13,7 +15,7 @@ import SprintTable from './SprintTable';
 
 export default function SprintSection() {
     const { project } = useProject();
-    const { sprints, loading, error, updateSprintOptimistically, removeSprintOptimistically } = useSprintsContext();
+    const { sprints, loading, error, updateSprintOptimistically, removeSprintOptimistically, refetch } = useSprintsContext();
     const { milestones } = useMilestonesContext();
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -49,17 +51,24 @@ export default function SprintSection() {
         milestone: string;
     }) => {
         try {
+            const token = getAccessToken();
+            if (!token || !project?.id) {
+                throw new Error('Authentication or project data missing');
+            }
+
             if (modalMode === 'add') {
-                // For add, we'll need to make the API call and then update optimistically
-                // For now, just close the modal - the actual implementation would need the API response
-                console.log('Add sprint:', data);
+                // Call API to create sprint
+                await createSprint(token, project.id, data);
+                
+                // Refetch sprints to get updated list
+                refetch();
             } else if (selectedSprint) {
                 updateSprintOptimistically(selectedSprint.slug, data);
             }
             setModalOpen(false);
         } catch (error) {
             console.error('Error saving sprint:', error);
-            // TODO: Show error message
+            // TODO: Show error message to user
         }
     };
 

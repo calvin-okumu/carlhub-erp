@@ -51,15 +51,15 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
         [filteredRequests, page, itemsPerPage]
     );
 
-    const handleApprove = useCallback((requestId: string) => {
+    const handleApprove = useCallback((requestSlug: string) => {
         if (confirm("Are you sure you want to approve this leave request?")) {
-            onApprove(requestId);
+            onApprove(requestSlug);
         }
     }, [onApprove]);
 
-    const handleReject = useCallback((requestId: string) => {
+    const handleReject = useCallback((requestSlug: string) => {
         if (confirm("Are you sure you want to reject this leave request?")) {
-            onReject(requestId);
+            onReject(requestSlug);
         }
     }, [onReject]);
 
@@ -91,20 +91,20 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
                         {expandedRequestId === request.id ? 'Hide' : 'View'}
                     </Button>
                     <Button
-                        onClick={() => handleApprove(request.id)}
+                        onClick={() => handleApprove(request.slug)}
                         variant="gradient"
                         size="sm"
-                        disabled={approvingId === request.id}
+                        disabled={approvingId === request.slug}
                         className="text-green-600 border-green-300 hover:bg-green-50"
                     >
                         <CheckCircle className="h-4 w-4 mr-2" />
-                        {approvingId === request.id ? 'Approving...' : 'Approve'}
+                        {approvingId === request.slug ? 'Approving...' : 'Approve'}
                     </Button>
                     <Button
-                        onClick={() => handleReject(request.id)}
+                        onClick={() => handleReject(request.slug)}
                         variant="danger"
                         size="sm"
-                        disabled={rejectingId === request.id}
+                        disabled={rejectingId === request.slug}
                         className="text-red-600 border-red-300 hover:bg-red-50"
                     >
                         <X className="h-4 w-4 mr-2" />
