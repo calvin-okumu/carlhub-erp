@@ -3,6 +3,7 @@ from decimal import Decimal
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from accounts.email_service import EmailService
@@ -49,6 +50,13 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     ordering = ["-applied_date"]
     lookup_field = "slug"
 
+    def get_object(self):
+        """Override to provide custom error message for not found objects."""
+        try:
+            return super().get_object()
+        except LeaveRequest.DoesNotExist:
+            raise NotFound("Leave request not found.") from None
+
     def get_queryset(self):
         """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
@@ -83,7 +91,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             return user_tenant.is_approved and (
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             )
-        except:
+        except Exception:
             return False
 
     def perform_create(self, serializer):
@@ -333,7 +341,7 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
             return user_tenant.is_approved and (
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             )
-        except:
+        except Exception:
             return False
 
 
@@ -391,5 +399,5 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
             return user_tenant.is_approved and (
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             )
-        except:
+        except Exception:
             return False
