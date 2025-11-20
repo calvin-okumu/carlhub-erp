@@ -1,25 +1,23 @@
+import { apiCall } from "./api-wrapper";
 import { API_BASE } from "./index";
 import type {
-  LeaveRequest,
-  LeaveBalance,
-  LeavePolicy,
-  CreateLeaveRequestData,
-  ApproveLeaveRequestData,
-  PaginatedResponse
+    ApproveLeaveRequestData,
+    CreateLeaveRequestData,
+    LeaveBalance,
+    LeavePolicy,
+    LeaveRequest,
+    PaginatedResponse,
 } from "./types";
-import { apiCall } from "./api-wrapper";
 
 // Leave Requests API
-export const getLeaveRequests = async (
-  params?: {
-    status?: string;
-    leave_type?: string;
-    employee?: number;
-    approved_by?: number;
-    page?: number;
-    page_size?: number;
-  }
-): Promise<PaginatedResponse<LeaveRequest>> => {
+export const getLeaveRequests = async (params?: {
+  status?: string;
+  leave_type?: string;
+  employee?: number;
+  approved_by?: number;
+  page?: number;
+  page_size?: number;
+}): Promise<PaginatedResponse<LeaveRequest>> => {
   const searchParams = new URLSearchParams();
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -29,9 +27,12 @@ export const getLeaveRequests = async (
     });
   }
 
-  return await apiCall<PaginatedResponse<LeaveRequest>>(`${API_BASE}/leave/requests/?${searchParams}`, {
-    method: "GET",
-  });
+  return await apiCall<PaginatedResponse<LeaveRequest>>(
+    `${API_BASE}/leave/requests/?${searchParams}`,
+    {
+      method: "GET",
+    },
+  );
 };
 
 export const getLeaveRequest = async (id: string): Promise<LeaveRequest> => {
@@ -40,14 +41,19 @@ export const getLeaveRequest = async (id: string): Promise<LeaveRequest> => {
   });
 };
 
-export const createLeaveRequest = async (data: CreateLeaveRequestData): Promise<LeaveRequest> => {
+export const createLeaveRequest = async (
+  data: CreateLeaveRequestData,
+): Promise<LeaveRequest> => {
   return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/`, {
     method: "POST",
     body: JSON.stringify(data),
   });
 };
 
-export const updateLeaveRequest = async (id: string, data: Partial<CreateLeaveRequestData>): Promise<LeaveRequest> => {
+export const updateLeaveRequest = async (
+  id: string,
+  data: Partial<CreateLeaveRequestData>,
+): Promise<LeaveRequest> => {
   return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/`, {
     method: "PATCH",
     body: JSON.stringify(data),
@@ -60,36 +66,49 @@ export const deleteLeaveRequest = async (id: string): Promise<void> => {
   });
 };
 
-export const approveLeaveRequest = async (id: string, data?: ApproveLeaveRequestData): Promise<LeaveRequest> => {
-  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/approve/`, {
-    method: "POST",
-    body: JSON.stringify(data || {}),
-  });
+export const approveLeaveRequest = async (
+  id: string,
+  data?: ApproveLeaveRequestData,
+): Promise<LeaveRequest> => {
+  return await apiCall<LeaveRequest>(
+    `${API_BASE}/leave/requests/${id}/approve/`,
+    {
+      method: "POST",
+      body: JSON.stringify(data || {}),
+    },
+  );
 };
 
-export const rejectLeaveRequest = async (id: string, data?: ApproveLeaveRequestData): Promise<LeaveRequest> => {
-  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/reject/`, {
-    method: "POST",
-    body: JSON.stringify(data || {}),
-  });
+export const rejectLeaveRequest = async (
+  id: string,
+  data?: ApproveLeaveRequestData,
+): Promise<LeaveRequest> => {
+  return await apiCall<LeaveRequest>(
+    `${API_BASE}/leave/requests/${id}/reject/`,
+    {
+      method: "POST",
+      body: JSON.stringify(data || {}),
+    },
+  );
 };
 
 export const cancelLeaveRequest = async (id: string): Promise<LeaveRequest> => {
-  return await apiCall<LeaveRequest>(`${API_BASE}/leave/requests/${id}/cancel/`, {
-    method: "POST",
-  });
+  return await apiCall<LeaveRequest>(
+    `${API_BASE}/leave/requests/${id}/cancel/`,
+    {
+      method: "POST",
+    },
+  );
 };
 
 // Leave Balances API
-export const getLeaveBalances = async (
-  params?: {
-    employee?: number;
-    leave_type?: string;
-    year?: number;
-    page?: number;
-    page_size?: number;
-  }
-): Promise<PaginatedResponse<LeaveBalance>> => {
+export const getLeaveBalances = async (params?: {
+  employee?: number;
+  leave_type?: string;
+  year?: number;
+  page?: number;
+  page_size?: number;
+}): Promise<PaginatedResponse<LeaveBalance>> => {
   const searchParams = new URLSearchParams();
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -99,9 +118,12 @@ export const getLeaveBalances = async (
     });
   }
 
-  return await apiCall<PaginatedResponse<LeaveBalance>>(`${API_BASE}/leave/balances/?${searchParams}`, {
-    method: "GET",
-  });
+  return await apiCall<PaginatedResponse<LeaveBalance>>(
+    `${API_BASE}/leave/balances/?${searchParams}`,
+    {
+      method: "GET",
+    },
+  );
 };
 
 export const getLeaveBalance = async (id: string): Promise<LeaveBalance> => {
@@ -111,14 +133,12 @@ export const getLeaveBalance = async (id: string): Promise<LeaveBalance> => {
 };
 
 // Leave Policies API
-export const getLeavePolicies = async (
-  params?: {
-    leave_type?: string;
-    is_active?: boolean;
-    page?: number;
-    page_size?: number;
-  }
-): Promise<PaginatedResponse<LeavePolicy>> => {
+export const getLeavePolicies = async (params?: {
+  leave_type?: string;
+  is_active?: boolean;
+  page?: number;
+  page_size?: number;
+}): Promise<PaginatedResponse<LeavePolicy>> => {
   const searchParams = new URLSearchParams();
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -128,9 +148,12 @@ export const getLeavePolicies = async (
     });
   }
 
-  return await apiCall<PaginatedResponse<LeavePolicy>>(`${API_BASE}/leave/policies/?${searchParams}`, {
-    method: "GET",
-  });
+  return await apiCall<PaginatedResponse<LeavePolicy>>(
+    `${API_BASE}/leave/policies/?${searchParams}`,
+    {
+      method: "GET",
+    },
+  );
 };
 
 export const getLeavePolicy = async (id: string): Promise<LeavePolicy> => {
@@ -138,3 +161,43 @@ export const getLeavePolicy = async (id: string): Promise<LeavePolicy> => {
     method: "GET",
   });
 };
+
+export const createLeavePolicy = async (data: {
+  leave_type: string;
+  annual_entitlement: number;
+  max_consecutive_days: number;
+  notice_period_days: number;
+  carry_over_allowed: boolean;
+  max_carry_over?: number;
+  auto_approve_max_days?: number;
+  is_active: boolean;
+}): Promise<LeavePolicy> => {
+  return await apiCall<LeavePolicy>(`${API_BASE}/leave/policies/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+};
+export const updateLeavePolicy = async (
+  slug: string,
+  data: Partial<LeavePolicy>,
+): Promise<LeavePolicy> => {
+  return await apiCall<LeavePolicy>(`${API_BASE}/leave/policies/${slug}/`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+};
+export const patchLeavePolicy = async (
+  slug: string,
+  data: Partial<LeavePolicy>,
+): Promise<LeavePolicy> => {
+  return await apiCall<LeavePolicy>(`${API_BASE}/leave/policies/${slug}/`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+};
+export const deleteLeavePolicy = async (slug: string): Promise<void> => {
+  await apiCall<void>(`${API_BASE}/leave/policies/${slug}/`, {
+    method: "DELETE",
+  });
+};
+

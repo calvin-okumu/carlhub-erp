@@ -4,8 +4,8 @@ import { getUserTenants } from '@/api/crm';
 import type { Milestone, UserTenant } from '@/api/types';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
-import { useProject } from '@/context/ProjectContext';
 import { useMilestonesContext } from '@/context/MilestonesContext';
+import { useProject } from '@/context/ProjectContext';
 import { getAccessToken } from '@/utils/auth';
 import { Plus } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -13,7 +13,7 @@ import MilestoneModal from './MilestoneModal';
 import MilestoneTable from './MilestoneTable';
 
 interface MilestoneSectionProps {
-    tenant?: number;
+    tenant: number;
 }
 
 export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
@@ -31,7 +31,7 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
             if (!token) return;
 
             try {
-                const data = await getUserTenants(token);
+                const data = await getUserTenants();
                 setUsers(data);
             } catch (err) {
                 console.error('Failed to fetch users:', err);
@@ -107,7 +107,7 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
                 mode={modalMode}
                 milestone={selectedMilestone || undefined}
                 projectSlug={project?.slug || ''}
-                tenant={tenantId}
+                tenant={tenant}
                 assignees={users}
                 projectStart={project?.start_date}
                 projectEnd={project?.end_date}
