@@ -548,7 +548,7 @@ class LeaveAnalyticsService:
             # Handle workflow step levels (format: step_{order}_{name})
             if level.startswith("step_"):
                 # For workflow steps, check if user is in the resolved approvers
-                approval_chain = cls.get_approval_chain(leave_request)
+                approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
                 for step_level, approver in approval_chain:
                     if step_level == level and approver == user:
                         return True, "User is designated approver for this step"
@@ -637,7 +637,8 @@ class LeaveAnalyticsService:
                         "approver": approver,
                         "status": action,
                         "notes": notes,
-                        "order": cls.APPROVAL_SEQUENCE.index(current_level) + 1,
+                        "order": LeaveApprovalWorkflowService.APPROVAL_SEQUENCE.index(current_level)
+                        + 1,
                         "approved_date": timezone.now(),
                     },
                 )
@@ -716,7 +717,7 @@ class LeaveAnalyticsService:
     @classmethod
     def _process_approval_action(cls, leave_request, approver, current_level):
         """Process approval action and advance workflow."""
-        approval_chain = cls.get_approval_chain(leave_request)
+        approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
 
         # Find current position in approval chain
         current_index = None
@@ -727,9 +728,11 @@ class LeaveAnalyticsService:
 
         if current_index is None:
             # Fallback for legacy levels
-            if current_level in cls.APPROVAL_SEQUENCE:
-                current_index = cls.APPROVAL_SEQUENCE.index(current_level)
-                approval_chain = [(level, None) for level in cls.APPROVAL_SEQUENCE]
+            if current_level in LeaveApprovalWorkflowService.APPROVAL_SEQUENCE:
+                current_index = LeaveApprovalWorkflowService.APPROVAL_SEQUENCE.index(current_level)
+                approval_chain = [
+                    (level, None) for level in LeaveApprovalWorkflowService.APPROVAL_SEQUENCE
+                ]
             else:
                 return {
                     "success": False,
@@ -783,12 +786,12 @@ class LeaveAnalyticsService:
         Get comprehensive workflow status for display.
         """
         approval_history = leave_request.get_approval_history()
-        approval_chain = cls.get_approval_chain(leave_request)
+        approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
 
         # Build workflow status
         workflow_steps = []
 
-        for i, level in enumerate(cls.APPROVAL_SEQUENCE):
+        for i, level in enumerate(LeaveApprovalWorkflowService.APPROVAL_SEQUENCE):
             # Find approver for this level
             approver_info = next((item for item in approval_chain if item[0] == level), None)
             approver_name = approver_info[1].get_full_name() if approver_info else None
@@ -806,7 +809,9 @@ class LeaveAnalyticsService:
                 step_status = approval_record.status
                 approved_date = approval_record.approved_date
                 notes = approval_record.notes
-            elif i < cls.APPROVAL_SEQUENCE.index(leave_request.current_approval_level):
+            elif i < LeaveApprovalWorkflowService.APPROVAL_SEQUENCE.index(
+                leave_request.current_approval_level
+            ):
                 step_status = "approved"
             elif level == leave_request.current_approval_level and leave_request.is_pending:
                 step_status = "pending"
@@ -847,7 +852,7 @@ class LeaveAnalyticsService:
         Initialize approval workflow for a new leave request.
         Uses configured workflow if available, otherwise dynamic logic.
         """
-        approval_chain = cls.get_approval_chain(leave_request)
+        approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
 
         if not approval_chain:
             # No approval chain, auto-approve if tenant owner or admin
