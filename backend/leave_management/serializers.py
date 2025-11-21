@@ -190,7 +190,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             return False
 
         if obj.is_pending:
-            can_approve, _ = LeaveApprovalWorkflowService.can_approve_at_level(
+            can_approve, _ = LeaveAnalyticsService.can_approve_at_level(
                 request.user, obj, obj.current_approval_level
             )
             return can_approve
