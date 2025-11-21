@@ -173,6 +173,382 @@ class LeaveApprovalWorkflowService:
         # Last resort: return empty chain (shouldn't happen in properly configured tenant)
         return approval_chain
 
+    @classmethod
+    def can_approve_at_level(cls, user, leave_request, level):
+        """
+        Check if user can approve at the specified level.
+        Handles both legacy levels and new workflow step levels.
+        """
+        try:
+            user_tenant = user.usertenant
+
+            # Basic checks
+            if user_tenant.tenant != leave_request.tenant:
+                return (
+                    False,
+                    f"User is not in the same tenant (user tenant: {user_tenant.tenant}, request tenant: {leave_request.tenant})",
+                )
+
+            if not leave_request.is_pending:
+                return False, f"Leave request is not pending (status: {leave_request.status})"
+
+            # Tenant Owners have full approval rights for all levels
+            if user_tenant.role == "Tenant Owner" or user_tenant.is_owner:
+                return (
+                    True,
+                    f"Tenant Owner has full approval privileges (role: {user_tenant.role}, is_owner: {user_tenant.is_owner})",
+                )
+
+            # Handle workflow step levels (format: step_{order}_{name})
+            if level.startswith("step_"):
+                # For workflow steps, check if user is in the resolved approvers
+                approval_chain = cls.get_approval_chain(leave_request)
+                for step_level, approver in approval_chain:
+                    if step_level == level and approver == user:
+                        return True, f"User is designated approver for this step (level: {level})"
+                return (
+                    False,
+                    f"User is not authorized for this workflow step (level: {level}, user: {user.email}, chain: {[f'{lvl}:{approver.email if approver else None}' for lvl, approver in approval_chain]})",
+                )
+
+            # Legacy role-based permissions
+            if level == "department_manager":
+                # Department managers can approve at their level
+                if user_tenant.role == "Department Manager":
+                    # Check if user is the manager of the employee's department
+                    try:
+                        employee_dept = leave_request.employee.usertenant.department
+                        return employee_dept.manager == user, "User is not the department manager"
+                    except Exception:
+                        return False, "Cannot determine department"
+
+                # HR managers and above can approve department level
+                if user_tenant.role in ["HR Manager", "General Manager", "Tenant Owner"]:
+                    return True, "Has approval privileges"
+
+            elif level == "hr_manager":
+                # HR managers and above can approve at HR level
+                if user_tenant.role in ["HR Manager", "General Manager", "Tenant Owner"]:
+                    return True, "Has HR approval privileges"
+
+            elif level == "general_manager":
+                # General managers and owners can approve at general level
+                if user_tenant.role in ["General Manager", "Tenant Owner"]:
+                    return True, "Has general approval privileges"
+
+            return False, "Insufficient privileges for this approval level"
+
+        except Exception as e:
+            return False, f"Error checking approval permissions: {str(e)}"
+
+    @classmethod
+    def process_approval(cls, leave_request, approver, action, notes="", request=None):
+        """
+        Process an approval or rejection action.
+
+        Args:
+            leave_request: LeaveRequest instance
+            approver: User instance performing the action
+            action: 'approve' or 'reject'
+            notes: Optional notes from approver
+            request: HTTP request object for audit logging
+
+        Returns:
+            dict with success status and message
+        """
+        try:
+            with transaction.atomic():
+                current_level = leave_request.current_approval_level
+                original_status = leave_request.status
+
+                # Check if approver can approve at current level
+                can_approve, reason = cls.can_approve_at_level(
+                    approver, leave_request, current_level
+                )
+                if not can_approve:
+                    # Audit failed approval attempt
+                    AuditLogger.log_event(
+                        action="leave_request_approval_denied",
+                        resource_type="leave_request",
+                        user=approver,
+                        resource_id=str(leave_request.id),
+                        metadata={
+                            "request_id": leave_request.id,
+                            "employee": leave_request.employee.email,
+                            "leave_type": leave_request.leave_type,
+                            "current_level": current_level,
+                            "reason": reason,
+                            "action_attempted": action,
+                        },
+                        ip_address=get_client_ip(request) if request else None,
+                        user_agent=(
+                            getattr(request, "META", {}).get("HTTP_USER_AGENT") if request else None
+                        ),
+                    )
+                    return {"success": False, "message": reason, "status": leave_request.status}
+
+                # Create or update approval record
+                approval, created = LeaveApproval.objects.get_or_create(
+                    leave_request=leave_request,
+                    approval_level=current_level,
+                    defaults={
+                        "approver": approver,
+                        "status": action,
+                        "notes": notes,
+                        "order": cls.APPROVAL_SEQUENCE.index(current_level) + 1,
+                        "approved_date": timezone.now(),
+                    },
+                )
+
+                if not created:
+                    # Update existing approval
+                    approval.approver = approver
+                    approval.status = action
+                    approval.notes = notes
+                    approval.approved_date = timezone.now()
+                    approval.save()
+
+                # Process the action
+                if action == "approve":
+                    result = cls._process_approval_action(leave_request, approver, current_level)
+                elif action == "reject":
+                    result = cls._process_rejection_action(leave_request, approver, notes)
+                else:
+                    result = {
+                        "success": False,
+                        "message": "Invalid action",
+                        "status": leave_request.status,
+                    }
+
+                # Audit successful action
+                if result["success"]:
+                    AuditLogger.log_event(
+                        action=f"leave_request_{action}",
+                        resource_type="leave_request",
+                        user=approver,
+                        resource_id=str(leave_request.id),
+                        metadata={
+                            "request_id": leave_request.id,
+                            "employee": leave_request.employee.email,
+                            "leave_type": leave_request.leave_type,
+                            "dates": f"{leave_request.start_date} to {leave_request.end_date}",
+                            "days_requested": str(leave_request.days_requested),
+                            "approval_level": current_level,
+                            "previous_status": original_status,
+                            "new_status": result.get("status", leave_request.status),
+                            "notes": notes,
+                            "next_level": result.get("next_level"),
+                            "workflow_step": getattr(approval, "order", None),
+                        },
+                        ip_address=get_client_ip(request) if request else None,
+                        user_agent=(
+                            getattr(request, "META", {}).get("HTTP_USER_AGENT") if request else None
+                        ),
+                    )
+
+                return result
+
+        except Exception as e:
+            # Audit system errors
+            AuditLogger.log_event(
+                action="leave_request_error",
+                resource_type="leave_request",
+                user=approver,
+                resource_id=str(leave_request.id),
+                metadata={
+                    "request_id": leave_request.id,
+                    "employee": leave_request.employee.email,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                    "action_attempted": action,
+                    "current_level": getattr(leave_request, "current_approval_level", None),
+                },
+                ip_address=get_client_ip(request) if request else None,
+                user_agent=getattr(request, "META", {}).get("HTTP_USER_AGENT") if request else None,
+            )
+
+            return {
+                "success": False,
+                "message": "An error occurred while processing your request. Please try again or contact support.",
+                "status": leave_request.status,
+            }
+
+    @classmethod
+    def _process_approval_action(cls, leave_request, approver, current_level):
+        """Process approval action and advance workflow."""
+        approval_chain = cls.get_approval_chain(leave_request)
+
+        # Find current position in approval chain
+        current_index = None
+        for i, (level, _) in enumerate(approval_chain):
+            if level == current_level:
+                current_index = i
+                break
+
+        if current_index is None:
+            # Fallback for legacy levels
+            if current_level in cls.APPROVAL_SEQUENCE:
+                current_index = cls.APPROVAL_SEQUENCE.index(current_level)
+                approval_chain = [(level, None) for level in cls.APPROVAL_SEQUENCE]
+            else:
+                return {
+                    "success": False,
+                    "message": "Invalid approval level",
+                    "status": leave_request.status,
+                }
+
+        if current_index < len(approval_chain) - 1:
+            # Move to next level
+            next_level = approval_chain[current_index + 1][0]
+            leave_request.current_approval_level = next_level
+            leave_request.status = (
+                f"pending_{next_level}"
+                if not next_level.startswith("step_")
+                else f"pending_{next_level.split('_', 2)[-1]}"
+            )
+            message = f"Approved at {current_level} level. Now pending {next_level} approval."
+        else:
+            # Final approval
+            leave_request.status = "approved"
+            leave_request.final_approver = approver
+            leave_request.approved_by = approver  # For backward compatibility
+            leave_request.approved_date = timezone.now()
+            message = "Leave request fully approved."
+
+        leave_request.save()
+
+        return {
+            "success": True,
+            "message": message,
+            "status": leave_request.status,
+            "next_level": (
+                leave_request.current_approval_level if leave_request.is_pending else None
+            ),
+        }
+
+    @classmethod
+    def _process_rejection_action(cls, leave_request, approver, notes):
+        """Process rejection action."""
+        leave_request.status = "rejected"
+        leave_request.approved_by = approver  # For backward compatibility
+        leave_request.approved_date = timezone.now()
+        leave_request.approval_notes = notes
+        leave_request.save()
+
+        return {"success": True, "message": "Leave request rejected.", "status": "rejected"}
+
+    @classmethod
+    def get_workflow_status(cls, leave_request):
+        """
+        Get comprehensive workflow status for display.
+        """
+        approval_history = leave_request.get_approval_history()
+        approval_chain = cls.get_approval_chain(leave_request)
+
+        # Build workflow status
+        workflow_steps = []
+
+        for i, level in enumerate(cls.APPROVAL_SEQUENCE):
+            # Find approver for this level
+            approver_info = next((item for item in approval_chain if item[0] == level), None)
+            approver_name = approver_info[1].get_full_name() if approver_info else None
+
+            # Find approval record for this level
+            approval_record = next(
+                (item for item in approval_history if item.approval_level == level), None
+            )
+
+            step_status = "pending"
+            approved_date = None
+            notes = ""
+
+            if approval_record:
+                step_status = approval_record.status
+                approved_date = approval_record.approved_date
+                notes = approval_record.notes
+            elif (
+                leave_request.current_approval_level in cls.APPROVAL_SEQUENCE
+                and i < cls.APPROVAL_SEQUENCE.index(leave_request.current_approval_level)
+            ):
+                step_status = "approved"
+            elif level == leave_request.current_approval_level and leave_request.is_pending:
+                step_status = "pending"
+            elif leave_request.status == "rejected":
+                step_status = "skipped"
+            else:
+                step_status = "pending"
+
+            workflow_steps.append(
+                {
+                    "level": level,
+                    "level_display": dict(LeaveApproval.APPROVAL_LEVEL_CHOICES).get(level, level),
+                    "approver": approver_name,
+                    "status": step_status,
+                    "approved_date": approved_date,
+                    "notes": notes,
+                    "order": i + 1,
+                }
+            )
+
+        return {
+            "current_status": leave_request.get_workflow_status_display(),
+            "current_level": leave_request.current_approval_level,
+            "is_pending": leave_request.is_pending,
+            "is_approved": leave_request.is_approved,
+            "is_rejected": leave_request.is_rejected,
+            "steps": workflow_steps,
+            "next_approver": (
+                leave_request.get_current_approver().get_full_name()
+                if leave_request.get_current_approver()
+                else None
+            ),
+        }
+
+    @classmethod
+    def initialize_workflow(cls, leave_request):
+        """
+        Initialize approval workflow for a new leave request.
+        Uses configured workflow if available, otherwise dynamic logic.
+        """
+        approval_chain = cls.get_approval_chain(leave_request)
+
+        if not approval_chain:
+            # No approval chain, auto-approve if tenant owner or admin
+            try:
+                employee_tenant = leave_request.employee.usertenant
+                if employee_tenant.role in ["Tenant Owner"]:
+                    leave_request.status = "approved"
+                    leave_request.final_approver = leave_request.employee
+                    leave_request.approved_by = leave_request.employee
+                    leave_request.approved_date = timezone.now()
+                else:
+                    leave_request.status = "pending_department_manager"
+                    leave_request.current_approval_level = "department_manager"
+            except Exception:
+                leave_request.status = "pending_department_manager"
+                leave_request.current_approval_level = "department_manager"
+        else:
+            # Start with first level in chain
+            first_level = approval_chain[0][0] if approval_chain else "department_manager"
+            leave_request.status = (
+                f"pending_{first_level}" if "_" in first_level else f"pending_{first_level}"
+            )
+            leave_request.current_approval_level = first_level
+
+        leave_request.save()
+
+        # Create pending approval records
+        for i, (level, approver) in enumerate(approval_chain):
+            LeaveApproval.objects.get_or_create(
+                leave_request=leave_request,
+                approval_level=level,
+                defaults={
+                    "approver": approver,
+                    "status": "pending",
+                    "order": i + 1,
+                },
+            )
+
 
 class LeaveNotificationService:
     """Advanced notification service for leave management."""
@@ -493,7 +869,7 @@ class LeaveAnalyticsService:
             "total_requests": requests.count(),
             "approved_requests": requests.filter(status="approved").count(),
             "rejected_requests": requests.filter(status="rejected").count(),
-            "total_days_taken": sum(r.total_days for r in requests.filter(status="approved")),
+            "total_days_taken": sum(r.days_requested for r in requests.filter(status="approved")),
             "avg_request_frequency": requests.count() / max(1, months),
             "preferred_leave_types": LeaveAnalyticsService._get_preferred_leave_types(requests),
             "seasonal_patterns": LeaveAnalyticsService._analyze_seasonal_patterns(requests),
@@ -528,365 +904,3 @@ class LeaveAnalyticsService:
             }
 
         return {"peak_month": None, "peak_count": 0, "seasonality_score": 0}
-
-    @classmethod
-    def can_approve_at_level(cls, user, leave_request, level):
-        """
-        Check if user can approve at the specified level.
-        Handles both legacy levels and new workflow step levels.
-        """
-        try:
-            user_tenant = user.usertenant
-
-            # Basic checks
-            if user_tenant.tenant != leave_request.tenant:
-                return False, "User is not in the same tenant"
-
-            if not leave_request.is_pending:
-                return False, "Leave request is not pending"
-
-            # Handle workflow step levels (format: step_{order}_{name})
-            if level.startswith("step_"):
-                # For workflow steps, check if user is in the resolved approvers
-                approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
-                for step_level, approver in approval_chain:
-                    if step_level == level and approver == user:
-                        return True, "User is designated approver for this step"
-                return False, "User is not authorized for this workflow step"
-
-            # Legacy role-based permissions
-            if level == "department_manager":
-                # Department managers can approve at their level
-                if user_tenant.role == "Department Manager":
-                    # Check if user is the manager of the employee's department
-                    try:
-                        employee_dept = leave_request.employee.usertenant.department
-                        return employee_dept.manager == user, "User is not the department manager"
-                    except Exception:
-                        return False, "Cannot determine department"
-
-                # HR managers and above can approve department level
-                if user_tenant.role in ["HR Manager", "General Manager", "Tenant Owner"]:
-                    return True, "Has approval privileges"
-
-            elif level == "hr_manager":
-                # HR managers and above can approve at HR level
-                if user_tenant.role in ["HR Manager", "General Manager", "Tenant Owner"]:
-                    return True, "Has HR approval privileges"
-
-            elif level == "general_manager":
-                # General managers and owners can approve at general level
-                if user_tenant.role in ["General Manager", "Tenant Owner"]:
-                    return True, "Has general approval privileges"
-
-            return False, "Insufficient privileges for this approval level"
-
-        except Exception as e:
-            return False, f"Error checking approval permissions: {str(e)}"
-
-    @classmethod
-    def process_approval(cls, leave_request, approver, action, notes="", request=None):
-        """
-        Process an approval or rejection action.
-
-        Args:
-            leave_request: LeaveRequest instance
-            approver: User instance performing the action
-            action: 'approve' or 'reject'
-            notes: Optional notes from approver
-            request: HTTP request object for audit logging
-
-        Returns:
-            dict with success status and message
-        """
-        try:
-            with transaction.atomic():
-                current_level = leave_request.current_approval_level
-                original_status = leave_request.status
-
-                # Check if approver can approve at current level
-                can_approve, reason = cls.can_approve_at_level(
-                    approver, leave_request, current_level
-                )
-                if not can_approve:
-                    # Audit failed approval attempt
-                    AuditLogger.log(
-                        action="leave_request_approval_denied",
-                        user=approver,
-                        resource=f"leave_request_{leave_request.id}",
-                        details={
-                            "request_id": leave_request.id,
-                            "employee": leave_request.employee.email,
-                            "leave_type": leave_request.leave_type,
-                            "current_level": current_level,
-                            "reason": reason,
-                            "action_attempted": action,
-                        },
-                        ip_address=get_client_ip(request) if request else None,
-                        user_agent=(
-                            getattr(request, "META", {}).get("HTTP_USER_AGENT") if request else None
-                        ),
-                    )
-                    return {"success": False, "message": reason, "status": leave_request.status}
-
-                # Create or update approval record
-                approval, created = LeaveApproval.objects.get_or_create(
-                    leave_request=leave_request,
-                    approval_level=current_level,
-                    defaults={
-                        "approver": approver,
-                        "status": action,
-                        "notes": notes,
-                        "order": LeaveApprovalWorkflowService.APPROVAL_SEQUENCE.index(current_level)
-                        + 1,
-                        "approved_date": timezone.now(),
-                    },
-                )
-
-                if not created:
-                    # Update existing approval
-                    approval.approver = approver
-                    approval.status = action
-                    approval.notes = notes
-                    approval.approved_date = timezone.now()
-                    approval.save()
-
-                # Process the action
-                if action == "approve":
-                    result = cls._process_approval_action(leave_request, approver, current_level)
-                elif action == "reject":
-                    result = cls._process_rejection_action(leave_request, approver, notes)
-                else:
-                    result = {
-                        "success": False,
-                        "message": "Invalid action",
-                        "status": leave_request.status,
-                    }
-
-                # Audit successful action
-                if result["success"]:
-                    AuditLogger.log(
-                        action=f"leave_request_{action}",
-                        user=approver,
-                        resource=f"leave_request_{leave_request.id}",
-                        details={
-                            "request_id": leave_request.id,
-                            "employee": leave_request.employee.email,
-                            "leave_type": leave_request.leave_type,
-                            "dates": f"{leave_request.start_date} to {leave_request.end_date}",
-                            "days_requested": str(leave_request.total_days),
-                            "approval_level": current_level,
-                            "previous_status": original_status,
-                            "new_status": result.get("status", leave_request.status),
-                            "notes": notes,
-                            "next_level": result.get("next_level"),
-                            "workflow_step": getattr(approval, "order", None),
-                        },
-                        ip_address=get_client_ip(request) if request else None,
-                        user_agent=(
-                            getattr(request, "META", {}).get("HTTP_USER_AGENT") if request else None
-                        ),
-                    )
-
-                return result
-
-        except Exception as e:
-            # Audit system errors
-            AuditLogger.log(
-                action="leave_request_error",
-                user=approver,
-                resource=f"leave_request_{leave_request.id}",
-                details={
-                    "request_id": leave_request.id,
-                    "employee": leave_request.employee.email,
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                    "action_attempted": action,
-                    "current_level": getattr(leave_request, "current_approval_level", None),
-                },
-                ip_address=get_client_ip(request) if request else None,
-                user_agent=getattr(request, "META", {}).get("HTTP_USER_AGENT") if request else None,
-            )
-
-            return {
-                "success": False,
-                "message": "An error occurred while processing your request. Please try again or contact support.",
-                "status": leave_request.status,
-            }
-
-    @classmethod
-    def _process_approval_action(cls, leave_request, approver, current_level):
-        """Process approval action and advance workflow."""
-        approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
-
-        # Find current position in approval chain
-        current_index = None
-        for i, (level, _) in enumerate(approval_chain):
-            if level == current_level:
-                current_index = i
-                break
-
-        if current_index is None:
-            # Fallback for legacy levels
-            if current_level in LeaveApprovalWorkflowService.APPROVAL_SEQUENCE:
-                current_index = LeaveApprovalWorkflowService.APPROVAL_SEQUENCE.index(current_level)
-                approval_chain = [
-                    (level, None) for level in LeaveApprovalWorkflowService.APPROVAL_SEQUENCE
-                ]
-            else:
-                return {
-                    "success": False,
-                    "message": "Invalid approval level",
-                    "status": leave_request.status,
-                }
-
-        if current_index < len(approval_chain) - 1:
-            # Move to next level
-            next_level = approval_chain[current_index + 1][0]
-            leave_request.current_approval_level = next_level
-            leave_request.status = (
-                f"pending_{next_level}"
-                if not next_level.startswith("step_")
-                else f"pending_{next_level.split('_', 2)[-1]}"
-            )
-            message = f"Approved at {current_level} level. Now pending {next_level} approval."
-        else:
-            # Final approval
-            leave_request.status = "approved"
-            leave_request.final_approver = approver
-            leave_request.approved_by = approver  # For backward compatibility
-            leave_request.approved_date = timezone.now()
-            message = "Leave request fully approved."
-
-        leave_request.save()
-
-        return {
-            "success": True,
-            "message": message,
-            "status": leave_request.status,
-            "next_level": (
-                leave_request.current_approval_level if leave_request.is_pending else None
-            ),
-        }
-
-    @classmethod
-    def _process_rejection_action(cls, leave_request, approver, notes):
-        """Process rejection action."""
-        leave_request.status = "rejected"
-        leave_request.approved_by = approver  # For backward compatibility
-        leave_request.approved_date = timezone.now()
-        leave_request.approval_notes = notes
-        leave_request.save()
-
-        return {"success": True, "message": "Leave request rejected.", "status": "rejected"}
-
-    @classmethod
-    def get_workflow_status(cls, leave_request):
-        """
-        Get comprehensive workflow status for display.
-        """
-        approval_history = leave_request.get_approval_history()
-        approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
-
-        # Build workflow status
-        workflow_steps = []
-
-        for i, level in enumerate(LeaveApprovalWorkflowService.APPROVAL_SEQUENCE):
-            # Find approver for this level
-            approver_info = next((item for item in approval_chain if item[0] == level), None)
-            approver_name = approver_info[1].get_full_name() if approver_info else None
-
-            # Find approval record for this level
-            approval_record = next(
-                (item for item in approval_history if item.approval_level == level), None
-            )
-
-            step_status = "pending"
-            approved_date = None
-            notes = ""
-
-            if approval_record:
-                step_status = approval_record.status
-                approved_date = approval_record.approved_date
-                notes = approval_record.notes
-            elif i < LeaveApprovalWorkflowService.APPROVAL_SEQUENCE.index(
-                leave_request.current_approval_level
-            ):
-                step_status = "approved"
-            elif level == leave_request.current_approval_level and leave_request.is_pending:
-                step_status = "pending"
-            elif leave_request.status == "rejected":
-                step_status = "skipped"
-            else:
-                step_status = "pending"
-
-            workflow_steps.append(
-                {
-                    "level": level,
-                    "level_display": dict(LeaveApproval.APPROVAL_LEVEL_CHOICES).get(level, level),
-                    "approver": approver_name,
-                    "status": step_status,
-                    "approved_date": approved_date,
-                    "notes": notes,
-                    "order": i + 1,
-                }
-            )
-
-        return {
-            "current_status": leave_request.get_workflow_status_display(),
-            "current_level": leave_request.current_approval_level,
-            "is_pending": leave_request.is_pending,
-            "is_approved": leave_request.is_approved,
-            "is_rejected": leave_request.is_rejected,
-            "steps": workflow_steps,
-            "next_approver": (
-                leave_request.get_current_approver().get_full_name()
-                if leave_request.get_current_approver()
-                else None
-            ),
-        }
-
-    @classmethod
-    def initialize_workflow(cls, leave_request):
-        """
-        Initialize approval workflow for a new leave request.
-        Uses configured workflow if available, otherwise dynamic logic.
-        """
-        approval_chain = LeaveApprovalWorkflowService.get_approval_chain(leave_request)
-
-        if not approval_chain:
-            # No approval chain, auto-approve if tenant owner or admin
-            try:
-                employee_tenant = leave_request.employee.usertenant
-                if employee_tenant.role in ["Tenant Owner"]:
-                    leave_request.status = "approved"
-                    leave_request.final_approver = leave_request.employee
-                    leave_request.approved_by = leave_request.employee
-                    leave_request.approved_date = timezone.now()
-                else:
-                    leave_request.status = "pending_department_manager"
-                    leave_request.current_approval_level = "department_manager"
-            except Exception:
-                leave_request.status = "pending_department_manager"
-                leave_request.current_approval_level = "department_manager"
-        else:
-            # Start with first level in chain
-            first_level = approval_chain[0][0] if approval_chain else "department_manager"
-            leave_request.status = (
-                f"pending_{first_level}" if "_" in first_level else f"pending_{first_level}"
-            )
-            leave_request.current_approval_level = first_level
-
-        leave_request.save()
-
-        # Create pending approval records
-        for i, (level, approver) in enumerate(approval_chain):
-            LeaveApproval.objects.get_or_create(
-                leave_request=leave_request,
-                approval_level=level,
-                defaults={
-                    "approver": approver,
-                    "status": "pending",
-                    "order": i + 1,
-                },
-            )

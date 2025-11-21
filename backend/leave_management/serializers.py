@@ -5,14 +5,13 @@ from rest_framework import serializers
 from accounts.models import Invitation, UserTenant
 
 from .models import (
-    ApprovalLevelConfig,
     LeaveApproval,
     LeaveApprovalWorkflow,
     LeaveBalance,
     LeavePolicy,
     LeaveRequest,
 )
-from .services import LeaveAnalyticsService, LeaveApprovalWorkflowService
+from .services import LeaveApprovalWorkflowService
 
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
@@ -39,6 +38,8 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         help_text="Name of the final approver",
     )
     duration_display = serializers.CharField(read_only=True, help_text="Human-readable duration")
+    start_date = serializers.DateField(help_text="Leave start date")
+    end_date = serializers.DateField(help_text="Leave end date")
 
     # Workflow fields
     workflow_status = serializers.SerializerMethodField(
@@ -156,7 +157,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.OBJECT)
     def get_workflow_status(self, obj):
         """Get comprehensive workflow status."""
-        return LeaveAnalyticsService.get_workflow_status(obj)
+        return LeaveApprovalWorkflowService.get_workflow_status(obj)
 
     @extend_schema_field(OpenApiTypes.OBJECT)
     def get_approval_history(self, obj):
@@ -190,7 +191,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             return False
 
         if obj.is_pending:
-            can_approve, _ = LeaveAnalyticsService.can_approve_at_level(
+            can_approve, _ = LeaveApprovalWorkflowService.can_approve_at_level(
                 request.user, obj, obj.current_approval_level
             )
             return can_approve
@@ -267,6 +268,31 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"Unable to determine tenant context: {str(e)}"
                 ) from e
+
+        # Check for overlapping leave requests before creating
+        employee = validated_data.get("employee")
+        tenant = validated_data.get("tenant")
+        start_date = validated_data.get("start_date")
+        end_date = validated_data.get("end_date")
+
+        if employee and tenant and start_date and end_date:
+            from django.db.models import Q
+
+            overlapping_requests = (
+                LeaveRequest.objects.filter(employee=employee, tenant=tenant)
+                .exclude(status__in=["cancelled", "rejected"])
+                .filter(
+                    # Check for date overlaps: start_date or end_date falls within existing range,
+                    # or existing range falls within new range
+                    Q(start_date__lte=end_date, end_date__gte=start_date)
+                )
+            )
+
+            if overlapping_requests.exists():
+                raise serializers.ValidationError(
+                    "You already have a leave request that overlaps with these dates. "
+                    "Please check your existing requests or modify the dates."
+                )
 
         # Create the leave request
         leave_request = super().create(validated_data)
@@ -506,56 +532,16 @@ class LeaveApprovalActionSerializer(serializers.Serializer):
         return data
 
 
-class ApprovalLevelConfigSerializer(serializers.ModelSerializer):
-    """Serializer for approval level configurations."""
-
-    approval_type_display = serializers.CharField(
-        source="get_approval_type_display",
-        read_only=True,
-        help_text="Human-readable approval type",
-    )
-
-    specific_user_name = serializers.CharField(
-        source="specific_user.get_full_name",
-        read_only=True,
-        help_text="Full name of the specific user",
-    )
-
-    permission_group_name = serializers.CharField(
-        source="permission_group.name",
-        read_only=True,
-        help_text="Name of the permission group",
-    )
-
-    required_role_display = serializers.CharField(
-        source="get_required_role_display",
-        read_only=True,
-        help_text="Human-readable required role",
-    )
-
-    class Meta:
-        model = ApprovalLevelConfig
-        fields = [
-            "id",
-            "level",
-            "approval_type",
-            "approval_type_display",
-            "specific_user",
-            "specific_user_name",
-            "permission_group",
-            "permission_group_name",
-            "required_role",
-            "required_role_display",
-        ]
-        read_only_fields = ["id"]
-
-
 class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
     """Serializer for leave approval workflows."""
 
-    level_configs = ApprovalLevelConfigSerializer(many=True, read_only=True)
+    approval_levels_display = serializers.CharField(
+        source="get_approval_levels_display",
+        read_only=True,
+        help_text="Human-readable approval levels",
+    )
     number_of_levels = serializers.SerializerMethodField(
-        help_text="Number of approval levels in this workflow (maximum 5)",
+        help_text="Number of approval levels in this workflow",
     )
     created_by_name = serializers.CharField(
         source="created_by.get_full_name",
@@ -569,44 +555,31 @@ class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "description",
+            "approval_levels",
+            "approval_levels_display",
+            "custom_approvers",
+            "number_of_levels",
             "is_default",
             "is_active",
-            "level_configs",
-            "number_of_levels",
             "created_by",
             "created_by_name",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at", "created_by_name"]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by_name",
+            "approval_levels_display",
+            "number_of_levels",
+        ]
 
     def get_number_of_levels(self, obj):
         """Get the number of approval levels."""
-        return obj.level_configs.count()
+        return obj.number_of_levels
 
     def create(self, validated_data):
-        """Create workflow with level configs."""
-        level_configs_data = self.context.get("level_configs", [])
+        """Create workflow."""
         validated_data["created_by"] = self.context["request"].user
-
-        workflow = super().create(validated_data)
-
-        # Create level configs
-        for config_data in level_configs_data:
-            ApprovalLevelConfig.objects.create(workflow=workflow, **config_data)
-
-        return workflow
-
-    def update(self, instance, validated_data):
-        """Update workflow and level configs."""
-        level_configs_data = self.context.get("level_configs", [])
-
-        # Update workflow
-        instance = super().update(instance, validated_data)
-
-        # Delete existing configs and create new ones
-        instance.level_configs.all().delete()
-        for config_data in level_configs_data:
-            ApprovalLevelConfig.objects.create(workflow=instance, **config_data)
-
-        return instance
+        return super().create(validated_data)

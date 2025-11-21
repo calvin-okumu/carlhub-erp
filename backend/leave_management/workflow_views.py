@@ -1,11 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import ApprovalLevelConfig, LeaveApprovalWorkflow
+from .models import LeaveApprovalWorkflow
 from .permissions import CanManageLeavePolicies
-from .serializers import ApprovalLevelConfigSerializer, LeaveApprovalWorkflowSerializer
+from .serializers import LeaveApprovalWorkflowSerializer
 from .services import (
     LeaveAnalyticsService,
     LeaveApprovalWorkflowService,
@@ -36,12 +36,6 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
             if user_tenant:
                 return LeaveApprovalWorkflow.objects.filter(tenant=user_tenant.tenant)
             return LeaveApprovalWorkflow.objects.none()
-
-    def get_serializer_context(self):
-        """Add request context for serializer."""
-        context = super().get_serializer_context()
-        context["level_configs"] = self.request.data.get("level_configs", [])
-        return context
 
     def perform_create(self, serializer):
         """Set tenant when creating workflow."""
@@ -76,37 +70,6 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
         workflow.is_default = True
         workflow.save()
 
-        serializer = self.get_serializer(workflow)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["get"])
-    def level_configs(self, request, pk=None):
-        """Get level configurations for this workflow."""
-        workflow = self.get_object()
-        configs = workflow.level_configs.all()
-        serializer = ApprovalLevelConfigSerializer(configs, many=True)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["put"])
-    def update_configs(self, request, pk=None):
-        """Update level configurations for this workflow."""
-        workflow = self.get_object()
-        configs_data = request.data.get("level_configs", [])
-
-        # Validate configs
-        for config_data in configs_data:
-            config_serializer = ApprovalLevelConfigSerializer(data=config_data)
-            if not config_serializer.is_valid():
-                return Response(config_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        # Delete existing configs
-        workflow.level_configs.all().delete()
-
-        # Create new configs
-        for config_data in configs_data:
-            ApprovalLevelConfig.objects.create(workflow=workflow, **config_data)
-
-        # Return updated workflow
         serializer = self.get_serializer(workflow)
         return Response(serializer.data)
 
