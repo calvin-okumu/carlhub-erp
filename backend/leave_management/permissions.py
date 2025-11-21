@@ -15,7 +15,7 @@ def is_tenant_admin_or_owner(user):
         return user_tenant.is_approved and (
             user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
         )
-    except:
+    except Exception:
         return False
 
 
@@ -250,7 +250,7 @@ class CanManageLeavePolicies(permissions.BasePermission):
             # Check for HR role
             if user_tenant.role == "hr":
                 return True
-        except:
+        except Exception:
             pass
 
         return False

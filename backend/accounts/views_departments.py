@@ -80,7 +80,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
             # Employees see only active departments
             return queryset.filter(is_active=True)
 
-        except:
+        except Exception:
             return queryset.none()
 
     def _get_child_departments(self, department, dept_ids):
@@ -103,10 +103,10 @@ class DepartmentViewSet(viewsets.ModelViewSet):
                 from rest_framework.exceptions import ValidationError
 
                 raise ValidationError("Your tenant membership is not approved.")
-        except:
+        except Exception:
             from rest_framework.exceptions import ValidationError
 
-            raise ValidationError("Unable to determine tenant context.")
+            raise ValidationError("Unable to determine tenant context.") from None
 
     @action(detail=True, methods=["get"])
     def employees(self, request, slug=None):
@@ -216,7 +216,7 @@ class DepartmentViewSet(viewsets.ModelViewSet):
                         return True
 
             return False
-        except:
+        except Exception:
             return False
 
     def _is_parent_department(self, potential_parent, child):

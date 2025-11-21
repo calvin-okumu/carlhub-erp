@@ -48,6 +48,8 @@ from .serializers import (
     UserTenantSerializer,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class TenantScopedMixin:
     """
@@ -1627,9 +1629,7 @@ def approve_member_view(request):
 
         # Check if user is owner
         try:
-            user_tenant = UserTenant.objects.get(
-                user=request.user, tenant=request.tenant, is_owner=True
-            )
+            UserTenant.objects.get(user=request.user, tenant=request.tenant, is_owner=True)
         except UserTenant.DoesNotExist:
             return Response(
                 {"error": "Only owners can approve members"}, status=status.HTTP_403_FORBIDDEN
@@ -1677,10 +1677,6 @@ def approve_member_view(request):
 
         try:
             group = Group.objects.get(name=group_name)
-            member_user_tenant.user.groups.add(group)
-        except Group.DoesNotExist:
-            # Fallback: create group if it doesn't exist (shouldn't happen with migration)
-            group, created = Group.objects.get_or_create(name=group_name)
             member_user_tenant.user.groups.add(group)
         except Group.DoesNotExist:
             # Fallback: create group if it doesn't exist

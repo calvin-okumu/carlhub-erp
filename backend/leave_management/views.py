@@ -164,6 +164,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             request.user,
             "approve",
             action_serializer.validated_data.get("notes", ""),
+            request,  # Pass request for audit logging
         )
 
         if result["success"]:
@@ -195,7 +196,11 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
 
         # Process rejection through workflow
         result = LeaveApprovalWorkflowService.process_approval(
-            leave_request, request.user, "reject", action_serializer.validated_data.get("notes", "")
+            leave_request,
+            request.user,
+            "reject",
+            action_serializer.validated_data.get("notes", ""),
+            request,
         )
 
         if result["success"]:

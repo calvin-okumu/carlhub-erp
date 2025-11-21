@@ -4,7 +4,14 @@ from rest_framework import serializers
 
 from accounts.models import Invitation, UserTenant
 
-from .models import LeaveApproval, LeaveBalance, LeavePolicy, LeaveRequest
+from .models import (
+    ApprovalLevelConfig,
+    LeaveApproval,
+    LeaveApprovalWorkflow,
+    LeaveBalance,
+    LeavePolicy,
+    LeaveRequest,
+)
 from .services import LeaveApprovalWorkflowService
 
 
@@ -251,13 +258,15 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         f"You have pending invitations but haven't accepted any yet: "
                         f"{', '.join(invitation_info)}. Please accept an invitation to create leave requests."
-                    )
+                    ) from None
                 else:
                     raise serializers.ValidationError(
                         "You are not a member of any tenant. Only approved tenant members can create leave requests."
-                    )
+                    ) from None
             except Exception as e:
-                raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
+                raise serializers.ValidationError(
+                    f"Unable to determine tenant context: {str(e)}"
+                ) from e
 
         # Create the leave request
         leave_request = super().create(validated_data)
@@ -413,9 +422,11 @@ class LeavePolicySerializer(serializers.ModelSerializer):
             except UserTenant.DoesNotExist:
                 raise serializers.ValidationError(
                     "You are not a member of any tenant. Only approved tenant members can create leave policies."
-                )
+                ) from None
             except Exception as e:
-                raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
+                raise serializers.ValidationError(
+                    f"Unable to determine tenant context: {str(e)}"
+                ) from e
 
         return super().create(validated_data)
 
@@ -493,3 +504,109 @@ class LeaveApprovalActionSerializer(serializers.Serializer):
             raise serializers.ValidationError("Notes are required when rejecting a leave request.")
 
         return data
+
+
+class ApprovalLevelConfigSerializer(serializers.ModelSerializer):
+    """Serializer for approval level configurations."""
+
+    approval_type_display = serializers.CharField(
+        source="get_approval_type_display",
+        read_only=True,
+        help_text="Human-readable approval type",
+    )
+
+    specific_user_name = serializers.CharField(
+        source="specific_user.get_full_name",
+        read_only=True,
+        help_text="Full name of the specific user",
+    )
+
+    permission_group_name = serializers.CharField(
+        source="permission_group.name",
+        read_only=True,
+        help_text="Name of the permission group",
+    )
+
+    required_role_display = serializers.CharField(
+        source="get_required_role_display",
+        read_only=True,
+        help_text="Human-readable required role",
+    )
+
+    class Meta:
+        model = ApprovalLevelConfig
+        fields = [
+            "id",
+            "level",
+            "approval_type",
+            "approval_type_display",
+            "specific_user",
+            "specific_user_name",
+            "permission_group",
+            "permission_group_name",
+            "required_role",
+            "required_role_display",
+        ]
+        read_only_fields = ["id"]
+
+
+class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
+    """Serializer for leave approval workflows."""
+
+    level_configs = ApprovalLevelConfigSerializer(many=True, read_only=True)
+    number_of_levels = serializers.SerializerMethodField(
+        help_text="Number of approval levels in this workflow (maximum 5)",
+    )
+    created_by_name = serializers.CharField(
+        source="created_by.get_full_name",
+        read_only=True,
+        help_text="Name of the user who created this workflow",
+    )
+
+    class Meta:
+        model = LeaveApprovalWorkflow
+        fields = [
+            "id",
+            "name",
+            "description",
+            "is_default",
+            "is_active",
+            "level_configs",
+            "number_of_levels",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "created_by_name"]
+
+    def get_number_of_levels(self, obj):
+        """Get the number of approval levels."""
+        return obj.level_configs.count()
+
+    def create(self, validated_data):
+        """Create workflow with level configs."""
+        level_configs_data = self.context.get("level_configs", [])
+        validated_data["created_by"] = self.context["request"].user
+
+        workflow = super().create(validated_data)
+
+        # Create level configs
+        for config_data in level_configs_data:
+            ApprovalLevelConfig.objects.create(workflow=workflow, **config_data)
+
+        return workflow
+
+    def update(self, instance, validated_data):
+        """Update workflow and level configs."""
+        level_configs_data = self.context.get("level_configs", [])
+
+        # Update workflow
+        instance = super().update(instance, validated_data)
+
+        # Delete existing configs and create new ones
+        instance.level_configs.all().delete()
+        for config_data in level_configs_data:
+            ApprovalLevelConfig.objects.create(workflow=instance, **config_data)
+
+        return instance

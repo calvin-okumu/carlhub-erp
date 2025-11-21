@@ -128,11 +128,10 @@ class LeaveRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-applied_date"]
+        ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["tenant", "status"]),
-            models.Index(fields=["employee", "status"]),
-            models.Index(fields=["start_date", "end_date"]),
+            models.Index(fields=["employee"]),  # For employee balance history
         ]
         constraints = [
             models.CheckConstraint(
@@ -632,6 +631,9 @@ class LeaveApprovalWorkflow(models.Model):
     Defines the sequence of approval steps for different leave types.
     """
 
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+
     tenant = models.ForeignKey(
         "accounts.Tenant",
         on_delete=models.CASCADE,
@@ -658,9 +660,6 @@ class LeaveApprovalWorkflow(models.Model):
         default=True,
         help_text="Whether this workflow is available for use",
     )
-
-    # Auto-generated slug
-    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
 
     # Audit fields
     created_by = models.ForeignKey(
@@ -698,9 +697,36 @@ class LeaveApprovalWorkflow(models.Model):
                 counter += 1
 
         super().save(*args, **kwargs)
+        # Generate steps based on level_configs
+        self._generate_steps_from_configs()
 
     def __str__(self):
         return f"{self.tenant.name} - {self.name}"
+
+    @property
+    def number_of_levels(self):
+        """Get the number of approval levels from configs."""
+        return self.level_configs.count()
+
+    def _generate_steps_from_configs(self):
+        """Generate LeaveApprovalStep instances from level_configs."""
+        # Delete existing steps
+        self.steps.all().delete()
+
+        for config in self.level_configs.all():
+            step = LeaveApprovalStep(
+                workflow=self,
+                order=config.level,
+                name=f"Level {config.level} Approval",
+                approval_type=config.approval_type,
+                specific_user=config.specific_user,
+                permission_group=config.permission_group,
+                required_role=config.required_role,
+                max_approvers=1,
+                selection_criteria="first",
+                requires_notes=False,
+            )
+            step.save()
 
     def clean(self):
         """Validate workflow configuration."""
@@ -711,6 +737,102 @@ class LeaveApprovalWorkflow(models.Model):
             ).exclude(pk=self.pk)
             if existing_default.exists():
                 raise ValidationError("Only one default workflow allowed per tenant.")
+
+        # Validate maximum 5 approval levels
+        if self.level_configs.count() > 5:
+            raise ValidationError("Maximum 5 approval levels allowed per workflow.")
+
+
+class ApprovalLevelConfig(models.Model):
+    """
+    Configuration for each approval level in a workflow.
+    Provides a simple way for HR to define who approves at each level.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    workflow = models.ForeignKey(
+        LeaveApprovalWorkflow,
+        on_delete=models.CASCADE,
+        related_name="level_configs",
+        help_text="Workflow this config belongs to",
+    )
+
+    level = models.IntegerField(
+        help_text="Approval level number (1, 2, 3...)",
+    )
+
+    APPROVAL_TYPES = [
+        ("user", "Specific User"),
+        ("permission_group", "Permission Group"),
+        ("role", "By Role"),
+        ("department_manager", "Employee's Department Manager"),
+        ("dynamic_hr", "Dynamic HR Selection"),
+        ("dynamic_gm", "Dynamic General Manager Selection"),
+    ]
+
+    approval_type = models.CharField(
+        max_length=20,
+        choices=APPROVAL_TYPES,
+        help_text="How approvers are determined for this level",
+    )
+
+    # For 'user' type
+    specific_user = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="approval_level_configs",
+        help_text="Specific user who must approve (for 'user' type)",
+    )
+
+    # For 'permission_group' type
+    permission_group = models.ForeignKey(
+        "accounts.PermissionGroup",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="approval_level_configs",
+        help_text="Permission group whose members can approve (for 'permission_group' type)",
+    )
+
+    # For 'role' type
+    ROLE_CHOICES = [
+        ("Employee", "Employee"),
+        ("Department Manager", "Department Manager"),
+        ("HR Manager", "HR Manager"),
+        ("General Manager", "General Manager"),
+        ("Tenant Owner", "Tenant Owner"),
+    ]
+
+    required_role = models.CharField(
+        max_length=50,
+        choices=ROLE_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Required user role for approval (for 'role' type)",
+    )
+
+    class Meta:
+        ordering = ["workflow", "level"]
+        unique_together = ["workflow", "level"]
+
+    def __str__(self):
+        return f"{self.workflow.name} - Level {self.level}: {self.get_approval_type_display()}"
+
+    def clean(self):
+        """Validate level config."""
+        if self.approval_type == "user" and not self.specific_user:
+            raise ValidationError("Specific user is required for 'user' approval type.")
+
+        if self.approval_type == "permission_group" and not self.permission_group:
+            raise ValidationError(
+                "Permission group is required for 'permission_group' approval type."
+            )
+
+        if self.approval_type == "role" and not self.required_role:
+            raise ValidationError("Required role is required for 'role' approval type.")
 
 
 class LeaveApprovalStep(models.Model):

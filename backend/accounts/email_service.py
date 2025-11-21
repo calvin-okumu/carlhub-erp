@@ -289,7 +289,9 @@ class EmailService:
                 logger.error(
                     f"Template rendering failed for invitation email to {email}: {template_error}"
                 )
-                raise Exception(f"Email template rendering failed: {template_error}")
+                raise Exception(
+                    f"Email template rendering failed: {template_error}"
+                ) from template_error
 
             subject = f"Invitation to join {tenant.name}"
             if is_resend:
@@ -329,7 +331,7 @@ class EmailService:
                 user_message=error_info["user_message"],
                 status_code=error_info["status_code"],
                 retryable=error_info["retryable"],
-            )
+            ) from e
 
     @staticmethod
     def send_welcome_email(user, tenant):

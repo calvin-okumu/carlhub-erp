@@ -31,7 +31,7 @@ class TenantMiddleware(MiddlewareMixin):
                 request.tenant = tenant
             except Tenant.DoesNotExist:
                 # Invalid subdomain, redirect to main site or error
-                raise Http404("Tenant not found")
+                raise Http404("Tenant not found") from None
         else:
             # No subdomain, perhaps public pages or login
             request.tenant = None

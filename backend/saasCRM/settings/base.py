@@ -1,4 +1,5 @@
 import os
+import importlib.util
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -11,9 +12,6 @@ if os.getenv("DOCKER_CONTAINER") == "true":
     load_dotenv(dotenv_path=BASE_DIR.parent / ".env")  # Root .env for Docker
 else:
     load_dotenv(dotenv_path=BASE_DIR / ".env")  # Backend .env for local
-
-# Import logging configuration after BASE_DIR is defined
-import importlib.util
 
 # Load logging configuration module
 logging_config_path = BASE_DIR / "saasCRM" / "logging.py"
@@ -132,7 +130,9 @@ WSGI_APPLICATION = "saasCRM.wsgi.application"
 # Database configuration
 # Default to PostgreSQL, fallback to SQLite if PostgreSQL is not available
 try:
-    import psycopg2  # Test if psycopg2 is available
+    import importlib.util
+
+    importlib.util.find_spec("psycopg2")  # Test if psycopg2 is available
 
     # Check for DATABASE_URL environment variable (for production/staging)
     database_url = os.getenv("DATABASE_URL")

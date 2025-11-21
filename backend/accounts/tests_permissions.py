@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -154,7 +155,7 @@ class CustomPermissionModelTestCase(TestCase):
     def test_unique_permission_codename(self):
         CustomPermission.objects.create(name="Test Perm 1", codename="test_perm", category="custom")
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             CustomPermission.objects.create(
                 name="Test Perm 2", codename="test_perm", category="custom"
             )
@@ -167,5 +168,5 @@ class CustomPermissionModelTestCase(TestCase):
         PermissionGroup.objects.create(name="Test Group", tenant=other_tenant)
 
         # Should not allow same name in same tenant
-        with self.assertRaises(Exception):
+        with self.assertRaises(IntegrityError):
             PermissionGroup.objects.create(name="Test Group", tenant=self.tenant)

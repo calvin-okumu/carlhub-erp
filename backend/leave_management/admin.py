@@ -1,120 +1,35 @@
 from django.contrib import admin
 
-from .models import (
-    LeaveApprovalStep,
-    LeaveApprovalWorkflow,
-    LeaveBalance,
-    LeavePolicy,
-    LeaveRequest,
-)
+from .models import ApprovalLevelConfig, LeaveApprovalStep, LeaveApprovalWorkflow
 
 
-@admin.register(LeaveRequest)
-class LeaveRequestAdmin(admin.ModelAdmin):
-    list_display = (
-        "employee",
-        "tenant",
-        "leave_type",
-        "start_date",
-        "end_date",
-        "days_requested",
-        "status",
-        "applied_date",
-        "approved_by",
+class ApprovalLevelConfigInline(admin.TabularInline):
+    model = ApprovalLevelConfig
+    extra = 0
+    ordering = ("level",)
+    fields = (
+        "level",
+        "approval_type",
+        "specific_user",
+        "permission_group",
+        "required_role",
     )
-    list_filter = ("status", "leave_type", "tenant", "applied_date", "approved_date")
-    search_fields = (
-        "employee__email",
-        "employee__first_name",
-        "employee__last_name",
-        "tenant__name",
-    )
-    readonly_fields = (
-        "slug",
-        "days_requested",
-        "applied_date",
-        "approved_date",
-        "created_at",
-        "updated_at",
-    )
-    raw_id_fields = ("employee", "tenant", "approved_by")
-    ordering = ("-applied_date",)
 
-    def get_queryset(self, request):
-        """Filter queryset based on user's tenant permissions."""
-        qs = super().get_queryset(request)
-        if not request.user.is_superuser:
-            # Filter to user's tenants
-            user_tenants = request.user.usertenant_set.values_list("tenant", flat=True)
-            qs = qs.filter(tenant__in=user_tenants)
-        return qs
-
-
-@admin.register(LeaveBalance)
-class LeaveBalanceAdmin(admin.ModelAdmin):
-    list_display = (
-        "employee",
-        "tenant",
-        "leave_type",
-        "year",
-        "total_days",
-        "used_days",
-        "remaining_days",
-        "utilization_percentage",
-    )
-    list_filter = ("leave_type", "year", "tenant")
-    search_fields = (
-        "employee__email",
-        "employee__first_name",
-        "employee__last_name",
-        "tenant__name",
-    )
-    readonly_fields = (
-        "slug",
-        "remaining_days",
-        "utilization_percentage",
-        "created_at",
-        "updated_at",
-    )
-    raw_id_fields = ("employee", "tenant")
-    ordering = ("-year", "employee__email")
-
-    def get_queryset(self, request):
-        """Filter queryset based on user's tenant permissions."""
-        qs = super().get_queryset(request)
-        if not request.user.is_superuser:
-            # Filter to user's tenants
-            user_tenants = request.user.usertenant_set.values_list("tenant", flat=True)
-            qs = qs.filter(tenant__in=user_tenants)
-        return qs
-
-
-@admin.register(LeavePolicy)
-class LeavePolicyAdmin(admin.ModelAdmin):
-    list_display = (
-        "tenant",
-        "leave_type",
-        "annual_entitlement",
-        "max_consecutive_days",
-        "notice_period_days",
-        "carry_over_allowed",
-        "approval_workflow",
-        "is_active",
-    )
-    list_filter = ("leave_type", "carry_over_allowed", "is_active", "tenant")
-    search_fields = ("tenant__name", "leave_type")
-    readonly_fields = ("slug", "created_at", "updated_at")
-    raw_id_fields = ("tenant", "approval_workflow")
-    ordering = ("tenant__name", "leave_type")
-
-    def get_queryset(self, request):
-        """Filter queryset based on user's tenant permissions."""
-        qs = super().get_queryset(request)
-        if not request.user.is_superuser:
-            # Filter to user's tenants
-            user_tenants = request.user.usertenant_set.values_list("tenant", flat=True)
-            qs = qs.filter(tenant__in=user_tenants)
-        return qs
+    def get_formset(self, request, obj=None, **kwargs):
+        """Get formset with tenant-scoped querysets."""
+        formset = super().get_formset(request, obj, **kwargs)
+        if obj and obj.tenant:
+            tenant = obj.tenant
+            # Modify the form's base fields to limit querysets
+            user_field = formset.form.base_fields.get("specific_user")
+            if user_field:
+                user_field.queryset = user_field.queryset.filter(
+                    usertenant__tenant=tenant, usertenant__is_approved=True
+                )
+            group_field = formset.form.base_fields.get("permission_group")
+            if group_field:
+                group_field.queryset = group_field.queryset.filter(tenant=tenant)
+        return formset
 
 
 class LeaveApprovalStepInline(admin.TabularInline):
@@ -132,6 +47,7 @@ class LeaveApprovalStepInline(admin.TabularInline):
         "selection_criteria",
         "requires_notes",
     )
+    readonly_fields = fields  # Make steps read-only since they're auto-generated
 
 
 @admin.register(LeaveApprovalWorkflow)
@@ -139,6 +55,7 @@ class LeaveApprovalWorkflowAdmin(admin.ModelAdmin):
     list_display = (
         "name",
         "tenant",
+        "number_of_levels",
         "is_default",
         "is_active",
         "created_by",
@@ -149,7 +66,15 @@ class LeaveApprovalWorkflowAdmin(admin.ModelAdmin):
     readonly_fields = ("slug", "created_at", "updated_at")
     raw_id_fields = ("tenant", "created_by")
     ordering = ("tenant__name", "name")
-    inlines = [LeaveApprovalStepInline]
+    fields = (
+        "tenant",
+        "name",
+        "description",
+        "is_default",
+        "is_active",
+        "created_by",
+    )
+    inlines = [ApprovalLevelConfigInline, LeaveApprovalStepInline]
 
     def get_queryset(self, request):
         """Filter queryset based on user's tenant permissions."""
