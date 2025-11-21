@@ -17,7 +17,10 @@ from leave_management.models import (
     LeavePolicy,
     LeaveRequest,
 )
-from leave_management.services import LeaveApprovalWorkflowService
+from leave_management.services import (
+    LeaveAnalyticsService,
+    LeaveApprovalWorkflowService,
+)
 
 
 class LeaveApprovalWorkflowTests(TestCase):
@@ -309,7 +312,7 @@ class LeaveApprovalWorkflowTests(TestCase):
 
         LeaveApprovalWorkflowService.initialize_workflow(leave_request)
 
-        workflow_status = LeaveApprovalWorkflowService.get_workflow_status(leave_request)
+        workflow_status = LeaveAnalyticsService.get_workflow_status(leave_request)
 
         self.assertEqual(workflow_status["current_level"], "department_manager")
         self.assertTrue(workflow_status["is_pending"])

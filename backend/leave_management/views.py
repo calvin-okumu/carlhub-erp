@@ -23,7 +23,7 @@ from .serializers import (
     LeavePolicySerializer,
     LeaveRequestSerializer,
 )
-from .services import LeaveApprovalWorkflowService
+from .services import LeaveAnalyticsService, LeaveApprovalWorkflowService
 
 
 class LeaveRequestViewSet(viewsets.ModelViewSet):
@@ -215,7 +215,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         """Get detailed workflow status for a leave request."""
         leave_request = self.get_object()
 
-        workflow_status = LeaveApprovalWorkflowService.get_workflow_status(leave_request)
+        workflow_status = LeaveAnalyticsService.get_workflow_status(leave_request)
 
         return Response(
             {

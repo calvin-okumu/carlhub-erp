@@ -12,7 +12,7 @@ from .models import (
     LeavePolicy,
     LeaveRequest,
 )
-from .services import LeaveApprovalWorkflowService
+from .services import LeaveAnalyticsService, LeaveApprovalWorkflowService
 
 
 class LeaveRequestSerializer(serializers.ModelSerializer):
@@ -156,7 +156,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
     @extend_schema_field(OpenApiTypes.OBJECT)
     def get_workflow_status(self, obj):
         """Get comprehensive workflow status."""
-        return LeaveApprovalWorkflowService.get_workflow_status(obj)
+        return LeaveAnalyticsService.get_workflow_status(obj)
 
     @extend_schema_field(OpenApiTypes.OBJECT)
     def get_approval_history(self, obj):
