@@ -43,7 +43,7 @@ export default function BankingInformationCard() {
             setIsEditing(false);
             setSuccessMessage('Banking information updated successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
-        } catch (err) {
+        } catch (_err) {
             setErrorMessage('Unable to update banking information. Please try again.');
             setTimeout(() => setErrorMessage(''), 5000);
         }

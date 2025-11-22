@@ -18,11 +18,10 @@ export function useUserRole(): UserRole {
 
         const approvalRoles = [
           "Tenant Owner",
-          "Manager",
-          "admin",
-          "owner",
+          "General Manager",
+          "HR Manager",
+          "Department Manager",
           "supervisor",
-          "department_manager",
           "hr",
           "gm",
         ];

@@ -49,7 +49,7 @@ export default function MedicalInformationCard() {
             setIsEditing(false);
             setSuccessMessage('Medical information updated successfully');
             setTimeout(() => setSuccessMessage(''), 3000);
-        } catch (err) {
+        } catch (_err) {
             setErrorMessage('Unable to update medical information. Please try again.');
             setTimeout(() => setErrorMessage(''), 5000);
         }

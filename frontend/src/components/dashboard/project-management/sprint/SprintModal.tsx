@@ -94,7 +94,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                 setErrors(prev => ({ ...prev, start_date: 'Sprint start date cannot be before the milestone\'s planned start date.' }));
             } else {
                 setErrors(prev => {
-                    const { start_date, ...rest } = prev;
+                    const { start_date: _, ...rest } = prev;
                     return rest;
                 });
             }
@@ -104,7 +104,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                 setErrors(prev => ({ ...prev, end_date: 'Sprint end date cannot be after the milestone\'s due date.' }));
             } else {
                 setErrors(prev => {
-                    const { end_date, ...rest } = prev;
+                    const { end_date: _, ...rest } = prev;
                     return rest;
                 });
             }

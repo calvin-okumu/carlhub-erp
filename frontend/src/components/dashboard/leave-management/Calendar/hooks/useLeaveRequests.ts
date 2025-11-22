@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { getLeaveRequests } from '../../../../../api/leave';
-import type { LeaveRequest, PaginatedResponse } from '../../../../../api/types';
+import type { LeaveRequest } from '../../../../../api/types';
 
 interface UseLeaveRequestsParams {
   month?: number;
@@ -99,7 +99,7 @@ export const useLeaveRequests = (params?: UseLeaveRequestsParams) => {
         abortControllerRef.current.abort();
       }
     };
-  }, [paramsKey]);
+  }, [paramsKey, params]);
 
   const refetch = () => {
     // Clear cache for this specific request

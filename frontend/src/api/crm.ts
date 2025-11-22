@@ -22,7 +22,7 @@ export async function getClients(params?: { search?: string; ordering?: string; 
   }
 
   // Otherwise, return just the results array
-  return (data as any).results || data;
+  return (data as { results: Client[] }).results || data;
 }
 
 export async function createClient(clientData: CreateClientData): Promise<Client> {
@@ -58,6 +58,6 @@ export async function getUserTenants(): Promise<UserTenant[]> {
     method: "GET",
   });
 
-  return (data as any).results || data;
+  return (data as { results: UserTenant[] }).results || data;
 }
 

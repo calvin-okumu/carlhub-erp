@@ -122,7 +122,7 @@ export default function PolicyModal({
         }
     };
 
-    const handleInputChange = (field: keyof PolicyFormData, value: any) => {
+    const handleInputChange = (field: keyof PolicyFormData, value: string | number | boolean) => {
         setFormData(prev => ({ ...prev, [field]: value }));
 
         // Clear error for this field when user starts typing

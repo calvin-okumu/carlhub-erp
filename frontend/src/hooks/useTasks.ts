@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { getAccessToken } from "../utils/auth";
 import type { Task } from "../api/types";
 import {
   createTask,
-  deleteTask,
   getTasks,
   updateTask,
 } from "../api/project_mgmt";

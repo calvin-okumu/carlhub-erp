@@ -20,7 +20,7 @@ interface SprintTableProps {
     statusFilter: string;
 }
 
-const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectSlug, searchValue, statusFilter }: SprintTableProps) {
+const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, searchValue, statusFilter, _projectSlug }: SprintTableProps) {
     const [page, setPage] = useState(1);
     const [expandedSprintId, setExpandedSprintId] = useState<string | null>(null);
 

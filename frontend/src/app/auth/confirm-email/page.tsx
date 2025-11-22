@@ -4,16 +4,16 @@ import { confirmEmail } from "@/api";
 import AuthLayout from "@/components/AuthLayout";
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function ConfirmEmailPage() {
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState("");
-    const searchParams = useSearchParams();
-
+    const router = useRouter();
+    
     useEffect(() => {
-        const token = searchParams.get('token');
+        const token = new URLSearchParams(window.location.search).get('token');
 
         if (!token) {
             setStatus('error');
@@ -37,7 +37,7 @@ export default function ConfirmEmailPage() {
         };
 
         confirm();
-    }, [searchParams]);
+    }, []);
 
     return (
         <AuthLayout>

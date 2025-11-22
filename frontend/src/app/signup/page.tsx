@@ -4,9 +4,10 @@
 import { signup, getInvitationDetails } from "@/api";
 import AuthLayout from "@/components/AuthLayout";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import SearchParamsWrapper from "@/components/shared/SearchParamsWrapper";
 
 type FormData = {
     email: string;
@@ -26,10 +27,9 @@ export default function SignUpPage() {
     const [invitationDetails, setInvitationDetails] = useState<{ tenant_name: string; role: string } | null>(null);
     const [loadingInvitation, setLoadingInvitation] = useState(false);
     const router = useRouter();
-    const searchParams = useSearchParams();
-
+    
     useEffect(() => {
-        const token = searchParams.get('token');
+        const token = new URLSearchParams(window.location.search).get('token');
         if (token) {
             setInvitationToken(token);
             setLoadingInvitation(true);
@@ -47,7 +47,7 @@ export default function SignUpPage() {
                     setLoadingInvitation(false);
                 });
         }
-    }, [searchParams, setValue]);
+    }, [setValue]);
 
     const onSubmit = async (data: FormData) => {
         setError("");
@@ -56,7 +56,7 @@ export default function SignUpPage() {
         setLoading(true);
 
         try {
-            const result = await signup(data.email, data.password, data.first_name, data.last_name, invitationToken ? undefined : data.company_name, invitationToken || undefined);
+            await signup(data.email, data.password, data.first_name, data.last_name, invitationToken ? undefined : data.company_name, invitationToken || undefined);
 
             setSuccess("Account created successfully! Please log in with your credentials.");
             setTimeout(() => router.push("/login"), 100);

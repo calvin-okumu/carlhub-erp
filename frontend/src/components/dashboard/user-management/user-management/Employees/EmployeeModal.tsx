@@ -163,7 +163,7 @@ export default function EmployeeModal({ isOpen, onClose, mode, employee, onSave 
                     if (errorData && typeof errorData === 'object') {
                         const fieldErrors = Object.entries(errorData)
                             .filter(([key, value]) => Array.isArray(value))
-                            .map(([key, value]) => `${key}: ${(value as string[]).join(', ')}`)
+                            .map(([key, _value]) => `${key}: ${(_value as string[]).join(', ')}`)
                             .join('\n');
 
                         if (fieldErrors) {
