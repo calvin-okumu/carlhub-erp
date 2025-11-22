@@ -124,9 +124,7 @@ Employees submit leave requests specifying:
 3. **Multi-Level Approval**: Request progresses through configured approval levels
 
 4. **Manager Review**: Designated approvers review at each level
-
-5. **Approval/Rejection**: Manager approves or rejects with notes (approver automatically recorded)
-
+5. **Approval/Rejection**: Manager approves or rejects with notes (approval details recorded in approval history)
 6. **Balance Update**: Approved leave deducts from employee balance
 
 7. **Notification**: All parties receive email notifications
@@ -408,7 +406,6 @@ List leave requests with filtering and search.
 - `status__in` - Filter by multiple statuses (e.g., pending_department_manager,pending_hr_manager)
 - `leave_type` - Filter by leave type (annual_leave, sick_leave, etc.)
 - `employee` - Filter by employee UUID
-- `approved_by` - Filter by approver UUID
 - `start_date` - Filter by start date range
 - `end_date` - Filter by end date range
 
@@ -436,9 +433,7 @@ List leave requests with filtering and search.
       "reason": "Vacation time",
       "status": "pending",
       "applied_date": "2024-01-10T09:00:00Z",
-      "approved_by": null,
-      "approved_date": null,
-      "approval_notes": "",
+      "current_approval_level": "department_manager",
       "created_at": "2024-01-10T09:00:00Z",
       "updated_at": "2024-01-10T09:00:00Z"
     }
@@ -502,9 +497,7 @@ Create a new leave request.
   "reason": "Vacation time",
   "status": "pending",
   "applied_date": "2024-01-10T09:00:00Z",
-  "approved_by": null,
-  "approved_date": null,
-  "approval_notes": "",
+  "current_approval_level": "department_manager",
   "created_at": "2024-01-10T09:00:00Z",
   "updated_at": "2024-01-10T09:00:00Z"
 }
@@ -547,9 +540,7 @@ Approve a leave request (managers only).
 {
   "id": "uuid",
   "status": "approved",
-  "approved_by": "uuid",
-  "approved_date": "2024-01-11T10:00:00Z",
-  "approval_notes": "Approved for vacation"
+  "current_approval_level": "department_manager"
 }
 ```
 
@@ -623,16 +614,28 @@ Get detailed workflow status and approval history for a leave request.
       {
         "level": "department_manager",
         "level_display": "Department Manager",
-        "approver": "John Manager",  // Shows the actual user who approved (when completed)
         "status": "pending",
-        "approved_date": null,
-        "notes": "",
         "order": 1
       }
     ],
     "next_approver": "John Manager"
   },
-  "approval_history": [...]
+  "approval_history": [
+    {
+      "id": "uuid",
+      "approver": {
+        "id": "uuid",
+        "email": "manager@example.com",
+        "first_name": "John",
+        "last_name": "Manager"
+      },
+      "approval_level": "department_manager",
+      "status": "approved",
+      "approved_date": "2024-01-11T10:00:00Z",
+      "notes": "Approved for vacation",
+      "order": 1
+    }
+  ]
 }
 ```
 
