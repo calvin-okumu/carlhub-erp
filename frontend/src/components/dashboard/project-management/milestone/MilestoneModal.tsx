@@ -76,7 +76,7 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
                 setErrors(prev => ({ ...prev, planned_start: 'Milestone planned start date cannot be before the project start date.' }));
             } else {
                 setErrors(prev => {
-                    const { planned_start, ...rest } = prev;
+                    const { planned_start: _, ...rest } = prev;
                     return rest;
                 });
             }
@@ -86,7 +86,7 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
                 setErrors(prev => ({ ...prev, due_date: 'Milestone due date cannot be after the project end date.' }));
             } else {
                 setErrors(prev => {
-                    const { due_date, ...rest } = prev;
+                    const { due_date: _, ...rest } = prev;
                     return rest;
                 });
             }

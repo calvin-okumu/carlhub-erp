@@ -1,7 +1,6 @@
  "use client";
 
- import { useState } from 'react';
- import { usePathname } from 'next/navigation';
+import { useState } from 'react';
  import { ProjectProvider } from '@/context/ProjectContext';
  import { SprintsProvider } from '@/context/SprintsContext';
  import { MilestonesProvider } from '@/context/MilestonesContext';
@@ -14,10 +13,10 @@ import BacklogSection from '@/components/dashboard/project-management/backlog/Ba
 import SprintSection from '@/components/dashboard/project-management/sprint/SprintSection';
 import CompletedTasksSection from '@/components/dashboard/project-management/completed-tasks/CompletedTasksSection';
 
- function ProjectLayoutWrapper({ children }: { children: React.ReactNode }) {
+ function ProjectLayoutWrapper({ }: { children: React.ReactNode }) {
      const { project, loading, error } = useProject();
      const [activeTab, setActiveTab] = useState('overview');
-     const pathname = usePathname();
+
 
 
 

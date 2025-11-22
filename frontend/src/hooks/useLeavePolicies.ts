@@ -44,7 +44,7 @@ export const useLeavePolicies = (params?: {
   };
   useEffect(() => {
     fetchPolicies();
-  }, [JSON.stringify(params)]);
+  }, [JSON.stringify(params), fetchPolicies]);
   const createPolicy = async (
     data: Omit<
       LeavePolicy,

@@ -1,6 +1,5 @@
 import { Project, Milestone, Sprint, Task, PaginatedResponse } from './types';
 import { API_BASE } from './index';
-import { apiCall } from './api-wrapper';
 
 export async function getProjects(token: string, params?: { tenant?: number; search?: string; ordering?: string; status?: string; client?: number; priority?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Project>> {
   const query = new URLSearchParams();

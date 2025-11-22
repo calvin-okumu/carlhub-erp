@@ -1,59 +1,44 @@
-"use client";
-
-import { getClients } from '@/api/crm';
-import type { Client } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import StatCard from '@/components/ui/StatCard';
-import { getAccessToken } from '@/utils/auth';
 import { UserCheck, UserPlus, Users } from 'lucide-react';
-import { useEffect, useState } from 'react';
 
 interface ClientHeaderProps {
     onAddClient: () => void;
     searchValue: string;
     onSearchChange: (value: string) => void;
+    metrics?: {
+        totalClients: number;
+        activeClients: number;
+        prospects: number;
+        newClientsThisMonth: number;
+    };
+    loading?: boolean;
+    error?: string | null;
 }
 
-export default function ClientHeader({ onAddClient, searchValue, onSearchChange }: ClientHeaderProps) {
-    const [allClients, setAllClients] = useState<Client[]>([]);
-    const [loading, setLoading] = useState(true);
+export default function ClientHeader({
+    onAddClient,
+    searchValue,
+    onSearchChange,
+    metrics,
+    loading = false,
+    error = null
+}: ClientHeaderProps) {
+    // Default metrics if not provided
+    const defaultMetrics = {
+        totalClients: 0,
+        activeClients: 0,
+        prospects: 0,
+        newClientsThisMonth: 0,
+    };
 
-    useEffect(() => {
-        const fetchAllClients = async () => {
-            const token = getAccessToken();
-            if (!token) return;
-
-            try {
-                // Fetch all clients with a high limit for metrics calculation
-                const data = await getClients(token, { limit: 1000 });
-
-                // Handle both paginated and non-paginated responses
-                if (data && typeof data === 'object' && 'results' in data) {
-                    setAllClients(data.results);
-                } else {
-                    setAllClients(data as Client[]);
-                }
-            } catch (error) {
-                console.error('Failed to fetch clients for metrics:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAllClients();
-    }, []);
-
-    const clients = allClients;
-
-    const totalClients = clients.length;
-    const activeClients = clients.filter(c => c.status === 'active').length;
-    const prospects = clients.filter(c => c.status === 'prospect').length;
-    const newClientsThisMonth = clients.filter(c => {
-        const created = new Date(c.created_at);
-        const now = new Date();
-        return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-    }).length;
+    const {
+        totalClients,
+        activeClients,
+        prospects,
+        newClientsThisMonth
+    } = metrics || defaultMetrics;
 
     const handleAddClient = () => {
         onAddClient();
@@ -61,29 +46,50 @@ export default function ClientHeader({ onAddClient, searchValue, onSearchChange 
 
     return (
         <div className="space-y-6">
+            {/* Error Display */}
+            {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                    <div className="flex items-center">
+                        <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                        <span className="font-medium">Error loading client metrics:</span>
+                        <span className="ml-2">{error}</span>
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     title="Total Clients"
-                    value={totalClients}
+                    value={loading ? "..." : totalClients}
                     icon={Users}
+                    loading={loading}
+                    color="blue"
                     className="shadow-lg hover:shadow-xl transition-shadow duration-300"
                 />
                 <StatCard
                     title="Active Clients"
-                    value={activeClients}
+                    value={loading ? "..." : activeClients}
                     icon={UserCheck}
+                    loading={loading}
+                    color="green"
                     className="shadow-lg hover:shadow-xl transition-shadow duration-300"
                 />
                 <StatCard
                     title="Prospects"
-                    value={prospects}
+                    value={loading ? "..." : prospects}
                     icon={UserPlus}
+                    loading={loading}
+                    color="yellow"
                     className="shadow-lg hover:shadow-xl transition-shadow duration-300"
                 />
                 <StatCard
                     title="New This Month"
-                    value={newClientsThisMonth}
+                    value={loading ? "..." : newClientsThisMonth}
                     icon={UserPlus}
+                    loading={loading}
+                    color="purple"
                     className="shadow-lg hover:shadow-xl transition-shadow duration-300"
                 />
             </div>

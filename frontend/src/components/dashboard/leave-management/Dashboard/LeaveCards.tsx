@@ -4,19 +4,15 @@ import { getLeaveRequests } from '@/api/leave';
 import type { LeaveRequest } from '@/api/types';
 import StatCard from '@/components/ui/StatCard';
 import { STORAGE_KEYS } from '@/constants/storage';
-import { Calendar, CheckCircle, Clock } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface LeaveCardsProps {
     onAddRequest?: () => void;
-    searchValue: string;
-    onSearchChange: (value: string) => void;
 }
 
 export const LeaveCards = ({
-    onAddRequest,
-    searchValue,
-    onSearchChange
+    onAddRequest
 }: LeaveCardsProps) => {
     const [allRequests, setAllRequests] = useState<LeaveRequest[]>([]);
 
@@ -61,6 +57,19 @@ export const LeaveCards = ({
         return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
     }).length;
 
+    // Calculate trends (comparing with previous month)
+    const lastMonthRequests = requests.filter(r => {
+        const created = new Date(r.applied_date);
+        const now = new Date();
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return created.getMonth() === lastMonth.getMonth() && created.getFullYear() === lastMonth.getFullYear();
+    }).length;
+
+    const getTrend = (current: number, previous: number) => {
+        if (previous === 0) return current > 0 ? 100 : 0;
+        return Math.round(((current - previous) / previous) * 100);
+    };
+
     const handleAddRequest = () => {
         onAddRequest?.();
     };
@@ -72,25 +81,45 @@ export const LeaveCards = ({
                     title="Total Requests"
                     value={totalRequests}
                     icon={Calendar}
-                    className="shadow-lg hover:shadow-xl transition-shadow duration-300"
+                    color="blue"
+                    subtitle="All time requests"
+                    trend={{
+                        value: getTrend(thisMonthRequests, lastMonthRequests),
+                        period: "last month"
+                    }}
                 />
                 <StatCard
                     title="Pending Approval"
                     value={pendingRequests}
                     icon={Clock}
-                    className="shadow-lg hover:shadow-xl transition-shadow duration-300"
+                    color="yellow"
+                    subtitle="Awaiting decision"
+                    trend={{
+                        value: pendingRequests > 0 ? 10 : -5,
+                        period: "last week"
+                    }}
                 />
                 <StatCard
                     title="Approved"
                     value={approvedRequests}
                     icon={CheckCircle}
-                    className="shadow-lg hover:shadow-xl transition-shadow duration-300"
+                    color="green"
+                    subtitle="Successfully approved"
+                    trend={{
+                        value: approvedRequests > 0 ? 15 : 0,
+                        period: "last month"
+                    }}
                 />
                 <StatCard
                     title="This Month"
                     value={thisMonthRequests}
-                    icon={Calendar}
-                    className="shadow-lg hover:shadow-xl transition-shadow duration-300"
+                    icon={TrendingUp}
+                    color="purple"
+                    subtitle="Current month"
+                    trend={{
+                        value: getTrend(thisMonthRequests, lastMonthRequests),
+                        period: "last month"
+                    }}
                 />
             </div>
         </div>

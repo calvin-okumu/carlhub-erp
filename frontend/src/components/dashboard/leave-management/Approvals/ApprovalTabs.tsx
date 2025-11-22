@@ -1,3 +1,5 @@
+import { Clock, CheckCircle, XCircle, LucideIcon } from 'lucide-react';
+
 type TabKey = 'all' | 'approved' | 'rejected';
 
 interface ApprovalTabsProps {
@@ -10,12 +12,37 @@ interface Tab {
     key: TabKey;
     label: string;
     count: number;
+    icon: LucideIcon;
+    color: string;
+    bgColor: string;
+    borderColor: string;
 }
 
 const TAB_CONFIG: Omit<Tab, 'count'>[] = [
-    { key: 'all', label: 'All Pending' },
-    { key: 'approved', label: 'Approved' },
-    { key: 'rejected', label: 'Rejected' },
+    { 
+        key: 'all', 
+        label: 'Pending', 
+        icon: Clock,
+        color: 'yellow',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-200'
+    },
+    { 
+        key: 'approved', 
+        label: 'Approved', 
+        icon: CheckCircle,
+        color: 'green',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200'
+    },
+    { 
+        key: 'rejected', 
+        label: 'Rejected', 
+        icon: XCircle,
+        color: 'red',
+        bgColor: 'bg-red-50',
+        borderColor: 'border-red-200'
+    },
 ] as const;
 
 export const ApprovalTabs = ({ activeTab, onTabChange, counts }: ApprovalTabsProps) => {
@@ -25,11 +52,12 @@ export const ApprovalTabs = ({ activeTab, onTabChange, counts }: ApprovalTabsPro
     }));
 
     return (
-        <div className="border-b border-gray-200 mb-6">
-            <nav className="flex space-x-8" role="tablist" aria-label="Approval categories">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-1 mb-6">
+            <nav className="flex space-x-1" role="tablist" aria-label="Approval categories">
                 {tabs.map((tab) => {
                     const isActive = activeTab === tab.key;
                     const hasCount = tab.count > 0;
+                    const Icon = tab.icon;
 
                     return (
                         <button
@@ -39,25 +67,26 @@ export const ApprovalTabs = ({ activeTab, onTabChange, counts }: ApprovalTabsPro
                             aria-selected={isActive}
                             aria-controls={`${tab.key}-panel`}
                             className={`
-                relative py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                ${isActive
-                                    ? 'border-blue-500 text-blue-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                relative flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-sm transition-all duration-200
+                                ${isActive
+                                    ? `${tab.bgColor} ${tab.borderColor} border text-${tab.color}-700 shadow-sm`
+                                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                                 }
-              `}
+                            `}
                         >
-                            <span>{tab.label}</span>
+                            <Icon className={`w-4 h-4 ${isActive ? `text-${tab.color}-600` : 'text-gray-400'}`} />
+                            <span className="font-medium">{tab.label}</span>
                             {hasCount && (
                                 <span
                                     className={`
-                    ml-2 inline-flex items-center justify-center py-0.5 px-2 
-                    rounded-full text-xs font-semibold transition-colors
-                    ${isActive
-                                            ? 'bg-blue-100 text-blue-600'
+                                        inline-flex items-center justify-center py-0.5 px-2 
+                                        rounded-full text-xs font-semibold transition-colors
+                                        ${isActive
+                                            ? `bg-${tab.color}-100 text-${tab.color}-700`
                                             : 'bg-gray-100 text-gray-600'
                                         }
-                  `}
-                                    aria-label={`${tab.count} pending`}
+                                    `}
+                                    aria-label={`${tab.count} requests`}
                                 >
                                     {tab.count}
                                 </span>

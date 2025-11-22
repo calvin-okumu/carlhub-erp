@@ -109,7 +109,7 @@ export const UserSection = () => {
 
                 // Handle different response formats (results array or direct array)
                 const invitesArray = invitations.results || invitations || [];
-                const transformedInvites = invitesArray.map((invite: any) => ({
+                const transformedInvites = invitesArray.map((invite: { id: string; email: string; created_at: string; is_used: boolean; email_confirmed: boolean; token: string; slug: string }) => ({
                     id: invite.id,
                     email: invite.email,
                     sentDate: new Date(invite.created_at).toLocaleDateString(),

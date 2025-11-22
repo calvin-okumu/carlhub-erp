@@ -45,9 +45,9 @@ export async function apiRequest(url: string, options: ApiOptions = {}): Promise
 }
 
 // Helper function for API calls with automatic JSON parsing
-export async function apiCall<T = any>(
-  url: string, 
-  options: ApiOptions = {}
+export async function apiCall<T = unknown>(
+    url: string, 
+    options: ApiOptions = {}
 ): Promise<T> {
   const response = await apiRequest(url, options);
   

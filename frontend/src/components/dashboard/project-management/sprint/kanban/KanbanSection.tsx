@@ -97,7 +97,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
         };
 
         fetchModalData();
-    }, [sprintSlug, fetchData]);
+    }, [sprintSlug, fetchData, project?.id, sprint?.slug]);
 
     useEffect(() => {
         const fetchModalData = async () => {
@@ -116,7 +116,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                 // Filter out tasks that are already in this sprint (safety check)
                 const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
                 setBacklogTasks(filteredBacklog);
-            } catch (err) {
+            } catch (_err) {
                 // Error handled silently
             }
         };

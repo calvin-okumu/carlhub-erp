@@ -67,7 +67,7 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
         if (mode === 'add' && clients.length > 0 && !formData.client) {
             setFormData(prev => ({ ...prev, client: clients[0].id }));
         }
-    }, [clients, mode]);
+    }, [clients, mode, formData.client]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;

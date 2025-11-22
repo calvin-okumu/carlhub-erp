@@ -83,7 +83,7 @@ export async function getCurrentUser(): Promise<User> {
     return getUser(user.id);
 }
 
-export async function getUserProfile( id: number): Promise<UserProfile> {
+export async function getUserProfile(): Promise<UserProfile> {
   const url = `${API_BASE}/accounts/profile/`;
   return await apiCall(url, {
     method: "GET",

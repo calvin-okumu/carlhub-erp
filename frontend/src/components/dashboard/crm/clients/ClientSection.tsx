@@ -5,6 +5,7 @@ import ClientHeader from './ClientHeader';
 import ClientTable from './ClientTable';
 import ClientModal from './ClientModal';
 import { useClients } from '@/hooks/useClients';
+import { useClientMetrics } from '@/hooks/useClientMetrics';
 import type { Client, CreateClientData, UpdateClientData } from '@/api/types';
 
 export default function ClientSection() {
@@ -13,7 +14,9 @@ export default function ClientSection() {
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+    
     const { clients, loading, error, pagination, addClient, editClient, removeClient, refetch } = useClients();
+    const { metrics, loading: metricsLoading, error: metricsError, refetch: refetchMetrics } = useClientMetrics();
 
     useEffect(() => {
         refetch({ page: currentPage, limit: 10, search: searchValue });
@@ -46,6 +49,8 @@ export default function ClientSection() {
             } else if (selectedClient) {
                 await editClient(selectedClient.slug, data as UpdateClientData);
             }
+            // Refresh metrics after any change
+            await refetchMetrics();
             setModalOpen(false);
         } catch (error) {
             console.error('Error saving client:', error);
@@ -55,7 +60,14 @@ export default function ClientSection() {
 
     return (
         <div className="space-y-6">
-            <ClientHeader onAddClient={handleAddClient} searchValue={searchValue} onSearchChange={setSearchValue} />
+            <ClientHeader 
+                onAddClient={handleAddClient} 
+                searchValue={searchValue} 
+                onSearchChange={setSearchValue}
+                metrics={metrics}
+                loading={metricsLoading}
+                error={metricsError}
+            />
             <ClientTable
                 clients={clients}
                 loading={loading}
@@ -76,5 +88,4 @@ export default function ClientSection() {
             />
         </div>
     );
-};
-
+}

@@ -23,10 +23,10 @@ export function useEmployees() {
       // Filter for employees - this is a temporary solution
       // Ideally we'd have a dedicated employee endpoint
       const employeeUsers = users.filter(
-        (user) =>
+        () =>
           // This filtering logic needs to be implemented based on your data
           true, // Placeholder - adjust based on your UserTenant data
-      );
+        );
       setEmployees(employeeUsers as Employee[]);
     } catch (err) {
       setError(
@@ -43,7 +43,7 @@ export function useEmployees() {
       if (!token) throw new Error("No access token");
 
       // First create the user
-      const newUser = await createUser(token, employeeData as any);
+      const newUser = await createUser(token, employeeData as CreateUserData);
 
       // Then add to tenant as employee (this would need a separate API call)
       // For now, just refetch

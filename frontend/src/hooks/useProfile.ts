@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getUserProfile, updateUserProfile } from '@/api/users';
 import { User, UserProfile } from '@/api/types';
 import { STORAGE_KEYS } from '@/constants/storage';

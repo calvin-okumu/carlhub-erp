@@ -105,7 +105,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                 setMinDate('');
                 setMaxDate('');
                 setErrors(prev => {
-                    const { start_date, end_date, ...rest } = prev;
+                    const { start_date: _, end_date: __, ...rest } = prev;
                     return rest;
                 });
             }
@@ -115,7 +115,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                 setErrors(prev => ({ ...prev, start_date: 'Task start date cannot be before the sprint\'s start date.' }));
             } else {
                 setErrors(prev => {
-                    const { start_date, ...rest } = prev;
+                    const { start_date: _, ...rest } = prev;
                     return rest;
                 });
             }
@@ -125,7 +125,7 @@ export default function BacklogModal({ isOpen, onClose, mode, task, sprints, ass
                 setErrors(prev => ({ ...prev, end_date: 'Task end date cannot be after the sprint\'s end date.' }));
             } else {
                 setErrors(prev => {
-                    const { end_date, ...rest } = prev;
+                    const { end_date: _, ...rest } = prev;
                     return rest;
                 });
             }

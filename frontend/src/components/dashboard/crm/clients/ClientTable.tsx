@@ -1,11 +1,8 @@
-"use client";
-
-import React from 'react';
-import Table from '@/components/ui/Table';
-import Loader from '@/components/shared/Loader';
 import type { Client } from '@/api/types';
-import { Edit, Trash2 } from 'lucide-react';
+import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
+import Table from '@/components/ui/Table';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface ClientTableProps {
     clients: Client[];
@@ -46,10 +43,10 @@ export default function ClientTable({ clients, loading, error, onEditClient, onD
             <span
                 key={client.id + '-status'}
                 className={`px-2 py-1 text-xs font-semibold rounded-full ${client.status === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : client.status === 'inactive'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
+                    ? 'bg-green-100 text-green-800'
+                    : client.status === 'inactive'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-800'
                     }`}
             >
                 {client.status}
