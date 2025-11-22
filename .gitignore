@@ -131,7 +131,13 @@ yarn-error.log*
 # Static files
 staticfiles/README_UPDATED.md
 
+# Django
+*.pid
+
 # Agents
 AGENTS.md
 #employee Documents
 backend/employee_documents/
+
+# Temporary backup
+.tmp_backup/
