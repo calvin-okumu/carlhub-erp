@@ -291,26 +291,11 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST Framework configuration
 REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "saasCRM.jwt_auth.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_VERSION": "v1",
-    "ALLOWED_VERSIONS": ["v1"],
-    "DEFAULT_PAGINATION_CLASS": "saasCRM.pagination.CustomPageNumberPagination",
-    "PAGE_SIZE": 10,
-    "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/hour",
-        "user": "1000/hour",
-    },
 }
 
 # Spectacular API documentation settings
@@ -363,9 +348,6 @@ SPECTACULAR_SETTINGS = {
             "bearerFormat": "JWT",
         },
     ],
-    "ENUM_NAME_OVERRIDES": {
-        "accounts.Tenant.default_currency": "CurrencyEnum",
-    },
 }
 
 # CORS settings

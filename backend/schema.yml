@@ -3260,6 +3260,14 @@ paths:
 
         Allows HR and management to configure approval workflows for leave requests.
       parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_default
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -3290,13 +3298,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+              $ref: '#/components/schemas/LeaveApprovalWorkflowCreate'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+              $ref: '#/components/schemas/LeaveApprovalWorkflowCreate'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+              $ref: '#/components/schemas/LeaveApprovalWorkflowCreate'
         required: true
       security:
       - JWTAuthentication: []
@@ -3306,7 +3314,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+                $ref: '#/components/schemas/LeaveApprovalWorkflowCreate'
           description: ''
   /api/leave/workflows/{id}/:
     get:
@@ -3320,6 +3328,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3344,6 +3354,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3380,6 +3392,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3415,6 +3429,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3433,6 +3449,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3467,6 +3485,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3501,6 +3521,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -6454,9 +6476,12 @@ components:
           description: Department manager (typically Department Manager role)
         manager_name:
           type: string
+          nullable: true
+          description: Get manager's full name
           readOnly: true
         employee_count:
-          type: string
+          type: integer
+          description: Get number of employees in this department
           readOnly: true
         created_at:
           type: string
@@ -6689,12 +6714,11 @@ components:
           readOnly: true
           description: Human-readable approval levels
         custom_approvers:
-          nullable: true
           description: Custom approver configuration for 'custom' approval type
         number_of_levels:
-          type: string
-          readOnly: true
+          type: integer
           description: Number of approval levels in this workflow
+          readOnly: true
         is_default:
           type: boolean
           description: Whether this is the default workflow for the tenant
@@ -6703,6 +6727,7 @@ components:
           description: Whether this workflow is available for use
         created_by:
           type: integer
+          readOnly: true
           nullable: true
           description: User who created this workflow
         created_by_name:
@@ -6720,11 +6745,48 @@ components:
       required:
       - approval_levels_display
       - created_at
+      - created_by
       - created_by_name
       - id
       - name
       - number_of_levels
       - updated_at
+    LeaveApprovalWorkflowCreate:
+      type: object
+      description: Serializer for creating leave approval workflows (excludes read-only
+        fields).
+      properties:
+        name:
+          type: string
+          description: Descriptive name for the workflow (e.g., 'Standard Approval',
+            'Executive Approval')
+          maxLength: 100
+        description:
+          type: string
+          description: Optional description of when to use this workflow
+        approval_levels:
+          allOf:
+          - $ref: '#/components/schemas/ApprovalLevelsEnum'
+          description: |-
+            The sequence of approval levels required
+
+            * `department_manager` - Department Manager Only
+            * `department_manager,hr_manager` - Department Manager → HR Manager
+            * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
+            * `hr_manager` - HR Manager Only
+            * `hr_manager,general_manager` - HR Manager → General Manager
+            * `general_manager` - General Manager Only
+            * `custom` - Custom Approval Chain
+        custom_approvers:
+          description: Custom approver configuration for 'custom' approval type
+        is_default:
+          type: boolean
+          description: Whether this is the default workflow for the tenant
+        is_active:
+          type: boolean
+          description: Whether this workflow is available for use
+      required:
+      - name
     LeaveBalance:
       type: object
       description: Serializer for leave balances with utilization calculations.
@@ -7749,9 +7811,12 @@ components:
           description: Department manager (typically Department Manager role)
         manager_name:
           type: string
+          nullable: true
+          description: Get manager's full name
           readOnly: true
         employee_count:
-          type: string
+          type: integer
+          description: Get number of employees in this department
           readOnly: true
         created_at:
           type: string
@@ -7931,12 +7996,11 @@ components:
           readOnly: true
           description: Human-readable approval levels
         custom_approvers:
-          nullable: true
           description: Custom approver configuration for 'custom' approval type
         number_of_levels:
-          type: string
-          readOnly: true
+          type: integer
           description: Number of approval levels in this workflow
+          readOnly: true
         is_default:
           type: boolean
           description: Whether this is the default workflow for the tenant
@@ -7945,6 +8009,7 @@ components:
           description: Whether this workflow is available for use
         created_by:
           type: integer
+          readOnly: true
           nullable: true
           description: User who created this workflow
         created_by_name:

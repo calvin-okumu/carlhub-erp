@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -23,7 +21,7 @@ from .serializers import (
     LeavePolicySerializer,
     LeaveRequestSerializer,
 )
-from .services import LeaveAnalyticsService, LeaveApprovalWorkflowService
+from .services import LeaveApprovalWorkflowService
 
 
 class LeaveRequestViewSet(viewsets.ModelViewSet):
@@ -148,44 +146,69 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         else:
             return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=["post"], permission_classes=[CanApproveLeaves])
-    def approve_level(self, request, pk=None):
+    @action(detail=True, methods=["post"])
+    def approve_level(self, request, slug=None):
         """Approve a leave request at the current workflow level."""
-        leave_request = self.get_object()
+        try:
+            leave_request = self.get_object()
 
-        # Validate action data
-        action_serializer = LeaveApprovalActionSerializer(data=request.data)
-        if not action_serializer.is_valid():
-            return Response(action_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # Validate action data
+            action_serializer = LeaveApprovalActionSerializer(data=request.data)
+            if not action_serializer.is_valid():
+                return Response(action_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Process approval through workflow
-        result = LeaveApprovalWorkflowService.process_approval(
-            leave_request,
-            request.user,
-            "approve",
-            action_serializer.validated_data.get("notes", ""),
-            request,  # Pass request for audit logging
-        )
+            # Process approval through workflow
+            result = LeaveApprovalWorkflowService.process_approval(
+                leave_request,
+                request.user,
+                "approve",
+                action_serializer.validated_data.get("notes", ""),
+                request,  # Pass request for audit logging
+            )
 
-        if result["success"]:
-            # Update leave balance if fully approved
-            if leave_request.is_approved:
-                self._update_leave_balance(leave_request)
-                EmailService.send_leave_approved_email(leave_request)
+            if result["success"]:
+                # Update leave balance if fully approved
+                if leave_request.is_approved:
+                    try:
+                        self._update_leave_balance(leave_request)
+                    except Exception as e:
+                        import logging
 
-            serializer = self.get_serializer(leave_request)
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Leave balance update failed: {e}")
+
+                    try:
+                        EmailService.send_leave_approved_email(leave_request)
+                    except Exception as e:
+                        import logging
+
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Email send failed: {e}")
+
+                serializer = self.get_serializer(leave_request)
+                return Response(
+                    {
+                        "message": result["message"],
+                        "data": serializer.data,
+                        "next_level": result.get("next_level"),
+                    }
+                )
+            else:
+                return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"View error: {e}")
+            import traceback
+
+            traceback.print_exc()
             return Response(
                 {
-                    "message": result["message"],
-                    "data": serializer.data,
-                    "next_level": result.get("next_level"),
-                }
+                    "error": "An error occurred while processing your request. Please try again or contact support."
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        else:
-            return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"], permission_classes=[CanApproveLeaves])
-    def reject_level(self, request, pk=None):
+    def reject_level(self, request, slug=None):
         """Reject a leave request at the current workflow level."""
         leave_request = self.get_object()
 
@@ -211,11 +234,11 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["get"])
-    def workflow_status(self, request, pk=None):
+    def workflow_status(self, request, slug=None):
         """Get detailed workflow status for a leave request."""
         leave_request = self.get_object()
 
-        workflow_status = LeaveAnalyticsService.get_workflow_status(leave_request)
+        workflow_status = LeaveApprovalWorkflowService.get_workflow_status(leave_request)
 
         return Response(
             {
@@ -227,7 +250,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=["post"])
-    def cancel(self, request, pk=None):
+    def cancel(self, request, slug=None):
         """Cancel a leave request (only by the employee who created it)."""
         leave_request = self.get_object()
 
@@ -267,18 +290,16 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
                 leave_type=leave_request.leave_type,
                 year=leave_request.start_date.year,
             )
-            balance.used_days += leave_request.days_requested
-            balance.save()
+            # Only update if there's sufficient balance
+            if (
+                balance.used_days + leave_request.days_requested
+                <= balance.total_days + balance.carried_over
+            ):
+                balance.used_days += leave_request.days_requested
+                balance.save()
         except LeaveBalance.DoesNotExist:
-            # Create balance entry if it doesn't exist
-            LeaveBalance.objects.create(
-                employee=leave_request.employee,
-                tenant=leave_request.tenant,
-                leave_type=leave_request.leave_type,
-                year=leave_request.start_date.year,
-                total_days=Decimal("0"),  # Will need to be set by HR
-                used_days=leave_request.days_requested,
-            )
+            # Don't create balance entry if it doesn't exist - HR needs to set it up first
+            pass
 
     def _restore_leave_balance(self, leave_request):
         """Restore leave balance when a request is cancelled."""

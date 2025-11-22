@@ -273,6 +273,15 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
                     "Please check your existing requests or modify the dates."
                 )
 
+        # Calculate days_requested if not provided
+        if "days_requested" not in validated_data:
+            start_date = validated_data.get("start_date")
+            end_date = validated_data.get("end_date")
+            if start_date and end_date:
+                from decimal import Decimal
+
+                validated_data["days_requested"] = Decimal((end_date - start_date).days + 1)
+
         # Create the leave request
         leave_request = super().create(validated_data)
 
@@ -371,6 +380,8 @@ class LeavePolicySerializer(serializers.ModelSerializer):
             "carry_over_allowed",
             "max_carry_over",
             "auto_approve_max_days",
+            "approval_levels",
+            "approval_workflow",
             "is_active",
             "created_at",
             "updated_at",
@@ -514,9 +525,7 @@ class LeaveApprovalActionSerializer(serializers.Serializer):
 class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
     """Serializer for leave approval workflows."""
 
-    approval_levels_display = serializers.CharField(
-        source="get_approval_levels_display",
-        read_only=True,
+    approval_levels_display = serializers.SerializerMethodField(
         help_text="Human-readable approval levels",
     )
     number_of_levels = serializers.SerializerMethodField(
@@ -528,15 +537,32 @@ class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
         help_text="Name of the user who created this workflow",
     )
 
+    def get_approval_levels_display(self, obj) -> str:
+        """Get human-readable approval levels."""
+        level_names = {
+            "department_manager": "Department Manager",
+            "hr_manager": "HR Manager",
+            "general_manager": "General Manager",
+            "tenant_owner": "Tenant Owner",
+            "custom": "Custom Role",
+        }
+        levels = [level_names.get(level, str(level)) for level in obj.approval_level_list if level]
+        return " → ".join(levels) if levels else "No levels configured"
+
+    def get_number_of_levels(self, obj) -> int:
+        """Get the number of approval levels."""
+        return obj.number_of_levels
+
     class Meta:
         model = LeaveApprovalWorkflow
         fields = [
             "id",
+            "slug",
             "name",
             "description",
             "approval_levels",
             "approval_levels_display",
-            "custom_approvers",
+            "default_hr_levels",
             "number_of_levels",
             "is_default",
             "is_active",
@@ -547,16 +573,29 @@ class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "slug",
             "created_at",
             "updated_at",
+            "created_by",
             "created_by_name",
             "approval_levels_display",
             "number_of_levels",
         ]
 
-    def get_number_of_levels(self, obj):
-        """Get the number of approval levels."""
-        return obj.number_of_levels
+
+class LeaveApprovalWorkflowCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating leave approval workflows (excludes read-only fields)."""
+
+    class Meta:
+        model = LeaveApprovalWorkflow
+        fields = [
+            "name",
+            "description",
+            "approval_levels",
+            "default_hr_levels",
+            "is_default",
+            "is_active",
+        ]
 
     def create(self, validated_data):
         """Create workflow."""
