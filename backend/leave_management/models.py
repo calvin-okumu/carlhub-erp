@@ -75,11 +75,11 @@ class LeaveRequest(models.Model):
     # Workflow tracking
     current_approval_level = models.CharField(
         max_length=20,
-        choices=[
+        choices=(
             ("department_manager", "Department Manager"),
             ("hr_manager", "HR Manager"),
             ("general_manager", "General Manager"),
-        ],
+        ),
         default="department_manager",
         help_text="Current approval level in workflow",
     )
@@ -87,225 +87,9 @@ class LeaveRequest(models.Model):
         auto_now_add=True, help_text="When the leave request was submitted"
     )
 
-    # Approval information
-    approved_by = models.ForeignKey(
-        "accounts.CustomUser",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="approved_leave_requests",
-        help_text="Manager who approved/rejected the request",
-    )
-    approved_date = models.DateTimeField(
-        null=True, blank=True, help_text="When the request was approved/rejected"
-    )
-    approval_notes = models.TextField(blank=True, help_text="Notes from approver")
-
-    # Workflow tracking fields
-    current_approval_level = models.CharField(
-        max_length=20,
-        choices=[
-            ("department_manager", "Department Manager"),
-            ("hr_manager", "HR Manager"),
-            ("general_manager", "General Manager"),
-        ],
-        default="department_manager",
-        help_text="Current approval level in workflow",
-    )
-
-    # Keep for backward compatibility - final approver
-    final_approver = models.ForeignKey(
-        "accounts.CustomUser",
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name="final_approved_leave_requests",
-        help_text="Final approver who completed the workflow",
-    )
-
     # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-        indexes = [
-            models.Index(fields=["tenant", "status"]),
-            models.Index(fields=["employee"]),  # For employee balance history
-        ]
-        constraints = [
-            models.CheckConstraint(
-                check=models.Q(start_date__lte=models.F("end_date")),
-                name="leave_request_start_before_end",
-            ),
-            models.CheckConstraint(
-                check=models.Q(days_requested__gt=0), name="leave_request_positive_days"
-            ),
-        ]
-
-    def clean(self):
-        """Validate leave request data."""
-        if self.start_date and self.end_date:
-            # Ensure dates are date objects (handle string inputs from API)
-            from datetime import date
-
-            if isinstance(self.start_date, str):
-                self.start_date = date.fromisoformat(self.start_date)
-            if isinstance(self.end_date, str):
-                self.end_date = date.fromisoformat(self.end_date)
-
-            if self.start_date > self.end_date:
-                raise ValidationError("Start date cannot be after end date.")
-
-            # Calculate business days (excluding weekends) only if days_requested is not set
-            if not self.days_requested:
-                from datetime import timedelta
-
-                business_days = 0
-                current_date = self.start_date
-                while current_date <= self.end_date:
-                    # Monday = 0, Sunday = 6
-                    if current_date.weekday() < 5:  # Monday to Friday
-                        business_days += 1
-                    current_date += timedelta(days=1)
-                self.days_requested = Decimal(str(business_days))
-
-    def save(self, *args, **kwargs):
-        # Generate slug if not present
-        if not self.slug:
-            base_slug = f"leave-{self.employee.id}-{self.start_date}"
-            self.slug = slugify(base_slug)
-
-            # Ensure uniqueness
-            original_slug = self.slug
-            counter = 1
-            while LeaveRequest.objects.filter(slug=self.slug).exists():
-                self.slug = f"{original_slug}-{counter}"
-                counter += 1
-
-        # Run validation
-        self.clean()
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.employee.get_full_name()} - {self.leave_type} ({self.start_date} to {self.end_date})"
-
-    @property
-    def duration_display(self):
-        """Human-readable duration display."""
-        if self.days_requested == 1:
-            return "1 day"
-        elif self.days_requested % 1 == 0:
-            return f"{int(self.days_requested)} days"
-        else:
-            return f"{self.days_requested} days"
-
-    @property
-    def is_pending(self):
-        """Check if request is pending at any level."""
-        return self.status.startswith("pending_")
-
-    @property
-    def is_approved(self):
-        """Check if request is fully approved."""
-        return self.status == "approved"
-
-    @property
-    def is_rejected(self):
-        """Check if request is rejected."""
-        return self.status == "rejected"
-
-    def get_workflow_status_display(self):
-        """Get human-readable workflow status."""
-        status_map = {
-            "pending_department_manager": "Pending Department Manager Approval",
-            "pending_hr_manager": "Pending HR Manager Approval",
-            "pending_general_manager": "Pending General Manager Approval",
-            "approved": "Approved",
-            "rejected": "Rejected",
-            "cancelled": "Cancelled",
-            "taken": "Leave Taken",
-        }
-        return status_map.get(self.status, self.status)
-
-    def get_current_approver(self):
-        """Get the user who should approve at current level."""
-        if not self.is_pending:
-            return None
-
-        # Get employee's department
-        try:
-            employee_tenant = self.employee.usertenant
-            department = employee_tenant.department
-        except Exception:
-            return None
-
-        if not department:
-            return None
-
-        # Return appropriate approver based on current level
-        if self.current_approval_level == "department_manager":
-            return department.manager
-        elif self.current_approval_level == "hr_manager":
-            # Find HR manager in tenant
-            try:
-                hr_manager_tenant = self.tenant.usertenant_set.filter(
-                    role="HR Manager", is_approved=True
-                ).first()
-                return hr_manager_tenant.user if hr_manager_tenant else None
-            except Exception:
-                return None
-        elif self.current_approval_level == "general_manager":
-            # Find general manager in tenant
-            try:
-                general_manager_tenant = self.tenant.usertenant_set.filter(
-                    role="General Manager", is_approved=True
-                ).first()
-                return general_manager_tenant.user if general_manager_tenant else None
-            except Exception:
-                return None
-
-        return None
-
-    def get_approval_history(self):
-        """Get all approval steps for this request."""
-        return self.approvals.all().order_by("order")
-
-    def can_be_approved_by(self, user):
-        """Check if user can approve this request at current level."""
-        if not self.is_pending:
-            return False
-
-        current_approver = self.get_current_approver()
-        if not current_approver:
-            return False
-
-        # User can approve if they are the current approver or have higher privileges
-        try:
-            user_tenant = user.usertenant
-            if user_tenant.tenant != self.tenant:
-                return False
-
-            # Check if user is the designated approver
-            if current_approver == user:
-                return True
-
-            # Check for higher-level approval rights
-            if user_tenant.role in ["General Manager", "Tenant Owner"]:
-                return True
-
-            # HR managers can approve department manager level
-            if (
-                user_tenant.role == "HR Manager"
-                and self.current_approval_level == "department_manager"
-            ):
-                return True
-
-        except Exception:
-            return False
-
-        return False
 
 
 class LeaveBalance(models.Model):
@@ -685,13 +469,6 @@ class LeaveApprovalWorkflow(models.Model):
         null=True,
         blank=True,
         help_text="Custom approver configuration for 'custom' approval type",
-    )
-
-    # Optional: Allow custom approval levels for advanced users
-    custom_approvers = models.JSONField(
-        null=True,
-        blank=True,
-        help_text="Custom approver configuration (optional)",
     )
 
     is_default = models.BooleanField(

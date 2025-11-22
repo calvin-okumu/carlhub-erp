@@ -410,9 +410,6 @@ class LeaveApprovalWorkflowService:
         else:
             # Final approval
             leave_request.status = "approved"
-            leave_request.final_approver = approver
-            leave_request.approved_by = approver  # For backward compatibility
-            leave_request.approved_date = timezone.now()
             message = "Leave request fully approved."
 
         leave_request.save()
@@ -430,9 +427,6 @@ class LeaveApprovalWorkflowService:
     def _process_rejection_action(cls, leave_request, approver, notes):
         """Process rejection action."""
         leave_request.status = "rejected"
-        leave_request.approved_by = approver  # For backward compatibility
-        leave_request.approved_date = timezone.now()
-        leave_request.approval_notes = notes
         leave_request.save()
 
         return {"success": True, "message": "Leave request rejected.", "status": "rejected"}
@@ -519,8 +513,7 @@ class LeaveApprovalWorkflowService:
                 if employee_tenant.role in ["Tenant Owner"]:
                     leave_request.status = "approved"
                     leave_request.final_approver = leave_request.employee
-                    leave_request.approved_by = leave_request.employee
-                    leave_request.approved_date = timezone.now()
+
                 else:
                     leave_request.status = "pending_department_manager"
                     leave_request.current_approval_level = "department_manager"

@@ -27,16 +27,7 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         read_only=True,
         help_text="Name of the tenant organization",
     )
-    approved_by_name = serializers.CharField(
-        source="approved_by.get_full_name",
-        read_only=True,
-        help_text="Name of the approver",
-    )
-    final_approver_name = serializers.CharField(
-        source="final_approver.get_full_name",
-        read_only=True,
-        help_text="Name of the final approver",
-    )
+
     duration_display = serializers.CharField(read_only=True, help_text="Human-readable duration")
     start_date = serializers.DateField(help_text="Leave start date")
     end_date = serializers.DateField(help_text="Leave end date")
@@ -72,12 +63,6 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "reason",
             "status",
             "applied_date",
-            "approved_by",
-            "approved_by_name",
-            "final_approver",
-            "final_approver_name",
-            "approved_date",
-            "approval_notes",
             "duration_display",
             "current_approval_level",
             "next_approval_level",
@@ -96,8 +81,6 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "tenant",
             "tenant_name",
             "days_requested",
-            "approved_by_name",
-            "final_approver_name",
             "duration_display",
             "current_approval_level",
             "next_approval_level",
@@ -118,10 +101,6 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "reason": "Reason for the leave request",
             "status": "Current status of the leave request",
             "applied_date": "When the leave request was submitted (auto-set)",
-            "approved_by": "Manager who approved/rejected the request (legacy field)",
-            "final_approver": "Final approver in the workflow chain",
-            "approved_date": "When the request was approved/rejected",
-            "approval_notes": "Notes from the approver",
             "current_approval_level": "Current approval level in workflow",
         }
 

@@ -44,7 +44,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [CanManageLeaveRequests]
     pagination_class = CustomPageNumberPagination
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["status", "leave_type", "employee", "approved_by"]
+    filterset_fields = ["status", "leave_type", "employee"]
     search_fields = ["reason", "approval_notes"]
     ordering_fields = ["applied_date", "start_date", "end_date", "status"]
     ordering = ["-applied_date"]
@@ -60,7 +60,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
-        queryset = LeaveRequest.objects.select_related("employee", "tenant", "approved_by")
+        queryset = LeaveRequest.objects.select_related("employee", "tenant")
 
         # Handle schema generation (no authenticated user)
         if not user or user.is_anonymous:
