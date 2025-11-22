@@ -522,6 +522,10 @@ class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
     number_of_levels = serializers.SerializerMethodField(
         help_text="Number of approval levels in this workflow",
     )
+    custom_approvers = serializers.JSONField(
+        required=False,
+        help_text="Custom approver configuration for 'custom' approval type",
+    )
     created_by_name = serializers.CharField(
         source="created_by.get_full_name",
         read_only=True,
@@ -554,6 +558,7 @@ class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
             "number_of_levels",
         ]
 
+    @extend_schema_field(OpenApiTypes.INT)
     def get_number_of_levels(self, obj):
         """Get the number of approval levels."""
         return obj.number_of_levels
