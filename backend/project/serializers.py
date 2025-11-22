@@ -75,7 +75,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             # Ensure budget is a Decimal with 2 decimal places
             from decimal import Decimal
 
-            if isinstance(value, (int, float)):
+            if isinstance(value, int | float):
                 value = Decimal(str(value)).quantize(Decimal("0.01"))
             elif isinstance(value, str):
                 value = Decimal(value).quantize(Decimal("0.01"))
@@ -214,7 +214,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
                 project = Project.objects.get(slug=project_slug, tenant=tenant)
                 attrs["project"] = project  # Replace slug with instance
             except Project.DoesNotExist:
-                raise serializers.ValidationError(f"Project '{project_slug}' not found")
+                raise serializers.ValidationError(f"Project '{project_slug}' not found") from None
 
         # Set tenant
         attrs["tenant"] = tenant
@@ -303,7 +303,9 @@ class SprintSerializer(serializers.ModelSerializer):
                 milestone = Milestone.objects.get(slug=milestone_slug, tenant=tenant)
                 attrs["milestone"] = milestone  # Replace slug with instance
             except Milestone.DoesNotExist:
-                raise serializers.ValidationError(f"Milestone '{milestone_slug}' not found")
+                raise serializers.ValidationError(
+                    f"Milestone '{milestone_slug}' not found"
+                ) from None
 
         # Set tenant
         attrs["tenant"] = tenant
@@ -390,7 +392,9 @@ class TaskSerializer(serializers.ModelSerializer):
                 milestone = Milestone.objects.get(slug=milestone_slug, tenant=tenant)
                 attrs["milestone"] = milestone  # Replace slug with instance
             except Milestone.DoesNotExist:
-                raise serializers.ValidationError(f"Milestone '{milestone_slug}' not found")
+                raise serializers.ValidationError(
+                    f"Milestone '{milestone_slug}' not found"
+                ) from None
 
         # Validate sprint relationship (if provided)
         sprint_slug = attrs.get("sprint")
@@ -406,25 +410,12 @@ class TaskSerializer(serializers.ModelSerializer):
                         f"but task milestone is '{attrs['milestone'].slug}'"
                     )
             except Sprint.DoesNotExist:
-                raise serializers.ValidationError(f"Sprint '{sprint_slug}' not found")
+                raise serializers.ValidationError(f"Sprint '{sprint_slug}' not found") from None
 
         # Set tenant
         attrs["tenant"] = tenant
 
         return attrs
-
-        help_texts = {
-            "title": "Task title or summary",
-            "description": "Detailed task description",
-            "status": "Current task status (To Do, In Progress, In Review, Testing, Done)",
-            "milestone": "Parent milestone this task belongs to (slug)",
-            "sprint": "Sprint this task is assigned to (optional, slug)",
-            "assignee": "User assigned to this task",
-            "start_date": "Task start date",
-            "end_date": "Task end date",
-            "estimated_hours": "Estimated hours to complete the task",
-            "tenant": "Tenant organization this task belongs to",
-        }
 
 
 class InvoiceSerializer(serializers.ModelSerializer):

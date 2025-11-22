@@ -62,7 +62,7 @@ class Command(BaseCommand):
             self.display_success_message(environment)
 
         except Exception as e:
-            raise CommandError(f"❌ Setup failed: {str(e)}")
+            raise CommandError(f"❌ Setup failed: {str(e)}") from e
 
     def detect_environment(self):
         """Detect the current environment with multiple indicators"""
@@ -149,10 +149,10 @@ class Command(BaseCommand):
         from django.db import connection
 
         try:
-            cursor = connection.cursor()
+            connection.cursor()
             self.stdout.write("✅ Database: OK")
         except Exception as e:
-            raise CommandError(f"Database validation failed: {e}")
+            raise CommandError(f"Database validation failed: {e}") from e
 
         # Check groups exist
         from django.contrib.auth.models import Group

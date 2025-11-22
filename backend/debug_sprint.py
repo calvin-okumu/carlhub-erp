@@ -2,19 +2,20 @@
 """
 Debug sprint creation
 """
+
 import os
 import sys
 
 import django
 
+from accounts.models import CustomUser, Tenant, UserTenant
+from project.models import Client, Milestone, Project
+from project.serializers import SprintSerializer
+
 # Setup Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "saasCRM.settings")
 sys.path.insert(0, os.path.dirname(__file__))
 django.setup()
-
-from accounts.models import CustomUser, Tenant, UserTenant
-from project.models import Client, Milestone, Project
-from project.serializers import SprintSerializer
 
 # Get or create test data
 tenant = Tenant.objects.filter(name="Test Tenant").first()

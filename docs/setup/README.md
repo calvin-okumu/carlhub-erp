@@ -459,7 +459,7 @@ pip install -r requirements.txt
 sudo systemctl status postgresql
 
 # Reset database
-cd backend && python manage.py reset_db
+cd backend && python manage.py flush
 python manage.py setup_project
 ```
 

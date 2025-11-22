@@ -26,7 +26,7 @@ This comprehensive documentation provides detailed information about the DjangoC
 - [Progress Tracking](./features/progress-tracking.md)
 - [Audit Logging](./features/audit-logging.md) ✅
 - [Data Management](./features/data-management.md) ✅
-- [Leave Management](./leave-management.md)
+- [Leave Management](./features/leave-management.md)
 - [Multi-Tenancy](./features/multi-tenancy.md)
 - [Email System](./features/email-system.md)
 
@@ -88,6 +88,11 @@ make docker-down  # Stop Docker services
 - ✅ Financial management with invoices and payments
 - ✅ Robust error handling with isolated audit logging
 - ✅ Production-ready API with consistent JSON responses
+- ✅ Configurable leave approval workflows with up to 5 levels
+- ✅ Mobile-friendly quick approval/rejection endpoints
+- ✅ Automated approval reminders and escalations
+- ✅ Comprehensive leave analytics and reporting
+- ✅ Code quality enforcement with automated linting (ruff, black, isort)
 
 ## 📋 Prerequisites
 
@@ -129,6 +134,6 @@ make docker-down  # Stop Docker services
 
 ---
 
-**Version**: 1.0.0
-**Last Updated**: October 2025
+**Version**: 1.1.0
+**Last Updated**: November 2025
 **License**: MIT

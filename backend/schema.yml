@@ -2816,10 +2816,6 @@ paths:
         - Approve/reject requests
       parameters:
       - in: query
-        name: approved_by
-        schema:
-          type: integer
-      - in: query
         name: employee
         schema:
           type: integer
@@ -3255,6 +3251,368 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LeaveRequest'
+          description: ''
+  /api/leave/workflows/:
+    get:
+      operationId: leave_workflows_list
+      description: |-
+        ViewSet for managing leave approval workflows.
+
+        Allows HR and management to configure approval workflows for leave requests.
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeaveApprovalWorkflowList'
+          description: ''
+    post:
+      operationId: leave_workflows_create
+      description: |-
+        ViewSet for managing leave approval workflows.
+
+        Allows HR and management to configure approval workflows for leave requests.
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+  /api/leave/workflows/{id}/:
+    get:
+      operationId: leave_workflows_retrieve
+      description: |-
+        ViewSet for managing leave approval workflows.
+
+        Allows HR and management to configure approval workflows for leave requests.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+    put:
+      operationId: leave_workflows_update
+      description: |-
+        ViewSet for managing leave approval workflows.
+
+        Allows HR and management to configure approval workflows for leave requests.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+    patch:
+      operationId: leave_workflows_partial_update
+      description: |-
+        ViewSet for managing leave approval workflows.
+
+        Allows HR and management to configure approval workflows for leave requests.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveApprovalWorkflow'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+    delete:
+      operationId: leave_workflows_destroy
+      description: |-
+        ViewSet for managing leave approval workflows.
+
+        Allows HR and management to configure approval workflows for leave requests.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/workflows/{id}/quick_approve/:
+    post:
+      operationId: leave_workflows_quick_approve_create
+      description: Quick approve for mobile - minimal data required.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+  /api/leave/workflows/{id}/quick_reject/:
+    post:
+      operationId: leave_workflows_quick_reject_create
+      description: Quick reject for mobile - requires reason.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+  /api/leave/workflows/{id}/set_default/:
+    post:
+      operationId: leave_workflows_set_default_create
+      description: Set this workflow as the default for the tenant.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+  /api/leave/workflows/analytics/:
+    get:
+      operationId: leave_workflows_analytics_retrieve
+      description: Get approval analytics for the tenant.
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+  /api/leave/workflows/notifications_summary/:
+    get:
+      operationId: leave_workflows_notifications_summary_retrieve
+      description: Get pending approvals summary for the current user.
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+  /api/leave/workflows/send_escalations/:
+    post:
+      operationId: leave_workflows_send_escalations_create
+      description: Send escalation notifications for critically overdue requests.
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          description: ''
+  /api/leave/workflows/send_reminders/:
+    post:
+      operationId: leave_workflows_send_reminders_create
+      description: Send approval reminders for overdue requests.
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveApprovalWorkflow'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveApprovalWorkflow'
           description: ''
   /api/login/:
     post:
@@ -5753,6 +6111,24 @@ components:
         * `security_token_misuse` - Token Misuse
         * `admin_user_suspended` - User Suspended
         * `admin_user_activated` - User Activated
+    ApprovalLevelsEnum:
+      enum:
+      - department_manager
+      - department_manager,hr_manager
+      - department_manager,hr_manager,general_manager
+      - hr_manager
+      - hr_manager,general_manager
+      - general_manager
+      - custom
+      type: string
+      description: |-
+        * `department_manager` - Department Manager Only
+        * `department_manager,hr_manager` - Department Manager → HR Manager
+        * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
+        * `hr_manager` - HR Manager Only
+        * `hr_manager,general_manager` - HR Manager → General Manager
+        * `general_manager` - General Manager Only
+        * `custom` - Custom Approval Chain
     AuditLog:
       type: object
       properties:
@@ -6279,6 +6655,76 @@ components:
       - formatted_amount
       - id
       - issued_at
+    LeaveApprovalWorkflow:
+      type: object
+      description: Serializer for leave approval workflows.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          description: Descriptive name for the workflow (e.g., 'Standard Approval',
+            'Executive Approval')
+          maxLength: 100
+        description:
+          type: string
+          description: Optional description of when to use this workflow
+        approval_levels:
+          allOf:
+          - $ref: '#/components/schemas/ApprovalLevelsEnum'
+          description: |-
+            The sequence of approval levels required
+
+            * `department_manager` - Department Manager Only
+            * `department_manager,hr_manager` - Department Manager → HR Manager
+            * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
+            * `hr_manager` - HR Manager Only
+            * `hr_manager,general_manager` - HR Manager → General Manager
+            * `general_manager` - General Manager Only
+            * `custom` - Custom Approval Chain
+        approval_levels_display:
+          type: string
+          readOnly: true
+          description: Human-readable approval levels
+        custom_approvers:
+          nullable: true
+          description: Custom approver configuration for 'custom' approval type
+        number_of_levels:
+          type: string
+          readOnly: true
+          description: Number of approval levels in this workflow
+        is_default:
+          type: boolean
+          description: Whether this is the default workflow for the tenant
+        is_active:
+          type: boolean
+          description: Whether this workflow is available for use
+        created_by:
+          type: integer
+          nullable: true
+          description: User who created this workflow
+        created_by_name:
+          type: string
+          readOnly: true
+          description: Name of the user who created this workflow
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - approval_levels_display
+      - created_at
+      - created_by_name
+      - id
+      - name
+      - number_of_levels
+      - updated_at
     LeaveBalance:
       type: object
       description: Serializer for leave balances with utilization calculations.
@@ -6503,11 +6949,11 @@ components:
         start_date:
           type: string
           format: date
-          description: First day of leave
+          description: Leave start date
         end_date:
           type: string
           format: date
-          description: Last day of leave
+          description: Leave end date
         days_requested:
           type: string
           format: decimal
@@ -6535,30 +6981,6 @@ components:
           format: date-time
           readOnly: true
           description: When the leave request was submitted
-        approved_by:
-          type: integer
-          nullable: true
-          description: Manager who approved/rejected the request
-        approved_by_name:
-          type: string
-          readOnly: true
-          description: Name of the approver
-        final_approver:
-          type: integer
-          nullable: true
-          description: Final approver who completed the workflow
-        final_approver_name:
-          type: string
-          readOnly: true
-          description: Name of the final approver
-        approved_date:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the request was approved/rejected
-        approval_notes:
-          type: string
-          description: Notes from approver
         duration_display:
           type: string
           readOnly: true
@@ -6606,7 +7028,6 @@ components:
       required:
       - applied_date
       - approval_history
-      - approved_by_name
       - can_approve
       - created_at
       - current_approval_level
@@ -6616,7 +7037,6 @@ components:
       - employee
       - employee_name
       - end_date
-      - final_approver_name
       - id
       - leave_type
       - next_approval_level
@@ -6919,6 +7339,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Invoice'
+    PaginatedLeaveApprovalWorkflowList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaveApprovalWorkflow'
     PaginatedLeaveBalanceList:
       type: object
       required:
@@ -7454,6 +7897,68 @@ components:
           readOnly: true
         paid:
           type: boolean
+    PatchedLeaveApprovalWorkflow:
+      type: object
+      description: Serializer for leave approval workflows.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          description: Descriptive name for the workflow (e.g., 'Standard Approval',
+            'Executive Approval')
+          maxLength: 100
+        description:
+          type: string
+          description: Optional description of when to use this workflow
+        approval_levels:
+          allOf:
+          - $ref: '#/components/schemas/ApprovalLevelsEnum'
+          description: |-
+            The sequence of approval levels required
+
+            * `department_manager` - Department Manager Only
+            * `department_manager,hr_manager` - Department Manager → HR Manager
+            * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
+            * `hr_manager` - HR Manager Only
+            * `hr_manager,general_manager` - HR Manager → General Manager
+            * `general_manager` - General Manager Only
+            * `custom` - Custom Approval Chain
+        approval_levels_display:
+          type: string
+          readOnly: true
+          description: Human-readable approval levels
+        custom_approvers:
+          nullable: true
+          description: Custom approver configuration for 'custom' approval type
+        number_of_levels:
+          type: string
+          readOnly: true
+          description: Number of approval levels in this workflow
+        is_default:
+          type: boolean
+          description: Whether this is the default workflow for the tenant
+        is_active:
+          type: boolean
+          description: Whether this workflow is available for use
+        created_by:
+          type: integer
+          nullable: true
+          description: User who created this workflow
+        created_by_name:
+          type: string
+          readOnly: true
+          description: Name of the user who created this workflow
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedLeaveBalance:
       type: object
       description: Serializer for leave balances with utilization calculations.
@@ -7655,11 +8160,11 @@ components:
         start_date:
           type: string
           format: date
-          description: First day of leave
+          description: Leave start date
         end_date:
           type: string
           format: date
-          description: Last day of leave
+          description: Leave end date
         days_requested:
           type: string
           format: decimal
@@ -7687,30 +8192,6 @@ components:
           format: date-time
           readOnly: true
           description: When the leave request was submitted
-        approved_by:
-          type: integer
-          nullable: true
-          description: Manager who approved/rejected the request
-        approved_by_name:
-          type: string
-          readOnly: true
-          description: Name of the approver
-        final_approver:
-          type: integer
-          nullable: true
-          description: Final approver who completed the workflow
-        final_approver_name:
-          type: string
-          readOnly: true
-          description: Name of the final approver
-        approved_date:
-          type: string
-          format: date-time
-          nullable: true
-          description: When the request was approved/rejected
-        approval_notes:
-          type: string
-          description: Notes from approver
         duration_display:
           type: string
           readOnly: true

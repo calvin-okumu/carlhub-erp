@@ -159,8 +159,8 @@ python manage.py setup_project --sample-data
 # Using pg_dump
 pg_dump -U saascrm_user -h localhost saascrm_db > backup.sql
 
-# Using Django
-python manage.py dbbackup
+# Using Django (JSON format)
+python manage.py dumpdata --natural-foreign --natural-primary -o backup.json
 ```
 
 ### Restore Database
@@ -169,8 +169,8 @@ python manage.py dbbackup
 # Using psql
 psql -U saascrm_user -h localhost saascrm_db < backup.sql
 
-# Using Django
-python manage.py dbrestore
+# Using Django (JSON format)
+python manage.py loaddata backup.json
 ```
 
 ### Database Shell
@@ -364,11 +364,11 @@ archive_command = 'cp %p /var/lib/postgresql/archive/%f'
 - Enable database query logging in development
 - Implement proper authentication and authorization
 - Regular dependency updates</content>
-</xai:function_call"> 
+</xai:function_call">
 
 Assistant: Now I need to update the MANUAL.md to be a concise overview, and update the main docs/README.md with the new structure.
 
-First, update MANUAL.md to be shorter. 
+First, update MANUAL.md to be shorter.
 
 <xai:function_call name="edit">
 <parameter name="filePath">MANUAL.md

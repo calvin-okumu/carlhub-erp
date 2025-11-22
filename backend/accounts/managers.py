@@ -6,7 +6,6 @@ Provides abstraction layer for database operations and enforces tenant isolation
 import uuid
 from datetime import timedelta
 
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
@@ -59,7 +58,6 @@ class UserTenantManager(models.Manager):
     """Custom manager for UserTenant model."""
 
     def get_by_natural_key(self, user_email: str, tenant_name: str):
-        User = get_user_model()
         return self.get(user__email=user_email, tenant__name=tenant_name)
 
     def create_membership(

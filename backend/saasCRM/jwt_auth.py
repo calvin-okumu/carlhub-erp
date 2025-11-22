@@ -48,11 +48,11 @@ class JWTAuthentication(BaseAuthentication):
             return (user, token)
 
         except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed("Token has expired")
+            raise AuthenticationFailed("Token has expired") from None
         except jwt.InvalidTokenError:
-            raise AuthenticationFailed("Token is invalid")
+            raise AuthenticationFailed("Token is invalid") from None
         except User.DoesNotExist:
-            raise AuthenticationFailed("User not found")
+            raise AuthenticationFailed("User not found") from None
 
 
 class JWTTokenManager:
@@ -115,11 +115,11 @@ class JWTTokenManager:
             return JWTTokenManager.generate_access_token(user)
 
         except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed("Refresh token has expired")
+            raise AuthenticationFailed("Refresh token has expired") from None
         except jwt.InvalidTokenError:
-            raise AuthenticationFailed("Invalid refresh token")
+            raise AuthenticationFailed("Invalid refresh token") from None
         except User.DoesNotExist:
-            raise AuthenticationFailed("User not found")
+            raise AuthenticationFailed("User not found") from None
 
 
 def get_tokens_for_user(user):

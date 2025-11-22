@@ -4,7 +4,13 @@ from rest_framework import serializers
 
 from accounts.models import Invitation, UserTenant
 
-from .models import LeaveApproval, LeaveBalance, LeavePolicy, LeaveRequest
+from .models import (
+    LeaveApproval,
+    LeaveApprovalWorkflow,
+    LeaveBalance,
+    LeavePolicy,
+    LeaveRequest,
+)
 from .services import LeaveApprovalWorkflowService
 
 
@@ -21,17 +27,10 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         read_only=True,
         help_text="Name of the tenant organization",
     )
-    approved_by_name = serializers.CharField(
-        source="approved_by.get_full_name",
-        read_only=True,
-        help_text="Name of the approver",
-    )
-    final_approver_name = serializers.CharField(
-        source="final_approver.get_full_name",
-        read_only=True,
-        help_text="Name of the final approver",
-    )
+
     duration_display = serializers.CharField(read_only=True, help_text="Human-readable duration")
+    start_date = serializers.DateField(help_text="Leave start date")
+    end_date = serializers.DateField(help_text="Leave end date")
 
     # Workflow fields
     workflow_status = serializers.SerializerMethodField(
@@ -64,12 +63,6 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "reason",
             "status",
             "applied_date",
-            "approved_by",
-            "approved_by_name",
-            "final_approver",
-            "final_approver_name",
-            "approved_date",
-            "approval_notes",
             "duration_display",
             "current_approval_level",
             "next_approval_level",
@@ -88,8 +81,6 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "tenant",
             "tenant_name",
             "days_requested",
-            "approved_by_name",
-            "final_approver_name",
             "duration_display",
             "current_approval_level",
             "next_approval_level",
@@ -110,10 +101,6 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "reason": "Reason for the leave request",
             "status": "Current status of the leave request",
             "applied_date": "When the leave request was submitted (auto-set)",
-            "approved_by": "Manager who approved/rejected the request (legacy field)",
-            "final_approver": "Final approver in the workflow chain",
-            "approved_date": "When the request was approved/rejected",
-            "approval_notes": "Notes from the approver",
             "current_approval_level": "Current approval level in workflow",
         }
 
@@ -251,13 +238,40 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(
                         f"You have pending invitations but haven't accepted any yet: "
                         f"{', '.join(invitation_info)}. Please accept an invitation to create leave requests."
-                    )
+                    ) from None
                 else:
                     raise serializers.ValidationError(
                         "You are not a member of any tenant. Only approved tenant members can create leave requests."
-                    )
+                    ) from None
             except Exception as e:
-                raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
+                raise serializers.ValidationError(
+                    f"Unable to determine tenant context: {str(e)}"
+                ) from e
+
+        # Check for overlapping leave requests before creating
+        employee = validated_data.get("employee")
+        tenant = validated_data.get("tenant")
+        start_date = validated_data.get("start_date")
+        end_date = validated_data.get("end_date")
+
+        if employee and tenant and start_date and end_date:
+            from django.db.models import Q
+
+            overlapping_requests = (
+                LeaveRequest.objects.filter(employee=employee, tenant=tenant)
+                .exclude(status__in=["cancelled", "rejected"])
+                .filter(
+                    # Check for date overlaps: start_date or end_date falls within existing range,
+                    # or existing range falls within new range
+                    Q(start_date__lte=end_date, end_date__gte=start_date)
+                )
+            )
+
+            if overlapping_requests.exists():
+                raise serializers.ValidationError(
+                    "You already have a leave request that overlaps with these dates. "
+                    "Please check your existing requests or modify the dates."
+                )
 
         # Create the leave request
         leave_request = super().create(validated_data)
@@ -413,9 +427,11 @@ class LeavePolicySerializer(serializers.ModelSerializer):
             except UserTenant.DoesNotExist:
                 raise serializers.ValidationError(
                     "You are not a member of any tenant. Only approved tenant members can create leave policies."
-                )
+                ) from None
             except Exception as e:
-                raise serializers.ValidationError(f"Unable to determine tenant context: {str(e)}")
+                raise serializers.ValidationError(
+                    f"Unable to determine tenant context: {str(e)}"
+                ) from e
 
         return super().create(validated_data)
 
@@ -493,3 +509,56 @@ class LeaveApprovalActionSerializer(serializers.Serializer):
             raise serializers.ValidationError("Notes are required when rejecting a leave request.")
 
         return data
+
+
+class LeaveApprovalWorkflowSerializer(serializers.ModelSerializer):
+    """Serializer for leave approval workflows."""
+
+    approval_levels_display = serializers.CharField(
+        source="get_approval_levels_display",
+        read_only=True,
+        help_text="Human-readable approval levels",
+    )
+    number_of_levels = serializers.SerializerMethodField(
+        help_text="Number of approval levels in this workflow",
+    )
+    created_by_name = serializers.CharField(
+        source="created_by.get_full_name",
+        read_only=True,
+        help_text="Name of the user who created this workflow",
+    )
+
+    class Meta:
+        model = LeaveApprovalWorkflow
+        fields = [
+            "id",
+            "name",
+            "description",
+            "approval_levels",
+            "approval_levels_display",
+            "custom_approvers",
+            "number_of_levels",
+            "is_default",
+            "is_active",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "created_by_name",
+            "approval_levels_display",
+            "number_of_levels",
+        ]
+
+    def get_number_of_levels(self, obj):
+        """Get the number of approval levels."""
+        return obj.number_of_levels
+
+    def create(self, validated_data):
+        """Create workflow."""
+        validated_data["created_by"] = self.context["request"].user
+        return super().create(validated_data)

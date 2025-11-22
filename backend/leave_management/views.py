@@ -3,6 +3,7 @@ from decimal import Decimal
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from accounts.email_service import EmailService
@@ -22,7 +23,7 @@ from .serializers import (
     LeavePolicySerializer,
     LeaveRequestSerializer,
 )
-from .services import LeaveApprovalWorkflowService
+from .services import LeaveAnalyticsService, LeaveApprovalWorkflowService
 
 
 class LeaveRequestViewSet(viewsets.ModelViewSet):
@@ -43,16 +44,23 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [CanManageLeaveRequests]
     pagination_class = CustomPageNumberPagination
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["status", "leave_type", "employee", "approved_by"]
+    filterset_fields = ["status", "leave_type", "employee"]
     search_fields = ["reason", "approval_notes"]
     ordering_fields = ["applied_date", "start_date", "end_date", "status"]
     ordering = ["-applied_date"]
     lookup_field = "slug"
 
+    def get_object(self):
+        """Override to provide custom error message for not found objects."""
+        try:
+            return super().get_object()
+        except LeaveRequest.DoesNotExist:
+            raise NotFound("Leave request not found.") from None
+
     def get_queryset(self):
         """Filter queryset based on user permissions with enhanced user-specific access."""
         user = self.request.user
-        queryset = LeaveRequest.objects.select_related("employee", "tenant", "approved_by")
+        queryset = LeaveRequest.objects.select_related("employee", "tenant")
 
         # Handle schema generation (no authenticated user)
         if not user or user.is_anonymous:
@@ -83,7 +91,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             return user_tenant.is_approved and (
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             )
-        except:
+        except Exception:
             return False
 
     def perform_create(self, serializer):
@@ -156,6 +164,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             request.user,
             "approve",
             action_serializer.validated_data.get("notes", ""),
+            request,  # Pass request for audit logging
         )
 
         if result["success"]:
@@ -187,7 +196,11 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
 
         # Process rejection through workflow
         result = LeaveApprovalWorkflowService.process_approval(
-            leave_request, request.user, "reject", action_serializer.validated_data.get("notes", "")
+            leave_request,
+            request.user,
+            "reject",
+            action_serializer.validated_data.get("notes", ""),
+            request,
         )
 
         if result["success"]:
@@ -202,7 +215,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         """Get detailed workflow status for a leave request."""
         leave_request = self.get_object()
 
-        workflow_status = LeaveApprovalWorkflowService.get_workflow_status(leave_request)
+        workflow_status = LeaveAnalyticsService.get_workflow_status(leave_request)
 
         return Response(
             {
@@ -333,7 +346,7 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
             return user_tenant.is_approved and (
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             )
-        except:
+        except Exception:
             return False
 
 
@@ -391,5 +404,5 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
             return user_tenant.is_approved and (
                 user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
             )
-        except:
+        except Exception:
             return False
