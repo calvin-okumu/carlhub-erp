@@ -30,17 +30,23 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if user.is_superuser:
             return LeaveApprovalWorkflow.objects.all()
-        else:
+        elif user.is_authenticated:
             # Get user's tenant
             user_tenant = user.usertenant_set.filter(is_approved=True).first()
             if user_tenant:
                 return LeaveApprovalWorkflow.objects.filter(tenant=user_tenant.tenant)
             return LeaveApprovalWorkflow.objects.none()
+        else:
+            # Anonymous user - return no results
+            return LeaveApprovalWorkflow.objects.none()
 
     def perform_create(self, serializer):
         """Set tenant when creating workflow."""
         user = self.request.user
-        if not user.is_superuser:
+        if user.is_superuser:
+            # Superuser must specify tenant
+            serializer.save()
+        elif user.is_authenticated:
             user_tenant = user.usertenant_set.filter(is_approved=True).first()
             if user_tenant:
                 serializer.save(tenant=user_tenant.tenant)
@@ -49,7 +55,9 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
 
                 raise serializers.ValidationError("User must be approved in a tenant.")
         else:
-            # Superuser must specify tenant
+            from rest_framework import serializers
+
+            raise serializers.ValidationError("Authentication required.")
             if not self.request.data.get("tenant"):
                 from rest_framework import serializers
 

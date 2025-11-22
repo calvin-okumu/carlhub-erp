@@ -3260,6 +3260,14 @@ paths:
 
         Allows HR and management to configure approval workflows for leave requests.
       parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: is_default
+        schema:
+          type: boolean
       - name: page
         required: false
         in: query
@@ -3320,6 +3328,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3344,6 +3354,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3380,6 +3392,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3415,6 +3429,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3433,6 +3449,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3467,6 +3485,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3501,6 +3521,8 @@ paths:
         name: id
         schema:
           type: string
+          format: uuid
+        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -6689,12 +6711,11 @@ components:
           readOnly: true
           description: Human-readable approval levels
         custom_approvers:
-          nullable: true
           description: Custom approver configuration for 'custom' approval type
         number_of_levels:
-          type: string
-          readOnly: true
+          type: integer
           description: Number of approval levels in this workflow
+          readOnly: true
         is_default:
           type: boolean
           description: Whether this is the default workflow for the tenant
@@ -7931,12 +7952,11 @@ components:
           readOnly: true
           description: Human-readable approval levels
         custom_approvers:
-          nullable: true
           description: Custom approver configuration for 'custom' approval type
         number_of_levels:
-          type: string
-          readOnly: true
+          type: integer
           description: Number of approval levels in this workflow
+          readOnly: true
         is_default:
           type: boolean
           description: Whether this is the default workflow for the tenant
