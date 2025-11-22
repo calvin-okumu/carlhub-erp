@@ -217,7 +217,7 @@ class InvitationAPITests(APITestCase):
 
     def test_resend_invitation(self):
         """Test resending an invitation"""
-        invitation = Invitation.objects.create(
+        Invitation.objects.create(
             email="resend@example.com",
             tenant=self.tenant,
             invited_by=self.owner,
@@ -242,7 +242,7 @@ class InvitationAPITests(APITestCase):
 
     def test_resend_confirmed_invitation_fails(self):
         """Test that resending a confirmed invitation fails"""
-        invitation = Invitation.objects.create(
+        Invitation.objects.create(
             email="confirmed@example.com",
             tenant=self.tenant,
             invited_by=self.owner,

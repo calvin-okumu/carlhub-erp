@@ -1,6 +1,6 @@
 import os
 
-from .base import *
+from .base import *  # noqa: F403,F405
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False

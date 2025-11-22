@@ -1,5 +1,6 @@
 from django.test import TestCase
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from .models import CustomUser, EmployeeDocument, Tenant, UserProfile, UserTenant
@@ -131,7 +132,7 @@ class UserProfileAPITests(APITestCase):
         # Try to access profile as unapproved user
         self.client.force_authenticate(user=unapproved_user)
         # This should raise an exception since no profile exists
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValidationError):
             self.client.get("/api/accounts/profile/")
 
 

@@ -157,7 +157,7 @@ class ClientExcelHandler(ExcelImportExport):
             }
 
         except Exception as e:
-            raise ValidationError(f"Error reading Excel file: {str(e)}")
+            raise ValidationError(f"Error reading Excel file: {str(e)}") from e
 
     def _format_worksheet(self, worksheet, data_rows: int):
         """Format the Excel worksheet"""
@@ -165,16 +165,16 @@ class ClientExcelHandler(ExcelImportExport):
         header_font = Font(bold=True, color="FFFFFF")
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
 
-        for col_num, column_title in enumerate(self.EXPORT_COLUMNS, 1):
+        for col_num, _column_title in enumerate(self.EXPORT_COLUMNS, 1):
             cell = worksheet.cell(row=1, column=col_num)
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = Alignment(horizontal="center")
 
         # Auto-adjust column widths
-        for col_num, column_title in enumerate(self.EXPORT_COLUMNS, 1):
+        for col_num, _column_title in enumerate(self.EXPORT_COLUMNS, 1):
             column_letter = get_column_letter(col_num)
-            max_length = len(column_title)
+            max_length = len(_column_title)
             for row_num in range(2, data_rows + 2):
                 cell_value = worksheet.cell(row=row_num, column=col_num).value
                 if cell_value:
@@ -284,7 +284,7 @@ class ProjectExcelHandler(ExcelImportExport):
                             continue
 
                         # Create project
-                        project = Project.objects.create(
+                        Project.objects.create(
                             name=row["name"],
                             client=client,
                             status=row.get("status", "planning"),
@@ -319,7 +319,7 @@ class ProjectExcelHandler(ExcelImportExport):
             }
 
         except Exception as e:
-            raise ValidationError(f"Error reading Excel file: {str(e)}")
+            raise ValidationError(f"Error reading Excel file: {str(e)}") from e
 
     def _format_worksheet(self, worksheet, data_rows: int):
         """Format the Excel worksheet"""
@@ -327,16 +327,16 @@ class ProjectExcelHandler(ExcelImportExport):
         header_font = Font(bold=True, color="FFFFFF")
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
 
-        for col_num, column_title in enumerate(self.EXPORT_COLUMNS, 1):
+        for col_num, _column_title in enumerate(self.EXPORT_COLUMNS, 1):
             cell = worksheet.cell(row=1, column=col_num)
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = Alignment(horizontal="center")
 
         # Auto-adjust column widths
-        for col_num, column_title in enumerate(self.EXPORT_COLUMNS, 1):
+        for col_num, _column_title in enumerate(self.EXPORT_COLUMNS, 1):
             column_letter = get_column_letter(col_num)
-            max_length = len(column_title)
+            max_length = len(_column_title)
             for row_num in range(2, data_rows + 2):
                 cell_value = worksheet.cell(row=row_num, column=col_num).value
                 if cell_value:
@@ -374,10 +374,6 @@ class TaskExcelHandler(ExcelImportExport):
         """Export tasks to Excel file"""
         if not PANDAS_AVAILABLE or not OPENPYXL_AVAILABLE:
             raise ImportError("pandas and openpyxl are required for Excel export functionality")
-
-        from django.contrib.auth import get_user_model
-
-        User = get_user_model()
 
         if self.tenant:
             queryset = Task.objects.select_related("milestone__project", "assignee").filter(
@@ -488,7 +484,7 @@ class TaskExcelHandler(ExcelImportExport):
                                 )
 
                         # Create task
-                        task = Task.objects.create(
+                        Task.objects.create(
                             title=row["title"],
                             milestone=milestone,
                             status=row.get("status", "to_do"),
@@ -527,7 +523,7 @@ class TaskExcelHandler(ExcelImportExport):
             }
 
         except Exception as e:
-            raise ValidationError(f"Error reading Excel file: {str(e)}")
+            raise ValidationError(f"Error reading Excel file: {str(e)}") from e
 
     def _format_worksheet(self, worksheet, data_rows: int):
         """Format the Excel worksheet"""
@@ -535,16 +531,16 @@ class TaskExcelHandler(ExcelImportExport):
         header_font = Font(bold=True, color="FFFFFF")
         header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
 
-        for col_num, column_title in enumerate(self.EXPORT_COLUMNS, 1):
+        for col_num, _column_title in enumerate(self.EXPORT_COLUMNS, 1):
             cell = worksheet.cell(row=1, column=col_num)
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = Alignment(horizontal="center")
 
         # Auto-adjust column widths
-        for col_num, column_title in enumerate(self.EXPORT_COLUMNS, 1):
+        for col_num, _column_title in enumerate(self.EXPORT_COLUMNS, 1):
             column_letter = get_column_letter(col_num)
-            max_length = len(column_title)
+            max_length = len(_column_title)
             for row_num in range(2, data_rows + 2):
                 cell_value = worksheet.cell(row=row_num, column=col_num).value
                 if cell_value:

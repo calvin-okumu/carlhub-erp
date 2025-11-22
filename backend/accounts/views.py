@@ -53,7 +53,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             user_tenant = self.request.user.usertenants.filter(is_approved=True).first()
             if user_tenant:
                 tenant = user_tenant.tenant
-        except:
+        except Exception:
             pass
 
         AuditLogger.log_event(
@@ -89,7 +89,7 @@ class EmployeeDocumentListView(generics.ListCreateAPIView):
             user_tenant = self.request.user.usertenants.filter(is_approved=True).first()
             if user_tenant:
                 tenant = user_tenant.tenant
-        except:
+        except Exception:
             pass
 
         AuditLogger.log_event(
@@ -151,7 +151,7 @@ class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
             user_tenant = self.request.user.usertenants.filter(is_approved=True).first()
             if user_tenant:
                 tenant = user_tenant.tenant
-        except:
+        except Exception:
             pass
 
         AuditLogger.log_event(
@@ -172,7 +172,7 @@ class EmployeeDocumentDetailView(generics.RetrieveUpdateDestroyAPIView):
             user_tenant = self.request.user.usertenants.filter(is_approved=True).first()
             if user_tenant:
                 tenant = user_tenant.tenant
-        except:
+        except Exception:
             pass
 
         AuditLogger.log_event(

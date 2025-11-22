@@ -2,7 +2,7 @@
 
 
 
-DjangoCRM provides comprehensive leave management functionality for tracking employee time off, managing leave balances, and enforcing company leave policies. The system supports various leave types, automated approval workflows, and integration with payroll and HR systems.
+DjangoCRM provides comprehensive leave management functionality for tracking employee time off, managing leave balances, and enforcing company leave policies. The system supports various leave types, configurable approval workflows with up to 5 levels, automatic HR fallback approval, and full integration with payroll and HR systems.
 
 
 
@@ -16,7 +16,9 @@ DjangoCRM provides comprehensive leave management functionality for tracking emp
 
 - **Multiple Leave Types**: Annual leave, sick leave, maternity/paternity leave, emergency leave, and unpaid leave
 
-- **Automated Approval Workflows**: Configurable approval processes with manager oversight
+- **Configurable Approval Workflows**: HR-configurable multi-level approval processes (up to 5 levels) with role-based, user-specific, and group-based approvals
+
+- **Default HR Approval**: Automatic fallback to HR approval when no workflow is configured
 
 - **Leave Balance Tracking**: Real-time balance monitoring with carry-over rules
 
@@ -39,6 +41,10 @@ DjangoCRM provides comprehensive leave management functionality for tracking emp
 - **Cost Control**: Track leave costs and manage budgets effectively
 
 - **Employee Satisfaction**: Fair and transparent leave management processes
+
+- **Flexible Approvals**: Configurable workflows adapt to different leave types and organizational structures
+
+- **Automated Routing**: Reduce manual coordination with intelligent approval routing
 
 
 
@@ -110,13 +116,20 @@ Employees submit leave requests specifying:
 
 1. **Submission**: Employee creates leave request
 
-2. **Manager Review**: Designated approvers review the request
+2. **Workflow Determination**:
+   - Check for leave-type specific workflow
+   - Fall back to tenant default workflow
+   - Default to HR approval if no workflow configured
 
-3. **Approval/Rejection**: Manager approves or rejects with notes
+3. **Multi-Level Approval**: Request progresses through configured approval levels
 
-4. **Balance Update**: Approved leave deducts from employee balance
+4. **Manager Review**: Designated approvers review at each level
 
-5. **Notification**: All parties receive email notifications
+5. **Approval/Rejection**: Manager approves or rejects with notes (approver automatically recorded)
+
+6. **Balance Update**: Approved leave deducts from employee balance
+
+7. **Notification**: All parties receive email notifications
 
 
 
@@ -131,6 +144,8 @@ Employees submit leave requests specifying:
 - **Balance Validation**: Ensures sufficient leave balance
 
 - **Policy Enforcement**: Applies company leave policies automatically
+
+- **Workflow Routing**: Automatic determination of approval workflow based on leave type and tenant defaults
 
 
 
@@ -165,6 +180,70 @@ Employees submit leave requests specifying:
 - **Manual Adjustments**: HR can adjust balances for special cases
 
 - **Reporting**: Balance reports for employees and management
+
+
+## Approval Workflows
+
+
+### Overview
+
+DjangoCRM supports configurable approval workflows that allow HR to define multi-level approval processes for leave requests. Workflows can be configured per leave type or set as tenant defaults.
+
+### Key Features
+
+- **Multi-Level Approvals**: Up to 5 approval levels per workflow (configurable limit)
+- **Flexible Approvers**: Support for role-based, user-specific, and group-based approvals
+- **Tenant-Scoped**: Workflows are configured per tenant
+- **Default Fallback**: Automatic HR approval when no workflow is configured
+- **Workflow Inheritance**: Leave-type specific workflows override tenant defaults
+
+### Approval Types
+
+#### Role-Based Approval
+Approves based on user roles (Department Manager, HR Manager, General Manager, etc.)
+
+#### User-Specific Approval
+Assigns specific users as approvers
+
+#### Permission Group Approval
+Approves based on membership in permission groups
+
+#### Dynamic Approvals
+- **Department Manager**: Employee's department manager
+- **Dynamic HR**: Automatic HR selection
+- **Dynamic GM**: Automatic General Manager selection
+
+### Default Behavior
+
+When no workflow is configured, the system defaults to HR approval:
+
+1. **Primary**: HR Manager role
+2. **Fallback**: General Manager or Tenant Owner roles
+3. **Emergency**: Any approved user with elevated permissions
+
+### Workflow Configuration
+
+HR can configure workflows through the admin interface or API:
+
+1. **Create Workflow**: Define workflow name and description
+2. **Add Levels**: Configure up to 5 approval levels
+3. **Assign Approvers**: Select approval type and specific approvers for each level
+4. **Set Default**: Mark workflow as tenant default
+5. **Associate with Leave Types**: Link workflows to specific leave types via policies
+
+### Workflow Priority and Inheritance
+
+The system follows a priority hierarchy when determining which workflow to use:
+
+1. **Leave-Type Specific**: Workflow linked to the specific leave type (highest priority)
+2. **Tenant Default**: Default workflow for the tenant
+3. **HR Fallback**: Automatic HR approval when no workflow is configured (lowest priority)
+
+**Example:**
+- Annual leave → Uses annual leave workflow (if configured) → Falls back to tenant default → Falls back to HR approval
+- Maternity leave → Uses maternity workflow → Falls back to tenant default → Falls back to HR approval
+
+This ensures all leave requests have a defined approval path while allowing flexibility for different leave types.
 
 
 
@@ -270,6 +349,24 @@ Employees submit leave requests specifying:
 
 4. **Training**: Educate employees and managers on processes
 
+### Workflow Configuration Best Practices
+
+
+
+1. **Keep It Simple**: Use 1-3 approval levels for most leave types
+
+2. **Role-Based Approvals**: Prefer role-based approvals over specific users for scalability
+
+3. **Escalation Path**: Ensure clear escalation from department → HR → executive levels
+
+4. **Default Workflows**: Configure tenant-wide defaults for common leave types
+
+5. **Leave-Type Specific**: Use specialized workflows for unique leave types (maternity, sabbatical)
+
+6. **Regular Review**: Periodically review and update workflows as organization changes
+
+7. **Testing**: Test workflows with sample requests before going live
+
 
 
 ### System Administration
@@ -283,6 +380,12 @@ Employees submit leave requests specifying:
 3. **Data Backup**: Regular backups of leave data
 
 4. **Access Control**: Secure access to sensitive leave information
+
+5. **Workflow Maintenance**: Regularly review and update approval workflows
+
+6. **User Role Management**: Ensure user roles are correctly assigned for workflow approvals
+
+7. **Performance Monitoring**: Monitor approval response times and workflow bottlenecks
 
 
 
@@ -412,6 +515,9 @@ Create a new leave request.
 
 Get detailed leave request information.
 
+**Error Responses:**
+- `404 Not Found`: `{"detail": "Leave request not found."}` (if slug doesn't exist)
+
 #### Update Leave Request
 **PUT/PATCH** `/api/leave/requests/{slug}/`
 
@@ -422,8 +528,10 @@ Update leave request (only by employee, only if pending).
 
 Delete leave request (only by employee, only if pending).
 
-#### Approve Leave Request
+#### Approve Leave Request (Legacy)
 **POST** `/api/leave/requests/{slug}/approve/`
+
+**⚠️ Deprecated**: Use `approve_level/` endpoint instead for proper workflow support.
 
 Approve a leave request (managers only).
 
@@ -445,8 +553,10 @@ Approve a leave request (managers only).
 }
 ```
 
-#### Reject Leave Request
+#### Reject Leave Request (Legacy)
 **POST** `/api/leave/requests/{slug}/reject/`
+
+**⚠️ Deprecated**: Use `reject_level/` endpoint instead for proper workflow support.
 
 Reject a leave request (managers only).
 
@@ -465,7 +575,7 @@ Cancel a leave request (only by the employee who created it).
 #### Approve at Current Level
 **POST** `/api/leave/requests/{slug}/approve_level/`
 
-Approve a leave request at the current workflow level (managers only).
+Approve a leave request at the current workflow level (managers only). The logged-in user is automatically recorded as the approver.
 
 **Request:**
 ```json
@@ -486,7 +596,7 @@ Approve a leave request at the current workflow level (managers only).
 #### Reject at Current Level
 **POST** `/api/leave/requests/{slug}/reject_level/`
 
-Reject a leave request at the current workflow level (managers only).
+Reject a leave request at the current workflow level (managers only). The logged-in user is automatically recorded as the approver.
 
 **Request:**
 ```json
@@ -513,7 +623,7 @@ Get detailed workflow status and approval history for a leave request.
       {
         "level": "department_manager",
         "level_display": "Department Manager",
-        "approver": "John Manager",
+        "approver": "John Manager",  // Shows the actual user who approved (when completed)
         "status": "pending",
         "approved_date": null,
         "notes": "",
@@ -640,6 +750,194 @@ Update leave policy (admin only).
 **DELETE** `/api/leave/policies/{slug}/`
 
 Delete leave policy (admin only).
+
+### Approval Workflows
+
+#### List Workflows
+**GET** `/api/leave/workflows/`
+
+List approval workflows for the tenant.
+
+**Query Parameters:**
+- `is_active` - Filter by active status (true/false)
+- `is_default` - Filter by default status (true/false)
+
+**Response:**
+```json
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "uuid",
+      "name": "Standard Approval Workflow",
+      "description": "Two-level approval process",
+      "is_default": true,
+      "is_active": true,
+      "number_of_levels": 2,
+      "level_configs": [
+        {
+          "id": "uuid",
+          "level": 1,
+          "approval_type": "role",
+          "approval_type_display": "By Role",
+          "required_role": "Department Manager",
+          "required_role_display": "Department Manager"
+        },
+        {
+          "id": "uuid",
+          "level": 2,
+          "approval_type": "role",
+          "approval_type_display": "By Role",
+          "required_role": "HR Manager",
+          "required_role_display": "HR Manager"
+        }
+      ],
+      "created_by": "uuid",
+      "created_by_name": "John Doe",
+      "created_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-15T10:00:00Z"
+    }
+  ]
+}
+```
+
+#### Create Workflow
+**POST** `/api/leave/workflows/`
+
+Create a new approval workflow (maximum 5 approval levels).
+
+**Request:**
+```json
+{
+  "name": "Executive Leave Workflow",
+  "description": "Special approval for executive leave",
+  "is_default": false,
+  "is_active": true,
+  "level_configs": [
+    {
+      "level": 1,
+      "approval_type": "role",
+      "required_role": "Department Manager"
+    },
+    {
+      "level": 2,
+      "approval_type": "role",
+      "required_role": "HR Manager"
+    },
+    {
+      "level": 3,
+      "approval_type": "role",
+      "required_role": "General Manager"
+    }
+  ]
+}
+```
+
+**Validation:**
+- Maximum 5 levels per workflow
+- Valid approval types: `user`, `permission_group`, `role`, `department_manager`, `dynamic_hr`, `dynamic_gm`
+- Required fields based on approval type
+
+**Response:** Same as list response format.
+
+#### Get Workflow
+**GET** `/api/leave/workflows/{id}/`
+
+Get detailed workflow information.
+
+#### Update Workflow
+**PUT/PATCH** `/api/leave/workflows/{id}/`
+
+Update workflow configuration.
+
+#### Delete Workflow
+**DELETE** `/api/leave/workflows/{id}/`
+
+Delete workflow (admin only).
+
+#### Set Default Workflow
+**POST** `/api/leave/workflows/{id}/set_default/`
+
+Set this workflow as the tenant default.
+
+**Response:**
+```json
+{
+  "message": "Workflow set as default",
+  "workflow": {...}
+}
+```
+
+#### Get Level Configurations
+**GET** `/api/leave/workflows/{id}/level_configs/`
+
+Get level configurations for a workflow.
+
+#### Update Level Configurations
+**PUT** `/api/leave/workflows/{id}/update_configs/`
+
+Update level configurations for a workflow.
+
+**Request:**
+```json
+{
+  "level_configs": [
+    {
+      "level": 1,
+      "approval_type": "user",
+      "specific_user": "uuid"
+    },
+    {
+      "level": 2,
+      "approval_type": "permission_group",
+      "permission_group": "uuid"
+    }
+  ]
+}
+```
+
+#### Get Approval Analytics
+**GET** `/api/leave/workflows/analytics/`
+
+Get approval workflow analytics for the tenant.
+
+**Query Parameters:**
+- `start_date` - Start date (YYYY-MM-DD)
+- `end_date` - End date (YYYY-MM-DD)
+
+#### Get Notifications Summary
+**GET** `/api/leave/workflows/notifications_summary/`
+
+Get summary of pending approvals for the current user.
+
+#### Send Approval Reminders
+**POST** `/api/leave/workflows/send_reminders/`
+
+Send reminder notifications for pending approvals (HR/Admin only).
+
+#### Send Escalation Notifications
+**POST** `/api/leave/workflows/send_escalations/`
+
+Send escalation notifications for critically overdue requests (Admin only).
+
+#### Quick Approve Request
+**POST** `/api/leave/workflows/{id}/quick_approve/`
+
+Quick approve a leave request with minimal data (mobile-friendly).
+
+#### Quick Reject Request
+**POST** `/api/leave/workflows/{id}/quick_reject/`
+
+Quick reject a leave request (mobile-friendly).
+
+**Request:**
+```json
+{
+  "reason": "Insufficient leave balance"
+}
+```
 
 ### Management Commands
 

@@ -145,14 +145,14 @@ Monitor tenant usage:
 
 ### Tenant Data Migration
 
-When upgrading plans or migrating data:
+When upgrading plans or migrating data, use Django's built-in data management:
 
 ```bash
-# Export tenant data
-python manage.py export_tenant_data tenant_id
+# Export tenant data (filter by tenant in your application logic)
+python manage.py dumpdata --natural-foreign --natural-primary -o tenant_data.json
 
-# Import to new tenant
-python manage.py import_tenant_data tenant_id data.json
+# Import tenant data
+python manage.py loaddata tenant_data.json
 ```
 
 ### Schema Updates
@@ -160,8 +160,8 @@ python manage.py import_tenant_data tenant_id data.json
 Database schema changes are applied per tenant:
 
 ```python
-# Migration runs for each tenant schema
-python manage.py migrate --tenant=tenant_id
+# Standard Django migrations apply to all tenants
+python manage.py migrate
 ```
 
 ## Best Practices
@@ -207,9 +207,9 @@ python manage.py migrate --tenant=tenant_id
 - Review role assignments
 - Check permission inheritance
 - Validate user-tenant links</content>
-</xai:function_call"> 
+</xai:function_call">
 
-Assistant: Now create crm-core.md in applications. 
+Assistant: Now create crm-core.md in applications.
 
 <xai:function_call name="write">
 <parameter name="filePath">docs/applications/crm-core.md

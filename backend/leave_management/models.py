@@ -128,11 +128,10 @@ class LeaveRequest(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ["-applied_date"]
+        ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["tenant", "status"]),
-            models.Index(fields=["employee", "status"]),
-            models.Index(fields=["start_date", "end_date"]),
+            models.Index(fields=["employee"]),  # For employee balance history
         ]
         constraints = [
             models.CheckConstraint(
@@ -147,6 +146,14 @@ class LeaveRequest(models.Model):
     def clean(self):
         """Validate leave request data."""
         if self.start_date and self.end_date:
+            # Ensure dates are date objects (handle string inputs from API)
+            from datetime import date
+
+            if isinstance(self.start_date, str):
+                self.start_date = date.fromisoformat(self.start_date)
+            if isinstance(self.end_date, str):
+                self.end_date = date.fromisoformat(self.end_date)
+
             if self.start_date > self.end_date:
                 raise ValidationError("Start date cannot be after end date.")
 
@@ -465,6 +472,16 @@ class LeavePolicy(models.Model):
         help_text="Maximum days that can be auto-approved (null = no auto-approval)",
     )
 
+    # Approval workflow
+    approval_workflow = models.ForeignKey(
+        "LeaveApprovalWorkflow",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="leave_policies",
+        help_text="Custom approval workflow for this leave type (null = use default workflow)",
+    )
+
     # Policy status
     is_active = models.BooleanField(
         default=True, help_text="Whether this policy is currently active"
@@ -614,3 +631,157 @@ class LeaveApproval(models.Model):
     def is_rejected(self):
         """Check if this approval step is rejected."""
         return self.status == "rejected"
+
+
+class LeaveApprovalWorkflow(models.Model):
+    """
+    Simple approval workflow for leave requests.
+    Defines the sequence of approval levels for different leave types.
+    """
+
+    APPROVAL_LEVEL_CHOICES = [
+        ("department_manager", "Department Manager Only"),
+        ("department_manager,hr_manager", "Department Manager → HR Manager"),
+        (
+            "department_manager,hr_manager,general_manager",
+            "Department Manager → HR Manager → General Manager",
+        ),
+        ("hr_manager", "HR Manager Only"),
+        ("hr_manager,general_manager", "HR Manager → General Manager"),
+        ("general_manager", "General Manager Only"),
+        ("custom", "Custom Approval Chain"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+
+    tenant = models.ForeignKey(
+        "accounts.Tenant",
+        on_delete=models.CASCADE,
+        related_name="leave_approval_workflows",
+        help_text="Tenant this workflow belongs to",
+    )
+
+    name = models.CharField(
+        max_length=100,
+        help_text="Descriptive name for the workflow (e.g., 'Standard Approval', 'Executive Approval')",
+    )
+
+    description = models.TextField(
+        blank=True,
+        help_text="Optional description of when to use this workflow",
+    )
+
+    # Simple approval chain - just select from predefined options
+    approval_levels = models.CharField(
+        max_length=100,
+        choices=APPROVAL_LEVEL_CHOICES,
+        default="department_manager",
+        help_text="The sequence of approval levels required",
+    )
+
+    # Optional: Allow custom approval levels for advanced users
+    custom_approvers = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Custom approver configuration for 'custom' approval type",
+    )
+
+    # Optional: Allow custom approval levels for advanced users
+    custom_approvers = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Custom approver configuration (optional)",
+    )
+
+    is_default = models.BooleanField(
+        default=False,
+        help_text="Whether this is the default workflow for the tenant",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this workflow is available for use",
+    )
+
+    # Audit fields
+    created_by = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_leave_workflows",
+        help_text="User who created this workflow",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["name"]
+        unique_together = ["tenant", "name"]
+        indexes = [
+            models.Index(fields=["tenant", "is_default"]),
+            models.Index(fields=["tenant", "is_active"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        # Generate slug if not present
+        if not self.slug:
+            from django.utils.text import slugify
+
+            base_slug = f"workflow-{self.tenant.id}-{self.name}"
+            self.slug = slugify(base_slug)
+
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while LeaveApprovalWorkflow.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.tenant.name} - {self.name}"
+
+    @property
+    def approval_level_list(self):
+        """Get the approval levels as a list."""
+        if self.approval_levels == "custom" and self.custom_approvers:
+            # For custom workflows, return the custom approver roles
+            if isinstance(self.custom_approvers, list):
+                return [
+                    approver.get("role", "")
+                    for approver in self.custom_approvers
+                    if approver.get("role")
+                ]
+        return self.approval_levels.split(",") if self.approval_levels else []
+
+    @property
+    def number_of_levels(self):
+        """Get the number of approval levels."""
+        return len(self.approval_level_list)
+
+    def clean(self):
+        """Validate workflow configuration."""
+        if self.is_default:
+            # Ensure only one default per tenant
+            existing_default = LeaveApprovalWorkflow.objects.filter(
+                tenant=self.tenant, is_default=True
+            ).exclude(pk=self.pk)
+            if existing_default.exists():
+                raise ValidationError("Only one default workflow allowed per tenant.")
+
+        # Validate custom approvers
+        if self.approval_levels == "custom":
+            if not self.custom_approvers:
+                raise ValidationError(
+                    "Custom approvers configuration is required when using custom approval chain."
+                )
+            if not isinstance(self.custom_approvers, list) or len(self.custom_approvers) == 0:
+                raise ValidationError("Custom approvers must be a non-empty list.")
+            for i, approver in enumerate(self.custom_approvers):
+                if not isinstance(approver, dict):
+                    raise ValidationError(f"Custom approver {i+1} must be a dictionary.")
+                if not approver.get("role"):
+                    raise ValidationError(f"Custom approver {i+1} must have a 'role' field.")

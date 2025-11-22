@@ -79,12 +79,11 @@ class HasDjangoPermission(permissions.BasePermission):
 
         # Check custom permissions in user's permission groups
         try:
-
             user_groups = user.permission_groups.filter(tenant=tenant)
             for group in user_groups:
                 if group.custom_permissions.filter(codename=permission_codename).exists():
                     return True
-        except:
+        except Exception:
             # If custom permissions aren't available yet, just check Django permissions
             pass
 
