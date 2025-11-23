@@ -274,6 +274,7 @@ def assign_admin_view(request):
     summary="Create database backup",
     description="Create a backup of the entire database and download it as JSON file.",
     responses={200: BackupResponseSerializer},
+    request=None,  # No request body for POST
 )
 @api_view(["POST"])
 @permission_classes([permissions.IsAuthenticated])

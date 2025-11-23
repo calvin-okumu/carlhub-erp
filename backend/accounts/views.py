@@ -197,12 +197,17 @@ class AuditLogListView(generics.ListAPIView):
     filterset_fields = ["action", "resource_type", "tenant", "user"]
     ordering_fields = ["timestamp", "action", "resource_type"]
     ordering = ["-timestamp"]
+    schema = None
 
     def get_queryset(self):
         from .services.audit_log_service import AuditLogService
 
         # Check if this is for schema generation
         if getattr(self, "swagger_fake_view", False):
+            return AuditLog.objects.none()
+
+        # Check if request is available (for schema generation compatibility)
+        if not hasattr(self, "request") or self.request is None:
             return AuditLog.objects.none()
 
         # Get filters from request

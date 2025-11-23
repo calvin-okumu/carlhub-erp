@@ -18,6 +18,10 @@ project/services/
 ├── client_service.py            # Client management logic
 ├── project_service.py           # Project management logic
 └── invoice_service.py           # Invoice management logic
+
+leave_management/
+├── services.py                  # Leave approval workflow logic
+└── (no additional service files)
 ```
 
 ## 🔧 How to Use Services
@@ -191,15 +195,15 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
             'phone': serializer.instance.phone,
             # ... more fields
         }
-        
+
         super().perform_update(serializer)
-        
+
         new_data = {
             'job_title': serializer.instance.job_title,
             'phone': serializer.instance.phone,
             # ... more fields
         }
-        
+
         # Manual tenant context
         tenant = None
         try:
@@ -208,7 +212,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
                 tenant = user_tenant.tenant
         except:
             pass
-        
+
         # Manual audit logging
         AuditLogger.log_event(
             action='user_profile_update',
@@ -255,10 +259,10 @@ class TestUserProfileService(TestCase):
             user=self.user,
             job_title='Software Engineer'
         )
-        
+
         # Verify profile was created
         self.assertEqual(profile.job_title, 'Software Engineer')
-        
+
         # Verify audit log was created automatically
         audit_log = AuditLog.objects.filter(
             action='profile_created',
@@ -274,15 +278,15 @@ class TestUserProfileAPI(APITestCase):
     def test_profile_update_uses_service(self):
         user = UserFactory()
         self.client.force_authenticate(user=user)
-        
+
         # Make API request
         response = self.client.put('/api/accounts/profile/', {
             'job_title': 'Product Manager'
         })
-        
+
         # Verify response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         # Verify service was called (audit log exists)
         audit_log = AuditLog.objects.filter(
             action='profile_updated',

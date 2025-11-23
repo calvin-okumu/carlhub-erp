@@ -67,8 +67,8 @@ class TestUserProfileService(TestCase):
     def test_update_profile(self):
         user = UserFactory()
         profile = UserProfileService.update_user_profile(
-            user=user, 
-            profile_data={'job_title': 'Engineer'}, 
+            user=user,
+            profile_data={'job_title': 'Engineer'},
             request=None
         )
         self.assertEqual(profile.job_title, 'Engineer')
@@ -200,6 +200,51 @@ def cleanup_old_logs(days: int = 365) -> int
 - Financial calculations
 - Billing workflow management
 
+### Leave Management App Services
+
+#### **LeaveApprovalWorkflowService**
+**Location**: `leave_management/services.py`
+
+**Responsibilities**:
+- Multi-level leave approval workflow management
+- Approval chain determination and execution
+- Workflow status tracking and progression
+- Automatic approver resolution based on roles
+- Leave balance updates upon approval
+
+**Key Methods**:
+```python
+@classmethod
+def get_approval_chain(leave_request) -> List[Tuple[str, User]]
+
+@classmethod
+def process_approval(leave_request, approver, action, notes="", request=None) -> Dict[str, Any]
+
+@classmethod
+def get_workflow_status(leave_request) -> Dict[str, Any]
+
+@classmethod
+def _get_workflow_approvers(leave_request, workflow) -> List[Tuple[str, User]]
+
+@classmethod
+def _resolve_level_approvers(level, leave_request) -> List[User]
+```
+
+**Usage Example**:
+```python
+# In views.py
+class LeaveRequestViewSet(viewsets.ModelViewSet):
+    def perform_approval(self, request, leave_request, action):
+        result = LeaveApprovalWorkflowService.process_approval(
+            leave_request=leave_request,
+            approver=request.user,
+            action=action,
+            notes=request.data.get('notes', ''),
+            request=request
+        )
+        return result
+```
+
 ## 🔄 Request Flow
 
 ### Typical API Request Flow
@@ -246,18 +291,18 @@ class UserProfileService:
     def update_user_profile(user, profile_data, request):
         # Get existing profile
         profile = UserProfileService.get_user_profile(user)
-        
+
         # Store old values for audit
         old_data = {...}
-        
+
         # Update profile
         for field, value in profile_data.items():
             setattr(profile, field, value)
         profile.save()
-        
+
         # Get new values for audit
         new_data = {...}
-        
+
         # Log audit event
         AuditLogger.log_event(
             action='profile_updated',
@@ -268,7 +313,7 @@ class UserProfileService:
             new_values=new_data,
             ip_address=get_client_ip(request)
         )
-        
+
         return profile
 ```
 
@@ -289,7 +334,7 @@ class TestUserProfileService(TestCase):
             job_title='Software Engineer',
             phone='+1234567890'
         )
-        
+
         self.assertEqual(profile.user, self.user)
         self.assertEqual(profile.job_title, 'Software Engineer')
         self.assertEqual(profile.phone, '+1234567890')
@@ -297,17 +342,17 @@ class TestUserProfileService(TestCase):
     def test_update_user_profile_with_audit(self):
         # Create initial profile
         profile = UserProfileService.create_user_profile(user=self.user)
-        
+
         # Update profile
         updated_profile = UserProfileService.update_user_profile(
             user=self.user,
             profile_data={'job_title': 'Senior Engineer'},
             request=None
         )
-        
+
         # Verify update
         self.assertEqual(updated_profile.job_title, 'Senior Engineer')
-        
+
         # Verify audit log was created
         audit_log = AuditLog.objects.filter(
             action='profile_updated',
@@ -326,19 +371,19 @@ class TestUserProfileAPI(APITestCase):
         user = UserFactory()
         tenant = TenantFactory()
         UserTenantFactory(user=user, tenant=tenant, is_approved=True)
-        
+
         self.client.force_authenticate(user=user)
-        
+
         data = {'job_title': 'Product Manager'}
         response = self.client.put('/api/accounts/profile/', data)
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['job_title'], 'Product Manager')
-        
+
         # Verify service was called and audit log created
         profile = UserProfile.objects.get(user=user)
         self.assertEqual(profile.job_title, 'Product Manager')
-        
+
         audit_log = AuditLog.objects.filter(
             action='profile_updated',
             user=user
@@ -362,10 +407,10 @@ def update_user_profile(user, profile_data, request):
         profile = UserProfileService.get_user_profile(user)
         if not profile:
             raise ValidationError("User profile does not exist")
-        
+
         # Business logic...
         return profile
-        
+
     except ValidationError as e:
         raise  # Re-raise validation errors
     except Exception as e:
@@ -395,11 +440,11 @@ def can_access_resource(user, resource):
     # Users can access their own resources
     if resource.user == user:
         return True
-    
+
     # Superusers can access any resource
     if user.is_superuser:
         return True
-    
+
     # Check tenant membership
     return UserProfileService._same_tenant(user, resource.user)
 ```
@@ -432,11 +477,11 @@ from django.core.cache import cache
 def get_user_profile_cached(user):
     cache_key = f'user_profile_{user.id}'
     profile = cache.get(cache_key)
-    
+
     if not profile:
         profile = UserProfileService.get_user_profile(user)
         cache.set(cache_key, profile, timeout=300)  # 5 minutes
-    
+
     return profile
 ```
 
@@ -459,7 +504,7 @@ from saasCRM.correlation_middleware import get_correlation_id
 def process_user_data(user, request):
     correlation_id = get_correlation_id(request)
     logger.info(f"[{correlation_id}] Processing user {user.id}")
-    
+
 # All log entries now include correlation IDs for tracing
 # Format: [env] [correlation_id] LEVEL timestamp module message
 ```
