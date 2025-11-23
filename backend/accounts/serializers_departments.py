@@ -31,13 +31,13 @@ class DepartmentSerializer(serializers.ModelSerializer):
             "manager_name",
         ]
 
-    def get_manager_name(self, obj):
+    def get_manager_name(self, obj) -> str | None:
         """Get manager's full name"""
         if obj.manager:
             return obj.manager.get_full_name() or obj.manager.email
         return None
 
-    def get_employee_count(self, obj):
+    def get_employee_count(self, obj) -> int:
         """Get number of employees in this department"""
         return UserTenant.objects.filter(department=obj, is_approved=True).count()
 

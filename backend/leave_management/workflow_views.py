@@ -5,7 +5,10 @@ from rest_framework.response import Response
 
 from .models import LeaveApprovalWorkflow
 from .permissions import CanManageLeavePolicies
-from .serializers import LeaveApprovalWorkflowSerializer
+from .serializers import (
+    LeaveApprovalWorkflowCreateSerializer,
+    LeaveApprovalWorkflowSerializer,
+)
 from .services import (
     LeaveAnalyticsService,
     LeaveApprovalWorkflowService,
@@ -24,6 +27,13 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
     permission_classes = [CanManageLeavePolicies]  # HR and above can manage workflows
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["is_active", "is_default"]
+    lookup_field = "slug"
+
+    def get_serializer_class(self):
+        """Use different serializer for create operations."""
+        if self.action == "create":
+            return LeaveApprovalWorkflowCreateSerializer
+        return LeaveApprovalWorkflowSerializer
 
     def get_queryset(self):
         """Filter workflows by user's tenant."""
@@ -65,7 +75,7 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
             serializer.save()
 
     @action(detail=True, methods=["post"])
-    def set_default(self, request, pk=None):
+    def set_default(self, request, slug=None):
         """Set this workflow as the default for the tenant."""
         workflow = self.get_object()
 
@@ -158,7 +168,7 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
         )
 
     @action(detail=True, methods=["post"])
-    def quick_approve(self, request, pk=None):
+    def quick_approve(self, request, slug=None):
         """Quick approve for mobile - minimal data required."""
         workflow = self.get_object()
 
@@ -179,7 +189,7 @@ class LeaveApprovalWorkflowViewSet(viewsets.ModelViewSet):
             return Response({"error": result["message"]}, status=400)
 
     @action(detail=True, methods=["post"])
-    def quick_reject(self, request, pk=None):
+    def quick_reject(self, request, slug=None):
         """Quick reject for mobile - requires reason."""
         workflow = self.get_object()
         reason = request.data.get("reason", "").strip()
