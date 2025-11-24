@@ -1,3 +1,4 @@
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
@@ -10,6 +11,7 @@ from .models import (
     LeaveBalance,
     LeavePolicy,
     LeaveRequest,
+    LeaveSale,
 )
 from .services import LeaveApprovalWorkflowService
 
@@ -601,3 +603,238 @@ class LeaveApprovalWorkflowCreateSerializer(serializers.ModelSerializer):
         """Create workflow."""
         validated_data["created_by"] = self.context["request"].user
         return super().create(validated_data)
+
+
+class LeaveSaleSerializer(serializers.ModelSerializer):
+    """Serializer for leave sales with validation and display fields."""
+
+    employee_name = serializers.CharField(
+        source="employee.get_full_name",
+        read_only=True,
+        help_text="Full name of the employee",
+    )
+    tenant_name = serializers.CharField(
+        source="tenant.name",
+        read_only=True,
+        help_text="Name of the tenant organization",
+    )
+    approved_by_name = serializers.CharField(
+        source="approved_by.get_full_name",
+        read_only=True,
+        help_text="Name of the approver",
+    )
+
+    class Meta:
+        model = LeaveSale
+        fields = [
+            "id",
+            "slug",
+            "employee",
+            "employee_name",
+            "tenant",
+            "tenant_name",
+            "leave_type",
+            "days_to_sell",
+            "sale_price_per_day",
+            "total_sale_amount",
+            "status",
+            "approved_by",
+            "approved_by_name",
+            "approved_date",
+            "rejection_reason",
+            "applied_date",
+            "reason",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "slug",
+            "employee_name",
+            "tenant_name",
+            "total_sale_amount",
+            "approved_by_name",
+            "approved_date",
+            "applied_date",
+            "created_at",
+            "updated_at",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make fields optional for creation
+        if self.context.get("request") and self.context["request"].method == "POST":
+            self.fields["leave_type"].required = False
+            # days_to_sell is required for employee creation
+            self.fields["employee"].required = False
+            self.fields["tenant"].required = False
+
+    def validate(self, data):
+        """Validate leave sale data."""
+        employee = data.get("employee")
+        tenant = data.get("tenant")
+        leave_type = data.get("leave_type")
+        days_to_sell = data.get("days_to_sell")
+        sale_price_per_day = data.get("sale_price_per_day")
+
+        # Don't allow employees to set pricing during creation
+        if sale_price_per_day is not None:
+            raise serializers.ValidationError(
+                "Sale price per day cannot be set during creation. HR will set the price during approval."
+            )
+
+        # For creation, validate days_to_sell is provided
+        if self.context.get("request") and self.context["request"].method == "POST":
+            if days_to_sell is None:
+                raise serializers.ValidationError("Number of days to sell is required.")
+
+        # If leave_type is provided during creation, check balance
+        if (
+            self.context.get("request")
+            and self.context["request"].method == "POST"
+            and employee
+            and tenant
+            and leave_type
+            and days_to_sell
+        ):
+            # Check if employee has sufficient leave balance
+            try:
+                from .models import LeaveBalance
+
+                balance = LeaveBalance.objects.get(
+                    employee=employee,
+                    tenant=tenant,
+                    leave_type=leave_type,
+                    year=timezone.now().year,
+                )
+                if balance.remaining_days < days_to_sell:
+                    raise serializers.ValidationError(
+                        f"Insufficient leave balance. Available: {balance.remaining_days} days, "
+                        f"Requested to sell: {days_to_sell} days."
+                    )
+            except LeaveBalance.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"No leave balance found for {leave_type} in {tenant.name}."
+                )
+
+        return data
+
+    def create(self, validated_data):
+        """Create leave sale with proper context."""
+        request = self.context["request"]
+
+        # Set employee to current user if not specified (employees can only sell their own leave)
+        if "employee" not in validated_data:
+            validated_data["employee"] = request.user
+
+        # Set tenant from request context
+        if hasattr(request, "tenant") and request.tenant:
+            validated_data["tenant"] = request.tenant
+        else:
+            # For superusers, allow specifying tenant directly
+            if request.user.is_superuser and "tenant" in validated_data:
+                pass  # Use the provided tenant
+            else:
+                # Fallback for dev mode - get tenant from user's approved UserTenant relationship
+                try:
+                    user_tenant = UserTenant.objects.get(user=request.user)
+                    if user_tenant.is_approved:
+                        validated_data["tenant"] = user_tenant.tenant
+                    else:
+                        raise serializers.ValidationError(
+                            "Your tenant membership is pending approval. Only approved tenant members can sell leave."
+                        )
+                except UserTenant.DoesNotExist:
+                    if not request.user.is_superuser:
+                        raise serializers.ValidationError(
+                            "You are not a member of any tenant. Only approved tenant members can sell leave."
+                        )
+                    elif "tenant" not in validated_data:
+                        raise serializers.ValidationError(
+                            "Superuser must specify a tenant when creating leave sales."
+                        )
+
+        # Remove sale_price_per_day from creation - HR will set it during approval
+        validated_data.pop("sale_price_per_day", None)
+
+        # Validate leave balance if leave_type was provided
+        leave_type = validated_data.get("leave_type")
+        days_to_sell = validated_data.get("days_to_sell")
+        employee = validated_data.get("employee")
+        tenant = validated_data.get("tenant")
+
+        if leave_type and days_to_sell and employee and tenant:
+            try:
+                from .models import LeaveBalance
+
+                balance = LeaveBalance.objects.get(
+                    employee=employee,
+                    tenant=tenant,
+                    leave_type=leave_type,
+                    year=timezone.now().year,
+                )
+                if balance.remaining_days < days_to_sell:
+                    raise serializers.ValidationError(
+                        f"Insufficient leave balance. Available: {balance.remaining_days} days, "
+                        f"Requested to sell: {days_to_sell} days."
+                    )
+            except LeaveBalance.DoesNotExist:
+                raise serializers.ValidationError(
+                    f"No leave balance found for {leave_type} in {tenant.name}."
+                )
+
+        return super().create(validated_data)
+
+
+class LeaveSaleApprovalSerializer(serializers.Serializer):
+    """Serializer for leave sale approval actions."""
+
+    action = serializers.ChoiceField(
+        choices=["approve", "reject"],
+        help_text="Action to perform on the leave sale",
+    )
+    leave_type = serializers.ChoiceField(
+        choices=[
+            ("annual_leave", "Annual Leave"),
+            ("sick_leave", "Sick Leave"),
+            ("personal_leave", "Personal Leave"),
+            ("maternity_leave", "Maternity Leave"),
+            ("paternity_leave", "Paternity Leave"),
+        ],
+        required=False,
+        help_text="Type of leave to sell (optional if employee specified, required for approval)",
+    )
+    days_to_sell = serializers.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        required=False,
+        help_text="Number of days to sell (optional if employee specified, required for approval)",
+    )
+    sale_price_per_day = serializers.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        required=False,
+        help_text="Sale price per day (required for approval)",
+    )
+    notes = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        max_length=500,
+        help_text="Optional notes explaining the decision",
+    )
+
+    def validate(self, data):
+        """Validate approval action data."""
+        action = data.get("action")
+        notes = data.get("notes", "")
+        sale_price_per_day = data.get("sale_price_per_day")
+
+        if action == "approve" and sale_price_per_day is None:
+            raise serializers.ValidationError(
+                "Sale price per day is required when approving a leave sale."
+            )
+
+        if action == "reject" and not notes.strip():
+            raise serializers.ValidationError("Notes are required when rejecting a leave sale.")
+
+        return data
