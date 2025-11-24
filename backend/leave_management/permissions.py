@@ -147,7 +147,8 @@ class CanApproveLeaves(permissions.BasePermission):
 class CanManageLeaveBalances(permissions.BasePermission):
     """
     Permission for leave balance management.
-    Typically restricted to HR admins.
+    Employees can view their own balances.
+    HR and tenant admins/owners can manage all balances.
     """
 
     def has_permission(self, request, view) -> bool:
@@ -156,8 +157,13 @@ class CanManageLeaveBalances(permissions.BasePermission):
             return False
 
         action = self._get_action_from_view(view)
+
+        # Employees can view balances
+        if action == "view":
+            return True
+
+        # For other actions, need specific permissions
         perm_map = {
-            "view": "leave_management.view_leavebalance",
             "add": "leave_management.add_leavebalance",
             "change": "leave_management.change_leavebalance",
             "delete": "leave_management.delete_leavebalance",
@@ -171,6 +177,12 @@ class CanManageLeaveBalances(permissions.BasePermission):
             return False
 
         action = self._get_action_from_view(view)
+
+        # Employees can view their own balances
+        if action == "view" and obj.employee == request.user:
+            return True
+
+        # For other actions, need specific permissions
         perm_map = {
             "view": "leave_management.view_leavebalance",
             "change": "leave_management.change_leavebalance",
@@ -296,3 +308,103 @@ class IsLeaveManager(permissions.BasePermission):
             return request.user.has_perm("leave_management.change_leavepolicy")
 
         return False
+
+
+class CanManageLeaveSales(permissions.BasePermission):
+    """
+    Permission for leave sale management.
+    Employees can view/create their own sales.
+    Managers can view/approve all sales in their tenant.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        # Check tenant access first
+        if not HasTenantAccess().has_permission(request, view):
+            return False
+
+        action = self._get_action_from_view(view)
+
+        # Employees can view and create their own sales
+        if action in ["view", "add"]:
+            return True
+
+        # For approve/change/delete, need specific permissions
+        if action in ["change", "delete"]:
+            perm_map = {
+                "change": "leave_management.change_leavesale",
+                "delete": "leave_management.delete_leavesale",
+            }
+            required_perm = perm_map.get(action)
+            return bool(required_perm and request.user.has_perm(required_perm))
+
+        return False
+
+    def has_object_permission(self, request, view, obj) -> bool:
+        # Check tenant access first
+        if not HasTenantAccess().has_object_permission(request, view, obj):
+            return False
+
+        action = self._get_action_from_view(view)
+
+        # Employees can view their own sales
+        if action == "view":
+            return (
+                obj.employee == request.user
+                or request.user.has_perm("leave_management.view_leavesale")
+                or is_tenant_admin_or_owner(request.user)
+            )
+
+        # Employees can only modify their own pending sales
+        if action == "change":
+            if obj.employee == request.user and obj.status == "pending":
+                return True
+            # Managers and Tenant Owners can approve/reject any sale
+            return request.user.has_perm(
+                "leave_management.change_leavesale"
+            ) or is_tenant_admin_or_owner(request.user)
+
+        # Only admins can delete sales
+        if action == "delete":
+            return request.user.has_perm(
+                "leave_management.delete_leavesale"
+            ) or is_tenant_admin_or_owner(request.user)
+
+        return False
+
+    def _get_action_from_view(self, view):
+        action_map = {
+            "list": "view",
+            "retrieve": "view",
+            "create": "add",
+            "update": "change",
+            "partial_update": "change",
+            "destroy": "delete",
+        }
+        return action_map.get(view.action, "view")
+
+
+class CanApproveLeaveSales(permissions.BasePermission):
+    """
+    Permission for leave sale approval actions.
+    Only Managers and Tenant Owners can approve/reject leave sales.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        # Check tenant access first
+        if not HasTenantAccess().has_permission(request, view):
+            return False
+
+        # Must have permission to change leave sales (approve/reject)
+        return request.user.has_perm(
+            "leave_management.change_leavesale"
+        ) or is_tenant_admin_or_owner(request.user)
+
+    def has_object_permission(self, request, view, obj) -> bool:
+        # Check tenant access first
+        if not HasTenantAccess().has_object_permission(request, view, obj):
+            return False
+
+        # Must have permission to change leave sales
+        return request.user.has_perm(
+            "leave_management.change_leavesale"
+        ) or is_tenant_admin_or_owner(request.user)

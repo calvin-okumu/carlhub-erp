@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -7,12 +8,14 @@ from rest_framework.response import Response
 from accounts.email_service import EmailService
 from saasCRM.pagination import CustomPageNumberPagination
 
-from .models import LeaveBalance, LeavePolicy, LeaveRequest
+from .models import LeaveBalance, LeavePolicy, LeaveRequest, LeaveSale
 from .permissions import (
     CanApproveLeaves,
+    CanApproveLeaveSales,
     CanManageLeaveBalances,
     CanManageLeavePolicies,
     CanManageLeaveRequests,
+    CanManageLeaveSales,
 )
 from .serializers import (
     LeaveApprovalActionSerializer,
@@ -20,6 +23,8 @@ from .serializers import (
     LeaveBalanceSerializer,
     LeavePolicySerializer,
     LeaveRequestSerializer,
+    LeaveSaleApprovalSerializer,
+    LeaveSaleSerializer,
 )
 from .services import LeaveApprovalWorkflowService
 
@@ -427,3 +432,215 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
             )
         except Exception:
             return False
+
+
+class LeaveSaleViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing leave sales.
+
+    Employees can:
+    - View their own leave sales
+    - Create new leave sale requests
+
+    Managers and Tenant Owners can:
+    - View all sales in their tenant
+    - Approve/reject sale requests
+    """
+
+    serializer_class = LeaveSaleSerializer
+    permission_classes = [CanManageLeaveSales]
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["status", "leave_type", "employee"]
+    search_fields = ["reason"]
+    ordering_fields = ["applied_date", "status", "total_sale_amount"]
+    ordering = ["-applied_date"]
+    lookup_field = "slug"
+
+    def get_object(self):
+        """Override to provide custom error message for not found objects."""
+        try:
+            return super().get_object()
+        except LeaveSale.DoesNotExist:
+            raise NotFound("Leave sale not found.") from None
+
+    def get_queryset(self):
+        """Filter queryset based on user permissions."""
+        user = self.request.user
+        queryset = LeaveSale.objects.select_related("employee", "tenant", "approved_by")
+
+        # Handle schema generation (no authenticated user)
+        if not user or user.is_anonymous:
+            return queryset.none()
+
+        # Check if user can view all sales (admin/owner/special permissions)
+        if self._can_view_all_sales(user):
+            if hasattr(self.request, "tenant") and self.request.tenant:
+                return queryset.filter(tenant=self.request.tenant)
+            return queryset
+
+        # Otherwise, only show user's own sales
+        return queryset.filter(employee=user)
+
+    def _can_view_all_sales(self, user):
+        """Check if user can view all leave sales in the tenant."""
+        # Superusers can view all
+        if user.is_superuser:
+            return True
+
+        # Check for explicit permission
+        if user.has_perm("leave_management.view_leavesale"):
+            return True
+
+        # Check tenant admin/owner role
+        try:
+            user_tenant = user.usertenant
+            return user_tenant.is_approved and (
+                user_tenant.is_owner or user_tenant.role in ["Manager", "Tenant Owner"]
+            )
+        except Exception:
+            return False
+
+    def perform_create(self, serializer):
+        """Set the employee and tenant when creating a sale."""
+        serializer.save()
+
+    @action(detail=True, methods=["post"], permission_classes=[CanApproveLeaveSales])
+    def approve(self, request, slug=None):
+        """Approve a leave sale request with details and pricing."""
+        leave_sale = self.get_object()
+
+        if leave_sale.status != "pending":
+            return Response(
+                {"error": "Only pending sales can be approved."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate approval data
+        action_serializer = LeaveSaleApprovalSerializer(data=request.data)
+        if not action_serializer.is_valid():
+            return Response(action_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get values from serializer (may be None if not provided)
+        leave_type = action_serializer.validated_data.get("leave_type") or leave_sale.leave_type
+        days_to_sell = (
+            action_serializer.validated_data.get("days_to_sell") or leave_sale.days_to_sell
+        )
+
+        # Validate that we have all required information
+        if not leave_type:
+            return Response(
+                {"error": "Leave type must be specified (by employee or HR)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not days_to_sell:
+            return Response(
+                {"error": "Days to sell must be specified (by employee or HR)."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check leave balance before approving
+        try:
+            from .models import LeaveBalance
+
+            balance = LeaveBalance.objects.get(
+                employee=leave_sale.employee,
+                tenant=leave_sale.tenant,
+                leave_type=leave_type,
+                year=timezone.now().year,
+            )
+            if balance.remaining_days < days_to_sell:
+                return Response(
+                    {
+                        "error": f"Insufficient leave balance. Available: {balance.remaining_days} days, "
+                        f"Requested to sell: {days_to_sell} days."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except LeaveBalance.DoesNotExist:
+            return Response(
+                {"error": f"No leave balance found for {leave_type}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Update sale with details and approval
+        leave_sale.leave_type = leave_type
+        leave_sale.days_to_sell = days_to_sell
+        leave_sale.sale_price_per_day = action_serializer.validated_data["sale_price_per_day"]
+        leave_sale.status = "approved"
+        leave_sale.approved_by = request.user
+        leave_sale.save()
+
+        serializer = self.get_serializer(leave_sale)
+        return Response(
+            {"message": "Leave sale approved with details and pricing", "data": serializer.data}
+        )
+
+    @action(detail=True, methods=["post"], permission_classes=[CanApproveLeaveSales])
+    def reject(self, request, slug=None):
+        """Reject a leave sale request."""
+        leave_sale = self.get_object()
+
+        if leave_sale.status != "pending":
+            return Response(
+                {"error": "Only pending sales can be rejected."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Validate rejection notes
+        action_serializer = LeaveSaleApprovalSerializer(data=request.data)
+        if not action_serializer.is_valid():
+            return Response(action_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update sale status
+        leave_sale.status = "rejected"
+        leave_sale.approved_by = request.user
+        leave_sale.rejection_reason = action_serializer.validated_data.get("notes", "")
+        leave_sale.save()
+
+        serializer = self.get_serializer(leave_sale)
+        return Response({"message": "Leave sale rejected", "data": serializer.data})
+
+    @action(detail=True, methods=["post"])
+    def complete(self, request, slug=None):
+        """Complete an approved leave sale (reduce leave balance)."""
+        leave_sale = self.get_object()
+
+        if leave_sale.status != "approved":
+            return Response(
+                {"error": "Only approved sales can be completed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            leave_sale.complete_sale()
+            serializer = self.get_serializer(leave_sale)
+            return Response({"message": "Leave sale completed", "data": serializer.data})
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["post"])
+    def cancel(self, request, slug=None):
+        """Cancel a leave sale request (only by the employee who created it)."""
+        leave_sale = self.get_object()
+
+        # Only allow cancellation of pending or approved requests
+        if leave_sale.status not in ["pending", "approved"]:
+            return Response(
+                {"error": "Cannot cancel sales that are already completed or rejected."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Only the employee can cancel their own sale
+        if leave_sale.employee != request.user:
+            return Response(
+                {"error": "You can only cancel your own leave sales."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        try:
+            leave_sale.cancel_sale()
+            serializer = self.get_serializer(leave_sale)
+            return Response(serializer.data)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
