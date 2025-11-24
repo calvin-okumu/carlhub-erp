@@ -6,6 +6,7 @@ from .models import (
     LeaveBalance,
     LeavePolicy,
     LeaveRequest,
+    LeaveSale,
 )
 
 
@@ -189,3 +190,39 @@ class LeaveApprovalWorkflowAdmin(admin.ModelAdmin):
         if not change:
             obj.created_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(LeaveSale)
+class LeaveSaleAdmin(admin.ModelAdmin):
+    list_display = (
+        "employee",
+        "leave_type",
+        "days_to_sell",
+        "sale_price_per_day",
+        "total_sale_amount",
+        "status",
+        "approved_by",
+        "tenant",
+        "applied_date",
+    )
+    list_filter = (
+        "status",
+        "leave_type",
+        "tenant",
+        "applied_date",
+        "approved_date",
+    )
+    search_fields = ("employee__email", "employee__first_name", "employee__last_name", "reason")
+    readonly_fields = ("slug", "total_sale_amount", "created_at", "updated_at")
+    raw_id_fields = ("employee", "tenant", "approved_by")
+    ordering = ("-applied_date",)
+    date_hierarchy = "applied_date"
+
+    def get_queryset(self, request):
+        """Filter queryset based on user's tenant permissions."""
+        qs = super().get_queryset(request)
+        if not request.user.is_superuser:
+            # Filter to user's tenants
+            user_tenants = request.user.usertenant_set.values_list("tenant", flat=True)
+            qs = qs.filter(tenant__in=user_tenants)
+        return qs

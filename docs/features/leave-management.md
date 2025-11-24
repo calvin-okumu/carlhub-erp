@@ -146,6 +146,67 @@ Employees submit leave requests specifying:
 
 
 
+## Leave Sales
+
+DjangoCRM includes a comprehensive leave sales feature that allows employees to sell back unused leave days for cash compensation. This feature provides transparency, fair pricing control, and proper approval workflows.
+
+### Key Features
+
+- **Employee-Initiated Requests**: Employees can request to sell unused leave days
+- **HR Pricing Control**: HR/admin sets fair pricing during approval process
+- **Balance Validation**: Automatic validation of available leave days
+- **Approval Workflow**: Configurable approval process for leave sales
+- **Transaction Tracking**: Complete audit trail of all leave sales
+- **Balance Updates**: Automatic deduction from leave balances upon completion
+
+### Business Benefits
+
+- **Employee Flexibility**: Employees can monetize unused leave days
+- **Cost Control**: HR maintains control over pricing and approval
+- **Financial Planning**: Predictable cash flow from leave sales
+- **Compliance**: Transparent and auditable leave sale transactions
+- **Employee Satisfaction**: Additional compensation option for unused leave
+
+### Leave Sale Workflow
+
+#### Employee Request
+Employees submit leave sale requests specifying:
+
+- Number of days to sell
+- Optional leave type preference
+- Reason for selling leave
+
+**Request Validation:**
+- Employee must have sufficient leave balance
+- Days requested cannot exceed available balance
+- System validates against current year's balance
+
+#### HR Review and Pricing
+HR/admin reviews requests and sets:
+
+- Final leave type (can override employee preference)
+- Sale price per day
+- Approval decision
+
+**Pricing Control:**
+- HR has full control over pricing
+- Can set different rates for different leave types
+- Pricing is transparent and auditable
+
+#### Approval Process
+1. **Submission**: Employee creates sale request
+2. **HR Review**: HR reviews and sets pricing
+3. **Approval**: HR approves with pricing details
+4. **Completion**: System deducts from leave balance
+5. **Payment**: Employee receives compensation
+
+#### Automated Rules
+
+- **Balance Validation**: Ensures sufficient leave balance before approval
+- **Pricing Calculation**: Automatic total calculation (days × price per day)
+- **Balance Deduction**: Automatic update of leave balances upon completion
+- **Audit Trail**: Complete record of all transactions
+
 ## Leave Balances
 
 
@@ -227,491 +288,195 @@ HR configures workflows through the API by specifying approval levels in order:
 }
 ```
 
-#### Example: 2-Level Workflow
-```json
-{
-  "name": "Executive Approval",
-  "description": "HR Manager → Tenant Owner",
-  "approval_levels": [
-    "hr_manager",
-    "tenant_owner"
-  ],
-  "default_hr_levels": 2,
-  "is_default": false,
-  "is_active": true
-}
-```
+### Leave Sales
 
-### Workflow Priority and Inheritance
+#### List Leave Sales
+**GET** `/api/leave/sales/`
 
-The system follows a priority hierarchy when determining which workflow to use:
-
-1. **Leave-Type Specific**: Approval levels configured in the leave policy (highest priority)
-2. **Tenant Default**: Default workflow for the tenant
-3. **HR Fallback**: Automatic HR approval when no workflow is configured (lowest priority)
-
-**Example:**
-- Annual leave → Uses approval levels from annual leave policy → Falls back to tenant default workflow → Falls back to 1-level HR approval
-- Maternity leave → Uses approval levels from maternity leave policy → Falls back to tenant default workflow → Falls back to 1-level HR approval
-
-### Policy-Level Configuration
-
-Leave policies can include specific approval level configurations:
-
-```json
-{
-  "leave_type": "annual_leave",
-  "annual_entitlement": "25.0",
-  "approval_levels": [
-    "department_manager",
-    "hr_manager"
-  ]
-}
-```
-
-This allows different leave types to have different approval requirements while maintaining the simple configuration approach.
-
-
-
-## Integration Points
-
-
-
-### HR Systems
-
-
-
-- **Employee Data**: Sync with HR systems for employee information
-
-- **Payroll Integration**: Leave data feeds into payroll calculations
-
-- **Compliance Reporting**: Generate reports for regulatory compliance
-
-
-
-### Calendar Systems
-
-
-
-- **Outlook/Google Calendar**: Sync leave events to employee calendars
-
-- **Team Calendars**: Shared calendars showing team availability
-
-- **Conflict Prevention**: Detect scheduling conflicts
-
-
-
-### Notification Systems
-
-
-
-- **Email Notifications**: Automated emails for request status changes
-
-- **Slack/Teams Integration**: Real-time notifications in chat systems
-
-- **Mobile Alerts**: Push notifications for urgent approvals
-
-
-
-## Reporting and Analytics
-
-
-
-### Management Reports
-
-
-
-- **Leave Usage Summary**: Overall leave patterns and trends
-
-- **Department Reports**: Leave usage by department
-
-- **Compliance Reports**: Policy adherence and exceptions
-
-- **Cost Analysis**: Leave costs and budget impact
-
-
-
-### Employee Self-Service
-
-
-
-- **Balance Dashboard**: Current leave balances and usage
-
-- **Request History**: Past leave requests and status
-
-- **Calendar View**: Visual leave calendar
-
-- **Policy Information**: Access to leave policies and rules
-
-
-
-## Best Practices
-
-
-
-### Policy Design
-
-
-
-1. **Clear Guidelines**: Well-documented leave policies
-
-2. **Fair Allocation**: Equitable leave entitlements
-
-3. **Flexibility**: Accommodate different employee needs
-
-4. **Compliance**: Adhere to local labor laws
-
-
-
-### Process Management
-
-
-
-1. **Timely Approvals**: Quick response to leave requests
-
-2. **Communication**: Clear communication throughout the process
-
-3. **Documentation**: Maintain records of all leave transactions
-
-4. **Training**: Educate employees and managers on processes
-
-### Workflow Configuration Best Practices
-
-1. **Keep It Simple**: Use 1-3 approval levels for most leave types (maximum 5 allowed)
-2. **Role-Based Approvals**: Use predefined roles: department_manager, hr_manager, general_manager, tenant_owner
-3. **Escalation Path**: Configure logical escalation: Department → HR → Executive levels
-4. **Default Workflows**: Set tenant-wide defaults for common leave types
-5. **Policy-Level Overrides**: Use leave policy approval_levels for type-specific workflows
-6. **Regular Review**: Periodically review and update workflows as organization changes
-7. **Testing**: Test workflows with sample requests before going live
-
-
-
-### System Administration
-
-
-
-1. **Regular Audits**: Review leave data for accuracy
-
-2. **Policy Updates**: Keep policies current with regulations
-
-3. **Data Backup**: Regular backups of leave data
-
-4. **Access Control**: Secure access to sensitive leave information
-
-5. **Workflow Maintenance**: Regularly review and update approval workflows and policy configurations
-6. **User Role Management**: Ensure users have appropriate roles (Department Manager, HR Manager, etc.) for workflow approvals
-7. **Performance Monitoring**: Monitor approval response times and workflow bottlenecks
-
-
-
----
-
-
-
-
-## 🗓️ Leave Management
-
-### Leave Requests
-
-#### List Leave Requests
-**GET** `/api/leave/requests/`
-
-List leave requests with filtering and search.
+List leave sales with filtering and search.
 
 **Query Parameters:**
-- `status` - Filter by status (pending_department_manager, pending_hr_manager, pending_general_manager, approved, rejected, cancelled, taken)
-- `status__in` - Filter by multiple statuses (e.g., pending_department_manager,pending_hr_manager)
+- `status` - Filter by status (pending, approved, rejected, completed, cancelled)
 - `leave_type` - Filter by leave type (annual_leave, sick_leave, etc.)
 - `employee` - Filter by employee UUID
-- `start_date` - Filter by start date range
-- `end_date` - Filter by end date range
 
 **Response:**
 ```json
 {
-  "count": 25,
-  "next": "http://localhost:8000/api/leave/requests/?page=2",
-  "previous": null,
-  "results": [
-    {
-      "id": "uuid",
-      "slug": "leave-uuid-2024-01-15",
-      "employee": {
-        "id": "uuid",
-        "email": "employee@example.com",
-        "first_name": "John",
-        "last_name": "Doe"
-      },
-      "tenant": "uuid",
-      "leave_type": "annual_leave",
-      "start_date": "2024-01-15",
-      "end_date": "2024-01-19",
-      "days_requested": "5.0",
-      "reason": "Vacation time",
-      "status": "pending",
-      "applied_date": "2024-01-10T09:00:00Z",
-      "current_approval_level": "department_manager",
-      "created_at": "2024-01-10T09:00:00Z",
-      "updated_at": "2024-01-10T09:00:00Z"
-    }
-  ]
-
-}
-```
-
-#### Get Pending Approvals for Managers
-**GET** `/api/leave/requests/?status__in=pending_department_manager,pending_hr_manager,pending_general_manager`
-
-Managers can retrieve leave requests pending their approval using status filters. The response includes a `can_approve` field indicating which requests the current user has authority to approve.
-
-**Query Parameters for Pending Approvals:**
-- `status=pending_department_manager` - Requests pending department manager approval
-- `status=pending_hr_manager` - Requests pending HR manager approval
-- `status=pending_general_manager` - Requests pending general manager approval
-- `status__in=pending_department_manager,pending_hr_manager,pending_general_manager` - All pending requests
-
-**Role-Based Access:**
-- **Department Managers**: Can approve requests from employees in their department
-- **HR Managers**: Can approve department-level and HR-level requests
-- **General Managers/Tenant Owners**: Can approve requests at all levels
-
-**Response includes:**
-- `can_approve`: Boolean indicating if current user can approve this request
-- `current_approver`: Name of the designated approver
-- `workflow_status`: Detailed approval workflow information
-
-**Example - Get all pending approvals:**
-```
-GET /api/leave/requests/?status__in=pending_department_manager,pending_hr_manager,pending_general_manager
-```
-
-#### Create Leave Request
-**POST** `/api/leave/requests/`
-
-Create a new leave request.
-
-**Request:**
-```json
-{
-  "leave_type": "annual_leave",
-  "start_date": "2024-01-15",
-  "end_date": "2024-01-19",
-  "reason": "Vacation time"
-}
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "slug": "leave-uuid-2024-01-15",
-  "employee": "uuid",
-  "tenant": "uuid",
-  "leave_type": "annual_leave",
-  "start_date": "2024-01-15",
-  "end_date": "2024-01-19",
-  "days_requested": "5.0",
-  "reason": "Vacation time",
-  "status": "pending",
-  "applied_date": "2024-01-10T09:00:00Z",
-  "current_approval_level": "department_manager",
-  "created_at": "2024-01-10T09:00:00Z",
-  "updated_at": "2024-01-10T09:00:00Z"
-}
-```
-
-#### Get Leave Request
-**GET** `/api/leave/requests/{slug}/`
-
-Get detailed leave request information.
-
-**Error Responses:**
-- `404 Not Found`: `{"detail": "Leave request not found."}` (if slug doesn't exist)
-
-#### Update Leave Request
-**PUT/PATCH** `/api/leave/requests/{slug}/`
-
-Update leave request (only by employee, only if pending).
-
-#### Delete Leave Request
-**DELETE** `/api/leave/requests/{slug}/`
-
-Delete leave request (only by employee, only if pending).
-
-#### Approve Leave Request (Legacy)
-**POST** `/api/leave/requests/{slug}/approve/`
-
-**⚠️ Deprecated**: Use `approve_level/` endpoint instead for proper workflow support.
-
-Approve a leave request (managers only).
-
-**Request:**
-```json
-{
-  "notes": "Approved for vacation"
-}
-```
-
-**Response:**
-```json
-{
-  "id": "uuid",
-  "status": "approved",
-  "current_approval_level": "department_manager"
-}
-```
-
-#### Reject Leave Request (Legacy)
-**POST** `/api/leave/requests/{slug}/reject/`
-
-**⚠️ Deprecated**: Use `reject_level/` endpoint instead for proper workflow support.
-
-Reject a leave request (managers only).
-
-**Request:**
-```json
-{
-  "notes": "Insufficient notice period"
-}
-```
-
-#### Cancel Leave Request
-**POST** `/api/leave/requests/{slug}/cancel/`
-
-Cancel a leave request (only by the employee who created it).
-
-#### Approve at Current Level
-**POST** `/api/leave/requests/{slug}/approve_level/`
-
-Approve a leave request at the current workflow level (managers only). The logged-in user is automatically recorded as the approver.
-
-**Request:**
-```json
-{
-  "notes": "Approved for vacation"
-}
-```
-
-**Response:**
-```json
-{
-  "message": "Approved at department_manager level. Now pending hr_manager approval.",
-  "data": {...},
-  "next_level": "hr_manager"
-}
-```
-
-#### Reject at Current Level
-**POST** `/api/leave/requests/{slug}/reject_level/`
-
-Reject a leave request at the current workflow level (managers only). The logged-in user is automatically recorded as the approver.
-
-**Request:**
-```json
-{
-  "notes": "Insufficient notice period"
-}
-```
-
-#### Get Workflow Status
-**GET** `/api/leave/requests/{slug}/workflow_status/`
-
-Get detailed workflow status and approval history for a leave request.
-
-**Response:**
-```json
-{
-  "workflow_status": {
-    "current_status": "Pending Department Manager Approval",
-    "current_level": "department_manager",
-    "is_pending": true,
-    "is_approved": false,
-    "is_rejected": false,
-    "steps": [
-      {
-        "level": "department_manager",
-        "level_display": "Department Manager",
-        "status": "pending",
-        "order": 1
-      }
-    ],
-    "next_approver": "John Manager"
-  },
-  "approval_history": [
-    {
-      "id": "uuid",
-      "approver": {
-        "id": "uuid",
-        "email": "manager@example.com",
-        "first_name": "John",
-        "last_name": "Manager"
-      },
-      "approval_level": "department_manager",
-      "status": "approved",
-      "approved_date": "2024-01-11T10:00:00Z",
-      "notes": "Approved for vacation",
-      "order": 1
-    }
-  ]
-}
-```
-
-### Leave Balances
-
-#### List Leave Balances
-**GET** `/api/leave/balances/`
-
-List leave balances for employees.
-
-**Query Parameters:**
-- `employee` - Filter by employee UUID
-- `leave_type` - Filter by leave type
-- `year` - Filter by year
-
-**Response:**
-```json
-{
-  "count": 10,
+  "count": 5,
   "next": null,
   "previous": null,
   "results": [
     {
       "id": "uuid",
-      "employee": {
-        "id": "uuid",
-        "email": "employee@example.com",
-        "first_name": "John",
-        "last_name": "Doe"
-      },
+      "slug": "sale-uuid-annual-leave-5-2024-11-24",
+      "employee": "uuid",
+      "employee_name": "John Doe",
       "tenant": "uuid",
+      "tenant_name": "Test Company",
       "leave_type": "annual_leave",
-      "year": 2024,
-      "total_days": "25.0",
-      "used_days": "5.0",
-      "remaining_days": "20.0",
-      "utilization_percentage": 20.0,
-      "created_at": "2024-01-01T00:00:00Z",
-      "updated_at": "2024-01-15T00:00:00Z"
+      "days_to_sell": "5.0",
+      "sale_price_per_day": "25.00",
+      "total_sale_amount": "125.00",
+      "status": "approved",
+      "approved_by": "uuid",
+      "approved_by_name": "Jane Smith",
+      "approved_date": "2024-11-24T10:00:00Z",
+      "rejection_reason": "",
+      "applied_date": "2024-11-24T09:00:00Z",
+      "reason": "Need extra cash",
+      "created_at": "2024-11-24T09:00:00Z",
+      "updated_at": "2024-11-24T10:00:00Z"
     }
   ]
 }
 ```
 
-#### Get Leave Balance
-**GET** `/api/leave/balances/{slug}/`
+#### Create Leave Sale Request
+**POST** `/api/leave/sales/`
 
-Get specific leave balance details.
+Create a new leave sale request. Employees specify days to sell, HR sets pricing during approval.
 
-#### Update Leave Balance
-**PUT/PATCH** `/api/leave/balances/{slug}/`
+**Request:**
+```json
+{
+  "days_to_sell": 5,
+  "leave_type": "annual_leave",
+  "reason": "Selling unused annual leave days"
+}
+```
 
-Update leave balance (HR/admin only).
+**Validation:**
+- `days_to_sell` is required and must be positive
+- Employee must have sufficient leave balance
+- If `leave_type` specified, balance validation occurs immediately
 
-#### Create Leave Balance
-**POST** `/api/leave/balances/`
+**Response:**
+```json
+{
+  "id": "uuid",
+  "slug": "sale-uuid-annual-leave-5-2024-11-24",
+  "employee": "uuid",
+  "employee_name": "John Doe",
+  "tenant": "uuid",
+  "tenant_name": "Test Company",
+  "leave_type": "annual_leave",
+  "days_to_sell": "5.0",
+  "sale_price_per_day": null,
+  "total_sale_amount": "0.00",
+  "status": "pending",
+  "approved_by": null,
+  "approved_date": null,
+  "applied_date": "2024-11-24T09:00:00Z",
+  "reason": "Selling unused annual leave days",
+  "created_at": "2024-11-24T09:00:00Z",
+  "updated_at": "2024-11-24T09:00:00Z"
+}
+```
 
-Create new leave balance entry (HR/admin only).
+**Error Responses:**
+- `400 Bad Request`: `["Insufficient leave balance. Available: 10.0 days, Requested to sell: 15.0 days."]`
+- `400 Bad Request`: `["Number of days to sell is required."]`
+
+#### Get Leave Sale
+**GET** `/api/leave/sales/{slug}/`
+
+Get detailed leave sale information.
+
+#### Approve Leave Sale
+**POST** `/api/leave/sales/{slug}/approve/`
+
+HR approves a leave sale request and sets pricing. Only HR/admin can approve.
+
+**Request:**
+```json
+{
+  "action": "approve",
+  "leave_type": "annual_leave",
+  "days_to_sell": 5,
+  "sale_price_per_day": 25.00,
+  "notes": "Approved at $25 per day"
+}
+```
+
+**Validation:**
+- `sale_price_per_day` is required for approval
+- `leave_type` and `days_to_sell` can be set/overridden by HR
+- Sufficient leave balance is re-validated
+
+**Response:**
+```json
+{
+  "message": "Leave sale approved with details and pricing",
+  "data": {
+    "id": "uuid",
+    "slug": "sale-uuid-annual-leave-5-2024-11-24",
+    "leave_type": "annual_leave",
+    "days_to_sell": "5.0",
+    "sale_price_per_day": "25.00",
+    "total_sale_amount": "125.00",
+    "status": "approved",
+    "approved_by": "uuid",
+    "approved_by_name": "Jane Smith",
+    "approved_date": "2024-11-24T10:00:00Z"
+  }
+}
+```
+
+#### Reject Leave Sale
+**POST** `/api/leave/sales/{slug}/reject/`
+
+HR rejects a leave sale request. Only HR/admin can reject.
+
+**Request:**
+```json
+{
+  "action": "reject",
+  "notes": "Cannot approve at this time due to budget constraints"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Leave sale rejected",
+  "data": {
+    "status": "rejected",
+    "rejection_reason": "Cannot approve at this time due to budget constraints"
+  }
+}
+```
+
+#### Complete Leave Sale
+**POST** `/api/leave/sales/{slug}/complete/`
+
+Complete an approved leave sale (deducts from leave balance). Can be called by HR/admin or automatically.
+
+**Response:**
+```json
+{
+  "message": "Leave sale completed",
+  "data": {
+    "status": "completed",
+    "updated_at": "2024-11-24T11:00:00Z"
+  }
+}
+```
+
+#### Cancel Leave Sale
+**POST** `/api/leave/sales/{slug}/cancel/`
+
+Cancel a leave sale request. Only the employee who created it can cancel pending/approved requests.
+
+**Response:**
+```json
+{
+  "data": {
+    "status": "cancelled",
+    "updated_at": "2024-11-24T11:00:00Z"
+  }
+}
+```
 
 ### Leave Policies
 

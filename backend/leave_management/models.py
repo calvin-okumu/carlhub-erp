@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
 from django.utils.text import slugify
 
 
@@ -636,3 +637,203 @@ class LeaveApprovalWorkflow(models.Model):
         for level in self.approval_levels:
             if level not in valid_levels:
                 raise ValidationError(f"Invalid approval level: {level}")
+
+
+class LeaveSale(models.Model):
+    """
+    Model for employee leave sales - allowing employees to sell back unused leave days.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+
+    # Relationships
+    employee = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.CASCADE,
+        related_name="leave_sales",
+        help_text="Employee selling leave days",
+    )
+    tenant = models.ForeignKey(
+        "accounts.Tenant",
+        on_delete=models.CASCADE,
+        related_name="leave_sales",
+        db_index=True,
+        help_text="Company/tenant the sale belongs to",
+    )
+
+    # Sale details
+    leave_type = models.CharField(
+        max_length=20,
+        choices=LeaveRequest.LEAVE_TYPE_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Type of leave being sold (set by HR during approval)",
+    )
+    days_to_sell = models.DecimalField(
+        max_digits=4,
+        decimal_places=1,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.5")), MaxValueValidator(Decimal("365"))],
+        help_text="Number of leave days to sell (set by HR during approval)",
+    )
+    sale_price_per_day = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Sale price per day in company currency (set by HR during approval)",
+    )
+
+    # Calculated total
+    total_sale_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Total sale amount (calculated as days_to_sell * sale_price_per_day)",
+    )
+
+    # Status and workflow
+    STATUS_CHOICES = [
+        ("pending", "Pending Approval"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending",
+        db_index=True,
+        help_text="Current status of the leave sale request",
+    )
+
+    # Approval details
+    approved_by = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_leave_sales",
+        help_text="User who approved this sale",
+    )
+    approved_date = models.DateTimeField(
+        null=True, blank=True, help_text="When the sale was approved"
+    )
+    rejection_reason = models.TextField(blank=True, help_text="Reason for rejection if applicable")
+
+    # Request metadata
+    applied_date = models.DateTimeField(
+        auto_now_add=True, help_text="When the sale request was submitted"
+    )
+    reason = models.TextField(blank=True, help_text="Employee's reason for selling leave")
+
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-applied_date"]
+        indexes = [
+            models.Index(fields=["employee", "status"]),
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["status", "applied_date"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        # Calculate total amount if both price and days are set
+        if self.sale_price_per_day is not None and self.days_to_sell is not None:
+            self.total_sale_amount = self.days_to_sell * self.sale_price_per_day
+        else:
+            self.total_sale_amount = Decimal("0")
+
+        # Generate slug if not present
+        if not self.slug:
+            from django.utils.text import slugify
+
+            if self.applied_date:
+                applied_date = self.applied_date
+            else:
+                applied_date = timezone.now()
+
+            # Use defaults if leave_type/days not set yet
+            leave_type = self.leave_type or "leave"
+            days = self.days_to_sell or 0
+            base_slug = f"sale-{self.employee.id}-{leave_type}-{days}-{applied_date.date()}"
+            self.slug = slugify(base_slug)
+
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while LeaveSale.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+
+        # Set approved_date when status changes to approved
+        if self.status in ["approved", "rejected"] and not self.approved_date:
+            self.approved_date = timezone.now()
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.employee.get_full_name()} - {self.days_to_sell} days {self.leave_type} sale"
+
+    @property
+    def is_pending(self):
+        """Check if the sale request is pending."""
+        return self.status == "pending"
+
+    @property
+    def is_approved(self):
+        """Check if the sale request is approved."""
+        return self.status == "approved"
+
+    @property
+    def is_rejected(self):
+        """Check if the sale request is rejected."""
+        return self.status == "rejected"
+
+    @property
+    def is_completed(self):
+        """Check if the sale has been completed."""
+        return self.status == "completed"
+
+    def can_be_cancelled(self):
+        """Check if the sale can still be cancelled."""
+        return self.status in ["pending", "approved"]
+
+    def complete_sale(self):
+        """Mark the sale as completed and update leave balance."""
+        if self.status != "approved":
+            raise ValueError("Only approved sales can be completed")
+
+        # Update leave balance - reduce available days
+        try:
+            balance = LeaveBalance.objects.get(
+                employee=self.employee,
+                tenant=self.tenant,
+                leave_type=self.leave_type,
+                year=self.applied_date.year,
+            )
+            # Check if sufficient balance
+            if balance.remaining_days >= self.days_to_sell:
+                balance.used_days += self.days_to_sell
+                balance.save()
+                self.status = "completed"
+                self.save()
+                return True
+            else:
+                raise ValueError("Insufficient leave balance")
+        except LeaveBalance.DoesNotExist:
+            raise ValueError("No leave balance found for this leave type") from None
+
+    def cancel_sale(self):
+        """Cancel the sale request."""
+        if not self.can_be_cancelled():
+            raise ValueError("Sale cannot be cancelled at this stage")
+        self.status = "cancelled"
+        self.save()
