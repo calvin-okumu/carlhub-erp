@@ -28,6 +28,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        # Check RUNSETUP variable
+        if os.environ.get("RUNSETUP") == "false":
+            self.stdout.write("RUNSETUP=false, skipping setup\n")
+            return
+
         self.stdout.write(self.style.SUCCESS("🚀 Starting DjangoCRM Automated Setup...\n"))
 
         environment = self.detect_environment()
@@ -66,9 +71,10 @@ class Command(BaseCommand):
 
     def detect_environment(self):
         """Detect the current environment with multiple indicators"""
-        # Priority order: explicit env var > CI detection > git detection > default
-        if os.environ.get("DJANGO_ENV") == "production":
-            return "production"
+        # Priority order: DJANGO_ENV > explicit env var > CI detection > git detection > default
+        django_env = os.environ.get("DJANGO_ENV")
+        if django_env:
+            return django_env
         elif os.environ.get("PRODUCTION") == "true":
             return "production"
         elif os.environ.get("CI") or os.environ.get("CONTINUOUS_INTEGRATION"):
@@ -133,7 +139,11 @@ class Command(BaseCommand):
         self.stdout.write("👤 Creating default superuser...")
         if not CustomUser.objects.filter(email="admin@example.com").exists():
             CustomUser.objects.create_superuser(
-                email="admin@example.com", password="admin123", first_name="Admin", last_name="User"
+                email="admin@example.com",
+                password="admin123",
+                username="admin@example.com",
+                first_name="Admin",
+                last_name="User",
             )
             self.stdout.write(
                 self.style.SUCCESS("Created superuser: admin@example.com / admin123\n")
