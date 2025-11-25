@@ -31,20 +31,27 @@ export function useClients() {
       setCurrentTenant(ownerTenant || null);
 
       const data = await getClients({ ordering: '-created_at', ...params });
-      if (params?.page || params?.limit) {
+
+      let clients: Client[] = [];
+      let paginationData: { count: number; next: string | null; previous: string | null } | null = null;
+
+      if (data && typeof data === 'object' && 'results' in data) {
         // Paginated response
         const paginatedData = data as PaginatedResponse<Client>;
-        setClients(paginatedData.results);
-        setPagination({
+        clients = paginatedData.results ?? [];
+        paginationData = {
           count: paginatedData.count,
           next: paginatedData.next,
           previous: paginatedData.previous,
-        });
+        };
       } else {
-        // Non-paginated response
-        setClients(data as Client[]);
-        setPagination(null);
+        // Non-paginated response or direct array
+        clients = (data as Client[]) ?? [];
+        paginationData = null;
       }
+
+      setClients(clients);
+      setPagination(paginationData);
     } catch (err) {
       console.error(err);
       setError("Failed to load data. Please try again.");

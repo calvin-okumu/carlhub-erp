@@ -20,21 +20,36 @@ export function useSprints(projectId: number) {
 
   const fetchSprints = useCallback(async () => {
     const token = getToken();
-    if (!token) return;
+    if (!token || !projectId) return;
 
     setLoading(true);
     try {
       const data = await getSprints(token, { projectId, ordering: '-created_at' });
 
+      let sprintsArray: Sprint[] = [];
+      if (data && typeof data === 'object' && 'results' in data) {
+        sprintsArray = (data as { results: Sprint[] }).results ?? [];
+      } else {
+        sprintsArray = (data as Sprint[]) ?? [];
+      }
+
       // Calculate progress for each sprint based on tasks (inheriting backend averaging pattern)
       const sprintsWithProgress = await Promise.all(
-        data.results.map(async (sprint) => {
+        sprintsArray.map(async (sprint) => {
           try {
             const tasksData = await getTasks(token, { projectId, sprintSlug: sprint.slug });
-            const calculatedProgress = tasksData.results.length > 0
-              ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+
+            let tasksArray: Task[] = [];
+            if (tasksData && typeof tasksData === 'object' && 'results' in tasksData) {
+              tasksArray = (tasksData as { results: Task[] }).results ?? [];
+            } else {
+              tasksArray = (tasksData as Task[]) ?? [];
+            }
+
+            const calculatedProgress = tasksArray.length > 0
+              ? Math.round(tasksArray.reduce((sum, task) => sum + task.progress, 0) / tasksArray.length)
               : 0;
-            return { ...sprint, progress: calculatedProgress, tasks_count: tasksData.results.length };
+            return { ...sprint, progress: calculatedProgress, tasks_count: tasksArray.length };
           } catch (err) {
             console.error(`Failed to fetch tasks for sprint ${sprint.slug}:`, err);
             return sprint; // Return sprint with original progress if task fetch fails
@@ -63,7 +78,10 @@ export function useSprints(projectId: number) {
     milestone: string;
   }) => {
     const token = getToken();
-    if (!token) return;
+    if (!token || !projectId) {
+      console.error('No token or projectId for addSprint');
+      return;
+    }
 
     // Temporary sprint for optimistic update
     const tempSprint: Sprint = {
@@ -88,10 +106,18 @@ export function useSprints(projectId: number) {
       console.log("Created sprint:", newSprint);
       // Calculate progress for the new sprint (should be 0 since no tasks yet)
       const tasksData = await getTasks(token, { projectId, sprintSlug: newSprint.slug });
-      const calculatedProgress = tasksData.results.length > 0
-        ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+
+      let tasksArray: Task[] = [];
+      if (tasksData && typeof tasksData === 'object' && 'results' in tasksData) {
+        tasksArray = (tasksData as { results: Task[] }).results ?? [];
+      } else {
+        tasksArray = (tasksData as Task[]) ?? [];
+      }
+
+      const calculatedProgress = tasksArray.length > 0
+        ? Math.round(tasksArray.reduce((sum, task) => sum + task.progress, 0) / tasksArray.length)
         : 0;
-      const sprintWithProgress = { ...newSprint, progress: calculatedProgress, tasks_count: tasksData.results.length };
+      const sprintWithProgress = { ...newSprint, progress: calculatedProgress, tasks_count: tasksArray.length };
       setSprints((prev) =>
         prev.map((s) => (s.id === tempSprint.id ? sprintWithProgress : s)),
       );
@@ -129,10 +155,18 @@ export function useSprints(projectId: number) {
       const updatedSprint = await updateSprint(token, slug, data);
       // Recalculate progress for the updated sprint
       const tasksData = await getTasks(token, { projectId, sprintSlug: slug });
-      const calculatedProgress = tasksData.results.length > 0
-        ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+
+      let tasksArray: Task[] = [];
+      if (tasksData && typeof tasksData === 'object' && 'results' in tasksData) {
+        tasksArray = (tasksData as { results: Task[] }).results ?? [];
+      } else {
+        tasksArray = (tasksData as Task[]) ?? [];
+      }
+
+      const calculatedProgress = tasksArray.length > 0
+        ? Math.round(tasksArray.reduce((sum, task) => sum + task.progress, 0) / tasksArray.length)
         : 0;
-      const sprintWithProgress = { ...updatedSprint, progress: calculatedProgress, tasks_count: tasksData.results.length };
+      const sprintWithProgress = { ...updatedSprint, progress: calculatedProgress, tasks_count: tasksArray.length };
       setSprints((prev) => prev.map((s) => (s.slug === slug ? sprintWithProgress : s)));
     } catch (err) {
       // Revert on error

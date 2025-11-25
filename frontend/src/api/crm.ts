@@ -12,17 +12,17 @@ export async function getClients(params?: { search?: string; ordering?: string; 
   if (params?.limit) query.append('limit', params.limit.toString());
 
   const url = `${API_BASE}/clients/?${query.toString()}`;
-  const data = await apiCall<Client[] | PaginatedResponse<Client>>(url, {
-    method: "GET",
-  });
+   const data = await apiCall<Client[] | PaginatedResponse<Client>>(url, {
+     method: "GET",
+   });
 
-  // If pagination params are provided, return paginated response
-  if (params?.page || params?.limit) {
-    return data as PaginatedResponse<Client>;
-  }
+   // If pagination params are provided, return paginated response
+   if (params?.page || params?.limit) {
+     return data as PaginatedResponse<Client>;
+   }
 
-  // Otherwise, return just the results array
-  return (data as { results: Client[] }).results || data;
+   // Otherwise, return just the results array
+   return (data as { results: Client[] }).results || data;
 }
 
 export async function createClient(clientData: CreateClientData): Promise<Client> {

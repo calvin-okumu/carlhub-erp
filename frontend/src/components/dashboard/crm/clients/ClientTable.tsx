@@ -20,7 +20,7 @@ interface ClientTableProps {
     searchValue: string;
 }
 
-export default function ClientTable({ clients, loading, error, onEditClient, onDeleteClient, pagination, currentPage, onPageChange, searchValue }: ClientTableProps) {
+export default function ClientTable({ clients = [], loading, error, onEditClient, onDeleteClient, pagination, currentPage, onPageChange, searchValue }: ClientTableProps) {
 
     const handleEdit = (client: Client) => {
         onEditClient(client);

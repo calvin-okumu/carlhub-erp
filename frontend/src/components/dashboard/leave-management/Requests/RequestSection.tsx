@@ -74,7 +74,7 @@ export const RequestSection = () => {
             }
 
             const response: PaginatedResponse<LeaveRequest> = await getLeaveRequests(params);
-            setLeaveRequests(response.results);
+            setLeaveRequests(response.results || []);
             setCurrentPage(page);
             setTotalPages(Math.ceil(response.count / itemsPerPage));
             setTotalItems(response.count);

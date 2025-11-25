@@ -34,20 +34,36 @@ export function SprintsProvider({ children }: { children: React.ReactNode }) {
     try {
       const data = await getSprints(token, { projectId: project.id, ordering: '-created_at' });
 
+      let sprints: Sprint[] = [];
+      if (data && typeof data === 'object' && 'results' in data) {
+        sprints = (data as { results: Sprint[] }).results ?? [];
+      } else {
+        sprints = (data as Sprint[]) ?? [];
+      }
+
       // Calculate progress for each sprint based on tasks
       const sprintsWithProgress = await Promise.all(
-        data.results.map(async (sprint) => {
+        sprints.map(async (sprint) => {
           try {
             const tasksData = await getTasks(token, { projectId: project.id, sprintSlug: sprint.slug });
-            const calculatedProgress = tasksData.results.length > 0
-              ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+
+            let tasks: Task[] = [];
+            if (tasksData && typeof tasksData === 'object' && 'results' in tasksData) {
+              tasks = (tasksData as { results: Task[] }).results ?? [];
+            } else {
+              tasks = (tasksData as Task[]) ?? [];
+            }
+
+            const calculatedProgress = tasks.length > 0
+              ? Math.round(tasks.reduce((sum, task) => sum + task.progress, 0) / tasks.length)
               : 0;
-            return { ...sprint, progress: calculatedProgress, tasks_count: tasksData.results.length };
+            return { ...sprint, progress: calculatedProgress, tasks_count: tasks.length };
           } catch (err) {
             console.error(`Failed to fetch tasks for sprint ${sprint.slug}:`, err);
             return sprint; // Return sprint with original progress if task fetch fails
           }
         })
+
       );
 
       setSprints(sprintsWithProgress);

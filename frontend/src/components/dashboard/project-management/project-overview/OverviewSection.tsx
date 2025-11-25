@@ -26,7 +26,15 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
 
                   try {
                       const tasks = await getTasks(token, { projectId: project.id });
-                      setTasksCount(tasks.results.length);
+
+                      let tasksArray: Task[] = [];
+                      if (tasks && typeof tasks === 'object' && 'results' in tasks) {
+                        tasksArray = (tasks as { results: Task[] }).results ?? [];
+                      } else {
+                        tasksArray = (tasks as Task[]) ?? [];
+                      }
+
+                      setTasksCount(tasksArray.length);
                   } catch (err) {
                       console.error('Failed to fetch tasks count:', err);
                   }

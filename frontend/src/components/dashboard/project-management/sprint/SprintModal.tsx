@@ -63,9 +63,13 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
         setErrors({});
     }, [mode, sprint, isOpen, milestones]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        handleValidation(name, value);
+    };
+
+    const handleValidation = (name: string, value: string) => {
         if (name === 'milestone') {
             const milestone = milestones.find(m => m.slug === value);
             if (milestone) {
@@ -77,12 +81,15 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
             }
             // Re-validate dates after milestone change
             const newErrors = { ...errors };
-            if (formData.start_date && milestone && formData.start_date < (milestone.planned_start || '')) {
+            const plannedStart = milestone?.planned_start || '';
+            const dueDate = milestone?.due_date || '';
+
+            if (formData.start_date && plannedStart && plannedStart.trim() !== '' && formData.start_date < plannedStart) {
                 newErrors.start_date = 'Sprint start date cannot be before the milestone\'s planned start date.';
             } else {
                 delete newErrors.start_date;
             }
-            if (formData.end_date && milestone && formData.end_date > (milestone.due_date || '')) {
+            if (formData.end_date && dueDate && dueDate.trim() !== '' && formData.end_date > dueDate) {
                 newErrors.end_date = 'Sprint end date cannot be after the milestone\'s due date.';
             } else {
                 delete newErrors.end_date;
@@ -90,9 +97,18 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
             setErrors(newErrors);
         }
         if (name === 'start_date') {
-            if (value && minDate && value < minDate) {
-                setErrors(prev => ({ ...prev, start_date: 'Sprint start date cannot be before the milestone\'s planned start date.' }));
+            // Only validate if we have both a value and a minDate
+            if (value && minDate && minDate.trim() !== '') {
+                if (value < minDate) {
+                    setErrors(prev => ({ ...prev, start_date: 'Sprint start date cannot be before the milestone\'s planned start date.' }));
+                } else {
+                    setErrors(prev => {
+                        const { start_date: _, ...rest } = prev;
+                        return rest;
+                    });
+                }
             } else {
+                // Clear error if no validation needed
                 setErrors(prev => {
                     const { start_date: _, ...rest } = prev;
                     return rest;
@@ -100,9 +116,18 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
             }
         }
         if (name === 'end_date') {
-            if (value && maxDate && value > maxDate) {
-                setErrors(prev => ({ ...prev, end_date: 'Sprint end date cannot be after the milestone\'s due date.' }));
+            // Only validate if we have both a value and a maxDate
+            if (value && maxDate && maxDate.trim() !== '') {
+                if (value > maxDate) {
+                    setErrors(prev => ({ ...prev, end_date: 'Sprint end date cannot be after the milestone\'s due date.' }));
+                } else {
+                    setErrors(prev => {
+                        const { end_date: _, ...rest } = prev;
+                        return rest;
+                    });
+                }
             } else {
+                // Clear error if no validation needed
                 setErrors(prev => {
                     const { end_date: _, ...rest } = prev;
                     return rest;
@@ -113,9 +138,19 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.name || !formData.milestone) return;
 
-        if (Object.keys(errors).length > 0) return;
+        if (!formData.name.trim()) {
+            return;
+        }
+
+        if (!formData.milestone) {
+            alert('Please select a milestone. If no milestones exist, create one first in the Milestones tab.');
+            return;
+        }
+
+        if (Object.keys(errors).length > 0) {
+            return;
+        }
 
         const data = {
             name: formData.name,
@@ -138,7 +173,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                         id="name"
                         name="name"
                         value={formData.name}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         required
                     />
                 </div>
@@ -148,7 +183,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                         id="status"
                         name="status"
                         value={formData.status}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                     >
                         <option value="planned">Planned</option>
                         <option value="active">Active</option>
@@ -163,15 +198,19 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                             id="milestone"
                             name="milestone"
                             value={formData.milestone}
-                            onChange={handleChange}
+                            onChange={handleInputChange}
                             required
                         >
                             <option value="">Select Milestone</option>
-                             {Array.isArray(milestones) && milestones.map(milestone => (
-                                 <option key={milestone.id} value={milestone.slug}>
-                                     {milestone.name}
-                                 </option>
-                             ))}
+                             {Array.isArray(milestones) && milestones.length > 0 ? (
+                                 milestones.map(milestone => (
+                                     <option key={milestone.id} value={milestone.slug}>
+                                         {milestone.name}
+                                     </option>
+                                 ))
+                             ) : (
+                                 <option disabled>No milestones available</option>
+                             )}
                         </Select>
                     </div>
 
@@ -181,7 +220,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                         id="start_date"
                         name="start_date"
                         value={formData.start_date}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         min={minDate}
                         max={maxDate}
                         className={errors.start_date ? 'border-red-500' : ''}
@@ -195,7 +234,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                         id="end_date"
                         name="end_date"
                         value={formData.end_date}
-                        onChange={handleChange}
+                        onChange={handleInputChange}
                         min={minDate}
                         max={maxDate}
                         className={errors.end_date ? 'border-red-500' : ''}
@@ -206,7 +245,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                     <Button type="button" onClick={onClose} variant='secondary'>
                         Cancel
                     </Button>
-                    <Button type="submit">
+                    <Button type="button" onClick={handleSubmit}>
                         {mode === 'add' ? 'Add Sprint' : 'Update Sprint'}
                     </Button>
                 </div>
