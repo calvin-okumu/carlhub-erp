@@ -25,7 +25,7 @@ interface ProjectTableProps {
 }
 
 export default function ProjectTable({
-    projects,
+    projects = [],
     loading,
     error,
     currentPage,

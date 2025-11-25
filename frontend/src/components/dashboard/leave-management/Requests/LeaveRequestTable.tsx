@@ -22,7 +22,7 @@ interface LeaveRequestTableProps {
 }
 
 export default function LeaveRequestTable({
-    leaveRequests,
+    leaveRequests = [],
     loading,
     error,
     currentPage,
@@ -38,7 +38,7 @@ export default function LeaveRequestTable({
 
     // Client-side search filtering
     const filteredRequests = useMemo(() =>
-        leaveRequests.filter(request =>
+        (leaveRequests || []).filter(request =>
             request.leave_type.toLowerCase().includes(searchValue.toLowerCase()) ||
             request.employee_name.toLowerCase().includes(searchValue.toLowerCase()) ||
             request.reason.toLowerCase().includes(searchValue.toLowerCase())

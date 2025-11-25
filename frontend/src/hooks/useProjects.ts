@@ -39,11 +39,21 @@ export function useProjects() {
         limit: itemsPerPage
       });
 
-      // Handle paginated response
-      setProjects(data.results);
-      setTotalItems(data.count);
-      setTotalPages(Math.ceil(data.count / itemsPerPage));
-      setCurrentPage(page);
+      // Handle response (should be paginated)
+      let projects: Project[] = [];
+      if (data && typeof data === 'object' && 'results' in data) {
+        projects = data.results ?? [];
+        setTotalItems(data.count);
+        setTotalPages(Math.ceil(data.count / itemsPerPage));
+        setCurrentPage(page);
+      } else {
+        projects = (data as Project[]) ?? [];
+        setTotalItems(projects.length);
+        setTotalPages(1);
+        setCurrentPage(1);
+      }
+
+      setProjects(projects);
     } catch (err) {
       console.error(err);
       setError("Failed to load projects. Please try again.");

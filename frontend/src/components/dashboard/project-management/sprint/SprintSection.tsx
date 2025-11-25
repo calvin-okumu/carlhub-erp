@@ -1,13 +1,12 @@
 "use client";
 
-import { createSprint } from '@/api/project_mgmt';
 import type { Sprint } from '@/api/types';
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
 import { useProject } from '@/context/ProjectContext';
 import { useSprintsContext } from '@/context/SprintsContext';
 import { useMilestonesContext } from '@/context/MilestonesContext';
-import { getAccessToken } from '@/utils/auth';
+import { useSprints } from '@/hooks/useSprints';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import SprintModal from './SprintModal';
@@ -17,6 +16,7 @@ export default function SprintSection() {
     const { project } = useProject();
     const { sprints, loading, error, updateSprintOptimistically, removeSprintOptimistically, refetch } = useSprintsContext();
     const { milestones } = useMilestonesContext();
+    const { addSprint } = useSprints(project?.id || 0);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
@@ -50,18 +50,15 @@ export default function SprintSection() {
         end_date?: string;
         milestone: string;
     }) => {
-        try {
-            const token = getAccessToken();
-            if (!token || !project?.id) {
-                throw new Error('Authentication or project data missing');
-            }
+        if (!project?.id) {
+            alert('Project not loaded yet. Please wait and try again.');
+            return;
+        }
 
+        try {
             if (modalMode === 'add') {
-                // Call API to create sprint
-                await createSprint(token, project.id, data);
-                
-                // Refetch sprints to get updated list
-                refetch();
+                // Use hook's addSprint function for proper state management
+                await addSprint(data);
             } else if (selectedSprint) {
                 updateSprintOptimistically(selectedSprint.slug, data);
             }
@@ -69,6 +66,7 @@ export default function SprintSection() {
         } catch (error) {
             console.error('Error saving sprint:', error);
             // TODO: Show error message to user
+            alert(`Error saving sprint: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 

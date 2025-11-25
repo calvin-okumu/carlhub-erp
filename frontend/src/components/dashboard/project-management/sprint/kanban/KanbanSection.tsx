@@ -60,13 +60,20 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             // Fetch tasks for this sprint
             const tasksData = await getTasks(token, { projectId: project?.id, sprintSlug: sprintSlug });
 
+            let tasksArray: Task[] = [];
+            if (tasksData && typeof tasksData === 'object' && 'results' in tasksData) {
+              tasksArray = (tasksData as { results: Task[] }).results ?? [];
+            } else {
+              tasksArray = (tasksData as Task[]) ?? [];
+            }
+
             // Calculate sprint progress as average of task progress (inheriting backend pattern)
-            const calculatedSprintProgress = tasksData.results.length > 0
-                ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+            const calculatedSprintProgress = tasksArray.length > 0
+                ? Math.round(tasksArray.reduce((sum, task) => sum + task.progress, 0) / tasksArray.length)
                 : 0;
 
             setSprint({ ...sprint, progress: calculatedSprintProgress });
-            setTasks(tasksData.results);
+            setTasks(tasksArray);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to fetch data. Please check your connection or try again.');
         } finally {
@@ -88,8 +95,16 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                     getTasks(token, { projectId: project?.id, backlog: true }) // backlog=true
                 ]);
                 setUsers(usersData);
+
+                let addModalBacklogTasksArray: Task[] = [];
+                if (backlogData && typeof backlogData === 'object' && 'results' in backlogData) {
+                  addModalBacklogTasksArray = (backlogData as { results: Task[] }).results ?? [];
+                } else {
+                  addModalBacklogTasksArray = (backlogData as Task[]) ?? [];
+                }
+
                 // Filter out tasks that are already in this sprint (safety check)
-                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
+                const filteredBacklog = addModalBacklogTasksArray.filter((task: Task) => task.sprint !== sprint?.slug);
                 setBacklogTasks(filteredBacklog);
             } catch (error) {
                 setAddError(error instanceof Error ? error.message : 'Failed to fetch data');
@@ -110,11 +125,57 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                     getUserTenants(token),
                     getTasks(token, { projectId: project?.id, backlog: true }) // backlog=true
                 ]);
-                setSprints(sprintsData.results);
-                setMilestones(milestonesData.results);
+
+                // Handle sprints data
+                let modalSprintsArray: Sprint[] = [];
+                if (sprintsData && typeof sprintsData === 'object' && 'results' in sprintsData) {
+                  modalSprintsArray = (sprintsData as { results: Sprint[] }).results ?? [];
+                } else {
+                  modalSprintsArray = (sprintsData as Sprint[]) ?? [];
+                }
+                setSprints(modalSprintsArray);
+
+                // Handle milestones data
+                let modalMilestonesArray: Milestone[] = [];
+                if (milestonesData && typeof milestonesData === 'object' && 'results' in milestonesData) {
+                  modalMilestonesArray = (milestonesData as { results: Milestone[] }).results ?? [];
+                } else {
+                  modalMilestonesArray = (milestonesData as Milestone[]) ?? [];
+                }
+                setMilestones(modalMilestonesArray);
+
                 setUsers(usersData);
+
+                // Handle backlog tasks data
+                let modalBacklogTasksArray: Task[] = [];
+                if (backlogData && typeof backlogData === 'object' && 'results' in backlogData) {
+                  modalBacklogTasksArray = (backlogData as { results: Task[] }).results ?? [];
+                } else {
+                  modalBacklogTasksArray = (backlogData as Task[]) ?? [];
+                }
+                setSprints(sprintsArray);
+
+                // Handle milestones data
+                let milestonesArray: Milestone[] = [];
+                if (milestonesData && typeof milestonesData === 'object' && 'results' in milestonesData) {
+                  milestonesArray = (milestonesData as { results: Milestone[] }).results ?? [];
+                } else {
+                  milestonesArray = (milestonesData as Milestone[]) ?? [];
+                }
+                setMilestones(milestonesArray);
+
+                setUsers(usersData);
+
+                // Handle backlog tasks data
+                let editModalBacklogTasksArray: Task[] = [];
+                if (backlogData && typeof backlogData === 'object' && 'results' in backlogData) {
+                  editModalBacklogTasksArray = (backlogData as { results: Task[] }).results ?? [];
+                } else {
+                  editModalBacklogTasksArray = (backlogData as Task[]) ?? [];
+                }
+
                 // Filter out tasks that are already in this sprint (safety check)
-                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
+                const filteredBacklog = editModalBacklogTasksArray.filter((task: Task) => task.sprint !== sprint?.slug);
                 setBacklogTasks(filteredBacklog);
             } catch (_err) {
                 // Error handled silently

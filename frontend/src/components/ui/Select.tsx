@@ -15,28 +15,67 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
   className?: string;
   options?: SelectOption[];
   value?: string;
-  onChange?: (value: string) => void;
+  onChange?: ((value: string) => void) | React.ChangeEventHandler<HTMLSelectElement>;
   placeholder?: string;
   showIcons?: boolean;
 }
 
-export default function Select({ 
-  className = '', 
+export default function Select({
+  className = '',
   options = [],
   value,
   onChange,
   placeholder = 'Select an option',
   showIcons = true,
-  ...props 
-}: SelectProps) {
+  children,
+  ...props
+}: SelectProps & { children?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  // If no options provided, use as regular select
+  // If no options provided but children exist, use as regular select with children
+  if (options.length === 0 && children) {
+    return (
+      <select
+        {...props}
+        value={value}
+        onChange={(e) => {
+          if (typeof onChange === 'function') {
+            // Check if it's an event handler (has target property) or string handler
+            if ('target' in e) {
+              // It's an event, call as event handler
+              (onChange as React.ChangeEventHandler<HTMLSelectElement>)(e);
+            } else {
+              // It's a string, call as string handler
+              (onChange as (value: string) => void)(e.target.value);
+            }
+          }
+        }}
+        className={`w-full p-3 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${className}`}
+      >
+        {children}
+      </select>
+    );
+  }
+
+  // If no options provided and no children, use as regular select
   if (options.length === 0) {
     return (
       <select
         {...props}
+        value={value}
+        onChange={(e) => {
+          if (typeof onChange === 'function') {
+            // Check if it's an event handler (has target property) or string handler
+            if ('target' in e) {
+              // It's an event, call as event handler
+              (onChange as React.ChangeEventHandler<HTMLSelectElement>)(e);
+            } else {
+              // It's a string, call as string handler
+              (onChange as (value: string) => void)(e.target.value);
+            }
+          }
+        }}
         className={`w-full p-3 border border-gray-300 bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${className}`}
       />
     );

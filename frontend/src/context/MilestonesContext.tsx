@@ -33,7 +33,15 @@ export function MilestonesProvider({ children }: { children: React.ReactNode }) 
 
     try {
       const data = await getMilestones(token, { projectId: project.id, ordering: '-created_at' });
-      setMilestones(data.results);
+
+      let milestones: Milestone[] = [];
+      if (data && typeof data === 'object' && 'results' in data) {
+        milestones = (data as { results: Milestone[] }).results ?? [];
+      } else {
+        milestones = (data as Milestone[]) ?? [];
+      }
+
+      setMilestones(milestones);
     } catch (err) {
       console.error('Failed to load milestones:', err);
       setError(err instanceof Error ? err.message : 'Failed to load milestones');
