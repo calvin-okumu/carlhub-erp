@@ -1,19 +1,17 @@
 import SearchInput from '@/components/shared/SearchInput';
 import Button from '@/components/ui/Button';
-import { Filter, CheckSquare, Search, BarChart3 } from 'lucide-react';
+import { CheckSquare, Filter, Search } from 'lucide-react';
 
 interface ApprovalsHeaderProps {
     searchValue: string;
     onSearchChange: (value: string) => void;
     onFiltersClick: () => void;
-    onBulkActionsClick: () => void;
 }
 
 export const ApprovalsHeader = ({
     searchValue,
     onSearchChange,
     onFiltersClick,
-    onBulkActionsClick
 }: ApprovalsHeaderProps) => {
     return (
         <header className="bg-gradient-to-r from-white to-blue-50/30 border border-blue-100 rounded-xl shadow-sm mb-6 p-6">
@@ -29,13 +27,12 @@ export const ApprovalsHeader = ({
                             <p className="text-sm text-gray-600">Review and manage leave requests</p>
                         </div>
                     </div>
-                    
+
                     <div className="relative max-w-lg">
                         <SearchInput
                             value={searchValue}
                             onChange={onSearchChange}
                             placeholder="Search by employee, dates, or leave type..."
-                            className="pl-12"
                         />
                         <Search className="absolute left-4 top-3 w-4 h-4 text-gray-400" />
                     </div>
@@ -51,16 +48,6 @@ export const ApprovalsHeader = ({
                     >
                         <Filter className="h-4 w-4" />
                         <span className="hidden sm:inline">Filters</span>
-                    </Button>
-
-                    <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={onBulkActionsClick}
-                        className="flex items-center gap-2 bg-white/80 backdrop-blur hover:bg-gray-50 transition-all duration-200"
-                    >
-                        <BarChart3 className="h-4 w-4" />
-                        <span className="hidden sm:inline">Bulk Actions</span>
                     </Button>
                 </div>
             </div>

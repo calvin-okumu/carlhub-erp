@@ -198,6 +198,22 @@ export interface PaginatedResponse<T> {
 }
 
 // Leave Management Types
+export interface LeaveApproval {
+  id: string;
+  slug: string;
+  leave_request: string;
+  approval_level: "department_manager" | "hr_manager" | "general_manager";
+  level_display: string;
+  approver: number;
+  approver_name: string;
+  status: "pending" | "approved" | "rejected";
+  approved_date?: string;
+  notes?: string;
+  order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface LeaveRequest {
   id: string;
   slug: string;
@@ -210,13 +226,22 @@ export interface LeaveRequest {
   end_date: string;
   days_requested: number;
   reason: string;
-  status: "pending" | "approved" | "rejected" | "cancelled" | "taken";
+  status: "pending_department_manager" | "pending_hr_manager" | "pending_general_manager" | "approved" | "rejected" | "cancelled" | "taken";
   applied_date: string;
-  approved_by?: number;
-  approved_by_name?: string;
-  approved_date?: string;
-  approval_notes?: string;
   duration_display: string;
+  current_approval_level: "department_manager" | "hr_manager" | "general_manager";
+  next_approval_level: string;
+  workflow_status: {
+    current_level: string;
+    next_level?: string;
+    is_completed: boolean;
+    total_levels: number;
+    completed_levels: number;
+    pending_approvals: number;
+  };
+  approval_history: LeaveApproval[];
+  current_approver: string;
+  can_approve: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -266,7 +291,24 @@ export interface CreateLeaveRequestData {
 }
 
 export interface ApproveLeaveRequestData {
+  action: "approve" | "reject";
   notes?: string;
+}
+
+export interface LeaveApprovalAction {
+  action: "approve" | "reject";
+  notes?: string;
+}
+
+export interface LeaveWorkflowStatus {
+  current_level: string;
+  next_level?: string;
+  is_completed: boolean;
+  total_levels: number;
+  completed_levels: number;
+  pending_approvals: number;
+  can_approve: boolean;
+  current_approver?: string;
 }
 
 export interface CreateLeavePolicy {

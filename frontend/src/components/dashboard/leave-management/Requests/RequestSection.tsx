@@ -1,12 +1,13 @@
 "use client";
-import { useState, useEffect, useCallback } from 'react';
+import { useProfile } from '@/hooks/useProfile';
+import { useCallback, useEffect, useState } from 'react';
+import { cancelLeaveRequest, deleteLeaveRequest, getLeaveRequest, getLeaveRequests } from '../../../../api/leave';
+import type { LeaveRequest, PaginatedResponse } from '../../../../api/types';
+import { STORAGE_KEYS } from '../../../../constants/storage';
+import LeaveRequestTable from './LeaveRequestTable';
+import type { LeaveType, SortOption } from './LeaveSort';
 import { LeaveSort } from './LeaveSort';
 import { RequestHeader } from './RequestHeader';
-import LeaveRequestTable from './LeaveRequestTable';
-import { getLeaveRequests, getLeaveRequest, cancelLeaveRequest, deleteLeaveRequest } from '../../../../api/leave';
-import { STORAGE_KEYS } from '../../../../constants/storage';
-import type { LeaveRequest, PaginatedResponse } from '../../../../api/types';
-import type { LeaveType, SortOption } from './LeaveSort';
 
 export const RequestSection = () => {
     const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
@@ -19,13 +20,13 @@ export const RequestSection = () => {
     const [editingRequest, setEditingRequest] = useState<LeaveRequest | null>(null);
     const [currentSort, setCurrentSort] = useState<LeaveType>('all');
     const [currentSortOption, setCurrentSortOption] = useState<SortOption>('applied_date_desc');
+    const { profile, loading: profileLoading } = useProfile();
 
     const fetchLeaveRequests = useCallback(async (page = 1) => {
         try {
             setLoading(true);
             setError(null);
 
-            // Get current user ID from localStorage
             const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
             let employeeId: number | undefined;
 
@@ -73,14 +74,28 @@ export const RequestSection = () => {
                     params.ordering = '-applied_date';
             }
 
-            const response: PaginatedResponse<LeaveRequest> = await getLeaveRequests(params);
-            setLeaveRequests(response.results || []);
+            const response: PaginatedResponse<LeaveRequest> | LeaveRequest[] = await getLeaveRequests(params);
+
+            let requests: LeaveRequest[] = [];
+            let totalCount = 0;
+
+            if (response && typeof response === 'object' && 'results' in response) {
+                // Paginated response
+                requests = response.results || [];
+                totalCount = response.count || 0;
+            } else if (Array.isArray(response)) {
+                // Direct array response
+                requests = response;
+                totalCount = response.length;
+            }
+
+            setLeaveRequests(requests);
             setCurrentPage(page);
-            setTotalPages(Math.ceil(response.count / itemsPerPage));
-            setTotalItems(response.count);
+            setTotalPages(Math.ceil(totalCount / itemsPerPage));
+            setTotalItems(totalCount);
         } catch (err) {
-            setError('Failed to fetch leave requests');
             console.error('Error fetching leave requests:', err);
+            setError(`Failed to fetch leave requests: ${err}`);
         } finally {
             setLoading(false);
         }

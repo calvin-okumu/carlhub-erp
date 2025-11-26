@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { LeaveRequest } from '@/api/types';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { LeaveRequest } from '@/api/types';
-import { CheckCircle, Clock, User, FileText, Eye, X, Calendar, AlertCircle, TrendingUp } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Clock, Eye, FileText, TrendingUp, User, X } from 'lucide-react';
+import { useState } from 'react';
 
 interface LeaveRequestCardProps {
     request: LeaveRequest;
@@ -52,10 +52,10 @@ export const LeaveRequestCard = ({
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
         });
     };
 
@@ -135,7 +135,7 @@ export const LeaveRequestCard = ({
                                 width: `${(stages.filter(s => s.completed).length / stages.length) * 100}%`
                             }}
                         ></div>
-                        
+
                         {/* Stages */}
                         <div className="relative flex justify-between">
                             {stages.map((stage, index) => {

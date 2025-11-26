@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock, Edit, Trash2, Calendar, User, AlertCircle, CheckCircle, XCircle, Timer } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, Clock, Edit, Timer, Trash2, User, XCircle } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 import type { LeaveRequest } from '../../../../api/types';
 import Loader from '../../../shared/Loader';
@@ -64,40 +64,40 @@ export default function LeaveRequestTable({
 
     const getStatusBadge = (status: string) => {
         const statusConfig = {
-            pending: { 
-                bg: "bg-yellow-50", 
-                border: "border-yellow-200", 
-                text: "text-yellow-800", 
+            pending: {
+                bg: "bg-yellow-50",
+                border: "border-yellow-200",
+                text: "text-yellow-800",
                 icon: Timer,
-                label: "Pending" 
+                label: "Pending"
             },
-            approved: { 
-                bg: "bg-green-50", 
-                border: "border-green-200", 
-                text: "text-green-800", 
+            approved: {
+                bg: "bg-green-50",
+                border: "border-green-200",
+                text: "text-green-800",
                 icon: CheckCircle,
-                label: "Approved" 
+                label: "Approved"
             },
-            rejected: { 
-                bg: "bg-red-50", 
-                border: "border-red-200", 
-                text: "text-red-800", 
+            rejected: {
+                bg: "bg-red-50",
+                border: "border-red-200",
+                text: "text-red-800",
                 icon: XCircle,
-                label: "Rejected" 
+                label: "Rejected"
             },
-            cancelled: { 
-                bg: "bg-gray-50", 
-                border: "border-gray-200", 
-                text: "text-gray-800", 
+            cancelled: {
+                bg: "bg-gray-50",
+                border: "border-gray-200",
+                text: "text-gray-800",
                 icon: XCircle,
-                label: "Cancelled" 
+                label: "Cancelled"
             },
-            taken: { 
-                bg: "bg-blue-50", 
-                border: "border-blue-200", 
-                text: "text-blue-800", 
+            taken: {
+                bg: "bg-blue-50",
+                border: "border-blue-200",
+                text: "text-blue-800",
                 icon: CheckCircle,
-                label: "Taken" 
+                label: "Taken"
             }
         };
 
@@ -134,10 +134,10 @@ export default function LeaveRequestTable({
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            month: 'short', 
-            day: 'numeric', 
-            year: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
         });
     };
 
@@ -146,7 +146,7 @@ export default function LeaveRequestTable({
     const rows = filteredRequests.map(request => {
         const LeaveTypeIcon = getLeaveTypeIcon(request.leave_type);
         const isSingleDay = request.start_date === request.end_date;
-        
+
         return {
             key: request.id,
             data: [
@@ -155,53 +155,36 @@ export default function LeaveRequestTable({
                     <div className="p-1.5 bg-gray-100 rounded-lg">
                         <LeaveTypeIcon className="w-4 h-4 text-gray-600" />
                     </div>
-                    <div>
-                        <div className="font-medium text-gray-900">
-                            {formatLeaveType(request.leave_type)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                            {request.days_requested} {request.days_requested === 1 ? 'day' : 'days'}
-                        </div>
+                    <div className="font-medium text-gray-900">
+                        {formatLeaveType(request.leave_type)}
                     </div>
                 </div>,
-                
+
                 // Duration
-                <div key={request.id + '-duration'} className="text-center">
-                    <div className="font-medium text-gray-900">
-                        {request.days_requested}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                        {request.days_requested === 1 ? 'day' : 'days'}
-                    </div>
+                <div key={request.id + '-duration'} className="text-center font-medium text-gray-900">
+                    {request.days_requested} {request.days_requested === 1 ? 'day' : 'days'}
                 </div>,
-                
+
                 // Dates
-                <div key={request.id + '-dates'} className="text-sm">
-                    <div className="font-medium text-gray-900">
-                        {formatDate(request.start_date)}
-                    </div>
-                    {!isSingleDay && (
-                        <div className="text-xs text-gray-500">
-                            to {formatDate(request.end_date)}
-                        </div>
-                    )}
-                    {isSingleDay && (
-                        <div className="text-xs text-gray-500">Single day</div>
-                    )}
+                <div key={request.id + '-dates'} className="text-sm text-gray-900">
+                    {isSingleDay
+                        ? formatDate(request.start_date)
+                        : `${formatDate(request.start_date)} - ${formatDate(request.end_date)}`
+                    }
                 </div>,
-                
+
                 // Reason
                 <div key={request.id + '-reason'} className="max-w-xs">
                     <div className="text-sm text-gray-900 truncate" title={request.reason}>
                         {request.reason || <span className="text-gray-400 italic">No reason provided</span>}
                     </div>
                 </div>,
-                
+
                 // Status
                 <div key={request.id + '-status'} className="flex justify-center">
                     {getStatusBadge(request.status)}
                 </div>,
-                
+
                 // Actions
                 <div key={request.id + '-actions'} className="flex gap-1.5 justify-center">
                     {/* Edit button - available for pending and approved requests */}
@@ -278,7 +261,7 @@ export default function LeaveRequestTable({
                     </div>
                 </div>
             </div>
-            
+
             {filteredRequests.length === 0 ? (
                 <div className="p-12 text-center">
                     <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -288,7 +271,7 @@ export default function LeaveRequestTable({
                         {searchValue ? 'No matching requests' : 'No leave requests'}
                     </h3>
                     <p className="text-sm text-gray-500">
-                        {searchValue 
+                        {searchValue
                             ? `No leave requests found matching "${searchValue}"`
                             : 'Get started by creating your first leave request'
                         }

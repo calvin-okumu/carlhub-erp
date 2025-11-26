@@ -1,4 +1,4 @@
-import { Clock, CheckCircle, XCircle, LucideIcon } from 'lucide-react';
+import { CheckCircle, Clock, LucideIcon, XCircle } from 'lucide-react';
 
 type TabKey = 'all' | 'approved' | 'rejected';
 
@@ -19,25 +19,25 @@ interface Tab {
 }
 
 const TAB_CONFIG: Omit<Tab, 'count'>[] = [
-    { 
-        key: 'all', 
-        label: 'Pending', 
+    {
+        key: 'all',
+        label: 'Pending',
         icon: Clock,
         color: 'yellow',
         bgColor: 'bg-yellow-50',
         borderColor: 'border-yellow-200'
     },
-    { 
-        key: 'approved', 
-        label: 'Approved', 
+    {
+        key: 'approved',
+        label: 'Approved',
         icon: CheckCircle,
         color: 'green',
         bgColor: 'bg-green-50',
         borderColor: 'border-green-200'
     },
-    { 
-        key: 'rejected', 
-        label: 'Rejected', 
+    {
+        key: 'rejected',
+        label: 'Rejected',
         icon: XCircle,
         color: 'red',
         bgColor: 'bg-red-50',
