@@ -6,6 +6,8 @@ import type {
   LeaveBalance,
   LeavePolicy,
   LeaveRequest,
+  LeaveWorkflowStatus,
+  LeaveApproval,
   PaginatedResponse,
 } from "./types";
 
@@ -70,6 +72,47 @@ export const approveLeaveRequest = async (
   slug: string,
   data?: ApproveLeaveRequestData,
 ): Promise<LeaveRequest> => {
+  try {
+    // Try new workflow endpoint first
+    return await apiCall<LeaveRequest>(
+      `${API_BASE}/leave/requests/${slug}/approve_level/`,
+      {
+        method: "POST",
+        body: JSON.stringify({ action: "approve", ...data }),
+      },
+    );
+  } catch (error) {
+    console.warn('New approve endpoint failed, trying legacy endpoint:', error);
+    // Fallback to legacy endpoint
+    return await legacyApproveLeaveRequest(slug, data);
+  }
+};
+
+export const rejectLeaveRequest = async (
+  slug: string,
+  data?: ApproveLeaveRequestData,
+): Promise<LeaveRequest> => {
+  try {
+    // Try new workflow endpoint first
+    return await apiCall<LeaveRequest>(
+      `${API_BASE}/leave/requests/${slug}/reject_level/`,
+      {
+        method: "POST",
+        body: JSON.stringify({ action: "reject", ...data }),
+      },
+    );
+  } catch (error) {
+    console.warn('New reject endpoint failed, trying legacy endpoint:', error);
+    // Fallback to legacy endpoint
+    return await legacyRejectLeaveRequest(slug, data);
+  }
+};
+
+// Legacy endpoints for backward compatibility
+export const legacyApproveLeaveRequest = async (
+  slug: string,
+  data?: ApproveLeaveRequestData,
+): Promise<LeaveRequest> => {
   return await apiCall<LeaveRequest>(
     `${API_BASE}/leave/requests/${slug}/approve/`,
     {
@@ -79,7 +122,7 @@ export const approveLeaveRequest = async (
   );
 };
 
-export const rejectLeaveRequest = async (
+export const legacyRejectLeaveRequest = async (
   slug: string,
   data?: ApproveLeaveRequestData,
 ): Promise<LeaveRequest> => {
@@ -88,6 +131,18 @@ export const rejectLeaveRequest = async (
     {
       method: "POST",
       body: JSON.stringify(data || {}),
+    },
+  );
+};
+
+// Get workflow status for a leave request
+export const getLeaveRequestWorkflowStatus = async (
+  slug: string,
+): Promise<{ workflow_status: LeaveWorkflowStatus; approval_history: LeaveApproval[] }> => {
+  return await apiCall<{ workflow_status: LeaveWorkflowStatus; approval_history: LeaveApproval[] }>(
+    `${API_BASE}/leave/requests/${slug}/workflow_status/`,
+    {
+      method: "GET",
     },
   );
 };

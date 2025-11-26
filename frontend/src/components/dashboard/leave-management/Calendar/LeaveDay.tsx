@@ -1,5 +1,5 @@
 import type { LeaveRequest } from '@/api/types';
-import { format, isWeekend } from 'date-fns';
+import { format, isToday, isWeekend } from 'date-fns';
 import { Users } from 'lucide-react';
 
 interface LeaveDayProps {

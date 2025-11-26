@@ -4,7 +4,16 @@ import type { LeaveRequest } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { AlertCircle, Calendar, CheckCircle, Clock, Eye, FileText, User, X } from 'lucide-react';
+import {
+    AlertCircle,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Eye,
+    FileText,
+    User,
+    X,
+} from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import LeaveRequestDetails from './LeaveRequestDetails';
 
@@ -32,51 +41,55 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
     const [page, setPage] = useState(1);
     const [expandedRequestId, setExpandedRequestId] = useState<string | null>(null);
 
-    const filteredRequests = useMemo(() =>
-        leaveRequests.filter(request =>
-            request.employee_name?.toLowerCase().includes(searchValue.toLowerCase()) &&
-            (statusFilter === 'all' || request.status === statusFilter)
-        ),
-        [leaveRequests, searchValue, statusFilter]
-    );
+    // FIXED FILTER LOGIC
+    const filteredRequests = useMemo(() => {
+        return leaveRequests.filter(request => {
+            const matchesSearch = request.employee_name
+                ?.toLowerCase()
+                .includes(searchValue.toLowerCase());
+
+            const matchesStatus =
+                statusFilter === "all"
+                    ? true
+                    : statusFilter === "pending"
+                        ? request.status.startsWith("pending")
+                        : request.status === statusFilter;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [leaveRequests, searchValue, statusFilter]);
 
     const itemsPerPage = 10;
-    const totalPages = useMemo(() =>
-        Math.ceil(filteredRequests.length / itemsPerPage),
-        [filteredRequests.length, itemsPerPage]
-    );
-    const visibleRequests = useMemo(() =>
-        filteredRequests.slice((page - 1) * itemsPerPage, page * itemsPerPage),
-        [filteredRequests, page, itemsPerPage]
-    );
+    const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
 
-    const handleApprove = useCallback((requestSlug: string) => {
-        if (confirm("Are you sure you want to approve this leave request?")) {
-            onApprove(requestSlug);
-        }
+    const visibleRequests = useMemo(() => {
+        return filteredRequests.slice(
+            (page - 1) * itemsPerPage,
+            page * itemsPerPage
+        );
+    }, [filteredRequests, page]);
+
+    const handleApprove = useCallback((slug: string) => {
+        if (confirm("Approve this leave request?")) onApprove(slug);
     }, [onApprove]);
 
-    const handleReject = useCallback((requestSlug: string) => {
-        if (confirm("Are you sure you want to reject this leave request?")) {
-            onReject(requestSlug);
-        }
+    const handleReject = useCallback((slug: string) => {
+        if (confirm("Reject this leave request?")) onReject(slug);
     }, [onReject]);
 
-    const handleViewDetails = useCallback((request: LeaveRequest) => {
-        setExpandedRequestId(expandedRequestId === request.id ? null : request.id);
-    }, [expandedRequestId]);
+    const toggleDetails = useCallback((r: LeaveRequest) => {
+        setExpandedRequestId(prev => (prev === r.id ? null : r.id));
+    }, []);
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
+    const formatDate = (date: string) =>
+        new Date(date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
         });
-    };
 
-    const getLeaveTypeIcon = (leaveType: string) => {
-        const icons = {
+    const getLeaveTypeIcon = (type: string) => {
+        const map = {
             annual_leave: Calendar,
             sick_leave: AlertCircle,
             personal_leave: User,
@@ -84,36 +97,22 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
             emergency_leave: AlertCircle,
             unpaid_leave: Clock,
         };
-        return icons[leaveType as keyof typeof icons] || FileText;
+        return map[type as keyof typeof map] || FileText;
     };
 
-    const getStatusColor = (status: string) => {
-        const colors = {
-            pending: 'text-yellow-600 bg-yellow-50 border-yellow-200',
-            approved: 'text-green-600 bg-green-50 border-green-200',
-            rejected: 'text-red-600 bg-red-50 border-red-200',
-            cancelled: 'text-gray-600 bg-gray-50 border-gray-200',
-            taken: 'text-blue-600 bg-blue-50 border-blue-200',
-        };
-        return colors[status as keyof typeof colors] || colors.pending;
-    };
-
-    if (loading) {
-        return <Loader />;
-    }
+    if (loading) return <Loader />;
 
     if (filteredRequests.length === 0) {
         return (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
+            <div className="bg-white rounded-xl p-12 text-center shadow">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <AlertCircle className="h-8 w-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No leave requests found</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">No leave requests found</h3>
                 <p className="text-sm text-gray-500">
                     {searchValue
-                        ? `No requests matching "${searchValue}"`
-                        : 'No leave requests to review at this time'
-                    }
+                        ? `No matching results for "${searchValue}"`
+                        : "No leave requests for now."}
                 </p>
             </div>
         );
@@ -121,73 +120,69 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
 
     return (
         <div className="space-y-4">
-            {visibleRequests.map((request) => {
-                const LeaveTypeIcon = getLeaveTypeIcon(request.leave_type);
-                const isExpanded = expandedRequestId === request.id;
-                const statusColorClass = getStatusColor(request.status);
-                const isSingleDay = request.start_date === request.end_date;
+            {visibleRequests.map(request => {
+                const Icon = getLeaveTypeIcon(request.leave_type);
+                const expanded = expandedRequestId === request.id;
+                const single = request.start_date === request.end_date;
 
                 return (
-                    <div key={request.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden">
-                        {/* Main Card Content */}
+                    <div
+                        key={request.id}
+                        className="bg-white rounded-xl border shadow-sm hover:shadow transition-all duration-200"
+                    >
                         <div className="p-6">
+                            {/* TOP ROW */}
                             <div className="flex items-start justify-between mb-4">
-                                {/* Employee and Leave Type */}
                                 <div className="flex items-center gap-4">
                                     <div className="p-3 bg-gray-50 rounded-lg">
                                         <User className="w-6 h-6 text-gray-600" />
                                     </div>
+
                                     <div>
                                         <h3 className="font-semibold text-gray-900 text-lg">
-                                            {request.employee_name || 'Unknown Employee'}
+                                            {request.employee_name}
                                         </h3>
+
                                         <div className="flex items-center gap-2 mt-1">
-                                            <LeaveTypeIcon className="w-4 h-4 text-gray-500" />
+                                            <Icon className="w-4 h-4 text-gray-500" />
                                             <span className="text-sm text-gray-600 capitalize">
-                                                {request.leave_type?.replace('_', ' ') || 'Unknown Type'}
+                                                {request.leave_type.replace("_", " ")}
                                             </span>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Status and Duration */}
                                 <div className="text-right">
-                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${statusColorClass} mb-2`}>
-                                        <StatusBadge status={request.status} />
-                                    </div>
-                                    <div className="text-sm text-gray-600">
-                                        {request.days_requested || 0} {request.days_requested === 1 ? 'day' : 'days'}
+                                    <StatusBadge status={request.status} />
+
+                                    <div className="text-sm text-gray-600 mt-1">
+                                        {request.days_requested} {request.days_requested === 1 ? "day" : "days"}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Dates Row */}
-                            <div className="flex items-center gap-6 mb-4 text-sm">
+                            {/* DATE ROW */}
+                            <div className="flex items-center gap-6 mb-4 text-sm text-gray-700">
                                 <div className="flex items-center gap-2">
                                     <Calendar className="w-4 h-4 text-gray-400" />
-                                    <span className="text-gray-900 font-medium">
-                                        {formatDate(request.start_date)}
-                                    </span>
-                                    {!isSingleDay && (
+                                    <span>{formatDate(request.start_date)}</span>
+                                    {!single && (
                                         <>
                                             <span className="text-gray-400">→</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {formatDate(request.end_date)}
-                                            </span>
+                                            <span>{formatDate(request.end_date)}</span>
                                         </>
                                     )}
                                 </div>
+
                                 <div className="flex items-center gap-2">
                                     <Clock className="w-4 h-4 text-gray-400" />
-                                    <span className="text-gray-600">
-                                        Applied {formatDate(request.applied_date)}
-                                    </span>
+                                    <span>Applied {formatDate(request.applied_date)}</span>
                                 </div>
                             </div>
 
-                            {/* Reason Preview */}
+                            {/* REASON BOX */}
                             {request.reason && (
-                                <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+                                <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-100">
                                     <div className="flex items-start gap-2">
                                         <FileText className="w-4 h-4 text-gray-400 mt-0.5" />
                                         <p className="text-sm text-gray-700 line-clamp-2">
@@ -197,71 +192,59 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
                                 </div>
                             )}
 
-                            {/* Action Buttons */}
-                            <div className="flex items-center justify-between">
+                            {/* ACTIONS */}
+                            <div className="flex items-center justify-between pt-2">
                                 <Button
                                     variant="secondary"
                                     size="sm"
-                                    onClick={() => handleViewDetails(request)}
-                                    className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
+                                    onClick={() => toggleDetails(request)}
+                                    className="flex items-center gap-2"
                                 >
                                     <Eye className="h-4 w-4" />
-                                    {isExpanded ? 'Hide Details' : 'View Details'}
+                                    {expanded ? "Hide Details" : "View Details"}
                                 </Button>
 
-                                <div className="flex items-center gap-2">
-                                    {request.status === 'pending' && (
-                                        <>
-                                            <Button
-                                                onClick={() => handleApprove(request.slug)}
-                                                variant="gradient"
-                                                size="sm"
-                                                disabled={approvingId === request.slug}
-                                                className="flex items-center gap-2 border-green-300 text-green-700 hover:bg-green-50"
-                                            >
-                                                {approvingId === request.slug ? (
-                                                    <>
-                                                        <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin"></div>
-                                                        Approving...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CheckCircle className="h-4 w-4" />
-                                                        Approve
-                                                    </>
-                                                )}
-                                            </Button>
-                                            <Button
-                                                onClick={() => handleReject(request.slug)}
-                                                variant="danger"
-                                                size="sm"
-                                                disabled={rejectingId === request.slug}
-                                                className="flex items-center gap-2 border-red-300 text-red-700 hover:bg-red-50"
-                                            >
-                                                {rejectingId === request.slug ? (
-                                                    <>
-                                                        <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-                                                        Rejecting...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <X className="h-4 w-4" />
-                                                        Reject
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
+                                {request.status === "pending" && (
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            onClick={() => handleApprove(request.slug)}
+                                            size="sm"
+                                            disabled={approvingId === request.slug}
+                                            className="flex items-center gap-2"
+                                        >
+                                            {approvingId === request.slug ? (
+                                                <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <CheckCircle className="h-4 w-4" />
+                                            )}
+                                            Approve
+                                        </Button>
+
+                                        <Button
+                                            onClick={() => handleReject(request.slug)}
+                                            size="sm"
+                                            variant="danger"
+                                            disabled={rejectingId === request.slug}
+                                            className="flex items-center gap-2"
+                                        >
+                                            {rejectingId === request.slug ? (
+                                                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                                            ) : (
+                                                <X className="h-4 w-4" />
+                                            )}
+                                            Reject
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Expandable Details */}
-                        {isExpanded && (
-                            <div className="border-t border-gray-100 bg-gray-50/50">
+                        {/* EXPANDABLE DETAILS */}
+                        {expanded && (
+                            <div className="border-t bg-gray-50 p-4 animate-fadeIn">
                                 <LeaveRequestDetails
                                     request={request}
-                                    isOpen={isExpanded}
+                                    isOpen
                                     onToggle={() => setExpandedRequestId(null)}
                                 />
                             </div>
@@ -270,12 +253,15 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
                 );
             })}
 
-            {/* Pagination */}
+            {/* PAGINATION */}
             {totalPages > 1 && (
-                <div className="flex items-center justify-between bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                <div className="flex items-center justify-between bg-white rounded-xl border shadow-sm p-4">
                     <div className="text-sm text-gray-600">
-                        Showing {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, filteredRequests.length)} of {filteredRequests.length} requests
+                        Showing {(page - 1) * itemsPerPage + 1}–
+                        {Math.min(page * itemsPerPage, filteredRequests.length)} of{" "}
+                        {filteredRequests.length}
                     </div>
+
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
@@ -285,9 +271,11 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
                         >
                             Previous
                         </Button>
-                        <span className="px-3 py-1 text-sm text-gray-600">
+
+                        <span className="text-sm text-gray-600">
                             Page {page} of {totalPages}
                         </span>
+
                         <Button
                             variant="outline"
                             size="sm"

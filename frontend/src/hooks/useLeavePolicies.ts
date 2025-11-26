@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   getLeavePolicies,
   createLeavePolicy,
@@ -22,17 +22,37 @@ export const useLeavePolicies = (params?: {
     next: string | null;
     previous: string | null;
   } | null>(null);
-  const fetchPolicies = async () => {
+  const fetchPolicies = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await getLeavePolicies(params);
-      setPolicies(response.results || []);
-      setPagination({
-        count: response.count,
-        next: response.next,
-        previous: response.previous,
-      });
+      const response: PaginatedResponse<LeavePolicy> | LeavePolicy[] = await getLeavePolicies(params);
+
+      let policiesData: LeavePolicy[] = [];
+      let paginationData: { count: number; next: string | null; previous: string | null } | null = null;
+
+      if (response && typeof response === 'object' && 'results' in response) {
+        // Paginated response
+        policiesData = response.results || [];
+        paginationData = {
+          count: response.count,
+          next: response.next,
+          previous: response.previous,
+        };
+      } else if (Array.isArray(response)) {
+        // Direct array response
+        policiesData = response;
+        paginationData = {
+          count: response.length,
+          next: null,
+          previous: null,
+        };
+      }
+
+      setPolicies(policiesData);
+      if (paginationData) {
+        setPagination(paginationData);
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to fetch leave policies",
@@ -41,10 +61,10 @@ export const useLeavePolicies = (params?: {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [params]);
   useEffect(() => {
     fetchPolicies();
-  }, [JSON.stringify(params), fetchPolicies]);
+  }, [fetchPolicies]);
   const createPolicy = async (
     data: Omit<
       LeavePolicy,

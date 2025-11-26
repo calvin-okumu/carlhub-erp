@@ -2,7 +2,7 @@
 
 import type { LeaveRequest } from '@/api/types';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, FileText, User, AlertCircle, TrendingUp, Mail } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle, ChevronDown, ChevronUp, Clock, FileText, Mail, TrendingUp, User } from 'lucide-react';
 
 interface LeaveRequestDetailsProps {
     request: LeaveRequest;
@@ -10,14 +10,14 @@ interface LeaveRequestDetailsProps {
     onToggle: () => void;
 }
 
-const ApprovalStage = ({ 
-    name, 
-    completed, 
-    isCurrent, 
-    description 
-}: { 
-    name: string; 
-    completed: boolean; 
+const ApprovalStage = ({
+    name,
+    completed,
+    isCurrent,
+    description
+}: {
+    name: string;
+    completed: boolean;
     isCurrent: boolean;
     description?: string;
 }) => {
@@ -66,10 +66,10 @@ export default function LeaveRequestDetails({ request, isOpen, onToggle }: Leave
 
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric' 
+        return date.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric'
         });
     };
 

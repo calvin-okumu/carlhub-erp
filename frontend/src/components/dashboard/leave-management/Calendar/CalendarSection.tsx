@@ -18,11 +18,17 @@ import LeaveDetailsModal from "./LeaveDetailsModal";
 import { CalendarLegend } from "./CalendarLegend";
 import { useLeaveRequests } from "./hooks/useLeaveRequests";
 import { Calendar, Download } from "lucide-react";
+import type { CalendarFilters } from "./CalendarLegend";
 
 const CalendarSection = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedLeaves, setSelectedLeaves] = useState<LeaveRequest[]>([]);
     const [showDetails, setShowDetails] = useState(false);
+    const [calendarFilters, setCalendarFilters] = useState<CalendarFilters>({
+        leaveTypes: [],
+        statuses: [],
+        dateRange: { start: '', end: '' }
+    });
 
     const { leaveRequests, isLoading, error } = useLeaveRequests({
         month: currentDate.getMonth() + 1,

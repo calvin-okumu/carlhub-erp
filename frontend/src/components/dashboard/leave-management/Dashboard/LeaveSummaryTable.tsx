@@ -20,7 +20,6 @@ export const LeaveSummaryTable = () => {
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                // Get current user ID from localStorage
                 const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
                 let employeeId: number | undefined;
 
@@ -30,7 +29,7 @@ export const LeaveSummaryTable = () => {
                 }
 
                 const data = await getLeaveRequests({
-                    page_size: 5,
+                    page_size: 10,
                     employee: employeeId
                 });
 
