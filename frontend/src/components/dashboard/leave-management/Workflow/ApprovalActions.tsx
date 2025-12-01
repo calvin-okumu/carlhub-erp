@@ -35,6 +35,9 @@ export default function ApprovalActions({
             onActionComplete?.();
         } catch (error) {
             console.error('Failed to approve leave request:', error);
+            // Show user-friendly error message
+            const errorMessage = error instanceof Error ? error.message : 'Failed to approve leave request. Please try again.';
+            alert(errorMessage);
         } finally {
             setIsSubmitting(false);
         }
@@ -42,6 +45,12 @@ export default function ApprovalActions({
 
     const handleReject = async () => {
         if (!leaveRequest.can_approve) return;
+        
+        // Validate rejection notes
+        if (!notes.trim()) {
+            alert('Rejection reason is required.');
+            return;
+        }
         
         setIsSubmitting(true);
         try {
@@ -51,6 +60,9 @@ export default function ApprovalActions({
             onActionComplete?.();
         } catch (error) {
             console.error('Failed to reject leave request:', error);
+            // Show user-friendly error message
+            const errorMessage = error instanceof Error ? error.message : 'Failed to reject leave request. Please try again.';
+            alert(errorMessage);
         } finally {
             setIsSubmitting(false);
         }

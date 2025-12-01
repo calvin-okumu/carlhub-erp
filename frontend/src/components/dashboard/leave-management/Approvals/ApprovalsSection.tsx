@@ -1,6 +1,6 @@
 "use client";
 
-import { approveLeaveRequest, getLeaveRequests, rejectLeaveRequest } from '@/api/leave';
+import { approveLeaveRequestLevel, getLeaveRequests, rejectLeaveRequestLevel, getPendingApprovalsSummary } from '@/api/leave';
 import type { LeaveRequest, PaginatedResponse } from '@/api/types';
 import { useCallback, useEffect, useState } from 'react';
 import { ApprovalsHeader } from './ApprovalsHeader';
@@ -26,26 +26,40 @@ export default function ApprovalsSection() {
 const fetchLeaveRequests = useCallback(async () => {
     try {
         setLoading(true);
-        const params: Record<string, string> = {};
-
-        // Handle status filtering for new workflow statuses
-        if (activeTab !== 'all') {
-            if (activeTab === 'approved' || activeTab === 'rejected') {
-                params.status = activeTab;
-            } else {
-                // For 'all' tab, don't filter by status to get all pending requests
-                // The backend will return requests based on user permissions
-            }
+        
+        // Get all requests - backend will filter by permissions
+        const response = await getLeaveRequests({});
+        
+        // Handle both paginated and direct array responses
+        let allRequests: LeaveRequest[] = [];
+        if (Array.isArray(response)) {
+            allRequests = response;
+        } else if (response && response.results) {
+            allRequests = response.results;
         }
-
+        
+        // Filter by active tab
+        let filteredResults = allRequests;
+        if (activeTab === 'approved') {
+            filteredResults = allRequests.filter(r => r.status === 'approved');
+        } else if (activeTab === 'rejected') {
+            filteredResults = allRequests.filter(r => r.status === 'rejected');
+        } else {
+            // 'all' tab - show pending requests
+            filteredResults = allRequests.filter(r => r.status.startsWith('pending_'));
+        }
+        
+        // Apply search filter
         if (searchValue.trim()) {
-            params.search = searchValue.trim();
+            filteredResults = filteredResults.filter(request =>
+                request.employee_name?.toLowerCase().includes(searchValue.toLowerCase())
+            );
         }
-
-        const response: PaginatedResponse<LeaveRequest> = await getLeaveRequests(params);
-        setLeaveRequests(response.results);
+        
+        setLeaveRequests(filteredResults);
     } catch (error) {
         console.error('Failed to fetch leave requests:', error);
+        setLeaveRequests([]);
     } finally {
         setLoading(false);
     }
@@ -58,22 +72,32 @@ useEffect(() => {
 const handleApprove = async (requestSlug: string) => {
     try {
         setApprovingId(requestSlug);
-        await approveLeaveRequest(requestSlug);
+        await approveLeaveRequestLevel(requestSlug, { notes: undefined });
         await fetchLeaveRequests();
     } catch (error) {
         console.error('Failed to approve request:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to approve leave request. Please try again.';
+        alert(errorMessage);
     } finally {
         setApprovingId(null);
     }
 };
 
 const handleReject = async (requestSlug: string) => {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (!reason?.trim()) {
+        alert('Rejection reason is required.');
+        return;
+    }
+
     try {
         setRejectingId(requestSlug);
-        await rejectLeaveRequest(requestSlug);
+        await rejectLeaveRequestLevel(requestSlug, { notes: reason.trim() });
         await fetchLeaveRequests();
     } catch (error) {
         console.error('Failed to reject request:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to reject leave request. Please try again.';
+        alert(errorMessage);
     } finally {
         setRejectingId(null);
     }
@@ -91,6 +115,8 @@ const handleBulkActionsClick = () => {
 
 return (
     <div>
+        
+
         <ApprovalsHeader
             searchValue={searchValue}
             onSearchChange={setSearchValue}

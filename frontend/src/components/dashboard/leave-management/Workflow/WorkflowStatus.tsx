@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle, Clock, XCircle, AlertCircle, User } from 'lucide-react';
-import type { WorkflowStatus as WorkflowStatusType, WorkflowStep } from '@/api/types';
+import type { LeaveWorkflowStatus as WorkflowStatusType, WorkflowStep } from '@/api/types';
 
 interface WorkflowStatusProps {
     workflowStatus: WorkflowStatusType;
