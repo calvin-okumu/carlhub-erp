@@ -231,14 +231,9 @@ export interface LeaveRequest {
   duration_display: string;
   current_approval_level: "department_manager" | "hr_manager" | "general_manager";
   next_approval_level: string;
-  workflow_status: {
-    current_level: string;
-    next_level?: string;
-    is_completed: boolean;
-    total_levels: number;
-    completed_levels: number;
-    pending_approvals: number;
-  };
+  approval_notes?: string;
+  final_approver?: string;
+  workflow_status: LeaveWorkflowStatus;
   approval_history: LeaveApproval[];
   current_approver: string;
   can_approve: boolean;
@@ -300,7 +295,24 @@ export interface LeaveApprovalAction {
   notes?: string;
 }
 
+export interface WorkflowStep {
+  level: string;
+  level_display: string;
+  approver?: string;
+  status: string;
+  approved_date?: string;
+  notes?: string;
+  order: number;
+}
+
 export interface LeaveWorkflowStatus {
+  current_status: string;
+  current_level: string;
+  is_pending: boolean;
+  is_approved: boolean;
+  is_rejected: boolean;
+  next_approver?: string;
+  steps: WorkflowStep[];
   current_level: string;
   next_level?: string;
   is_completed: boolean;

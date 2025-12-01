@@ -204,7 +204,7 @@ const ApprovalsTable = React.memo(function ApprovalsTable({
                                     {expanded ? "Hide Details" : "View Details"}
                                 </Button>
 
-                                {request.status === "pending" && (
+                                {request.can_approve && request.status.startsWith("pending") && (
                                     <div className="flex items-center gap-2">
                                         <Button
                                             onClick={() => handleApprove(request.slug)}

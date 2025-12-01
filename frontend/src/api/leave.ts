@@ -14,12 +14,14 @@ import type {
 // Leave Requests API
 export const getLeaveRequests = async (params?: {
   status?: string;
+  status__startswith?: string;
   leave_type?: string;
   employee?: number;
   approved_by?: number;
   page?: number;
   page_size?: number;
-}): Promise<PaginatedResponse<LeaveRequest>> => {
+  search?: string;
+}): Promise<PaginatedResponse<LeaveRequest> | LeaveRequest[]> => {
   const searchParams = new URLSearchParams();
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
@@ -29,12 +31,23 @@ export const getLeaveRequests = async (params?: {
     });
   }
 
-  return await apiCall<PaginatedResponse<LeaveRequest>>(
-    `${API_BASE}/leave/requests/?${searchParams}`,
-    {
-      method: "GET",
-    },
-  );
+  const url = `${API_BASE}/leave/requests/?${searchParams}`;
+  
+  const response = await apiCall<PaginatedResponse<LeaveRequest> | LeaveRequest[]>(url, {
+    method: "GET",
+  });
+  
+  // Handle both paginated and direct array responses
+  if (Array.isArray(response)) {
+    return {
+      count: response.length,
+      next: null,
+      previous: null,
+      results: response
+    };
+  }
+  
+  return response;
 };
 
 export const getLeaveRequest = async (id: string): Promise<LeaveRequest> => {
@@ -106,6 +119,33 @@ export const rejectLeaveRequest = async (
     // Fallback to legacy endpoint
     return await legacyRejectLeaveRequest(slug, data);
   }
+};
+
+// New workflow-specific approval functions
+export const approveLeaveRequestLevel = async (
+  slug: string,
+  data?: ApproveLeaveRequestData,
+): Promise<LeaveRequest> => {
+  return await apiCall<LeaveRequest>(
+    `${API_BASE}/leave/requests/${slug}/approve_level/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ action: "approve", ...data }),
+    },
+  );
+};
+
+export const rejectLeaveRequestLevel = async (
+  slug: string,
+  data?: ApproveLeaveRequestData,
+): Promise<LeaveRequest> => {
+  return await apiCall<LeaveRequest>(
+    `${API_BASE}/leave/requests/${slug}/reject_level/`,
+    {
+      method: "POST",
+      body: JSON.stringify({ action: "reject", ...data }),
+    },
+  );
 };
 
 // Legacy endpoints for backward compatibility
@@ -256,3 +296,32 @@ export const deleteLeavePolicy = async (slug: string): Promise<void> => {
   });
 };
 
+// Get pending approvals summary for current user
+export const getPendingApprovalsSummary = async (): Promise<{
+  pending_count: number;
+  pending_requests: LeaveRequest[];
+}> => {
+  try {
+    return await apiCall<{ pending_count: number; pending_requests: LeaveRequest[] }>(
+      `${API_BASE}/leave/workflows/notifications_summary/`,
+      {
+        method: "GET",
+      },
+    );
+  } catch (error) {
+    console.warn('notifications_summary endpoint failed, using fallback:', error);
+    // Fallback: get all requests and filter for pending ones user can approve
+    const allRequests = await getLeaveRequests({});
+    
+    const pendingRequests = allRequests.filter(request => {
+      const isPending = request.status.startsWith('pending_');
+      const canApprove = request.can_approve;
+      return isPending && canApprove;
+    }) || [];
+    
+    return {
+      pending_count: pendingRequests.length,
+      pending_requests: pendingRequests
+    };
+  }
+};
