@@ -6,7 +6,6 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
-from django.utils import timezone
 from django.utils.text import slugify
 
 from accounts.models import SoftDeleteMixin
@@ -39,6 +38,99 @@ class Client(models.Model):
         blank=True,
         db_index=True,
     )
+
+    # Enhanced client lifecycle fields
+    lead_source = models.CharField(
+        max_length=50,
+        choices=[
+            ("website", "Website"),
+            ("referral", "Referral"),
+            ("social_media", "Social Media"),
+            ("cold_outreach", "Cold Outreach"),
+            ("trade_show", "Trade Show"),
+            ("other", "Other"),
+        ],
+        blank=True,
+        help_text="How did we acquire this client?",
+    )
+
+    lead_score = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Lead qualification score (0-100)",
+    )
+
+    industry = models.CharField(max_length=100, blank=True)
+
+    company_size = models.CharField(
+        max_length=20,
+        choices=[
+            ("1-10", "1-10 employees"),
+            ("11-50", "11-50 employees"),
+            ("51-200", "51-200 employees"),
+            ("201-1000", "201-1000 employees"),
+            ("1000+", "1000+ employees"),
+        ],
+        blank=True,
+    )
+
+    website = models.URLField(blank=True)
+    address = models.TextField(blank=True)
+    billing_address = models.TextField(blank=True)
+
+    # Relationship management
+    primary_contact = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="primary_clients",
+    )
+
+    account_manager = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="managed_clients",
+    )
+
+    # Financial info
+    credit_limit = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+
+    payment_terms = models.CharField(
+        max_length=50,
+        choices=[
+            ("immediate", "Immediate"),
+            ("net_15", "Net 15"),
+            ("net_30", "Net 30"),
+            ("net_45", "Net 45"),
+            ("net_60", "Net 60"),
+            ("custom", "Custom"),
+        ],
+        default="net_30",
+    )
+
+    tax_id = models.CharField(max_length=50, blank=True)
+
+    # Communication & tracking
+    last_contact = models.DateTimeField(null=True, blank=True)
+    next_followup = models.DateTimeField(null=True, blank=True)
+
+    satisfaction_score = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Client satisfaction rating (1-5)",
+    )
+
+    notes = models.TextField(blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -71,6 +163,117 @@ class Client(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Contract(models.Model):
+    """LPO/Contract management system"""
+
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("sent", "Sent to Client"),
+        ("signed", "Signed"),
+        ("active", "Active"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
+
+    tenant = models.ForeignKey(
+        "accounts.Tenant",
+        on_delete=models.CASCADE,
+        related_name="contracts",
+        null=True,
+        blank=True,
+        db_index=True,
+    )
+
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="contracts", db_index=True
+    )
+
+    project = models.OneToOneField(
+        "Project", on_delete=models.CASCADE, related_name="contract_link"
+    )
+
+    contract_number = models.CharField(max_length=50, unique=True)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+
+    # Financial details
+    total_value = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0"))]
+    )
+
+    currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="USD")
+
+    payment_schedule = models.JSONField(default=dict, help_text="Payment milestones and amounts")
+
+    # Dates
+    issued_date = models.DateField()
+    signed_date = models.DateField(null=True, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    # Documents
+    contract_file = models.FileField(upload_to="contracts/", null=True, blank=True)
+
+    signed_contract_file = models.FileField(upload_to="contracts/signed/", null=True, blank=True)
+
+    # Approval workflow
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+
+    approved_by = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="approved_contracts",
+    )
+
+    approved_date = models.DateTimeField(null=True, blank=True)
+
+    # Rejection handling
+    rejection_reason = models.TextField(blank=True)
+
+    # Audit
+    created_by = models.ForeignKey(
+        "accounts.CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_contracts",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["tenant", "status"]),
+            models.Index(fields=["client", "status"]),
+            models.Index(fields=["contract_number"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+
+            self.slug = slugify(f"contract-{self.contract_number}")
+
+            # Ensure uniqueness
+            original_slug = self.slug
+            counter = 1
+            while Contract.objects.filter(slug=self.slug).exists():
+                self.slug = f"{original_slug}-{counter}"
+                counter += 1
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.contract_number} - {self.client.name}"
 
 
 class Project(SoftDeleteMixin, models.Model):
@@ -119,6 +322,59 @@ class Project(SoftDeleteMixin, models.Model):
     progress = models.PositiveIntegerField(
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
+
+    # Enhanced lifecycle management
+    PHASE_CHOICES = [
+        ("initiation", "Initiation"),
+        ("planning", "Planning"),
+        ("execution", "Execution"),
+        ("monitoring", "Monitoring & Control"),
+        ("closure", "Closure"),
+    ]
+
+    phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default="initiation")
+
+    # Contract relationship
+    contract = models.OneToOneField(
+        Contract, on_delete=models.SET_NULL, null=True, blank=True, related_name="project_link"
+    )
+
+    # Resource management
+    estimated_hours = models.DecimalField(
+        max_digits=8,
+        decimal_places=1,
+        default=Decimal("0.0"),
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+
+    actual_hours = models.DecimalField(
+        max_digits=8,
+        decimal_places=1,
+        default=Decimal("0.0"),
+        validators=[MinValueValidator(Decimal("0"))],
+    )
+
+    # Risk management
+    risk_level = models.CharField(
+        max_length=20,
+        choices=[("low", "Low"), ("medium", "Medium"), ("high", "High"), ("critical", "Critical")],
+        default="low",
+    )
+
+    # Quality metrics
+    quality_score = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text="Project quality rating (1-5)",
+    )
+
+    client_feedback = models.TextField(blank=True)
+
+    # Automation settings
+    auto_complete_on_invoice_paid = models.BooleanField(default=False)
+    notify_on_phase_change = models.BooleanField(default=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -481,115 +737,3 @@ class Task(SoftDeleteMixin, models.Model):
             models.Index(fields=["milestone", "status"], name="task_milestone_status"),
             models.Index(fields=["sprint", "status"], name="task_sprint_status"),
         ]
-
-
-# Financial models
-class Invoice(SoftDeleteMixin, models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
-    tenant = models.ForeignKey(
-        "accounts.Tenant",
-        on_delete=models.CASCADE,
-        related_name="invoices",
-        null=True,
-        blank=True,
-        db_index=True,
-    )
-    client = models.ForeignKey(
-        Client, on_delete=models.CASCADE, related_name="invoices", db_index=True
-    )
-    project = models.ForeignKey(
-        Project, on_delete=models.SET_NULL, related_name="invoices", null=True, blank=True
-    )
-    currency = models.CharField(
-        max_length=3,
-        null=True,
-        blank=True,
-        choices=CURRENCY_CHOICES,
-        help_text="Currency for this invoice",
-    )
-    amount = models.DecimalField(
-        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0"))]
-    )
-    issued_at = models.DateTimeField(auto_now_add=True)
-    paid = models.BooleanField(default=False)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            from django.utils.text import slugify
-
-            self.slug = slugify(f"invoice-{self.client.name}-{self.amount}")
-            # Ensure uniqueness
-            original_slug = self.slug
-            counter = 1
-            while Invoice.objects.filter(slug=self.slug).exists():
-                self.slug = f"{original_slug}-{counter}"
-                counter += 1
-
-        # Set default currency from tenant if not provided
-        if not self.currency:
-            from saasCRM.currency import get_tenant_default_currency
-
-            self.currency = get_tenant_default_currency(self.tenant)
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Invoice {self.id or 'Unsaved'} - {self.client.name}"
-
-
-class Payment(SoftDeleteMixin, models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
-    tenant = models.ForeignKey(
-        "accounts.Tenant",
-        on_delete=models.CASCADE,
-        related_name="payments",
-        null=True,
-        blank=True,
-        db_index=True,
-    )
-    invoice = models.ForeignKey(
-        Invoice,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="payments",
-        db_index=True,
-    )
-    currency = models.CharField(
-        max_length=3,
-        null=True,
-        blank=True,
-        choices=CURRENCY_CHOICES,
-        help_text="Currency for this payment",
-    )
-    amount = models.DecimalField(
-        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0"))]
-    )
-    paid_at = models.DateTimeField(auto_now_add=True)
-    created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            from django.utils.text import slugify
-
-            self.slug = slugify(f"payment-{self.invoice.id}-{self.amount}")
-            # Ensure uniqueness
-            original_slug = self.slug
-            counter = 1
-            while Payment.objects.filter(slug=self.slug).exists():
-                self.slug = f"{original_slug}-{counter}"
-                counter += 1
-
-        # Set currency from invoice if not provided
-        if not self.currency:
-            self.currency = self.invoice.currency
-
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"Payment {self.id or 'Unsaved'} for Invoice {self.invoice.id or 'Unsaved'}"

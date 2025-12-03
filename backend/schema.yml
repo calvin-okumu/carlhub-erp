@@ -20,60 +20,27 @@ info:
   license:
     name: MIT License
 paths:
-  /api/accounts/audit-logs/:
+  /api/accounting/invoices/:
     get:
-      operationId: accounts_audit_logs_list
+      operationId: accounting_invoices_list
+      description: Retrieve a list of invoices for current tenant.
+      summary: List invoices
       parameters:
       - in: query
-        name: action
+        name: client
         schema:
           type: string
-          enum:
-          - admin_user_activated
-          - admin_user_suspended
-          - bulk_invitation_completed
-          - bulk_invitation_started
-          - invitation_cancelled
-          - invitation_confirmed
-          - invitation_expired
-          - invitation_sent
-          - invitation_used
-          - member_approved
-          - member_rejected
-          - project_created
-          - role_assigned
-          - role_created
-          - role_updated
-          - security_failed_login
-          - security_token_misuse
-          - user_login
-          - user_logout
-          - user_password_change
-          - user_profile_update
-          - user_signup
-        description: |-
-          * `user_signup` - User Signup
-          * `user_login` - User Login
-          * `user_logout` - User Logout
-          * `user_profile_update` - Profile Update
-          * `user_password_change` - Password Change
-          * `invitation_sent` - Invitation Sent
-          * `invitation_confirmed` - Invitation Confirmed
-          * `invitation_used` - Invitation Used
-          * `invitation_cancelled` - Invitation Cancelled
-          * `invitation_expired` - Invitation Expired
-          * `member_approved` - Member Approved
-          * `member_rejected` - Member Rejected
-          * `role_created` - Role Created
-          * `role_updated` - Role Updated
-          * `role_assigned` - Role Assigned
-          * `project_created` - Project Created
-          * `bulk_invitation_started` - Bulk Invitation Started
-          * `bulk_invitation_completed` - Bulk Invitation Completed
-          * `security_failed_login` - Failed Login Attempt
-          * `security_token_misuse` - Token Misuse
-          * `admin_user_suspended` - User Suspended
-          * `admin_user_activated` - User Activated
+          format: uuid
+      - in: query
+        name: due_date
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: issued_at
+        schema:
+          type: string
+          format: date-time
       - name: ordering
         required: false
         in: query
@@ -87,34 +54,34 @@ paths:
         schema:
           type: integer
       - in: query
-        name: resource_type
-        schema:
-          type: string
-          enum:
-          - bulk_invitation
-          - invitation
-          - profile
-          - role
-          - tenant
-          - user
-        description: |-
-          * `user` - User
-          * `invitation` - Invitation
-          * `role` - Role
-          * `tenant` - Tenant
-          * `profile` - User Profile
-          * `bulk_invitation` - Bulk Invitation
-      - in: query
-        name: tenant
+        name: project
         schema:
           type: string
           format: uuid
-      - in: query
-        name: user
+      - name: search
+        required: false
+        in: query
+        description: A search term.
         schema:
-          type: integer
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - cancelled
+          - draft
+          - overdue
+          - paid
+          - sent
+        description: |-
+          * `draft` - Draft
+          * `sent` - Sent
+          * `paid` - Paid
+          * `overdue` - Overdue
+          * `cancelled` - Cancelled
       tags:
-      - accounts
+      - accounting
       security:
       - JWTAuthentication: []
       - cookieAuth: []
@@ -123,7 +90,535 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedAuditLogList'
+                $ref: '#/components/schemas/PaginatedInvoiceSummaryList'
+          description: ''
+    post:
+      operationId: accounting_invoices_create
+      description: Create a new invoice for a client/project.
+      summary: Create invoice
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/accounting/invoices/{id}/:
+    get:
+      operationId: accounting_invoices_retrieve
+      description: Retrieve details of a specific invoice.
+      summary: Retrieve invoice
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this invoice.
+        required: true
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    put:
+      operationId: accounting_invoices_update
+      description: Update an existing invoice's information.
+      summary: Update invoice
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this invoice.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    patch:
+      operationId: accounting_invoices_partial_update
+      description: Partially update an invoice's information.
+      summary: Partially update invoice
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this invoice.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedInvoice'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+    delete:
+      operationId: accounting_invoices_destroy
+      description: Delete an invoice.
+      summary: Delete invoice
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this invoice.
+        required: true
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounting/invoices/{id}/mark_as_paid/:
+    post:
+      operationId: accounting_invoices_mark_as_paid_create
+      description: Mark invoice as paid
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this invoice.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/accounting/invoices/{id}/mark_as_sent/:
+    post:
+      operationId: accounting_invoices_mark_as_sent_create
+      description: Mark invoice as sent
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this invoice.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Invoice'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/accounting/invoices/overdue/:
+    get:
+      operationId: accounting_invoices_overdue_retrieve
+      description: Get overdue invoices
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/accounting/invoices/summary/:
+    get:
+      operationId: accounting_invoices_summary_retrieve
+      description: Get invoice summary statistics
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+          description: ''
+  /api/accounting/payments/:
+    get:
+      operationId: accounting_payments_list
+      description: Retrieve a list of payments for current tenant.
+      summary: List payments
+      parameters:
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: currency
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - AUD
+          - BRL
+          - CAD
+          - CHF
+          - CNY
+          - EUR
+          - GBP
+          - INR
+          - JPY
+          - KES
+          - USD
+          - ZAR
+        description: |-
+          Currency for this payment
+
+          * `USD` - US Dollar ($)
+          * `EUR` - Euro (€)
+          * `GBP` - British Pound (£)
+          * `JPY` - Japanese Yen (¥)
+          * `CAD` - Canadian Dollar (C$)
+          * `AUD` - Australian Dollar (A$)
+          * `CHF` - Swiss Franc (CHF)
+          * `CNY` - Chinese Yuan (¥)
+          * `INR` - Indian Rupee (₹)
+          * `BRL` - Brazilian Real (R$)
+          * `ZAR` - South African Rand (R)
+          * `KES` - Kenyan Shilling (KSh)
+      - in: query
+        name: invoice
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: paid_at
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: payment_method
+        schema:
+          type: string
+          enum:
+          - bank_transfer
+          - cash
+          - check
+          - credit_card
+          - debit_card
+          - online
+          - other
+        description: |-
+          * `bank_transfer` - Bank Transfer
+          * `credit_card` - Credit Card
+          * `debit_card` - Debit Card
+          * `cash` - Cash
+          * `check` - Check
+          * `online` - Online Payment
+          * `other` - Other
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentSummaryList'
+          description: ''
+    post:
+      operationId: accounting_payments_create
+      description: Record a new payment for an invoice.
+      summary: Create payment
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payment'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/accounting/payments/{id}/:
+    get:
+      operationId: accounting_payments_retrieve
+      description: Retrieve details of a specific payment.
+      summary: Retrieve payment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment.
+        required: true
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    put:
+      operationId: accounting_payments_update
+      description: Update an existing payment's information.
+      summary: Update payment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Payment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Payment'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    patch:
+      operationId: accounting_payments_partial_update
+      description: Partially update a payment's information.
+      summary: Partially update payment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment.
+        required: true
+      tags:
+      - accounting
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPayment'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPayment'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPayment'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+    delete:
+      operationId: accounting_payments_destroy
+      description: Delete a payment record.
+      summary: Delete payment
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this payment.
+        required: true
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounting/payments/methods/:
+    get:
+      operationId: accounting_payments_methods_retrieve
+      description: Get available payment methods
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/accounting/payments/summary/:
+    get:
+      operationId: accounting_payments_summary_retrieve
+      description: Get payment summary statistics
+      tags:
+      - accounting
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
           description: ''
   /api/accounts/departments/:
     get:
@@ -425,13 +920,6 @@ paths:
     get:
       operationId: accounts_documents_list
       description: List and create employee documents
-      parameters:
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       tags:
       - accounts
       security:
@@ -442,7 +930,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedEmployeeDocumentList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/EmployeeDocument'
           description: ''
     post:
       operationId: accounts_documents_create
@@ -587,12 +1077,6 @@ paths:
           format: uuid
         description: UUID of permission group
         required: true
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       tags:
       - accounts
       security:
@@ -603,7 +1087,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedPermissionGroupList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/PermissionGroup'
           description: ''
     post:
       operationId: accounts_permission_groups_create
@@ -836,12 +1322,6 @@ paths:
           format: uuid
         description: UUID of the permission
         required: true
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       tags:
       - accounts
       security:
@@ -852,7 +1332,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedCustomPermissionList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomPermission'
           description: ''
     post:
       operationId: accounts_permissions_create
@@ -1304,12 +1786,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - name: search
         required: false
         in: query
@@ -1338,7 +1814,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedClientList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
           description: ''
     post:
       operationId: clients_create
@@ -1616,6 +2094,276 @@ paths:
                   error:
                     type: string
           description: ''
+  /api/contracts/:
+    get:
+      operationId: contracts_list
+      description: Retrieve a list of projects for the current tenant with progress
+        calculation.
+      summary: List projects
+      parameters:
+      - in: query
+        name: client
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: project
+        schema:
+          type: string
+          format: uuid
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - active
+          - cancelled
+          - completed
+          - draft
+          - sent
+          - signed
+        description: |-
+          * `draft` - Draft
+          * `sent` - Sent to Client
+          * `signed` - Signed
+          * `active` - Active
+          * `completed` - Completed
+          * `cancelled` - Cancelled
+      tags:
+      - contracts
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedContractList'
+          description: ''
+    post:
+      operationId: contracts_create
+      description: Create a new project for the current tenant.
+      summary: Create project
+      tags:
+      - contracts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Contract'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
+  /api/contracts/{slug}/:
+    get:
+      operationId: contracts_retrieve
+      description: Retrieve details of a specific project including milestones count
+        and progress.
+      summary: Retrieve project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - contracts
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
+    put:
+      operationId: contracts_update
+      description: Update an existing project's information.
+      summary: Update project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - contracts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Contract'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
+    patch:
+      operationId: contracts_partial_update
+      description: Partially update a project's information.
+      summary: Partially update project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - contracts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedContract'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedContract'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedContract'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
+    delete:
+      operationId: contracts_destroy
+      description: Delete a project and all associated milestones, tasks, and invoices.
+      summary: Delete project
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - contracts
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/contracts/{slug}/approve/:
+    post:
+      operationId: contracts_approve_create
+      description: Approve a contract
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - contracts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Contract'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
+  /api/contracts/{slug}/sign/:
+    post:
+      operationId: contracts_sign_create
+      description: Mark contract as signed
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - contracts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Contract'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Contract'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+          description: ''
   /api/database-backup/:
     post:
       operationId: database_backup_create
@@ -1767,12 +2515,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - in: query
         name: role
         schema:
@@ -1793,7 +2535,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedInvitationList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
           description: ''
     post:
       operationId: invitations_create
@@ -2058,339 +2802,6 @@ paths:
                 properties:
                   error:
                     type: string
-          description: ''
-  /api/invoices/:
-    get:
-      operationId: invoices_list
-      description: Retrieve a list of invoices for current tenant.
-      summary: List invoices
-      parameters:
-      - in: query
-        name: client
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: currency
-        schema:
-          type: string
-          nullable: true
-          enum:
-          - AUD
-          - BRL
-          - CAD
-          - CHF
-          - CNY
-          - EUR
-          - GBP
-          - INR
-          - JPY
-          - KES
-          - USD
-          - ZAR
-        description: |-
-          Currency for this invoice
-
-          * `USD` - US Dollar ($)
-          * `EUR` - Euro (€)
-          * `GBP` - British Pound (£)
-          * `JPY` - Japanese Yen (¥)
-          * `CAD` - Canadian Dollar (C$)
-          * `AUD` - Australian Dollar (A$)
-          * `CHF` - Swiss Franc (CHF)
-          * `CNY` - Chinese Yuan (¥)
-          * `INR` - Indian Rupee (₹)
-          * `BRL` - Brazilian Real (R$)
-          * `ZAR` - South African Rand (R)
-          * `KES` - Kenyan Shilling (KSh)
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - in: query
-        name: paid
-        schema:
-          type: boolean
-      - in: query
-        name: project
-        schema:
-          type: string
-          format: uuid
-      - name: search
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      tags:
-      - invoices
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedInvoiceList'
-          description: ''
-    post:
-      operationId: invoices_create
-      description: Create a new invoice for a client/project.
-      summary: Create invoice
-      tags:
-      - invoices
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-          description: ''
-  /api/invoices/{slug}/:
-    get:
-      operationId: invoices_retrieve
-      description: Retrieve details of a specific invoice.
-      summary: Retrieve invoice
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - invoices
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-          description: ''
-    put:
-      operationId: invoices_update
-      description: Update an existing invoice's information.
-      summary: Update invoice
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - invoices
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-          description: ''
-    patch:
-      operationId: invoices_partial_update
-      description: Partially update an invoice's information.
-      summary: Partially update invoice
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - invoices
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedInvoice'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedInvoice'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedInvoice'
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-          description: ''
-    delete:
-      operationId: invoices_destroy
-      description: Delete an invoice.
-      summary: Delete invoice
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - invoices
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/invoices/{slug}/mark_as_paid/:
-    post:
-      operationId: invoices_mark_as_paid_create
-      description: Mark an invoice as paid and create payment record.
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - invoices
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-          description: ''
-  /api/invoices/{slug}/mark_as_sent/:
-    post:
-      operationId: invoices_mark_as_sent_create
-      description: Mark an invoice as sent to client.
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - invoices
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-          description: ''
-  /api/invoices/bulk_delete_invoices/:
-    post:
-      operationId: invoices_bulk_delete_invoices_create
-      description: |-
-        Bulk delete multiple invoices.
-        Expects: {"invoice_ids": [1, 2, 3]}
-      tags:
-      - invoices
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Invoice'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
-          description: ''
-  /api/invoices/overdue_invoices/:
-    get:
-      operationId: invoices_overdue_invoices_retrieve
-      description: Get list of overdue invoices.
-      tags:
-      - invoices
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Invoice'
           description: ''
   /api/leave/balances/:
     get:
@@ -3252,6 +3663,393 @@ paths:
               schema:
                 $ref: '#/components/schemas/LeaveRequest'
           description: ''
+  /api/leave/sales/:
+    get:
+      operationId: leave_sales_list
+      description: |-
+        ViewSet for managing leave sales.
+
+        Employees can:
+        - View their own leave sales
+        - Create new leave sale requests
+
+        Managers and Tenant Owners can:
+        - View all sales in their tenant
+        - Approve/reject sale requests
+      parameters:
+      - in: query
+        name: employee
+        schema:
+          type: integer
+      - in: query
+        name: leave_type
+        schema:
+          type: string
+          nullable: true
+          enum:
+          - annual_leave
+          - emergency_leave
+          - maternity_leave
+          - personal_leave
+          - sick_leave
+          - unpaid_leave
+        description: |-
+          Type of leave being sold (set by HR during approval)
+
+          * `annual_leave` - Annual Leave
+          * `sick_leave` - Sick Leave
+          * `personal_leave` - Personal Leave
+          * `maternity_leave` - Maternity/Paternity Leave
+          * `emergency_leave` - Emergency Leave
+          * `unpaid_leave` - Unpaid Leave
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - approved
+          - cancelled
+          - completed
+          - pending
+          - rejected
+        description: |-
+          Current status of the leave sale request
+
+          * `pending` - Pending Approval
+          * `approved` - Approved
+          * `rejected` - Rejected
+          * `completed` - Completed
+          * `cancelled` - Cancelled
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLeaveSaleList'
+          description: ''
+    post:
+      operationId: leave_sales_create
+      description: |-
+        ViewSet for managing leave sales.
+
+        Employees can:
+        - View their own leave sales
+        - Create new leave sale requests
+
+        Managers and Tenant Owners can:
+        - View all sales in their tenant
+        - Approve/reject sale requests
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
+  /api/leave/sales/{slug}/:
+    get:
+      operationId: leave_sales_retrieve
+      description: |-
+        ViewSet for managing leave sales.
+
+        Employees can:
+        - View their own leave sales
+        - Create new leave sale requests
+
+        Managers and Tenant Owners can:
+        - View all sales in their tenant
+        - Approve/reject sale requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
+    put:
+      operationId: leave_sales_update
+      description: |-
+        ViewSet for managing leave sales.
+
+        Employees can:
+        - View their own leave sales
+        - Create new leave sale requests
+
+        Managers and Tenant Owners can:
+        - View all sales in their tenant
+        - Approve/reject sale requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
+    patch:
+      operationId: leave_sales_partial_update
+      description: |-
+        ViewSet for managing leave sales.
+
+        Employees can:
+        - View their own leave sales
+        - Create new leave sale requests
+
+        Managers and Tenant Owners can:
+        - View all sales in their tenant
+        - Approve/reject sale requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveSale'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveSale'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLeaveSale'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
+    delete:
+      operationId: leave_sales_destroy
+      description: |-
+        ViewSet for managing leave sales.
+
+        Employees can:
+        - View their own leave sales
+        - Create new leave sale requests
+
+        Managers and Tenant Owners can:
+        - View all sales in their tenant
+        - Approve/reject sale requests
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/leave/sales/{slug}/approve/:
+    post:
+      operationId: leave_sales_approve_create
+      description: Approve a leave sale request with details and pricing.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
+  /api/leave/sales/{slug}/cancel/:
+    post:
+      operationId: leave_sales_cancel_create
+      description: Cancel a leave sale request (only by the employee who created it).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
+  /api/leave/sales/{slug}/complete/:
+    post:
+      operationId: leave_sales_complete_create
+      description: Complete an approved leave sale (reduce leave balance).
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
+  /api/leave/sales/{slug}/reject/:
+    post:
+      operationId: leave_sales_reject_create
+      description: Reject a leave sale request.
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - leave
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LeaveSale'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveSale'
+          description: ''
   /api/leave/workflows/:
     get:
       operationId: leave_workflows_list
@@ -3268,12 +4066,6 @@ paths:
         name: is_default
         schema:
           type: boolean
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       tags:
       - leave
       security:
@@ -3284,7 +4076,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedLeaveApprovalWorkflowList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaveApprovalWorkflow'
           description: ''
     post:
       operationId: leave_workflows_create
@@ -3316,7 +4110,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/LeaveApprovalWorkflowCreate'
           description: ''
-  /api/leave/workflows/{id}/:
+  /api/leave/workflows/{slug}/:
     get:
       operationId: leave_workflows_retrieve
       description: |-
@@ -3325,11 +4119,9 @@ paths:
         Allows HR and management to configure approval workflows for leave requests.
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3351,11 +4143,9 @@ paths:
         Allows HR and management to configure approval workflows for leave requests.
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3389,11 +4179,9 @@ paths:
         Allows HR and management to configure approval workflows for leave requests.
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3426,11 +4214,9 @@ paths:
         Allows HR and management to configure approval workflows for leave requests.
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3440,17 +4226,15 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/leave/workflows/{id}/quick_approve/:
+  /api/leave/workflows/{slug}/quick_approve/:
     post:
       operationId: leave_workflows_quick_approve_create
       description: Quick approve for mobile - minimal data required.
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3476,17 +4260,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/LeaveApprovalWorkflow'
           description: ''
-  /api/leave/workflows/{id}/quick_reject/:
+  /api/leave/workflows/{slug}/quick_reject/:
     post:
       operationId: leave_workflows_quick_reject_create
       description: Quick reject for mobile - requires reason.
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3512,17 +4294,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/LeaveApprovalWorkflow'
           description: ''
-  /api/leave/workflows/{id}/set_default/:
+  /api/leave/workflows/{slug}/set_default/:
     post:
       operationId: leave_workflows_set_default_create
       description: Set this workflow as the default for the tenant.
       parameters:
       - in: path
-        name: id
+        name: slug
         schema:
           type: string
-          format: uuid
-        description: A UUID string identifying this leave approval workflow.
         required: true
       tags:
       - leave
@@ -3721,12 +4501,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - in: query
         name: role
         schema:
@@ -3761,7 +4535,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedUserTenantList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserTenant'
           description: ''
     post:
       operationId: members_create
@@ -3984,12 +4760,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - in: query
         name: project
         schema:
@@ -4023,7 +4793,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedMilestoneList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Milestone'
           description: ''
     post:
       operationId: milestones_create
@@ -4162,262 +4934,6 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/payments/:
-    get:
-      operationId: payments_list
-      description: Retrieve a list of payments for current tenant.
-      summary: List payments
-      parameters:
-      - in: query
-        name: currency
-        schema:
-          type: string
-          nullable: true
-          enum:
-          - AUD
-          - BRL
-          - CAD
-          - CHF
-          - CNY
-          - EUR
-          - GBP
-          - INR
-          - JPY
-          - KES
-          - USD
-          - ZAR
-        description: |-
-          Currency for this payment
-
-          * `USD` - US Dollar ($)
-          * `EUR` - Euro (€)
-          * `GBP` - British Pound (£)
-          * `JPY` - Japanese Yen (¥)
-          * `CAD` - Canadian Dollar (C$)
-          * `AUD` - Australian Dollar (A$)
-          * `CHF` - Swiss Franc (CHF)
-          * `CNY` - Chinese Yuan (¥)
-          * `INR` - Indian Rupee (₹)
-          * `BRL` - Brazilian Real (R$)
-          * `ZAR` - South African Rand (R)
-          * `KES` - Kenyan Shilling (KSh)
-      - in: query
-        name: invoice
-        schema:
-          type: string
-          format: uuid
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
-      - name: search
-        required: false
-        in: query
-        description: A search term.
-        schema:
-          type: string
-      tags:
-      - payments
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedPaymentList'
-          description: ''
-    post:
-      operationId: payments_create
-      description: Create a new payment record for an invoice.
-      summary: Create payment
-      tags:
-      - payments
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Payment'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '201':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
-  /api/payments/{slug}/:
-    get:
-      operationId: payments_retrieve
-      description: Retrieve details of a specific payment.
-      summary: Retrieve payment
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - payments
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
-    put:
-      operationId: payments_update
-      description: Update an existing payment's information.
-      summary: Update payment
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - payments
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Payment'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
-    patch:
-      operationId: payments_partial_update
-      description: Partially update a payment's information.
-      summary: Partially update payment
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - payments
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPayment'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPayment'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPayment'
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
-    delete:
-      operationId: payments_destroy
-      description: Delete a payment record.
-      summary: Delete payment
-      parameters:
-      - in: path
-        name: slug
-        schema:
-          type: string
-        required: true
-      tags:
-      - payments
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '204':
-          description: No response body
-  /api/payments/bulk_delete_payments/:
-    post:
-      operationId: payments_bulk_delete_payments_create
-      description: |-
-        Bulk delete multiple payments.
-        Expects: {"payment_ids": [1, 2, 3]}
-      tags:
-      - payments
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Payment'
-        required: true
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
-  /api/payments/payment_summary/:
-    get:
-      operationId: payments_payment_summary_retrieve
-      description: Get payment summary statistics.
-      tags:
-      - payments
-      security:
-      - JWTAuthentication: []
-      - cookieAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
   /api/projects/:
     get:
       operationId: projects_list
@@ -4436,12 +4952,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - in: query
         name: priority
         schema:
@@ -4486,7 +4996,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedProjectList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
           description: ''
     post:
       operationId: projects_create
@@ -4791,6 +5303,1144 @@ paths:
                   error:
                     type: string
           description: ''
+  /api/sales/activities/:
+    get:
+      operationId: sales_activities_list
+      description: ViewSet for managing sales activities
+      parameters:
+      - in: query
+        name: activity_type
+        schema:
+          type: string
+          enum:
+          - call
+          - demo
+          - email
+          - followup
+          - meeting
+          - negotiation
+          - note
+          - other
+          - proposal
+        description: |-
+          * `call` - Phone Call
+          * `email` - Email
+          * `meeting` - Meeting
+          * `demo` - Product Demo
+          * `proposal` - Proposal Sent
+          * `followup` - Follow-up
+          * `negotiation` - Negotiation
+          * `note` - Internal Note
+          * `other` - Other
+      - in: query
+        name: completed_date
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: customer
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: opportunity
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: performed_by
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSalesActivityList'
+          description: ''
+    post:
+      operationId: sales_activities_create
+      description: ViewSet for managing sales activities
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesActivity'
+          description: ''
+  /api/sales/activities/{id}/:
+    get:
+      operationId: sales_activities_retrieve
+      description: ViewSet for managing sales activities
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales activity.
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesActivity'
+          description: ''
+    put:
+      operationId: sales_activities_update
+      description: ViewSet for managing sales activities
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales activity.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesActivity'
+          description: ''
+    patch:
+      operationId: sales_activities_partial_update
+      description: ViewSet for managing sales activities
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales activity.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesActivity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesActivity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesActivity'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesActivity'
+          description: ''
+    delete:
+      operationId: sales_activities_destroy
+      description: ViewSet for managing sales activities
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales activity.
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/sales/activities/{id}/mark_completed/:
+    post:
+      operationId: sales_activities_mark_completed_create
+      description: Mark activity as completed
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales activity.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesActivity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesActivity'
+          description: ''
+  /api/sales/activities/overdue/:
+    get:
+      operationId: sales_activities_overdue_retrieve
+      description: Get overdue activities
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesActivity'
+          description: ''
+  /api/sales/analytics/:
+    get:
+      operationId: sales_analytics_retrieve
+      description: Get sales analytics overview
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/sales/customers/:
+    get:
+      operationId: sales_customers_list
+      description: ViewSet for managing customers/prospects
+      parameters:
+      - in: query
+        name: assigned_to
+        schema:
+          type: integer
+      - in: query
+        name: company_size
+        schema:
+          type: string
+          enum:
+          - 1-10
+          - 1000+
+          - 11-50
+          - 201-1000
+          - 51-200
+        description: |-
+          * `1-10` - 1-10 employees
+          * `11-50` - 11-50 employees
+          * `51-200` - 51-200 employees
+          * `201-1000` - 201-1000 employees
+          * `1000+` - 1000+ employees
+      - in: query
+        name: industry
+        schema:
+          type: string
+      - in: query
+        name: lead_source
+        schema:
+          type: string
+          enum:
+          - advertising
+          - cold_outreach
+          - other
+          - referral
+          - social_media
+          - trade_show
+          - website
+        description: |-
+          How did we acquire this lead?
+
+          * `website` - Website
+          * `referral` - Referral
+          * `social_media` - Social Media
+          * `cold_outreach` - Cold Outreach
+          * `trade_show` - Trade Show
+          * `advertising` - Advertising
+          * `other` - Other
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - inactive
+          - lost
+          - negotiation
+          - proposal
+          - prospect
+          - qualified
+          - won
+        description: |-
+          * `prospect` - Prospect
+          * `qualified` - Qualified Lead
+          * `proposal` - Proposal Sent
+          * `negotiation` - In Negotiation
+          * `won` - Won
+          * `lost` - Lost
+          * `inactive` - Inactive
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
+    post:
+      operationId: sales_customers_create
+      description: ViewSet for managing customers/prospects
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+  /api/sales/customers/{slug}/:
+    get:
+      operationId: sales_customers_retrieve
+      description: ViewSet for managing customers/prospects
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    put:
+      operationId: sales_customers_update
+      description: ViewSet for managing customers/prospects
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    patch:
+      operationId: sales_customers_partial_update
+      description: ViewSet for managing customers/prospects
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomer'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    delete:
+      operationId: sales_customers_destroy
+      description: ViewSet for managing customers/prospects
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/sales/customers/{slug}/convert_to_lost/:
+    post:
+      operationId: sales_customers_convert_to_lost_create
+      description: Convert customer to lost status
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+  /api/sales/customers/{slug}/convert_to_won/:
+    post:
+      operationId: sales_customers_convert_to_won_create
+      description: Convert customer to won status
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Customer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Customer'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+  /api/sales/opportunities/:
+    get:
+      operationId: sales_opportunities_list
+      description: ViewSet for managing sales opportunities
+      parameters:
+      - in: query
+        name: assigned_to
+        schema:
+          type: integer
+      - in: query
+        name: customer
+        schema:
+          type: string
+          format: uuid
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: probability
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: stage
+        schema:
+          type: string
+          enum:
+          - closed_lost
+          - closed_won
+          - negotiation
+          - proposal
+          - prospecting
+          - qualification
+        description: |-
+          * `prospecting` - Prospecting
+          * `qualification` - Qualification
+          * `proposal` - Proposal
+          * `negotiation` - Negotiation
+          * `closed_won` - Closed Won
+          * `closed_lost` - Closed Lost
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOpportunityList'
+          description: ''
+    post:
+      operationId: sales_opportunities_create
+      description: ViewSet for managing sales opportunities
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+          description: ''
+  /api/sales/opportunities/{slug}/:
+    get:
+      operationId: sales_opportunities_retrieve
+      description: ViewSet for managing sales opportunities
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+          description: ''
+    put:
+      operationId: sales_opportunities_update
+      description: ViewSet for managing sales opportunities
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+          description: ''
+    patch:
+      operationId: sales_opportunities_partial_update
+      description: ViewSet for managing sales opportunities
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedOpportunity'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+          description: ''
+    delete:
+      operationId: sales_opportunities_destroy
+      description: ViewSet for managing sales opportunities
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/sales/opportunities/{slug}/advance_stage/:
+    post:
+      operationId: sales_opportunities_advance_stage_create
+      description: Advance opportunity to next stage
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+          description: ''
+  /api/sales/opportunities/{slug}/close_lost/:
+    post:
+      operationId: sales_opportunities_close_lost_create
+      description: Close opportunity as lost
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+          description: ''
+  /api/sales/opportunities/{slug}/close_won/:
+    post:
+      operationId: sales_opportunities_close_won_create
+      description: Close opportunity as won
+      parameters:
+      - in: path
+        name: slug
+        schema:
+          type: string
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Opportunity'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Opportunity'
+          description: ''
+  /api/sales/teams/:
+    get:
+      operationId: sales_teams_list
+      description: ViewSet for managing sales teams
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - in: query
+        name: manager
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: territory
+        schema:
+          type: string
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSalesTeamList'
+          description: ''
+    post:
+      operationId: sales_teams_create
+      description: ViewSet for managing sales teams
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesTeam'
+          description: ''
+  /api/sales/teams/{id}/:
+    get:
+      operationId: sales_teams_retrieve
+      description: ViewSet for managing sales teams
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales team.
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesTeam'
+          description: ''
+    put:
+      operationId: sales_teams_update
+      description: ViewSet for managing sales teams
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales team.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesTeam'
+          description: ''
+    patch:
+      operationId: sales_teams_partial_update
+      description: ViewSet for managing sales teams
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales team.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesTeam'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesTeam'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSalesTeam'
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesTeam'
+          description: ''
+    delete:
+      operationId: sales_teams_destroy
+      description: ViewSet for managing sales teams
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales team.
+        required: true
+      tags:
+      - sales
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/sales/teams/{id}/add_member/:
+    post:
+      operationId: sales_teams_add_member_create
+      description: Add a member to the team
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales team.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesTeam'
+          description: ''
+  /api/sales/teams/{id}/remove_member/:
+    post:
+      operationId: sales_teams_remove_member_create
+      description: Remove a member from the team
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this sales team.
+        required: true
+      tags:
+      - sales
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SalesTeam'
+        required: true
+      security:
+      - JWTAuthentication: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesTeam'
+          description: ''
   /api/signup/:
     post:
       operationId: signup_create
@@ -4900,12 +6550,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - in: path
         name: project_slug
         schema:
@@ -4942,7 +6586,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedSprintList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sprint'
           description: ''
     post:
       operationId: sprints_create
@@ -5256,12 +6902,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - name: search
         required: false
         in: query
@@ -5299,7 +6939,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedTaskList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Task'
           description: ''
     post:
       operationId: tasks_create
@@ -5549,12 +7191,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - name: search
         required: false
         in: query
@@ -5571,7 +7207,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedTenantList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tenant'
           description: ''
     post:
       operationId: tenants_create
@@ -5843,12 +7481,6 @@ paths:
         description: Which field to use when ordering the results.
         schema:
           type: string
-      - name: page
-        required: false
-        in: query
-        description: A page number within the paginated result set.
-        schema:
-          type: integer
       - name: search
         required: false
         in: query
@@ -5865,7 +7497,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedCustomUserList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomUser'
           description: ''
     post:
       operationId: users_create
@@ -6085,115 +7719,28 @@ components:
       description: |-
         * `checking` - Checking
         * `savings` - Savings
-    ActionEnum:
+    ActivityTypeEnum:
       enum:
-      - user_signup
-      - user_login
-      - user_logout
-      - user_profile_update
-      - user_password_change
-      - invitation_sent
-      - invitation_confirmed
-      - invitation_used
-      - invitation_cancelled
-      - invitation_expired
-      - member_approved
-      - member_rejected
-      - role_created
-      - role_updated
-      - role_assigned
-      - project_created
-      - bulk_invitation_started
-      - bulk_invitation_completed
-      - security_failed_login
-      - security_token_misuse
-      - admin_user_suspended
-      - admin_user_activated
+      - call
+      - email
+      - meeting
+      - demo
+      - proposal
+      - followup
+      - negotiation
+      - note
+      - other
       type: string
       description: |-
-        * `user_signup` - User Signup
-        * `user_login` - User Login
-        * `user_logout` - User Logout
-        * `user_profile_update` - Profile Update
-        * `user_password_change` - Password Change
-        * `invitation_sent` - Invitation Sent
-        * `invitation_confirmed` - Invitation Confirmed
-        * `invitation_used` - Invitation Used
-        * `invitation_cancelled` - Invitation Cancelled
-        * `invitation_expired` - Invitation Expired
-        * `member_approved` - Member Approved
-        * `member_rejected` - Member Rejected
-        * `role_created` - Role Created
-        * `role_updated` - Role Updated
-        * `role_assigned` - Role Assigned
-        * `project_created` - Project Created
-        * `bulk_invitation_started` - Bulk Invitation Started
-        * `bulk_invitation_completed` - Bulk Invitation Completed
-        * `security_failed_login` - Failed Login Attempt
-        * `security_token_misuse` - Token Misuse
-        * `admin_user_suspended` - User Suspended
-        * `admin_user_activated` - User Activated
-    ApprovalLevelsEnum:
-      enum:
-      - department_manager
-      - department_manager,hr_manager
-      - department_manager,hr_manager,general_manager
-      - hr_manager
-      - hr_manager,general_manager
-      - general_manager
-      - custom
-      type: string
-      description: |-
-        * `department_manager` - Department Manager Only
-        * `department_manager,hr_manager` - Department Manager → HR Manager
-        * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
-        * `hr_manager` - HR Manager Only
-        * `hr_manager,general_manager` - HR Manager → General Manager
-        * `general_manager` - General Manager Only
-        * `custom` - Custom Approval Chain
-    AuditLog:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        action:
-          $ref: '#/components/schemas/ActionEnum'
-        resource_type:
-          $ref: '#/components/schemas/ResourceTypeEnum'
-        resource_id:
-          type: string
-          nullable: true
-          maxLength: 255
-        old_values:
-          nullable: true
-        new_values:
-          nullable: true
-        ip_address:
-          type: string
-          nullable: true
-        user_agent:
-          type: string
-          nullable: true
-        timestamp:
-          type: string
-          format: date-time
-          readOnly: true
-        metadata:
-          nullable: true
-        user_email:
-          type: string
-          readOnly: true
-        tenant_name:
-          type: string
-          readOnly: true
-      required:
-      - action
-      - id
-      - resource_type
-      - tenant_name
-      - timestamp
-      - user_email
+        * `call` - Phone Call
+        * `email` - Email
+        * `meeting` - Meeting
+        * `demo` - Product Demo
+        * `proposal` - Proposal Sent
+        * `followup` - Follow-up
+        * `negotiation` - Negotiation
+        * `note` - Internal Note
+        * `other` - Other
     BackupResponse:
       type: object
       description: Serializer for backup database response
@@ -6269,6 +7816,70 @@ components:
           type: integer
           readOnly: true
           description: Number of projects associated with this client
+        lead_source:
+          description: |-
+            How did we acquire this client?
+
+            * `website` - Website
+            * `referral` - Referral
+            * `social_media` - Social Media
+            * `cold_outreach` - Cold Outreach
+            * `trade_show` - Trade Show
+            * `other` - Other
+          oneOf:
+          - $ref: '#/components/schemas/ClientLeadSourceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        lead_score:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Lead qualification score (0-100)
+        industry:
+          type: string
+          maxLength: 100
+        company_size:
+          oneOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+        address:
+          type: string
+        billing_address:
+          type: string
+        primary_contact:
+          type: integer
+          nullable: true
+        account_manager:
+          type: integer
+          nullable: true
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        payment_terms:
+          $ref: '#/components/schemas/PaymentTermsEnum'
+        tax_id:
+          type: string
+          maxLength: 50
+        last_contact:
+          type: string
+          format: date-time
+          nullable: true
+        next_followup:
+          type: string
+          format: date-time
+          nullable: true
+        satisfaction_score:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+          description: Client satisfaction rating (1-5)
+        notes:
+          type: string
         created_at:
           type: string
           format: date-time
@@ -6286,6 +7897,22 @@ components:
       - tenant
       - tenant_name
       - updated_at
+    ClientLeadSourceEnum:
+      enum:
+      - website
+      - referral
+      - social_media
+      - cold_outreach
+      - trade_show
+      - other
+      type: string
+      description: |-
+        * `website` - Website
+        * `referral` - Referral
+        * `social_media` - Social Media
+        * `cold_outreach` - Cold Outreach
+        * `trade_show` - Trade Show
+        * `other` - Other
     ClientStatusEnum:
       enum:
       - active
@@ -6310,6 +7937,130 @@ components:
         * `51-200` - 51-200 employees
         * `201-1000` - 201-1000 employees
         * `1000+` - 1000+ employees
+    Contract:
+      type: object
+      description: Serializer for contracts/LPOs
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        contract_number:
+          type: string
+          maxLength: 50
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+        project:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+          readOnly: true
+        total_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        payment_schedule:
+          description: Payment milestones and amounts
+        issued_date:
+          type: string
+          format: date
+        signed_date:
+          type: string
+          format: date
+          nullable: true
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        contract_file:
+          type: string
+          format: uri
+          nullable: true
+        signed_contract_file:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ContractStatusEnum'
+        approved_by:
+          type: integer
+          nullable: true
+        approved_by_name:
+          type: string
+          readOnly: true
+        approved_date:
+          type: string
+          format: date-time
+          nullable: true
+        rejection_reason:
+          type: string
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - approved_by_name
+      - client
+      - client_name
+      - contract_number
+      - created_at
+      - created_by_name
+      - description
+      - end_date
+      - id
+      - issued_date
+      - project
+      - project_name
+      - slug
+      - start_date
+      - title
+      - total_value
+      - updated_at
+    ContractStatusEnum:
+      enum:
+      - draft
+      - sent
+      - signed
+      - active
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `sent` - Sent to Client
+        * `signed` - Signed
+        * `active` - Active
+        * `completed` - Completed
+        * `cancelled` - Cancelled
     CurrencyEnum:
       enum:
       - USD
@@ -6422,6 +8173,184 @@ components:
       - email
       - id
       - is_active
+    Customer:
+      type: object
+      description: Serializer for customer/prospect management
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          pattern: ^\+?1?\d{9,15}$
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/CustomerStatusEnum'
+        lead_source:
+          description: |-
+            How did we acquire this lead?
+
+            * `website` - Website
+            * `referral` - Referral
+            * `social_media` - Social Media
+            * `cold_outreach` - Cold Outreach
+            * `trade_show` - Trade Show
+            * `advertising` - Advertising
+            * `other` - Other
+          oneOf:
+          - $ref: '#/components/schemas/CustomerLeadSourceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        lead_score:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Lead qualification score (0-100)
+        company_name:
+          type: string
+          maxLength: 255
+        industry:
+          type: string
+          maxLength: 100
+        company_size:
+          oneOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+        address:
+          type: string
+        primary_contact:
+          type: string
+          maxLength: 255
+        job_title:
+          type: string
+          maxLength: 100
+        assigned_to:
+          type: integer
+          nullable: true
+        assigned_to_name:
+          type: string
+          readOnly: true
+        estimated_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Estimated deal value
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        expected_close_date:
+          type: string
+          format: date
+          nullable: true
+        actual_close_date:
+          type: string
+          format: date
+          nullable: true
+        last_contact:
+          type: string
+          format: date-time
+          nullable: true
+        next_followup:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        opportunities_count:
+          type: integer
+          description: Get total number of opportunities for this customer
+          readOnly: true
+        total_opportunity_value:
+          type: number
+          format: double
+          description: Get total value of all opportunities for this customer
+          readOnly: true
+        won_opportunities_value:
+          type: number
+          format: double
+          description: Get total value of won opportunities for this customer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to_name
+      - created_at
+      - created_by_name
+      - email
+      - id
+      - name
+      - opportunities_count
+      - slug
+      - total_opportunity_value
+      - updated_at
+      - won_opportunities_value
+    CustomerLeadSourceEnum:
+      enum:
+      - website
+      - referral
+      - social_media
+      - cold_outreach
+      - trade_show
+      - advertising
+      - other
+      type: string
+      description: |-
+        * `website` - Website
+        * `referral` - Referral
+        * `social_media` - Social Media
+        * `cold_outreach` - Cold Outreach
+        * `trade_show` - Trade Show
+        * `advertising` - Advertising
+        * `other` - Other
+    CustomerStatusEnum:
+      enum:
+      - prospect
+      - qualified
+      - proposal
+      - negotiation
+      - won
+      - lost
+      - inactive
+      type: string
+      description: |-
+        * `prospect` - Prospect
+        * `qualified` - Qualified Lead
+        * `proposal` - Proposal Sent
+        * `negotiation` - In Negotiation
+        * `won` - Won
+        * `lost` - Lost
+        * `inactive` - Inactive
     DefaultCurrencyEnum:
       enum:
       - USD
@@ -6617,6 +8546,7 @@ components:
       - token
     Invoice:
       type: object
+      description: Serializer for Invoice model
       properties:
         id:
           type: string
@@ -6624,20 +8554,43 @@ components:
           readOnly: true
         slug:
           type: string
+          readOnly: true
           nullable: true
-          maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
+        invoice_number:
+          type: string
+          nullable: true
+          maxLength: 50
         client:
           type: string
           format: uuid
         client_name:
           type: string
           readOnly: true
-          description: Name of the billed client
         project:
           type: string
           format: uuid
           nullable: true
+        project_name:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
         currency:
           nullable: true
           description: |-
@@ -6659,27 +8612,133 @@ components:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-        formatted_amount:
-          type: string
-          readOnly: true
-          description: Amount formatted with currency symbol
+        status:
+          $ref: '#/components/schemas/Status113Enum'
         issued_at:
           type: string
           format: date-time
           readOnly: true
-        paid:
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_overdue:
           type: boolean
+          readOnly: true
+        days_overdue:
+          type: integer
+          readOnly: true
+        notes:
+          type: string
+        terms:
+          type: string
+          description: Payment terms and conditions
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
       - amount
       - client
       - client_name
-      - formatted_amount
+      - created_at
+      - created_by_name
+      - days_overdue
+      - id
+      - is_overdue
+      - issued_at
+      - project_name
+      - slug
+      - total_amount
+      - updated_at
+    InvoiceSummary:
+      type: object
+      description: Lightweight serializer for invoice listings
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        invoice_number:
+          type: string
+          nullable: true
+          maxLength: 50
+        client_name:
+          type: string
+          readOnly: true
+        project_name:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
+        currency:
+          nullable: true
+          description: |-
+            Currency for this invoice
+
+            * `USD` - US Dollar ($)
+            * `EUR` - Euro (€)
+            * `GBP` - British Pound (£)
+            * `JPY` - Japanese Yen (¥)
+            * `CAD` - Canadian Dollar (C$)
+            * `AUD` - Australian Dollar (A$)
+            * `CHF` - Swiss Franc (CHF)
+            * `CNY` - Chinese Yuan (¥)
+            * `INR` - Indian Rupee (₹)
+            * `BRL` - Brazilian Real (R$)
+            * `ZAR` - South African Rand (R)
+            * `KES` - Kenyan Shilling (KSh)
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        status:
+          $ref: '#/components/schemas/Status113Enum'
+        issued_at:
+          type: string
+          format: date-time
+          readOnly: true
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - amount
+      - client_name
       - id
       - issued_at
+      - project_name
+      - total_amount
     LeaveApprovalWorkflow:
       type: object
       description: Serializer for leave approval workflows.
@@ -6688,6 +8747,11 @@ components:
           type: string
           format: uuid
           readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
         name:
           type: string
           description: Descriptive name for the workflow (e.g., 'Standard Approval',
@@ -6697,24 +8761,16 @@ components:
           type: string
           description: Optional description of when to use this workflow
         approval_levels:
-          allOf:
-          - $ref: '#/components/schemas/ApprovalLevelsEnum'
-          description: |-
-            The sequence of approval levels required
-
-            * `department_manager` - Department Manager Only
-            * `department_manager,hr_manager` - Department Manager → HR Manager
-            * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
-            * `hr_manager` - HR Manager Only
-            * `hr_manager,general_manager` - HR Manager → General Manager
-            * `general_manager` - General Manager Only
-            * `custom` - Custom Approval Chain
+          description: List of approval levels required (max 5 levels)
         approval_levels_display:
           type: string
-          readOnly: true
           description: Human-readable approval levels
-        custom_approvers:
-          description: Custom approver configuration for 'custom' approval type
+          readOnly: true
+        default_hr_levels:
+          type: integer
+          maximum: 5
+          minimum: 1
+          description: Default number of approval levels for HR (1-5)
         number_of_levels:
           type: integer
           description: Number of approval levels in this workflow
@@ -6750,6 +8806,7 @@ components:
       - id
       - name
       - number_of_levels
+      - slug
       - updated_at
     LeaveApprovalWorkflowCreate:
       type: object
@@ -6765,20 +8822,12 @@ components:
           type: string
           description: Optional description of when to use this workflow
         approval_levels:
-          allOf:
-          - $ref: '#/components/schemas/ApprovalLevelsEnum'
-          description: |-
-            The sequence of approval levels required
-
-            * `department_manager` - Department Manager Only
-            * `department_manager,hr_manager` - Department Manager → HR Manager
-            * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
-            * `hr_manager` - HR Manager Only
-            * `hr_manager,general_manager` - HR Manager → General Manager
-            * `general_manager` - General Manager Only
-            * `custom` - Custom Approval Chain
-        custom_approvers:
-          description: Custom approver configuration for 'custom' approval type
+          description: List of approval levels required (max 5 levels)
+        default_hr_levels:
+          type: integer
+          maximum: 5
+          minimum: 1
+          description: Default number of approval levels for HR (1-5)
         is_default:
           type: boolean
           description: Whether this is the default workflow for the tenant
@@ -6945,6 +8994,14 @@ components:
           pattern: ^-?\d{0,2}(?:\.\d{0,1})?$
           nullable: true
           description: Maximum days that can be auto-approved (null = no auto-approval)
+        approval_levels:
+          description: Configured approval levels for this policy (max 5 levels)
+        approval_workflow:
+          type: string
+          format: uuid
+          nullable: true
+          description: Custom approval workflow for this leave type (null = use default
+            workflow)
         is_active:
           type: boolean
           description: Whether this policy is currently active
@@ -7126,6 +9183,138 @@ components:
         * `rejected` - Rejected
         * `cancelled` - Cancelled
         * `taken` - Leave Taken
+    LeaveSale:
+      type: object
+      description: Serializer for leave sales with validation and display fields.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          description: Employee selling leave days
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant the sale belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          nullable: true
+          description: |-
+            Type of leave being sold (set by HR during approval)
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+          oneOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        days_to_sell:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          nullable: true
+          description: Number of leave days to sell (set by HR during approval)
+        sale_price_per_day:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+          description: Sale price per day in company currency (set by HR during approval)
+        total_sale_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total sale amount (calculated as days_to_sell * sale_price_per_day)
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveSaleStatusEnum'
+          description: |-
+            Current status of the leave sale request
+
+            * `pending` - Pending Approval
+            * `approved` - Approved
+            * `rejected` - Rejected
+            * `completed` - Completed
+            * `cancelled` - Cancelled
+        approved_by:
+          type: integer
+          nullable: true
+          description: User who approved this sale
+        approved_by_name:
+          type: string
+          readOnly: true
+          description: Name of the approver
+        approved_date:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: When the sale was approved
+        rejection_reason:
+          type: string
+          description: Reason for rejection if applicable
+        applied_date:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the sale request was submitted
+        reason:
+          type: string
+          description: Employee's reason for selling leave
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - applied_date
+      - approved_by_name
+      - approved_date
+      - created_at
+      - employee
+      - employee_name
+      - id
+      - slug
+      - tenant
+      - tenant_name
+      - total_sale_amount
+      - updated_at
+    LeaveSaleStatusEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending Approval
+        * `approved` - Approved
+        * `rejected` - Rejected
+        * `completed` - Completed
+        * `cancelled` - Cancelled
     LeaveTypeEnum:
       enum:
       - annual_leave
@@ -7217,7 +9406,122 @@ components:
     NullEnum:
       enum:
       - null
-    PaginatedAuditLogList:
+    Opportunity:
+      type: object
+      description: Serializer for sales opportunities
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        customer:
+          type: string
+          format: uuid
+        customer_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        probability:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Win probability percentage (0-100)
+        weighted_value:
+          type: number
+          format: double
+          description: Calculate weighted value based on probability
+          readOnly: true
+        stage:
+          $ref: '#/components/schemas/StageEnum'
+        expected_close_date:
+          type: string
+          format: date
+          nullable: true
+        actual_close_date:
+          type: string
+          format: date
+          nullable: true
+        assigned_to:
+          type: integer
+          nullable: true
+        assigned_to_name:
+          type: string
+          readOnly: true
+        competitors:
+          type: string
+        competitive_advantage:
+          type: string
+        requirements:
+          type: string
+        pain_points:
+          type: string
+        next_steps:
+          type: string
+        next_followup:
+          type: string
+          format: date-time
+          nullable: true
+        days_in_stage:
+          type: integer
+          description: Get days in current stage
+          readOnly: true
+        is_overdue:
+          type: boolean
+          description: Check if opportunity is overdue
+          readOnly: true
+        activities_count:
+          type: integer
+          description: Get number of activities for this opportunity
+          readOnly: true
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - activities_count
+      - assigned_to_name
+      - created_at
+      - created_by_name
+      - customer
+      - customer_name
+      - days_in_stage
+      - id
+      - is_overdue
+      - slug
+      - title
+      - updated_at
+      - value
+      - weighted_value
+    PaginatedContractList:
       type: object
       required:
       - count
@@ -7239,8 +9543,8 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/AuditLog'
-    PaginatedClientList:
+            $ref: '#/components/schemas/Contract'
+    PaginatedCustomerList:
       type: object
       required:
       - count
@@ -7262,53 +9566,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/Client'
-    PaginatedCustomPermissionList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/CustomPermission'
-    PaginatedCustomUserList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/CustomUser'
+            $ref: '#/components/schemas/Customer'
     PaginatedDepartmentList:
       type: object
       required:
@@ -7332,7 +9590,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Department'
-    PaginatedEmployeeDocumentList:
+    PaginatedInvoiceSummaryList:
       type: object
       required:
       - count
@@ -7354,76 +9612,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/EmployeeDocument'
-    PaginatedInvitationList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Invitation'
-    PaginatedInvoiceList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Invoice'
-    PaginatedLeaveApprovalWorkflowList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/LeaveApprovalWorkflow'
+            $ref: '#/components/schemas/InvoiceSummary'
     PaginatedLeaveBalanceList:
       type: object
       required:
@@ -7493,7 +9682,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LeaveRequest'
-    PaginatedMilestoneList:
+    PaginatedLeaveSaleList:
       type: object
       required:
       - count
@@ -7515,8 +9704,8 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/Milestone'
-    PaginatedPaymentList:
+            $ref: '#/components/schemas/LeaveSale'
+    PaginatedOpportunityList:
       type: object
       required:
       - count
@@ -7538,8 +9727,8 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/Payment'
-    PaginatedPermissionGroupList:
+            $ref: '#/components/schemas/Opportunity'
+    PaginatedPaymentSummaryList:
       type: object
       required:
       - count
@@ -7561,8 +9750,8 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/PermissionGroup'
-    PaginatedProjectList:
+            $ref: '#/components/schemas/PaymentSummary'
+    PaginatedSalesActivityList:
       type: object
       required:
       - count
@@ -7584,8 +9773,8 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/Project'
-    PaginatedSprintList:
+            $ref: '#/components/schemas/SalesActivity'
+    PaginatedSalesTeamList:
       type: object
       required:
       - count
@@ -7607,76 +9796,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/Sprint'
-    PaginatedTaskList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Task'
-    PaginatedTenantList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tenant'
-    PaginatedUserTenantList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=4
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?page=2
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/UserTenant'
+            $ref: '#/components/schemas/SalesTeam'
     PatchedClient:
       type: object
       properties:
@@ -7715,6 +9835,160 @@ components:
           type: integer
           readOnly: true
           description: Number of projects associated with this client
+        lead_source:
+          description: |-
+            How did we acquire this client?
+
+            * `website` - Website
+            * `referral` - Referral
+            * `social_media` - Social Media
+            * `cold_outreach` - Cold Outreach
+            * `trade_show` - Trade Show
+            * `other` - Other
+          oneOf:
+          - $ref: '#/components/schemas/ClientLeadSourceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        lead_score:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Lead qualification score (0-100)
+        industry:
+          type: string
+          maxLength: 100
+        company_size:
+          oneOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+        address:
+          type: string
+        billing_address:
+          type: string
+        primary_contact:
+          type: integer
+          nullable: true
+        account_manager:
+          type: integer
+          nullable: true
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        payment_terms:
+          $ref: '#/components/schemas/PaymentTermsEnum'
+        tax_id:
+          type: string
+          maxLength: 50
+        last_contact:
+          type: string
+          format: date-time
+          nullable: true
+        next_followup:
+          type: string
+          format: date-time
+          nullable: true
+        satisfaction_score:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+          description: Client satisfaction rating (1-5)
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedContract:
+      type: object
+      description: Serializer for contracts/LPOs
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        contract_number:
+          type: string
+          maxLength: 50
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+        project:
+          type: string
+          format: uuid
+        project_name:
+          type: string
+          readOnly: true
+        total_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        payment_schedule:
+          description: Payment milestones and amounts
+        issued_date:
+          type: string
+          format: date
+        signed_date:
+          type: string
+          format: date
+          nullable: true
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        contract_file:
+          type: string
+          format: uri
+          nullable: true
+        signed_contract_file:
+          type: string
+          format: uri
+          nullable: true
+        status:
+          $ref: '#/components/schemas/ContractStatusEnum'
+        approved_by:
+          type: integer
+          nullable: true
+        approved_by_name:
+          type: string
+          readOnly: true
+        approved_date:
+          type: string
+          format: date-time
+          nullable: true
+        rejection_reason:
+          type: string
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -7782,6 +10056,136 @@ components:
           description: Designates whether this user should be treated as active. Unselect
             this instead of deleting accounts.
         date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedCustomer:
+      type: object
+      description: Serializer for customer/prospect management
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 255
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          pattern: ^\+?1?\d{9,15}$
+          maxLength: 20
+        status:
+          $ref: '#/components/schemas/CustomerStatusEnum'
+        lead_source:
+          description: |-
+            How did we acquire this lead?
+
+            * `website` - Website
+            * `referral` - Referral
+            * `social_media` - Social Media
+            * `cold_outreach` - Cold Outreach
+            * `trade_show` - Trade Show
+            * `advertising` - Advertising
+            * `other` - Other
+          oneOf:
+          - $ref: '#/components/schemas/CustomerLeadSourceEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        lead_score:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Lead qualification score (0-100)
+        company_name:
+          type: string
+          maxLength: 255
+        industry:
+          type: string
+          maxLength: 100
+        company_size:
+          oneOf:
+          - $ref: '#/components/schemas/CompanySizeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+        address:
+          type: string
+        primary_contact:
+          type: string
+          maxLength: 255
+        job_title:
+          type: string
+          maxLength: 100
+        assigned_to:
+          type: integer
+          nullable: true
+        assigned_to_name:
+          type: string
+          readOnly: true
+        estimated_value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Estimated deal value
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        expected_close_date:
+          type: string
+          format: date
+          nullable: true
+        actual_close_date:
+          type: string
+          format: date
+          nullable: true
+        last_contact:
+          type: string
+          format: date-time
+          nullable: true
+        next_followup:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        opportunities_count:
+          type: integer
+          description: Get total number of opportunities for this customer
+          readOnly: true
+        total_opportunity_value:
+          type: number
+          format: double
+          description: Get total value of all opportunities for this customer
+          readOnly: true
+        won_opportunities_value:
+          type: number
+          format: double
+          description: Get total value of won opportunities for this customer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -7906,6 +10310,7 @@ components:
           type: boolean
     PatchedInvoice:
       type: object
+      description: Serializer for Invoice model
       properties:
         id:
           type: string
@@ -7913,20 +10318,43 @@ components:
           readOnly: true
         slug:
           type: string
+          readOnly: true
           nullable: true
-          maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
+        invoice_number:
+          type: string
+          nullable: true
+          maxLength: 50
         client:
           type: string
           format: uuid
         client_name:
           type: string
           readOnly: true
-          description: Name of the billed client
         project:
           type: string
           format: uuid
           nullable: true
+        project_name:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        total_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          readOnly: true
         currency:
           nullable: true
           description: |-
@@ -7948,20 +10376,45 @@ components:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-        formatted_amount:
-          type: string
-          readOnly: true
-          description: Amount formatted with currency symbol
+        status:
+          $ref: '#/components/schemas/Status113Enum'
         issued_at:
           type: string
           format: date-time
           readOnly: true
-        paid:
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        paid_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_overdue:
           type: boolean
+          readOnly: true
+        days_overdue:
+          type: integer
+          readOnly: true
+        notes:
+          type: string
+        terms:
+          type: string
+          description: Payment terms and conditions
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedLeaveApprovalWorkflow:
       type: object
       description: Serializer for leave approval workflows.
@@ -7970,6 +10423,11 @@ components:
           type: string
           format: uuid
           readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
         name:
           type: string
           description: Descriptive name for the workflow (e.g., 'Standard Approval',
@@ -7979,24 +10437,16 @@ components:
           type: string
           description: Optional description of when to use this workflow
         approval_levels:
-          allOf:
-          - $ref: '#/components/schemas/ApprovalLevelsEnum'
-          description: |-
-            The sequence of approval levels required
-
-            * `department_manager` - Department Manager Only
-            * `department_manager,hr_manager` - Department Manager → HR Manager
-            * `department_manager,hr_manager,general_manager` - Department Manager → HR Manager → General Manager
-            * `hr_manager` - HR Manager Only
-            * `hr_manager,general_manager` - HR Manager → General Manager
-            * `general_manager` - General Manager Only
-            * `custom` - Custom Approval Chain
+          description: List of approval levels required (max 5 levels)
         approval_levels_display:
           type: string
-          readOnly: true
           description: Human-readable approval levels
-        custom_approvers:
-          description: Custom approver configuration for 'custom' approval type
+          readOnly: true
+        default_hr_levels:
+          type: integer
+          maximum: 5
+          minimum: 1
+          description: Default number of approval levels for HR (1-5)
         number_of_levels:
           type: integer
           description: Number of approval levels in this workflow
@@ -8168,6 +10618,14 @@ components:
           pattern: ^-?\d{0,2}(?:\.\d{0,1})?$
           nullable: true
           description: Maximum days that can be auto-approved (null = no auto-approval)
+        approval_levels:
+          description: Configured approval levels for this policy (max 5 levels)
+        approval_workflow:
+          type: string
+          format: uuid
+          nullable: true
+          description: Custom approval workflow for this leave type (null = use default
+            workflow)
         is_active:
           type: boolean
           description: Whether this policy is currently active
@@ -8301,6 +10759,111 @@ components:
           type: string
           format: date-time
           readOnly: true
+    PatchedLeaveSale:
+      type: object
+      description: Serializer for leave sales with validation and display fields.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        employee:
+          type: integer
+          description: Employee selling leave days
+        employee_name:
+          type: string
+          readOnly: true
+          description: Full name of the employee
+        tenant:
+          type: string
+          format: uuid
+          description: Company/tenant the sale belongs to
+        tenant_name:
+          type: string
+          readOnly: true
+          description: Name of the tenant organization
+        leave_type:
+          nullable: true
+          description: |-
+            Type of leave being sold (set by HR during approval)
+
+            * `annual_leave` - Annual Leave
+            * `sick_leave` - Sick Leave
+            * `personal_leave` - Personal Leave
+            * `maternity_leave` - Maternity/Paternity Leave
+            * `emergency_leave` - Emergency Leave
+            * `unpaid_leave` - Unpaid Leave
+          oneOf:
+          - $ref: '#/components/schemas/LeaveTypeEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        days_to_sell:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,1})?$
+          nullable: true
+          description: Number of leave days to sell (set by HR during approval)
+        sale_price_per_day:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+          description: Sale price per day in company currency (set by HR during approval)
+        total_sale_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          readOnly: true
+          description: Total sale amount (calculated as days_to_sell * sale_price_per_day)
+        status:
+          allOf:
+          - $ref: '#/components/schemas/LeaveSaleStatusEnum'
+          description: |-
+            Current status of the leave sale request
+
+            * `pending` - Pending Approval
+            * `approved` - Approved
+            * `rejected` - Rejected
+            * `completed` - Completed
+            * `cancelled` - Cancelled
+        approved_by:
+          type: integer
+          nullable: true
+          description: User who approved this sale
+        approved_by_name:
+          type: string
+          readOnly: true
+          description: Name of the approver
+        approved_date:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: When the sale was approved
+        rejection_reason:
+          type: string
+          description: Reason for rejection if applicable
+        applied_date:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the sale request was submitted
+        reason:
+          type: string
+          description: Employee's reason for selling leave
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
     PatchedMilestone:
       type: object
       properties:
@@ -8355,8 +10918,9 @@ components:
           type: string
           format: date-time
           readOnly: true
-    PatchedPayment:
+    PatchedOpportunity:
       type: object
+      description: Serializer for sales opportunities
       properties:
         id:
           type: string
@@ -8364,17 +10928,130 @@ components:
           readOnly: true
         slug:
           type: string
+          readOnly: true
           nullable: true
-          maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
+        customer:
+          type: string
+          format: uuid
+        customer_name:
+          type: string
+          readOnly: true
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        value:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        probability:
+          type: integer
+          maximum: 100
+          minimum: 0
+          description: Win probability percentage (0-100)
+        weighted_value:
+          type: number
+          format: double
+          description: Calculate weighted value based on probability
+          readOnly: true
+        stage:
+          $ref: '#/components/schemas/StageEnum'
+        expected_close_date:
+          type: string
+          format: date
+          nullable: true
+        actual_close_date:
+          type: string
+          format: date
+          nullable: true
+        assigned_to:
+          type: integer
+          nullable: true
+        assigned_to_name:
+          type: string
+          readOnly: true
+        competitors:
+          type: string
+        competitive_advantage:
+          type: string
+        requirements:
+          type: string
+        pain_points:
+          type: string
+        next_steps:
+          type: string
+        next_followup:
+          type: string
+          format: date-time
+          nullable: true
+        days_in_stage:
+          type: integer
+          description: Get days in current stage
+          readOnly: true
+        is_overdue:
+          type: boolean
+          description: Check if opportunity is overdue
+          readOnly: true
+        activities_count:
+          type: integer
+          description: Get number of activities for this opportunity
+          readOnly: true
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_by:
+          type: integer
+          nullable: true
+        created_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedPayment:
+      type: object
+      description: Serializer for Payment model
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          readOnly: true
+          nullable: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        payment_reference:
+          type: string
+          nullable: true
+          maxLength: 100
         invoice:
           type: string
           format: uuid
           nullable: true
-        invoice_id:
-          type: integer
+        invoice_number:
+          type: string
           readOnly: true
-          description: ID of the associated invoice
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
         currency:
           nullable: true
           description: |-
@@ -8396,15 +11073,33 @@ components:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
-        amount:
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodEnum'
+        paid_at:
           type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-        formatted_amount:
+          format: date-time
+          readOnly: true
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+        transaction_id:
+          type: string
+          description: External payment processor ID
+          maxLength: 100
+        recorded_by:
+          type: integer
+          nullable: true
+        recorded_by_name:
           type: string
           readOnly: true
-          description: Amount formatted with currency symbol
-        paid_at:
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -8491,7 +11186,171 @@ components:
           type: integer
           readOnly: true
           description: Overall project progress percentage (0-100)
+        phase:
+          $ref: '#/components/schemas/PhaseEnum'
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        estimated_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,1})?$
+        actual_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,1})?$
+        risk_level:
+          $ref: '#/components/schemas/RiskLevelEnum'
+        quality_score:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+          description: Project quality rating (1-5)
+        client_feedback:
+          type: string
+        auto_complete_on_invoice_paid:
+          type: boolean
+        notify_on_phase_change:
+          type: boolean
         created_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedSalesActivity:
+      type: object
+      description: Serializer for sales activities
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        customer:
+          type: string
+          format: uuid
+        customer_name:
+          type: string
+          readOnly: true
+        opportunity:
+          type: string
+          format: uuid
+          nullable: true
+        opportunity_title:
+          type: string
+          readOnly: true
+        activity_type:
+          $ref: '#/components/schemas/ActivityTypeEnum'
+        subject:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        scheduled_date:
+          type: string
+          format: date-time
+          nullable: true
+        completed_date:
+          type: string
+          format: date-time
+          nullable: true
+        outcome:
+          type: string
+        next_action:
+          type: string
+        next_action_date:
+          type: string
+          format: date-time
+          nullable: true
+        duration_minutes:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        performed_by:
+          type: integer
+          nullable: true
+        performed_by_name:
+          type: string
+          readOnly: true
+        is_completed:
+          type: boolean
+          description: Check if activity is completed
+          readOnly: true
+        is_overdue:
+          type: boolean
+          description: Check if activity is overdue
+          readOnly: true
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+    PatchedSalesTeam:
+      type: object
+      description: Serializer for sales teams
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        manager:
+          type: integer
+          nullable: true
+        manager_name:
+          type: string
+          readOnly: true
+        members:
+          type: array
+          items:
+            type: integer
+        member_names:
+          type: array
+          items:
+            type: string
+          description: Get list of member names
+          readOnly: true
+        territory:
+          type: string
+          maxLength: 100
+        target_quota:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        current_quota_progress:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        quota_percentage:
+          type: number
+          format: double
+          description: Get quota completion percentage
+          readOnly: true
+        is_active:
+          type: boolean
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -8810,6 +11669,7 @@ components:
             * `Tenant Owner` - Tenant Owner
     Payment:
       type: object
+      description: Serializer for Payment model
       properties:
         id:
           type: string
@@ -8817,17 +11677,30 @@ components:
           readOnly: true
         slug:
           type: string
+          readOnly: true
           nullable: true
-          maxLength: 255
           pattern: ^[-a-zA-Z0-9_]+$
+        payment_reference:
+          type: string
+          nullable: true
+          maxLength: 100
         invoice:
           type: string
           format: uuid
           nullable: true
-        invoice_id:
-          type: integer
+        invoice_number:
+          type: string
           readOnly: true
-          description: ID of the associated invoice
+        client:
+          type: string
+          format: uuid
+        client_name:
+          type: string
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
         currency:
           nullable: true
           description: |-
@@ -8849,24 +11722,141 @@ components:
           - $ref: '#/components/schemas/CurrencyEnum'
           - $ref: '#/components/schemas/BlankEnum'
           - $ref: '#/components/schemas/NullEnum'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodEnum'
+        paid_at:
+          type: string
+          format: date-time
+          readOnly: true
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+        notes:
+          type: string
+        transaction_id:
+          type: string
+          description: External payment processor ID
+          maxLength: 100
+        recorded_by:
+          type: integer
+          nullable: true
+        recorded_by_name:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - client
+      - client_name
+      - created_at
+      - id
+      - invoice_number
+      - paid_at
+      - recorded_by_name
+      - slug
+      - updated_at
+    PaymentMethodEnum:
+      enum:
+      - bank_transfer
+      - credit_card
+      - debit_card
+      - cash
+      - check
+      - online
+      - other
+      type: string
+      description: |-
+        * `bank_transfer` - Bank Transfer
+        * `credit_card` - Credit Card
+        * `debit_card` - Debit Card
+        * `cash` - Cash
+        * `check` - Check
+        * `online` - Online Payment
+        * `other` - Other
+    PaymentSummary:
+      type: object
+      description: Lightweight serializer for payment listings
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          nullable: true
+          maxLength: 255
+          pattern: ^[-a-zA-Z0-9_]+$
+        payment_reference:
+          type: string
+          nullable: true
+          maxLength: 100
+        client_name:
+          type: string
+          readOnly: true
+        invoice_number:
+          type: string
+          readOnly: true
         amount:
           type: string
           format: decimal
           pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-        formatted_amount:
-          type: string
-          readOnly: true
-          description: Amount formatted with currency symbol
+        currency:
+          nullable: true
+          description: |-
+            Currency for this payment
+
+            * `USD` - US Dollar ($)
+            * `EUR` - Euro (€)
+            * `GBP` - British Pound (£)
+            * `JPY` - Japanese Yen (¥)
+            * `CAD` - Canadian Dollar (C$)
+            * `AUD` - Australian Dollar (A$)
+            * `CHF` - Swiss Franc (CHF)
+            * `CNY` - Chinese Yuan (¥)
+            * `INR` - Indian Rupee (₹)
+            * `BRL` - Brazilian Real (R$)
+            * `ZAR` - South African Rand (R)
+            * `KES` - Kenyan Shilling (KSh)
+          oneOf:
+          - $ref: '#/components/schemas/CurrencyEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+          - $ref: '#/components/schemas/NullEnum'
+        payment_method:
+          $ref: '#/components/schemas/PaymentMethodEnum'
         paid_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - amount
-      - formatted_amount
+      - client_name
       - id
-      - invoice_id
+      - invoice_number
       - paid_at
+    PaymentTermsEnum:
+      enum:
+      - immediate
+      - net_15
+      - net_30
+      - net_45
+      - net_60
+      - custom
+      type: string
+      description: |-
+        * `immediate` - Immediate
+        * `net_15` - Net 15
+        * `net_30` - Net 30
+        * `net_45` - Net 45
+        * `net_60` - Net 60
+        * `custom` - Custom
     PermissionGroup:
       type: object
       properties:
@@ -8896,6 +11886,20 @@ components:
       - id
       - name
       - slug
+    PhaseEnum:
+      enum:
+      - initiation
+      - planning
+      - execution
+      - monitoring
+      - closure
+      type: string
+      description: |-
+        * `initiation` - Initiation
+        * `planning` - Planning
+        * `execution` - Execution
+        * `monitoring` - Monitoring & Control
+        * `closure` - Closure
     PriorityEnum:
       enum:
       - low
@@ -8965,6 +11969,34 @@ components:
           type: integer
           readOnly: true
           description: Overall project progress percentage (0-100)
+        phase:
+          $ref: '#/components/schemas/PhaseEnum'
+        contract:
+          type: string
+          format: uuid
+          nullable: true
+        estimated_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,1})?$
+        actual_hours:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,7}(?:\.\d{0,1})?$
+        risk_level:
+          $ref: '#/components/schemas/RiskLevelEnum'
+        quality_score:
+          type: integer
+          maximum: 5
+          minimum: 1
+          nullable: true
+          description: Project quality rating (1-5)
+        client_feedback:
+          type: string
+        auto_complete_on_invoice_paid:
+          type: boolean
+        notify_on_phase_change:
+          type: boolean
         created_at:
           type: string
           format: date-time
@@ -8991,22 +12023,18 @@ components:
         * `on_hold` - On Hold
         * `completed` - Completed
         * `archived` - Archived
-    ResourceTypeEnum:
+    RiskLevelEnum:
       enum:
-      - user
-      - invitation
-      - role
-      - tenant
-      - profile
-      - bulk_invitation
+      - low
+      - medium
+      - high
+      - critical
       type: string
       description: |-
-        * `user` - User
-        * `invitation` - Invitation
-        * `role` - Role
-        * `tenant` - Tenant
-        * `profile` - User Profile
-        * `bulk_invitation` - Bulk Invitation
+        * `low` - Low
+        * `medium` - Medium
+        * `high` - High
+        * `critical` - Critical
     RoleEnum:
       enum:
       - Employee
@@ -9021,6 +12049,162 @@ components:
         * `HR Manager` - HR Manager
         * `General Manager` - General Manager
         * `Tenant Owner` - Tenant Owner
+    SalesActivity:
+      type: object
+      description: Serializer for sales activities
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        customer:
+          type: string
+          format: uuid
+        customer_name:
+          type: string
+          readOnly: true
+        opportunity:
+          type: string
+          format: uuid
+          nullable: true
+        opportunity_title:
+          type: string
+          readOnly: true
+        activity_type:
+          $ref: '#/components/schemas/ActivityTypeEnum'
+        subject:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        scheduled_date:
+          type: string
+          format: date-time
+          nullable: true
+        completed_date:
+          type: string
+          format: date-time
+          nullable: true
+        outcome:
+          type: string
+        next_action:
+          type: string
+        next_action_date:
+          type: string
+          format: date-time
+          nullable: true
+        duration_minutes:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+          nullable: true
+        performed_by:
+          type: integer
+          nullable: true
+        performed_by_name:
+          type: string
+          readOnly: true
+        is_completed:
+          type: boolean
+          description: Check if activity is completed
+          readOnly: true
+        is_overdue:
+          type: boolean
+          description: Check if activity is overdue
+          readOnly: true
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - activity_type
+      - created_at
+      - customer
+      - customer_name
+      - id
+      - is_completed
+      - is_overdue
+      - opportunity_title
+      - performed_by_name
+      - subject
+      - updated_at
+    SalesTeam:
+      type: object
+      description: Serializer for sales teams
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        manager:
+          type: integer
+          nullable: true
+        manager_name:
+          type: string
+          readOnly: true
+        members:
+          type: array
+          items:
+            type: integer
+        member_names:
+          type: array
+          items:
+            type: string
+          description: Get list of member names
+          readOnly: true
+        territory:
+          type: string
+          maxLength: 100
+        target_quota:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        currency:
+          $ref: '#/components/schemas/CurrencyEnum'
+        current_quota_progress:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        quota_percentage:
+          type: number
+          format: double
+          description: Get quota completion percentage
+          readOnly: true
+        is_active:
+          type: boolean
+        tenant:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - manager_name
+      - member_names
+      - name
+      - quota_percentage
+      - updated_at
     Sprint:
       type: object
       properties:
@@ -9087,6 +12271,36 @@ components:
         * `active` - Active
         * `completed` - Completed
         * `canceled` - Canceled
+    StageEnum:
+      enum:
+      - prospecting
+      - qualification
+      - proposal
+      - negotiation
+      - closed_won
+      - closed_lost
+      type: string
+      description: |-
+        * `prospecting` - Prospecting
+        * `qualification` - Qualification
+        * `proposal` - Proposal
+        * `negotiation` - Negotiation
+        * `closed_won` - Closed Won
+        * `closed_lost` - Closed Lost
+    Status113Enum:
+      enum:
+      - draft
+      - sent
+      - paid
+      - overdue
+      - cancelled
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `sent` - Sent
+        * `paid` - Paid
+        * `overdue` - Overdue
+        * `cancelled` - Cancelled
     Task:
       type: object
       properties:

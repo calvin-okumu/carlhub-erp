@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework import routers
 
-from .views import health_check, transfer_ownership_view
+from .views import ContractViewSet, health_check, transfer_ownership_view
 from .views_auth import (
     approve_member_view,
     confirm_invitation_view,
@@ -17,7 +17,6 @@ from .views_core import (
     SprintViewSet,
     TaskViewSet,
 )
-from .views_financial import InvoiceViewSet, PaymentViewSet
 
 # Import ViewSets from modular view files
 from .views_tenant import TenantViewSet
@@ -35,12 +34,11 @@ from .views_utils import (
 router = routers.DefaultRouter()
 router.register(r"tenants", TenantViewSet)
 router.register(r"clients", ClientViewSet)
+router.register(r"contracts", ContractViewSet)
 router.register(r"projects", ProjectViewSet)
 router.register(r"milestones", MilestoneViewSet)
 router.register(r"sprints", SprintViewSet)
 router.register(r"tasks", TaskViewSet)
-router.register(r"invoices", InvoiceViewSet)
-router.register(r"payments", PaymentViewSet)
 router.register(r"members", UserTenantViewSet)
 router.register(r"invitations", InvitationViewSet)
 router.register(r"users", UserViewSet)

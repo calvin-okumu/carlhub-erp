@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
+from .models import Client, Milestone, Project, Sprint, Task
 
 
 @admin.register(Client)
@@ -45,17 +45,3 @@ class TaskAdmin(admin.ModelAdmin):
     list_display = ("title", "sprint", "status", "assignee", "created_at")
     list_filter = ("status", "sprint")
     search_fields = ("title", "description")
-
-
-@admin.register(Invoice)
-class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ("id", "client", "project", "amount", "issued_at", "paid")
-    list_filter = ("paid", "client")
-    search_fields = ("client__name",)
-
-
-@admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ("id", "invoice", "amount", "paid_at")
-    list_filter = ("paid_at",)
-    search_fields = ("invoice__id",)

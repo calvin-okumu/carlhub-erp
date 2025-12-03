@@ -540,4 +540,5 @@ sudo chown -R $USER:$USER .
 1. Choose your preferred setup method
 2. Follow the detailed guide in the appropriate subdirectory
 3. Verify installation with health checks
-4. Start developing or deploying
+4. **[Learn how to use DjangoCRM](../applications/crm-core.md#user-journey--operational-flow)**
+5. Start developing or deploying
