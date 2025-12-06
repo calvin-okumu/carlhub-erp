@@ -3,9 +3,17 @@ import random
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
+from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import AuditLog, CustomUser, Invitation, Tenant, UserProfile
+from accounts.models import (
+    AuditLog,
+    CustomUser,
+    Invitation,
+    Tenant,
+    UserProfile,
+    UserTenant,
+)
 from leave_management.models import LeaveBalance, LeavePolicy, LeaveRequest
 from project.factories import (
     ClientFactory,
@@ -30,6 +38,13 @@ class Command(BaseCommand):
 
         self.stdout.write("Generating sample data...")
 
+        # Clean up orphaned users (users without UserTenant relationships)
+        orphaned_users = CustomUser.objects.exclude(id__in=UserTenant.objects.values("user"))
+        if orphaned_users.exists():
+            orphaned_count = orphaned_users.count()
+            orphaned_users.delete()
+            self.stdout.write(f"Cleaned up {orphaned_count} orphaned user accounts")
+
         # Create or get groups (let signal handle assignment)
         group_names = [
             "Client Management Administrators",
@@ -43,71 +58,96 @@ class Command(BaseCommand):
             Group.objects.get_or_create(name=name)
         self.stdout.write("Ensured groups exist")
 
-        # Create users
-        users = []
-        for i in range(5):
-            email = f"user{i+1}@tenant{i+1}.sample.com"
-            user, created = CustomUser.objects.get_or_create(
-                email=email,
-                defaults={
-                    "username": f"user{i+1}",
-                    "first_name": f"User{i+1}",
-                    "last_name": "Test",
-                },
-            )
-            if created:
-                user.set_password("password123")
-                user.save()
-            users.append(user)
-        self.stdout.write(f"Ensured {len(users)} users exist")
-
-        # Create tenants with domains if not exist
-        if Tenant.objects.count() < 3:
-            tenants = []
-            for i in range(3 - Tenant.objects.count()):
-                domain = f"tenant{i+1}.sample.com"
-                tenant = TenantFactory.create(domain=domain)
-                # Set created_by to the first user for sample data
-                if users:
-                    tenant.created_by = users[0]  # Assign to first user as creator
-                    tenant.save()
-                tenants.append(tenant)
-            self.stdout.write(f"Created {len(tenants)} tenants")
-        else:
-            self.stdout.write("Tenants already exist")
-            tenants = list(Tenant.objects.all()[:3])  # Get existing for linking
-
-        # Link users to tenants via UserTenant
-        from accounts.models import UserTenant
-
-        self.stdout.write(f"Linking {len(users)} users to {len(tenants)} tenants")
-        for i, user in enumerate(users):
-            # Skip if user already has a UserTenant entry
-            if UserTenant.objects.filter(user=user).exists():
-                existing = UserTenant.objects.get(user=user)
-                self.stdout.write(
-                    f"User {user.email} already linked to tenant {existing.tenant.name}, skipping"
-                )
-                continue
-
-            tenant = tenants[i % len(tenants)]  # Cycle through tenants
-            self.stdout.write(f"Processing user {user.email} with tenant {tenant.name}")
-            user_tenant, created = UserTenant.objects.get_or_create(
-                user=user,
-                tenant=tenant,
-                defaults={
-                    "is_owner": (i % len(tenants) == 0),  # First user per tenant is owner
-                    "is_approved": True,
-                    "role": "Tenant Owner" if (i % len(tenants) == 0) else "Employee",
-                },
-            )
-            if created:
-                self.stdout.write(
-                    f'Created link: {user.email} to {tenant.name} as {"owner" if user_tenant.is_owner else "employee"}'
-                )
+        # Create user-tenant relationships using factories to avoid orphaned accounts
+        user_tenants = []
+        with transaction.atomic():
+            if Tenant.objects.count() < 3:
+                # Create tenants first if needed
+                tenants = []
+                for i in range(3 - Tenant.objects.count()):
+                    domain = f"tenant{i+1}.sample.com"
+                    tenant = TenantFactory.create(domain=domain)
+                    tenants.append(tenant)
+                self.stdout.write(f"Created {len(tenants)} tenants")
             else:
-                self.stdout.write(f"Link already exists: {user.email} to {tenant.name}")
-        self.stdout.write("User-tenant links established")
+                tenants = list(Tenant.objects.all()[:3])
+
+            # Ensure user-tenant relationships exist for each tenant
+            for i, tenant in enumerate(tenants):
+                # Ensure tenant owner exists
+                owner_email = f"owner{i+1}@tenant{i+1}.sample.com"
+                if not UserTenant.objects.filter(user__email=owner_email, tenant=tenant).exists():
+                    # Check if user exists and doesn't have any UserTenant (since OneToOneField)
+                    user = CustomUser.objects.filter(email=owner_email).first()
+                    if user and UserTenant.objects.filter(user=user).exists():
+                        self.stdout.write(
+                            f"User {owner_email} already belongs to another tenant, skipping"
+                        )
+                        continue
+
+                    user, created = CustomUser.objects.get_or_create(
+                        email=owner_email,
+                        defaults={
+                            "username": owner_email,
+                            "first_name": f"Tenant{i+1}",
+                            "last_name": "Owner",
+                        },
+                    )
+                    if created:
+                        user.set_password("password123")
+                        user.save()
+
+                    # Create UserTenant
+                    owner_user_tenant = UserTenant.objects.create(
+                        user=user,
+                        tenant=tenant,
+                        is_owner=True,
+                        is_approved=True,
+                        role="Tenant Owner",
+                    )
+                    # Set tenant created_by
+                    tenant.created_by = user
+                    tenant.save()
+                    user_tenants.append(owner_user_tenant)
+                    self.stdout.write(f"Ensured tenant owner: {owner_email} for {tenant.name}")
+
+                # Ensure employees exist for this tenant
+                for j in range(2):  # 2 employees per tenant
+                    emp_email = f"emp{j+1}@tenant{i+1}.sample.com"
+                    if not UserTenant.objects.filter(user__email=emp_email, tenant=tenant).exists():
+                        # Check if user exists and doesn't have any UserTenant
+                        user = CustomUser.objects.filter(email=emp_email).first()
+                        if user and UserTenant.objects.filter(user=user).exists():
+                            self.stdout.write(
+                                f"User {emp_email} already belongs to another tenant, skipping"
+                            )
+                            continue
+
+                        user, created = CustomUser.objects.get_or_create(
+                            email=emp_email,
+                            defaults={
+                                "username": emp_email,
+                                "first_name": f"Employee{j+1}",
+                                "last_name": f"Tenant{i+1}",
+                            },
+                        )
+                        if created:
+                            user.set_password("password123")
+                            user.save()
+
+                        # Create UserTenant
+                        emp_user_tenant = UserTenant.objects.create(
+                            user=user,
+                            tenant=tenant,
+                            is_owner=False,
+                            is_approved=True,
+                            role="Employee",
+                        )
+                        user_tenants.append(emp_user_tenant)
+                        self.stdout.write(f"Ensured employee: {emp_email} for {tenant.name}")
+
+        users = [ut.user for ut in user_tenants]
+        self.stdout.write(f"Ensured {len(users)} users with tenant relationships exist")
 
         # Create user profiles for all users (they should have profiles since is_approved=True)
         self.stdout.write("Creating user profiles...")
@@ -233,7 +273,6 @@ class Command(BaseCommand):
 
         # Create sample audit logs using service layer
         if AuditLog.objects.count() < 10:
-
             audit_logs = []
             actions = [
                 "user_login",
@@ -290,7 +329,9 @@ class Command(BaseCommand):
                     "annual_entitlement": (
                         25.0
                         if leave_type == "annual_leave"
-                        else 10.0 if leave_type == "sick_leave" else 5.0
+                        else 10.0
+                        if leave_type == "sick_leave"
+                        else 5.0
                     ),
                     "max_consecutive_days": (
                         30 if leave_type in ["annual_leave", "maternity_leave"] else 5
@@ -300,7 +341,9 @@ class Command(BaseCommand):
                     "max_carry_over": (
                         5.0
                         if leave_type == "annual_leave"
-                        else 2.0 if leave_type == "sick_leave" else None
+                        else 2.0
+                        if leave_type == "sick_leave"
+                        else None
                     ),
                     "auto_approve_max_days": (
                         3.0 if leave_type in ["annual_leave", "sick_leave"] else None
