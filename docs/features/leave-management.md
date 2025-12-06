@@ -127,22 +127,62 @@ Employees submit leave requests specifying:
 6. **Balance Update**: Approved leave deducts from employee balance
 
 7. **Notification**: All parties receive email notifications
+    - **Approval Email**: Employee receives detailed approval confirmation with leave details
+    - **Rejection Email**: Employee receives rejection notification with reason and next steps
 
 
 
 ### Automated Rules
 
-
-
 - **Business Day Calculation**: Leave days exclude weekends
-
 - **Overlap Detection**: Prevents conflicting leave requests
-
 - **Balance Validation**: Ensures sufficient leave balance
-
 - **Policy Enforcement**: Applies company leave policies automatically
-
 - **Workflow Routing**: Automatic determination of approval workflow based on leave type and tenant defaults
+
+## Email Notifications
+
+DjangoCRM automatically sends professional email notifications for all leave request activities:
+
+### Approval Notifications
+
+**Trigger**: When a leave request is fully approved (all workflow levels completed)
+
+**Recipient**: The employee who requested leave
+
+**Content Includes**:
+- Complete leave details (dates, type, duration, reason)
+- Approver information and approval notes
+- Updated leave balance information
+- Next steps and reminders (update out-of-office, task handover)
+- Link to view detailed leave information
+
+### Rejection Notifications
+
+**Trigger**: When a leave request is rejected at any workflow level
+
+**Recipient**: The employee who requested leave
+
+**Content Includes**:
+- Complete leave details with rejection reason
+- Approver information and rejection notes
+- Guidance for resubmission or alternative arrangements
+- Contact information for manager discussion
+- Link to view leave request details
+
+### Email Templates
+
+- **leave_approved.html/txt**: Professional approval notification with green styling
+- **leave_rejected.html/txt**: Clear rejection notification with red styling
+- **Mobile-responsive**: All templates work on mobile devices
+- **Consistent branding**: Matches site-wide email design standards
+
+### Error Handling
+
+- **Fail-safe**: Email failures don't prevent leave approval/rejection
+- **Logging**: All email attempts are logged for debugging
+- **Retry logic**: Automatic retry for temporary email service issues
+- **Fallback**: Text-only versions ensure deliverability
 
 
 
