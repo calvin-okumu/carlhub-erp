@@ -666,3 +666,117 @@ class EmailService:
                 f"Failed to send leave rejected email to {leave_request.employee.email} - Category: {error_info['category']}, Error: {str(e)}"
             )
             return False
+
+    @staticmethod
+    def send_member_approval_email(email, tenant_name, role):
+        """
+        Send email notification when a member is approved for tenant access.
+
+        Args:
+            email: Member's email address
+            tenant_name: Name of the tenant
+            role: Member's role in the tenant
+
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            context = {
+                "email": email,
+                "tenant_name": tenant_name,
+                "role": role,
+                "site_name": getattr(settings, "SITE_NAME", "DjangoCRM"),
+                "support_email": settings.DEFAULT_FROM_EMAIL,
+                "login_url": f"{settings.SITE_URL}/login",
+            }
+
+            # Render templates with error handling
+            try:
+                html_content = render_to_string("emails/member_approved.html", context)
+                text_content = render_to_string("emails/member_approved.txt", context)
+            except Exception as template_error:
+                logger.error(
+                    f"Template rendering failed for member approval email to {email}: {template_error}"
+                )
+                return False
+
+            subject = f"Welcome to {tenant_name} - Your membership has been approved"
+
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            msg.attach_alternative(html_content, "text/html")
+
+            result = msg.send(fail_silently=True)
+            if result > 0:
+                logger.info(f"Member approval email sent successfully to {email}")
+                return True
+            else:
+                logger.warning(f"Member approval email failed to send to {email}")
+                return False
+
+        except Exception as e:
+            error_info = EmailService.classify_email_error(e)
+            logger.error(
+                f"Failed to send member approval email to {email} - Category: {error_info['category']}, Error: {str(e)}"
+            )
+            return False
+
+    @staticmethod
+    def send_member_removal_email(email, tenant_name):
+        """
+        Send email notification when a member is removed from a tenant.
+
+        Args:
+            email: Member's email address
+            tenant_name: Name of the tenant
+
+        Returns:
+            bool: True if email sent successfully, False otherwise
+        """
+        try:
+            context = {
+                "email": email,
+                "tenant_name": tenant_name,
+                "site_name": getattr(settings, "SITE_NAME", "DjangoCRM"),
+                "support_email": settings.DEFAULT_FROM_EMAIL,
+                "site_url": settings.SITE_URL,
+            }
+
+            # Render templates with error handling
+            try:
+                html_content = render_to_string("emails/member_removed.html", context)
+                text_content = render_to_string("emails/member_removed.txt", context)
+            except Exception as template_error:
+                logger.error(
+                    f"Template rendering failed for member removal email to {email}: {template_error}"
+                )
+                return False
+
+            subject = f"Your access to {tenant_name} has been removed"
+
+            msg = EmailMultiAlternatives(
+                subject=subject,
+                body=text_content,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+            )
+            msg.attach_alternative(html_content, "text/html")
+
+            result = msg.send(fail_silently=True)
+            if result > 0:
+                logger.info(f"Member removal email sent successfully to {email}")
+                return True
+            else:
+                logger.warning(f"Member removal email failed to send to {email}")
+                return False
+
+        except Exception as e:
+            error_info = EmailService.classify_email_error(e)
+            logger.error(
+                f"Failed to send member removal email to {email} - Category: {error_info['category']}, Error: {str(e)}"
+            )
+            return False

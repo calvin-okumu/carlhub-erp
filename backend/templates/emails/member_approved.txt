@@ -1,0 +1,35 @@
+Welcome to {{ tenant_name }}! 🎉
+
+Great news! Your membership request has been approved and you now have access to {{ tenant_name }} as a {{ role }}.
+
+GET STARTED
+Click the link below to log in and start exploring your new workspace:
+{{ login_url }}
+
+YOUR ROLE & PERMISSIONS
+You have been assigned the role of {{ role }} in {{ tenant_name }}.
+
+- Access your dashboard: View projects and tasks assigned to you
+- Collaborate with your team: Work on projects and communicate with colleagues
+- Manage your profile: Update your information and preferences
+{% if role == "Tenant Owner" %}
+- Administrative access: Manage team members, projects, and settings
+{% endif %}
+
+QUICK LINKS:
+- Login Page: {{ login_url }}
+- Dashboard: {{ site_url }}
+
+SECURITY REMINDER: Keep your login credentials secure and never share them with others. If you suspect any unauthorized access to your account, please contact us immediately.
+
+We're excited to have you join our team! If you have any questions or need help getting started, don't hesitate to reach out to your team lead or contact our support team at {{ support_email }}.
+
+Welcome aboard!
+
+Best regards,
+The {{ tenant_name }} Team
+
+---
+{{ site_name }} - Professional Project Management
+This email was sent to {{ email }}. If you have any questions, contact {{ support_email }}.
+© {% now "Y" %} {{ site_name }}. All rights reserved.
