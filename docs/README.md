@@ -31,7 +31,7 @@ This comprehensive documentation provides detailed information about the DjangoC
 - [Email System](./features/email-system.md)
 
 ### [🏢 Applications](./applications/README.md)
-- [CRM Core](./applications/crm-core.md)
+- [CRM Core](./applications/crm-core.md) - **User journey & operational workflows**
 - [Project Tracker](./applications/project-tracker.md)
 - [Task Board](./applications/task-board.md)
 - [Financial Suite](./applications/financial-suite.md)
