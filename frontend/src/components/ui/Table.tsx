@@ -58,21 +58,28 @@ export default function Table({
                 <tbody className="bg-white divide-y divide-gray-200">
                     {rows.map((row) => (
                         <tr key={row.key} className="hover:bg-gray-50">
-                            {row.data.map((cell, index) => (
-                                <td
-                                    key={index}
-                                    className={`
-                                        px-4 py-4 
-                                        text-sm text-gray-900 
-                                        align-middle 
-                                        truncate
-                                    `}
-                                >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        {cell}
-                                    </div>
-                                </td>
-                            ))}
+                            {row.data.map((cell, index) => {
+                                // If cell is a <td> element, render it directly to avoid nesting
+                                if (React.isValidElement(cell) && cell.type === 'td') {
+                                    return React.cloneElement(cell, { key: index });
+                                }
+                                // Otherwise, wrap in td and div as usual
+                                return (
+                                    <td
+                                        key={index}
+                                        className={`
+                                            px-4 py-4
+                                            text-sm text-gray-900
+                                            align-middle
+                                            truncate
+                                        `}
+                                    >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            {cell}
+                                        </div>
+                                    </td>
+                                );
+                            })}
                         </tr>
                     ))}
                 </tbody>
