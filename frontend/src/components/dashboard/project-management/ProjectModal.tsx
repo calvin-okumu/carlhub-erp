@@ -83,7 +83,7 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        if (startDate < today) {
+        if (mode === 'add' && startDate < today) {
             alert("Start date cannot be in the past.");
             return;
         }
