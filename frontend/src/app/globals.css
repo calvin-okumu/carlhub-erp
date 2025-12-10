@@ -3,9 +3,13 @@
 @import "tailwindcss";
 
 .h1-title {
-  font-family: "Exo 2", sans-serif;
+  font-family: "Exo 2";
   font-size: 1.875rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #3b3b4f; /* adjust to match screenshot */
+  color: #3b3b4f;
+}
+
+.p {
+  font-family: "Exo 2";
 }
