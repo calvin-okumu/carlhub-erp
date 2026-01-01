@@ -23,14 +23,25 @@ export default function Table({
     totalItems
 }: TableProps) {
 
-    // Normalize header format
+    // Normalize headers
     const normalizedHeaders = headers.map((h) =>
         typeof h === "string" ? { label: h, className: "" } : h
     );
 
+    // Per-column width constraints
+    const columnWidths = [
+        "max-w-[180px]",
+        "max-w-[300px]",
+        "max-w-[120px]",
+        "max-w-[140px]",
+        "max-w-[100px]",
+        "max-w-[150px]"
+    ];
+
     return (
         <div className={`overflow-x-auto ${className}`}>
             <table className="min-w-full table-fixed border-collapse">
+
                 {/* HEADERS */}
                 <thead className="bg-gray-50">
                     <tr>
@@ -58,21 +69,32 @@ export default function Table({
                 <tbody className="bg-white divide-y divide-gray-200">
                     {rows.map((row) => (
                         <tr key={row.key} className="hover:bg-gray-50">
-                            {row.data.map((cell, index) => (
-                                <td
-                                    key={index}
-                                    className={`
-                                        px-4 py-4 
-                                        text-sm text-gray-900 
-                                        align-middle 
-                                        truncate
-                                    `}
-                                >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        {cell}
-                                    </div>
-                                </td>
-                            ))}
+
+                            {row.data.map((cell, index) => {
+                                // If user manually provided <td>, don't nest
+                                if (React.isValidElement(cell) && cell.type === 'td') {
+                                    return React.cloneElement(cell, { key: index });
+                                }
+
+                                return (
+                                    <td
+                                        key={index}
+                                        className={`
+                                            px-4 py-4
+                                            text-sm text-gray-900
+                                            align-middle
+                                            overflow-hidden
+                                            text-ellipsis
+                                            whitespace-nowrap
+                                            ${columnWidths[index] || ""}
+                                        `}
+                                    >
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            {cell}
+                                        </div>
+                                    </td>
+                                );
+                            })}
                         </tr>
                     ))}
                 </tbody>
