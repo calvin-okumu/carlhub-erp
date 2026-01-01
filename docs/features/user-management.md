@@ -152,6 +152,8 @@ DjangoCRM sends professional, mobile-responsive HTML emails with text fallbacks.
 - **Invitation Emails**: Professional welcome and onboarding instructions
 - **Welcome Emails**: Post-registration confirmation with getting started guide
 - **Password Reset Emails**: Secure password recovery with expiration warnings
+- **Member Approval Emails**: Welcome notifications when access is granted
+- **Member Removal Emails**: Clear notifications when access is revoked
 - **System Notifications**: Customizable alerts for system events and updates
 
 ### Resending Invitations
@@ -220,6 +222,43 @@ curl -X POST http://localhost:8000/api/approve-member/ \
 
 **Automatic Approval for Confirmed Invitations:**
 Users who complete the email confirmation process are automatically approved and can immediately access the system.
+
+### Member Approval Notifications
+
+When a tenant owner approves a pending member, the system automatically sends a professional welcome email:
+
+**Email Content:**
+- Personalized welcome message with tenant and role information
+- Getting started guide with next steps
+- Role-specific permissions overview
+- Login instructions and dashboard access
+- Security reminders and support contact
+
+**Email Templates:**
+- `member_approved.html` - HTML version with professional styling
+- `member_approved.txt` - Text fallback for all email clients
+
+### Member Removal Notifications
+
+When a member is removed from a tenant, they receive a clear notification email:
+
+**Email Content:**
+- Explanation of access removal and implications
+- Information about retained data and account status
+- Guidance for alternative access options
+- Contact information for questions or appeals
+
+**Email Templates:**
+- `member_removed.html` - HTML version with clear messaging
+- `member_removed.txt` - Text version for accessibility
+
+**Notification Triggers:**
+- **Approval**: Sent immediately after member approval via `POST /api/approve-member/`
+- **Removal**: Sent immediately after member removal via `POST /api/members/{id}/remove/`
+
+**Error Handling:**
+- Email failures are logged but don't prevent the approval/removal action
+- System continues to function normally even if emails fail to send
 
 ### Member Management
 
@@ -513,6 +552,6 @@ Users are automatically assigned to Django groups based on their role:
 2. **Access Transparency**: Make permissions clear to all users
 3. **Support Structure**: Provide help for permission-related issues
 4. **Feedback Collection**: Gather user experience feedback</content>
-</xai:function_call">  
+</xai:function_call">
 </xai:function_call name="todowrite">
 <parameter name="todos">[{"content":"Compare task-management.md against actual implementation and update","status":"completed","priority":"high","id":"validate_task_docs"},{"content":"Analyze task-related models, views, and serializers for task-management.md validation","status":"completed","priority":"high","id":"analyze_task_components"},{"content":"Analyze user/account models and views for user-management.md validation","status":"completed","priority":"high","id":"analyze_user_components"},{"content":"Compare user-management.md against actual user implementation and update","status":"completed","priority":"high","id":"validate_user_docs"},{"content":"Analyze multi-tenancy implementation for multi-tenancy.md validation","status":"in_progress","priority":"medium","id":"analyze_multi_tenancy"}]

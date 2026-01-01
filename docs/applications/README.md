@@ -13,8 +13,11 @@ Complete project lifecycle management from planning to completion, including mil
 ### [Task Board](./task-board.md)
 Agile task management with kanban-style boards, time tracking, and team collaboration features.
 
+### [Accounting](./accounting.md)
+Financial collection and billing management including invoicing, payments, and transaction processing.
+
 ### [Financial Suite](./financial-suite.md)
-Comprehensive financial management including invoicing, payments, budgeting, and financial reporting.
+Legacy financial reporting and budgeting tools (being migrated to Accounting app).
 
 ### [Admin Panel](./admin-panel.md)
 System administration interface for managing users, tenants, system settings, and monitoring.
@@ -42,14 +45,16 @@ Financial Suite ← Admin Panel ← Monitoring
 
 ## Application Features Matrix
 
-| Feature | CRM Core | Project Tracker | Task Board | Financial Suite | Admin Panel |
-|---------|----------|-----------------|------------|-----------------|-------------|
+| Feature | CRM Core | Sales | Project Tracker | Accounting | Admin Panel |
+|---------|----------|-------|-----------------|------------|-------------|
 | User Management | ✅ | | | | ✅ |
 | Client Management | ✅ | | | | |
-| Project Creation | | ✅ | | | |
+| Sales Pipeline | | ✅ | | | |
+| Project Creation | | | ✅ | | |
 | Task Management | | | ✅ | | |
-| Progress Tracking | | ✅ | ✅ | | |
+| Progress Tracking | | | ✅ | | |
 | Invoicing | | | | ✅ | |
+| Payment Processing | | | | ✅ | |
 | Reporting | ✅ | ✅ | ✅ | ✅ | ✅ |
 | System Admin | | | | | ✅ |
 
@@ -72,9 +77,9 @@ Financial Suite ← Admin Panel ← Monitoring
 - **Database Sharding**: Data can be partitioned by application needs
 - **Service Discovery**: Automatic service registration and discovery
 - **Health Monitoring**: Individual application health checks</content>
-</xai:function_call"> 
+</xai:function_call">
 
-Assistant: Now create features/README.md. 
+Assistant: Now create features/README.md.
 
 <xai:function_call name="write">
 <parameter name="filePath">docs/features/README.md

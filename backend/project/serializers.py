@@ -2,9 +2,8 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from accounts.models import CustomUser, Invitation, Tenant, UserTenant
-from saasCRM.currency import CurrencyConverter
 
-from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
+from .models import Client, Contract, Milestone, Project, Sprint, Task
 
 
 class TenantSerializer(serializers.ModelSerializer):
@@ -42,6 +41,23 @@ class ClientSerializer(serializers.ModelSerializer):
             "tenant",
             "tenant_name",
             "projects_count",
+            # Enhanced client lifecycle fields
+            "lead_source",
+            "lead_score",
+            "industry",
+            "company_size",
+            "website",
+            "address",
+            "billing_address",
+            "primary_contact",
+            "account_manager",
+            "credit_limit",
+            "payment_terms",
+            "tax_id",
+            "last_contact",
+            "next_followup",
+            "satisfaction_score",
+            "notes",
             "created_at",
             "updated_at",
         ]
@@ -57,6 +73,57 @@ class ClientSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.IntegerField)
     def get_projects_count(self, obj):
         return obj.projects.count()
+
+
+class ContractSerializer(serializers.ModelSerializer):
+    """Serializer for contracts/LPOs"""
+
+    client_name = serializers.CharField(source="client.name", read_only=True)
+    project_name = serializers.CharField(source="project_link.name", read_only=True)
+    created_by_name = serializers.CharField(source="created_by.get_full_name", read_only=True)
+    approved_by_name = serializers.CharField(source="approved_by.get_full_name", read_only=True)
+
+    class Meta:
+        model = Contract
+        fields = [
+            "id",
+            "slug",
+            "contract_number",
+            "title",
+            "description",
+            "client",
+            "client_name",
+            "project",
+            "project_name",
+            "total_value",
+            "currency",
+            "payment_schedule",
+            "issued_date",
+            "signed_date",
+            "start_date",
+            "end_date",
+            "contract_file",
+            "signed_contract_file",
+            "status",
+            "approved_by",
+            "approved_by_name",
+            "approved_date",
+            "rejection_reason",
+            "created_by",
+            "created_by_name",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id",
+            "slug",
+            "client_name",
+            "project_name",
+            "created_by_name",
+            "approved_by_name",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -110,6 +177,16 @@ class ProjectSerializer(serializers.ModelSerializer):
             "access_groups",
             "milestones_count",
             "progress",
+            # Enhanced project lifecycle fields
+            "phase",
+            "contract",
+            "estimated_hours",
+            "actual_hours",
+            "risk_level",
+            "quality_score",
+            "client_feedback",
+            "auto_complete_on_invoice_paid",
+            "notify_on_phase_change",
             "created_at",
         ]
         help_texts = {
@@ -416,74 +493,6 @@ class TaskSerializer(serializers.ModelSerializer):
         attrs["tenant"] = tenant
 
         return attrs
-
-
-class InvoiceSerializer(serializers.ModelSerializer):
-    client_name = serializers.CharField(
-        source="client.name", read_only=True, help_text="Name of the billed client"
-    )
-    formatted_amount = serializers.SerializerMethodField(
-        help_text="Amount formatted with currency symbol"
-    )
-
-    class Meta:
-        model = Invoice
-        fields = [
-            "id",
-            "slug",
-            "client",
-            "client_name",
-            "project",
-            "currency",
-            "amount",
-            "formatted_amount",
-            "issued_at",
-            "paid",
-        ]
-        help_texts = {
-            "client": "Client being invoiced",
-            "project": "Project this invoice is for (optional)",
-            "currency": "Currency code for this invoice",
-            "amount": "Invoice amount in currency units",
-            "issued_at": "Date the invoice was issued",
-            "paid": "Whether the invoice has been paid",
-        }
-
-    @extend_schema_field(serializers.CharField)
-    def get_formatted_amount(self, obj):
-        return CurrencyConverter.format_currency(obj.amount, obj.currency)
-
-
-class PaymentSerializer(serializers.ModelSerializer):
-    invoice_id = serializers.IntegerField(
-        source="invoice.id", read_only=True, help_text="ID of the associated invoice"
-    )
-    formatted_amount = serializers.SerializerMethodField(
-        help_text="Amount formatted with currency symbol"
-    )
-
-    class Meta:
-        model = Payment
-        fields = [
-            "id",
-            "slug",
-            "invoice",
-            "invoice_id",
-            "currency",
-            "amount",
-            "formatted_amount",
-            "paid_at",
-        ]
-        help_texts = {
-            "invoice": "Invoice this payment is for",
-            "currency": "Currency code for this payment",
-            "amount": "Payment amount in currency units",
-            "paid_at": "Date and time the payment was made",
-        }
-
-    @extend_schema_field(serializers.CharField)
-    def get_formatted_amount(self, obj):
-        return CurrencyConverter.format_currency(obj.amount, obj.currency)
 
 
 class CustomUserSerializer(serializers.ModelSerializer):

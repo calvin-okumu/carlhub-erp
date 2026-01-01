@@ -85,6 +85,75 @@ Flexible notification system for system events and alerts. Includes:
 - `action_text`: Action button text (optional)
 - `additional_info`: Extra information (optional)
 
+#### 5. Member Approval Emails
+**Files:** `member_approved.html`, `member_approved.txt`
+
+Sent when a tenant owner approves a new member's access. Includes:
+- Welcome message with tenant and role information
+- Getting started guide and next steps
+- Login instructions and dashboard access
+- Role-specific permissions overview
+
+**Context Variables:**
+- `email`: Member's email address
+- `tenant_name`: Name of the tenant organization
+- `role`: Member's assigned role (Employee, Manager, etc.)
+- `login_url`: Login page URL
+- `site_name`: Site name for branding
+- `support_email`: Support contact email
+
+#### 6. Member Removal Emails
+**Files:** `member_removed.html`, `member_removed.txt`
+
+Sent when a member is removed from a tenant. Includes:
+- Clear explanation of access removal
+- Information about retained data and account status
+- Guidance for alternative access options
+- Contact information for questions
+
+**Context Variables:**
+- `email`: Member's email address
+- `tenant_name`: Name of the tenant organization
+- `site_name`: Site name for branding
+- `site_url`: Main site URL
+- `support_email`: Support contact email
+
+#### 7. Leave Approved Emails
+**Files:** `leave_approved.html`, `leave_approved.txt`
+
+Sent when a leave request is approved. Includes:
+- Complete leave details (dates, type, duration)
+- Approver information and approval notes
+- Leave balance impact information
+- Next steps and reminders
+
+**Context Variables:**
+- `leave_request`: LeaveRequest instance with full details
+- `employee`: Employee user instance
+- `tenant`: Tenant instance
+- `approver`: Approver user instance
+- `leave_details_url`: URL to view leave details
+- `site_name`: Site name for branding
+- `support_email`: Support contact email
+
+#### 8. Leave Rejected Emails
+**Files:** `leave_rejected.html`, `leave_rejected.txt`
+
+Sent when a leave request is rejected. Includes:
+- Complete leave details with rejection reason
+- Approver information and rejection notes
+- Guidance for resubmission or alternative arrangements
+- Contact information for questions
+
+**Context Variables:**
+- `leave_request`: LeaveRequest instance with full details
+- `employee`: Employee user instance
+- `tenant`: Tenant instance
+- `approver`: Approver user instance
+- `leave_details_url`: URL to view leave details
+- `site_name`: Site name for branding
+- `support_email`: Support contact email
+
 ## Email Service API
 
 ### EmailService Class
@@ -203,6 +272,49 @@ Send customizable system notification emails with error handling.
 
 **Returns:**
 - `int`: Number of successfully sent emails
+
+##### `send_member_approval_email(email, tenant_name, role)`
+
+Send email notification when a member is approved for tenant access.
+
+**Parameters:**
+- `email` (str): Member's email address
+- `tenant_name` (str): Name of the tenant organization
+- `role` (str): Member's assigned role
+
+**Returns:**
+- `bool`: True if email sent successfully, False otherwise
+
+##### `send_member_removal_email(email, tenant_name)`
+
+Send email notification when a member is removed from a tenant.
+
+**Parameters:**
+- `email` (str): Member's email address
+- `tenant_name` (str): Name of the tenant organization
+
+**Returns:**
+- `bool`: True if email sent successfully, False otherwise
+
+##### `send_leave_approved_email(leave_request)`
+
+Send email notification when a leave request is approved.
+
+**Parameters:**
+- `leave_request`: LeaveRequest instance
+
+**Returns:**
+- `bool`: True if email sent successfully, False otherwise
+
+##### `send_leave_rejected_email(leave_request)`
+
+Send email notification when a leave request is rejected.
+
+**Parameters:**
+- `leave_request`: LeaveRequest instance
+
+**Returns:**
+- `bool`: True if email sent successfully, False otherwise
 
 ## Configuration
 
@@ -416,6 +528,10 @@ Email functionality integrates with these API endpoints with improved error hand
 - `POST /api/signup/` - Triggers welcome emails (failures don't break signup)
 - `POST /api/password-reset/` - Triggers password reset emails (failures don't break reset)
 - `POST /api/resend-invitation/` - Resends invitation emails with enhanced error handling
+- `POST /api/approve-member/` - Triggers member approval emails
+- `POST /api/members/{id}/remove/` - Triggers member removal emails
+- `POST /api/leave/requests/{id}/approve/` - Triggers leave approval emails
+- `POST /api/leave/requests/{id}/reject/` - Triggers leave rejection emails
 
 ### Signals and Hooks
 

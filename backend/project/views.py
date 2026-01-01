@@ -20,13 +20,12 @@ from rest_framework.response import Response
 from accounts.audit import AuditLogger, get_client_ip
 from accounts.email_service import EmailError, EmailService
 from accounts.models import CustomUser, Invitation, Tenant, UserTenant
+from saasCRM.pagination import CustomPageNumberPagination
 
-from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
+from .models import Client, Contract, Milestone, Project, Sprint, Task
 from .permissions import (
     CanManageClients,
-    CanManageInvoices,
     CanManageMilestones,
-    CanManagePayments,
     CanManageProjects,
     CanManageSprints,
     CanManageTasks,
@@ -35,12 +34,11 @@ from .permissions import (
 )
 from .serializers import (
     ClientSerializer,
+    ContractSerializer,
     CustomUserSerializer,
     HealthCheckSerializer,
     InvitationSerializer,
-    InvoiceSerializer,
     MilestoneSerializer,
-    PaymentSerializer,
     ProjectSerializer,
     SprintSerializer,
     TaskSerializer,
@@ -272,6 +270,74 @@ class ClientViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         description="Delete a project and all associated milestones, tasks, and invoices.",
     ),
 )
+class ContractViewSet(TenantScopedMixin, viewsets.ModelViewSet):
+    """
+    ViewSet for managing contracts/LPOs.
+
+    Provides CRUD operations for contract management with tenant isolation.
+    """
+
+    queryset = Contract.objects.all()
+    serializer_class = ContractSerializer
+    permission_classes = [CanManageProjects]  # Use project permissions for contracts
+    pagination_class = CustomPageNumberPagination
+    filter_backends = [DjangoFilterBackend, OrderingFilter, SearchFilter]
+    filterset_fields = ["status", "client", "project"]
+    search_fields = ["contract_number", "title", "description"]
+    ordering_fields = ["issued_date", "signed_date", "created_at", "total_value"]
+    ordering = ["-created_at"]
+    lookup_field = "slug"
+
+    def get_queryset(self):
+        """Filter contracts by tenant"""
+        return Contract.objects.filter(tenant=self.request.tenant).select_related(
+            "client", "project_link", "created_by", "approved_by"
+        )
+
+    @action(detail=True, methods=["post"], permission_classes=[CanManageProjects])
+    def approve(self, request, slug=None):
+        """Approve a contract"""
+        contract = self.get_object()
+
+        if contract.status != "draft":
+            return Response(
+                {"error": "Only draft contracts can be approved."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        contract.status = "sent"
+        contract.approved_by = request.user
+        contract.approved_date = timezone.now()
+        contract.save()
+
+        serializer = self.get_serializer(contract)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"], permission_classes=[CanManageProjects])
+    def sign(self, request, slug=None):
+        """Mark contract as signed"""
+        contract = self.get_object()
+
+        if contract.status not in ["sent", "active"]:
+            return Response(
+                {"error": "Contract must be sent before signing."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        contract.status = "signed"
+        contract.signed_date = timezone.now()
+        contract.save()
+
+        # Update related project status
+        if hasattr(contract, "project_link") and contract.project_link:
+            contract.project_link.status = "active"
+            contract.project_link.phase = "execution"
+            contract.project_link.save()
+
+        serializer = self.get_serializer(contract)
+        return Response(serializer.data)
+
+
 class ProjectViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     ViewSet for managing projects.
@@ -928,180 +994,6 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
-
-
-@extend_schema_view(
-    list=extend_schema(
-        summary="List invoices", description="Retrieve a list of invoices for the current tenant."
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve invoice", description="Retrieve details of a specific invoice."
-    ),
-    create=extend_schema(
-        summary="Create invoice", description="Create a new invoice for a client and project."
-    ),
-    update=extend_schema(
-        summary="Update invoice", description="Update an existing invoice's information."
-    ),
-    partial_update=extend_schema(
-        summary="Partially update invoice", description="Partially update an invoice's information."
-    ),
-    destroy=extend_schema(
-        summary="Delete invoice", description="Delete an invoice and associated payments."
-    ),
-)
-class InvoiceViewSet(TenantScopedMixin, viewsets.ModelViewSet):
-    """
-    ViewSet for managing invoices.
-
-    Provides CRUD operations for invoice management with tenant isolation.
-    Handles billing and payment tracking for client projects.
-    """
-
-    queryset = Invoice.objects.filter(is_deleted=False)
-    serializer_class = InvoiceSerializer
-    permission_classes = [permissions.IsAuthenticated, CanManageInvoices]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["paid", "client", "project"]
-    search_fields = ["client__name"]
-    ordering_fields = ["issued_at"]
-    ordering = ["issued_at"]
-    lookup_field = "slug"
-
-    def perform_create(self, serializer):
-        # Determine the tenant
-        if hasattr(self.request, "tenant") and self.request.tenant:
-            tenant = self.request.tenant
-        else:
-            # Development/Test mode: try to get tenant from user or create default
-            from accounts.models import Tenant, UserTenant
-
-            try:
-                user_tenant = UserTenant.objects.filter(
-                    user=self.request.user, is_owner=True
-                ).first()
-                if user_tenant:
-                    tenant = user_tenant.tenant
-                else:
-                    # Create a default tenant for testing
-                    tenant, created = Tenant.objects.get_or_create(
-                        name="Default Test Tenant", defaults={"domain": "test.com"}
-                    )
-            except Exception:
-                # Fallback for any issues
-                tenant, created = Tenant.objects.get_or_create(
-                    name="Default Test Tenant", defaults={"domain": "test.com"}
-                )
-
-        # Validate that the client belongs to the same tenant
-        client = serializer.validated_data.get("client")
-        if client and client.tenant != tenant:
-            from rest_framework import serializers
-
-            raise serializers.ValidationError("Client does not belong to the current tenant.")
-
-        # Validate that the project (if provided) belongs to the same tenant
-        project = serializer.validated_data.get("project")
-        if project and project.tenant != tenant:
-            from rest_framework import serializers
-
-            raise serializers.ValidationError("Project does not belong to the current tenant.")
-
-        # Set default currency if not provided
-        if "currency" not in serializer.validated_data:
-            from saasCRM.currency import get_tenant_default_currency
-
-            serializer.validated_data["currency"] = get_tenant_default_currency(tenant)
-
-        serializer.save(tenant=tenant)
-
-    def perform_destroy(self, instance):
-        # Soft delete the invoice
-        instance.delete()
-
-
-@extend_schema_view(
-    list=extend_schema(
-        summary="List payments", description="Retrieve a list of payments for the current tenant."
-    ),
-    retrieve=extend_schema(
-        summary="Retrieve payment", description="Retrieve details of a specific payment."
-    ),
-    create=extend_schema(
-        summary="Create payment", description="Create a new payment for an invoice."
-    ),
-    update=extend_schema(
-        summary="Update payment", description="Update an existing payment's information."
-    ),
-    partial_update=extend_schema(
-        summary="Partially update payment", description="Partially update a payment's information."
-    ),
-    destroy=extend_schema(summary="Delete payment", description="Delete a payment record."),
-)
-class PaymentViewSet(TenantScopedMixin, viewsets.ModelViewSet):
-    """
-    ViewSet for managing payments.
-
-    Provides CRUD operations for payment tracking with tenant isolation.
-    Manages financial transactions and invoice settlements.
-    """
-
-    queryset = Payment.objects.filter(is_deleted=False)
-    serializer_class = PaymentSerializer
-    permission_classes = [permissions.IsAuthenticated, CanManagePayments]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["invoice"]
-    search_fields = ["invoice__id"]
-    ordering_fields = ["paid_at"]
-    ordering = ["paid_at"]
-    lookup_field = "slug"
-
-    def perform_create(self, serializer):
-        # Determine the tenant
-        if hasattr(self.request, "tenant") and self.request.tenant:
-            tenant = self.request.tenant
-        else:
-            # Development/Test mode: try to get tenant from user or create default
-            from accounts.models import Tenant, UserTenant
-
-            try:
-                user_tenant = UserTenant.objects.filter(
-                    user=self.request.user, is_owner=True
-                ).first()
-                if user_tenant:
-                    tenant = user_tenant.tenant
-                else:
-                    # Create a default tenant for testing
-                    tenant, created = Tenant.objects.get_or_create(
-                        name="Default Test Tenant", defaults={"domain": "test.com"}
-                    )
-            except Exception:
-                # Fallback for any issues
-                tenant, created = Tenant.objects.get_or_create(
-                    name="Default Test Tenant", defaults={"domain": "test.com"}
-                )
-                tenant = tenant
-
-        # Validate that the invoice belongs to the same tenant
-        invoice = serializer.validated_data.get("invoice")
-        if invoice and invoice.tenant != tenant:
-            from rest_framework import serializers
-
-            raise serializers.ValidationError("Invoice does not belong to the current tenant.")
-
-        # Set currency from invoice if not provided
-        if "currency" not in serializer.validated_data and invoice:
-            serializer.validated_data["currency"] = invoice.currency
-        elif "currency" not in serializer.validated_data:
-            from saasCRM.currency import get_tenant_default_currency
-
-            serializer.validated_data["currency"] = get_tenant_default_currency(tenant)
-
-        serializer.save(tenant=tenant)
-
-    def perform_destroy(self, instance):
-        # Soft delete the payment
-        instance.delete()
 
 
 @extend_schema_view(

@@ -71,6 +71,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "accounts",
     "project",
+    "sales",
+    "accounting",
     "leave_management",
     "rest_framework",
     "django_filters",
