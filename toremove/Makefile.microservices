@@ -1,0 +1,170 @@
+# DjangoCRM Microservices Makefile
+# Unified commands for microservices development, testing, and deployment
+
+.PHONY: help infra-up infra-down infra-logs services-up services-down services-logs all-up all-down all-logs clean-microservices test-microservices build-microservices
+
+# Default target
+help:
+	@echo "DjangoCRM Microservices Commands"
+	@echo ""
+	@echo "Infrastructure Commands:"
+	@echo "  make infra-up          - Start infrastructure (databases, RabbitMQ, Redis, monitoring)"
+	@echo "  make infra-down        - Stop infrastructure"
+	@echo "  make infra-logs        - Show infrastructure logs"
+	@echo ""
+	@echo "Services Commands:"
+	@echo "  make services-up       - Start all microservices"
+	@echo "  make services-down     - Stop all microservices"
+	@echo "  make services-logs     - Show all service logs"
+	@echo ""
+	@echo "Combined Commands:"
+	@echo "  make all-up            - Start everything (infrastructure + services)"
+	@echo "  make all-down          - Stop everything"
+	@echo "  make all-logs          - Show all logs"
+	@echo ""
+	@echo "Development Commands:"
+	@echo "  make test-microservices - Run tests for all services"
+	@echo "  make build-microservices - Build all service images"
+	@echo "  make clean-microservices - Clean up containers and volumes"
+	@echo ""
+	@echo "Service Status:"
+	@echo "  make status            - Show status of all components"
+
+# Infrastructure management
+infra-up:
+	@echo "Starting microservices infrastructure..."
+	@DOCKER_BUILDKIT=1 docker-compose -f docker-compose.microservices.yml up -d \
+		postgres-identity postgres-audit postgres-project postgres-accounting postgres-hr postgres-sales \
+		rabbitmq redis prometheus grafana jaeger elasticsearch logstash kibana
+	@echo "Infrastructure started. Waiting for services to be ready..."
+	@sleep 15
+	@echo "Infrastructure ready!"
+	@echo ""
+	@echo "Access URLs:"
+	@echo "  RabbitMQ UI: http://localhost:15672 (admin/password)"
+	@echo "  Prometheus: http://localhost:9090"
+	@echo "  Grafana: http://localhost:3001 (admin/admin)"
+	@echo "  Jaeger: http://localhost:16686"
+	@echo "  Kibana: http://localhost:5601"
+
+infra-down:
+	@echo "Stopping microservices infrastructure..."
+	@docker-compose -f docker-compose.microservices.yml down
+
+infra-logs:
+	@echo "Showing infrastructure logs..."
+	@docker-compose -f docker-compose.microservices.yml logs -f \
+		postgres-identity postgres-audit postgres-project postgres-accounting postgres-hr postgres-sales \
+		rabbitmq redis prometheus grafana jaeger elasticsearch logstash kibana
+
+# Services management
+services-up:
+	@echo "Starting microservices..."
+	@DOCKER_BUILDKIT=1 docker-compose -f docker-compose.microservices.yml up -d \
+		identity-service audit-service notification-service \
+		project-service accounting-service hr-service sales-service
+	@echo "Services started!"
+
+services-down:
+	@echo "Stopping microservices..."
+	@docker-compose -f docker-compose.microservices.yml down
+
+services-logs:
+	@echo "Showing service logs..."
+	@docker-compose -f docker-compose.microservices.yml logs -f \
+		identity-service audit-service notification-service \
+		project-service accounting-service hr-service sales-service
+
+# Combined commands
+all-up: infra-up services-up
+	@echo "All microservices components started!"
+	@echo ""
+	@echo "Access URLs:"
+	@echo "  API Gateway: http://localhost:8000"
+	@echo "  RabbitMQ UI: http://localhost:15672 (admin/password)"
+	@echo "  Grafana: http://localhost:3001 (admin/admin)"
+	@echo "  Prometheus: http://localhost:9090"
+	@echo "  Jaeger: http://localhost:16686"
+	@echo "  Kibana: http://localhost:5601"
+	@echo ""
+	@echo "Service URLs (direct access):"
+	@echo "  Identity: http://localhost:8001"
+	@echo "  Audit: http://localhost:8002"
+	@echo "  Notification: http://localhost:8003"
+	@echo "  Project: http://localhost:8004"
+	@echo "  Accounting: http://localhost:8005"
+	@echo "  HR: http://localhost:8006"
+	@echo "  Sales: http://localhost:8007"
+
+all-down: services-down infra-down
+	@echo "All microservices components stopped!"
+
+all-logs: infra-logs services-logs
+
+# Development commands
+test-microservices:
+	@echo "Running microservices tests..."
+	@echo "Note: Individual services need to be running for integration tests"
+	@echo "Use 'make all-up' first, then run tests in each service directory"
+
+build-microservices:
+	@echo "Building microservice images..."
+	@DOCKER_BUILDKIT=1 docker-compose -f docker-compose.microservices.yml build \
+		identity-service audit-service notification-service \
+		project-service accounting-service hr-service sales-service
+
+clean-microservices:
+	@echo "Cleaning up microservices containers and volumes..."
+	@docker-compose -f docker-compose.microservices.yml down -v
+	@docker system prune -f
+	@echo "Cleanup complete. Run 'make all-up' to restart."
+
+# Status checking
+status:
+	@echo "=== Microservices Status ==="
+	@echo ""
+	@echo "Infrastructure:"
+	@docker-compose -f docker-compose.microservices.yml ps \
+		postgres-identity postgres-audit postgres-project postgres-accounting postgres-hr postgres-sales \
+		rabbitmq redis prometheus grafana jaeger elasticsearch logstash kibana
+	@echo ""
+	@echo "Services:"
+	@docker-compose -f docker-compose.microservices.yml ps \
+		identity-service audit-service notification-service \
+		project-service accounting-service hr-service sales-service
+	@echo ""
+	@echo "Health Checks:"
+	@echo "API Gateway: " && curl -s http://localhost:8000/health 2>/dev/null || echo "❌ Not responding"
+	@echo "RabbitMQ: " && curl -s http://localhost:15672/api/overview 2>/dev/null | head -1 || echo "❌ Not responding"
+	@echo "Redis: " && docker exec $$(docker ps -q -f name=redis) redis-cli ping 2>/dev/null || echo "✅ Ready" || echo "❌ Not ready"
+
+# Database management
+db-status:
+	@echo "Database Status:"
+	@echo "Identity DB: " && docker exec $$(docker ps -q -f name=postgres-identity) pg_isready -U postgres -d identity_db 2>/dev/null && echo "✅ Ready" || echo "❌ Not ready"
+	@echo "Audit DB: " && docker exec $$(docker ps -q -f name=postgres-audit) pg_isready -U postgres -d audit_db 2>/dev/null && echo "✅ Ready" || echo "❌ Not ready"
+	@echo "Project DB: " && docker exec $$(docker ps -q -f name=postgres-project) pg_isready -U postgres -d project_db 2>/dev/null && echo "✅ Ready" || echo "❌ Not ready"
+	@echo "Accounting DB: " && docker exec $$(docker ps -q -f name=postgres-accounting) pg_isready -U postgres -d accounting_db 2>/dev/null && echo "✅ Ready" || echo "❌ Not ready"
+	@echo "HR DB: " && docker exec $$(docker ps -q -f name=postgres-hr) pg_isready -U postgres -d hr_db 2>/dev/null && echo "✅ Ready" || echo "❌ Not ready"
+	@echo "Sales DB: " && docker exec $$(docker ps -q -f name=postgres-sales) pg_isready -U postgres -d sales_db 2>/dev/null && echo "✅ Ready" || echo "❌ Not ready"
+
+# Troubleshooting
+troubleshoot:
+	@echo "Microservices Troubleshooting Guide"
+	@echo "=================================="
+	@echo ""
+	@echo "1. Check overall status: make status"
+	@echo "2. Check database status: make db-status"
+	@echo "3. View infrastructure logs: make infra-logs"
+	@echo "4. View service logs: make services-logs"
+	@echo "5. Check RabbitMQ: http://localhost:15672 (admin/password)"
+	@echo "6. Check API Gateway: http://localhost:8080 (Traefik dashboard)"
+	@echo "7. Check Grafana: http://localhost:3001 (admin/admin)"
+	@echo ""
+	@echo "Common Issues:"
+	@echo "- Services can't connect: Check network connectivity"
+	@echo "- Database errors: Check database migrations"
+	@echo "- Event publishing fails: Check RabbitMQ connection"
+	@echo "- API calls fail: Check service authentication headers"
+	@echo ""
+	@echo "Reset everything: make clean-microservices && make all-up"

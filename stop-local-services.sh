@@ -5,7 +5,7 @@ stop_service() {
     SERVICE_NAME=$1
     PORT=$2
     echo "Stopping $SERVICE_NAME (port $PORT)..."
-    
+
     # Kill by PID file if exists
     if [ -f "services/logs/$SERVICE_NAME.pid" ]; then
         PID=$(cat services/logs/$SERVICE_NAME.pid)
@@ -17,10 +17,10 @@ stop_service() {
         fi
         rm services/logs/$SERVICE_NAME.pid
     fi
-    
+
     # Also kill by port to be thorough
     pkill -f "runserver.*:$PORT" 2>/dev/null || true
-    
+
     cd services/$SERVICE_NAME
     # Deactivate any active venv
     deactivate 2>/dev/null || true

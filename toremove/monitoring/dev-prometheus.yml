@@ -1,0 +1,53 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Traefik metrics
+  - job_name: 'traefik'
+    static_configs:
+      - targets: ['traefik:8080']
+    scrape_interval: 5s
+
+  # RabbitMQ metrics
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+    scrape_interval: 10s
+
+  # Redis metrics
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 10s
+
+  # PostgreSQL metrics (basic connectivity)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+
+  # Identity Service (when running)
+  - job_name: 'identity-service'
+    static_configs:
+      - targets: ['identity-service:8001']
+    scrape_interval: 10s
+    metrics_path: /api/v1/health/
+    params:
+      format: ['prometheus']
+
+  # Loki (for log aggregation)
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+    scrape_interval: 15s
+
+  # Jaeger (for tracing)
+  - job_name: 'jaeger'
+    static_configs:
+      - targets: ['jaeger:14268']
+    scrape_interval: 30s
