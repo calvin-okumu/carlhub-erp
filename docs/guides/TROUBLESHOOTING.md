@@ -1,67 +1,71 @@
-# DjangoCRM Docker Troubleshooting Guide
+# DjangoCRM Microservices Troubleshooting Guide
 
-This guide provides manual troubleshooting steps for the Docker development environment. For automated troubleshooting, use `make docker-troubleshoot`.
+This guide provides troubleshooting steps for the local microservices environment running Django processes directly.
 
 ## Quick Status Check
 
 ```bash
-# Check if Docker is running
-docker --version
-docker compose version
+# Check service health
+./check-services.sh
 
-# Check service status
-docker compose ps
+# Check running processes
+ps aux | grep 'python manage.py runserver'
 
-# Check resource usage
-docker stats --no-stream
+# Check port usage
+netstat -tulpn | grep :800
 ```
 
 ## Common Issues and Solutions
 
 ### 1. Services Not Starting
 
-**Symptoms**: `docker compose ps` shows services not running or unhealthy
+**Symptoms**: `./start-local-services.sh` fails or services don't respond
 
 **Steps**:
 ```bash
 # Check logs for errors
-docker compose logs
+tail -f services/logs/identity-service.log
+tail -f services/logs/audit-service.log
+# ... etc for each service
 
-# Check specific service logs
-docker compose logs backend
-docker compose logs frontend
-docker compose logs db
-docker compose logs redis
+# Check if ports are already in use
+netstat -tulpn | grep :8001
+netstat -tulpn | grep :8002
+
+# Kill conflicting processes
+sudo kill -9 <PID>
 
 # Restart services
-docker compose restart
-
-# If issues persist, rebuild
-docker compose down
-docker compose build --no-cache
-docker compose up -d
+./stop-local-services.sh
+./start-local-services.sh
 ```
 
 ### 2. Database Connection Issues
 
-**Symptoms**: Backend shows database connection errors
+**Symptoms**: Backend shows database connection errors in logs
 
 **Steps**:
 ```bash
-# Check database health
-docker compose exec db pg_isready -U saascrm_user -d saascrm_db
+# Check if PostgreSQL is running
+sudo systemctl status postgresql
 
-# Check database logs
-docker compose logs db
+# Start PostgreSQL if needed
+sudo systemctl start postgresql
 
-# Test connection from backend
-docker compose exec backend python manage.py dbshell -c "SELECT 1;"
+# Test database connection
+psql -U django_microservices -d saascrm_db -c "SELECT 1;"
 
-# Verify environment variables
-docker compose exec backend env | grep DATABASE_URL
+# Check database exists
+psql -U postgres -l | grep saascrm
 
-# Restart database
-docker compose restart db
+# Recreate database if needed
+psql -U postgres -c "DROP DATABASE saascrm_db;"
+psql -U postgres -c "CREATE DATABASE saascrm_db OWNER django_microservices;"
+
+# Run migrations for each service
+cd services/identity-service
+source venv/bin/activate
+python manage.py migrate
 ```
 
 ### 3. Redis Connection Issues
@@ -70,111 +74,66 @@ docker compose restart db
 
 **Steps**:
 ```bash
-# Check Redis health
-docker compose exec redis redis-cli ping
+# Check if Redis is running
+sudo systemctl status redis
+
+# Start Redis if needed
+sudo systemctl start redis
+
+# Test Redis connection
+redis-cli ping
 
 # Check Redis logs
-docker compose logs redis
-
-# Test connection from backend
-docker compose exec backend python -c "import redis; r = redis.Redis(host='redis', port=6379); print(r.ping())"
+sudo journalctl -u redis -f
 
 # Restart Redis
-docker compose restart redis
+sudo systemctl restart redis
 ```
 
-### 4. Network Connectivity Issues
+### 4. Port Conflicts
 
-**Symptoms**: Services can't communicate with each other
+**Symptoms**: Services fail to start with "Address already in use" errors
 
 **Steps**:
 ```bash
-# Check networks
-docker network ls | grep django
+# Find what's using the ports
+netstat -tulpn | grep :8001
+netstat -tulpn | grep :8002
+netstat -tulpn | grep :8003
+netstat -tulpn | grep :8004
+netstat -tulpn | grep :8005
+netstat -tulpn | grep :8006
+netstat -tulpn | grep :8007
 
-# Inspect networks
-docker network inspect django_backend
-docker network inspect django_frontend
+# Kill the conflicting process
+sudo kill -9 <PID>
 
-# Test backend API from host
-curl http://localhost:8000/api/health/
-
-# Test backend API from frontend container
-docker compose exec frontend curl http://backend:8000/api/health/
-
-# Check service discovery
-docker compose exec backend nslookup db
-docker compose exec backend nslookup redis
-docker compose exec frontend nslookup backend
+# Or change port in service settings
+# Edit services/<service-name>/<service>/settings.py
+# Change ALLOWED_HOSTS and runserver port
 ```
 
-### 5. Frontend Build/Startup Issues
-
-**Symptoms**: Frontend container exits or doesn't serve on port 3000
-
-**Steps**:
-```bash
-# Check frontend logs
-docker compose logs frontend
-
-# Check if Next.js is building
-docker compose exec frontend ls -la /app
-
-# Check Node.js version
-docker compose exec frontend node --version
-docker compose exec frontend npm --version
-
-# Rebuild frontend
-docker compose build frontend
-docker compose up -d frontend
-
-# Check frontend health
-curl http://localhost:3000
-```
-
-### 6. Port Conflicts
-
-**Symptoms**: Services fail to start with port binding errors
-
-**Steps**:
-```bash
-# Check what's using the ports
-netstat -tulpn | grep :8000
-netstat -tulpn | grep :3000
-netstat -tulpn | grep :5433
-netstat -tulpn | grep :6379
-
-# Stop conflicting services
-sudo systemctl stop apache2  # or nginx, etc.
-
-# Or change ports in docker-compose.yml
-# Edit ports section and restart
-docker compose down
-docker compose up -d
-```
-
-### 7. Permission Issues
+### 5. Permission Issues
 
 **Symptoms**: File access errors in logs
 
 **Steps**:
 ```bash
 # Check file permissions
-ls -la backend/
-ls -la frontend/
+ls -la services/
 
-# Fix permissions if needed
-sudo chown -R $USER:$USER backend/
-sudo chown -R $USER:$USER frontend/
+# Fix permissions
+sudo chown -R $USER:$USER services/
+chmod -R 755 services/
 
-# Rebuild containers
-docker compose build --no-cache
-docker compose up -d
+# Check virtual environment ownership
+ls -la services/identity-service/venv/
+sudo chown -R $USER:$USER services/identity-service/venv/
 ```
 
-### 8. Memory/Resource Issues
+### 6. Memory/Resource Issues
 
-**Symptoms**: Containers crash with out-of-memory errors
+**Symptoms**: Services crash with out-of-memory errors
 
 **Steps**:
 ```bash
@@ -182,107 +141,137 @@ docker compose up -d
 free -h
 df -h
 
-# Check container resource usage
-docker stats
+# Check process memory usage
+ps aux | grep python | awk '{print $2, $4, $11}'
 
-# Increase Docker memory limit in Docker Desktop settings
-# Or reduce container memory limits in docker-compose.yml
+# Kill memory-heavy processes
+sudo kill -9 <PID>
 
-# Clean up unused resources
-docker system prune -f
-docker volume prune -f
+# Restart services
+./stop-local-services.sh
+./start-local-services.sh
 ```
 
-### 9. Volume/Data Persistence Issues
+### 7. Virtual Environment Issues
 
-**Symptoms**: Data lost after container restart
+**Symptoms**: Import errors or module not found
 
 **Steps**:
 ```bash
-# Check volumes
-docker volume ls | grep django
+# Navigate to service
+cd services/identity-service
 
-# Inspect volume data
-docker run --rm -v django_postgres_data:/data alpine ls -la /data
+# Recreate virtual environment
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 
-# Backup and restore if needed
-docker compose exec db pg_dump -U saascrm_user saascrm_db > backup.sql
-docker compose exec -T db psql -U saascrm_user saascrm_db < backup.sql
+# Try running migrations
+python manage.py migrate
 ```
 
-### 10. Environment Variable Issues
+### 8. Traefik Gateway Issues
 
-**Symptoms**: Services fail with configuration errors
+**Symptoms**: Services work directly but not through localhost:8000
 
 **Steps**:
 ```bash
-# Check .env file
-cat .env
+# Check if Traefik is running
+curl http://localhost:8080/api/rawdata
 
-# Validate required variables
-echo $SECRET_KEY
-echo $DB_NAME
-echo $DB_USER
-echo $DB_PASSWORD
+# Check Traefik dashboard
+curl http://localhost:8080/dashboard/
 
-# Check variables in containers
-docker compose exec backend env | grep SECRET_KEY
-docker compose exec backend env | grep DATABASE_URL
+# Restart Traefik
+./stop-traefik.sh
+./start-traefik.sh
 
-# Update .env and restart
-docker compose down
-docker compose up -d
+# Check Traefik logs
+tail -f logs/traefik.log
+
+# Verify Traefik configuration
+cat traefik-local.toml
+cat traefik-dynamic.toml
 ```
 
 ## Advanced Troubleshooting
 
-### Inspecting Containers
+### Service Process Management
 
 ```bash
-# Enter container shell
-docker compose exec backend bash
-docker compose exec frontend sh
-docker compose exec db bash
-docker compose exec redis sh
+# Check PIDs
+cat services/logs/identity-service.pid
+cat services/logs/audit-service.pid
 
-# Check running processes
-docker compose exec backend ps aux
-docker compose exec frontend ps aux
+# Check if process is running
+ps -p $(cat services/logs/identity-service.pid)
 
-# Check disk usage inside containers
-docker compose exec backend df -h
+# Stop specific service
+kill $(cat services/logs/identity-service.pid)
+
+# Start specific service manually
+cd services/identity-service
+source venv/bin/activate
+nohup python manage.py runserver 0.0.0.0:8001 > ../../services/logs/identity-service.log 2>&1 &
+echo $! > ../../services/logs/identity-service.pid
 ```
 
 ### Log Analysis
 
 ```bash
-# Follow logs in real-time
-docker compose logs -f backend
+# View all logs
+tail -f services/logs/*.log
 
-# Search for specific errors
-docker compose logs backend | grep -i error
+# Search for errors
+grep -i error services/logs/*.log
 
-# Check log file sizes
-docker compose exec backend ls -lh logs/backend/
+# Check specific error
+grep "ConnectionRefused" services/logs/*.log
 
-# Rotate logs if needed
-docker compose exec backend logrotate -f /etc/logrotate.conf
+# Check recent errors
+tail -100 services/logs/identity-service.log | grep -i error
+
+# Count errors
+grep -i error services/logs/identity-service.log | wc -l
 ```
 
 ### Network Debugging
 
 ```bash
-# Test internal networking
-docker compose exec backend ping db
-docker compose exec backend ping redis
-docker compose exec frontend ping backend
+# Test direct access to services
+curl http://localhost:8001/api/v1/health/
+curl http://localhost:8002/api/v1/health/
+
+# Test through Traefik
+curl http://localhost:8000/api/v1/identity/health/
+curl http://localhost:8000/api/v1/audit/health/
 
 # Check DNS resolution
-docker compose exec backend nslookup db
-docker compose exec backend nslookup redis
+nslookup localhost
 
-# Inspect network traffic
-docker compose exec backend tcpdump -i eth0 port 5432
+# Check firewall
+sudo ufw status
+sudo iptables -L
+```
+
+### Database Debugging
+
+```bash
+# Connect to database
+psql -U django_microservices -d saascrm_db
+
+# Check tables
+\dt
+
+# Check migrations
+SELECT * FROM django_migrations ORDER BY applied DESC;
+
+# Check user
+\du
+
+# Exit
+\q
 ```
 
 ## Emergency Recovery
@@ -290,53 +279,125 @@ docker compose exec backend tcpdump -i eth0 port 5432
 ### Complete Reset
 
 ```bash
-# Stop everything
-docker compose down -v
+# Stop all services
+./stop-local-services.sh
 
-# Remove all containers and volumes
-docker system prune -f
-docker volume prune -f
+# Stop Traefik if running
+./stop-traefik.sh
 
-# Clean up networks
-docker network prune -f
+# Kill any remaining processes
+pkill -f 'python manage.py runserver'
 
-# Rebuild from scratch
-docker compose build --no-cache
-docker compose up -d
+# Restart everything
+./start-local-services.sh
+./start-traefik.sh
 ```
 
-### Database Recovery
+### Database Reset
 
 ```bash
-# Stop backend to prevent writes
-docker compose stop backend
+# Stop all services
+./stop-local-services.sh
 
-# Backup current data
-docker compose exec db pg_dump -U saascrm_user saascrm_db > emergency_backup.sql
+# Backup current database
+pg_dump -U django_microservices saascrm_db > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # Reset database
-docker compose exec db dropdb -U saascrm_user saascrm_db
-docker compose exec db createdb -U saascrm_user saascrm_db
+psql -U postgres -c "DROP DATABASE saascrm_db;"
+psql -U postgres -c "CREATE DATABASE saascrm_db OWNER django_microservices;"
 
-# Restore from backup
-docker compose exec -T db psql -U saascrm_user saascrm_db < emergency_backup.sql
+# Restart services and run migrations
+./start-local-services.sh
+```
 
-# Restart services
-docker compose start backend
+### Service Recovery
+
+```bash
+# Check which services are down
+./check-services.sh
+
+# Restart specific service
+cd services/<service-name>
+source venv/bin/activate
+nohup python manage.py runserver 0.0.0.0:<PORT> > ../../services/logs/<service-name>.log 2>&1 &
+echo $! > ../../services/logs/<service-name>.pid
+
+# Verify it's running
+./check-services.sh
 ```
 
 ## Prevention Tips
 
-1. **Regular Backups**: Use `make db-backup` regularly
-2. **Monitor Resources**: Check `docker stats` periodically
-3. **Update Images**: Run `docker compose pull` to get latest images
-4. **Clean Up**: Use `make docker-clean` weekly
-5. **Version Control**: Keep docker-compose.yml and .env in git (exclude sensitive data)
+1. **Regular Health Checks**: Run `./check-services.sh` regularly
+2. **Monitor Logs**: Use `./view-logs.sh all` to watch all services
+3. **Clean Up**: Remove old log files periodically
+4. **Version Control**: Keep .env files backed up (exclude from git)
+5. **Backup Database**: Regularly export database with pg_dump
+
+## Service-Specific Commands
+
+### Identity Service
+```bash
+cd services/identity-service
+source venv/bin/activate
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver 0.0.0.0:8001
+```
+
+### Audit Service
+```bash
+cd services/audit-service
+source venv/bin/activate
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8002
+```
+
+### Notification Service
+```bash
+cd services/notification-service
+source venv/bin/activate
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8003
+```
+
+### Accounting Service
+```bash
+cd services/accounting-service
+source venv/bin/activate
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8004
+```
+
+### HR Service
+```bash
+cd services/hr-service
+source venv/bin/activate
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8005
+```
+
+### Project Service
+```bash
+cd services/project-service
+source venv/bin/activate
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8006
+```
+
+### Sales Service
+```bash
+cd services/sales-service
+source venv/bin/activate
+python manage.py migrate
+python manage.py runserver 0.0.0.0:8007
+```
 
 ## Getting Help
 
 If issues persist:
-1. Check GitHub issues for similar problems
-2. Provide output of `docker compose logs` and `docker compose ps`
-3. Include your docker-compose.yml and .env (redact secrets)
-4. Specify your OS, Docker version, and exact error messages
+1. Check logs in `services/logs/` for error messages
+2. Run `./check-services.sh` for health status
+3. Check that PostgreSQL and Redis are running
+4. Verify all .env files are correctly configured
+5. Review service-specific settings files

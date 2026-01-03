@@ -242,15 +242,6 @@ du -sh services/*/venv
 du -sh services/logs
 ```
 
-## Migration from Docker
-
-If migrating from Docker setup:
-
-1. Docker services use `postgres` as DB user, local setup uses `django_microservices`
-2. Docker services connect to `postgres` hostname, local uses `localhost`
-3. Update `.env` files if needed
-4. Run migrations to create local databases
-
 ## Production Migration
 
 To move to production:

@@ -5,45 +5,38 @@
 Start the entire microservices ecosystem with a single command:
 
 ```bash
-docker compose -f docker-compose.dev.yml up -d
+./start-local-services.sh
 ```
 
-That's it! All 7 services + infrastructure will start automatically.
+That's it! All 7 services will start automatically on their respective ports.
 
 ## 📊 What Starts Automatically
 
-### **Core Services** (3-5 minutes startup):
-1. ✅ **Traefik** (Port 8000) - API Gateway
-2. ✅ **PostgreSQL** (Port 5432) - Database (6 logical DBs)
-3. ✅ **Redis** (Port 6379) - Cache
-4. ✅ **RabbitMQ** (Port 5672) - Message Broker
-
 ### **Application Services** (30-60 seconds each):
-5. ✅ **Identity Service** (Port 8001) - User/Auth management
-6. ✅ **Audit Service** (Port 8002) - Audit logging
-7. ✅ **Notification Service** (Port 8003) - Notifications
-8. ✅ **Accounting Service** (Port 8004) - Invoices/Payments
-9. ✅ **HR Service** (Port 8005) - Leave management
-10. ✅ **Project Service** (Port 8006) - Projects/Tasks
-11. ✅ **Sales Service** (Port 8007) - CRM/Leads
+1. ✅ **Identity Service** (Port 8001) - User/Auth management
+2. ✅ **Audit Service** (Port 8002) - Audit logging
+3. ✅ **Notification Service** (Port 8003) - Notifications
+4. ✅ **Accounting Service** (Port 8004) - Invoices/Payments
+5. ✅ **HR Service** (Port 8005) - Leave management
+6. ✅ **Project Service** (Port 8006) - Projects/Tasks
+7. ✅ **Sales Service** (Port 8007) - CRM/Leads
 
-### **Monitoring** (1-2 minutes):
-12. ✅ **Prometheus** (Port 9090) - Metrics
-13. ✅ **Grafana** (Port 3001) - Dashboards
-14. ✅ **Loki** (Port 3100) - Logs
-15. ✅ **Jaeger** (Port 16686) - Tracing
+### **Optional** (if using Traefik gateway):
+- ✅ **Traefik** (Port 8000) - API Gateway
+- ✅ **Traefik Dashboard** (Port 8080)
 
-**Total Startup Time**: 3-5 minutes
-**Total RAM Usage**: 4-6 GB (vs 8-12 GB before optimization)
+### **Infrastructure** (must be running):
+- ✅ **PostgreSQL** (Port 5432) - Database (6 logical DBs)
+- ✅ **Redis** (Port 6379) - Cache
+
+**Total Startup Time**: 2-3 minutes
+**Total RAM Usage**: 1-2 GB (per service)
 
 ## 🔍 Check Service Health
 
 ### **All Services at Once:**
 ```bash
-for port in 8001 8002 8003 8004 8005 8006 8007; do
-  echo "Checking port $port..."
-  curl -s http://localhost:$port/api/v1/health/ | jq .
-done
+./check-services.sh
 ```
 
 ### **Individual Services:**
@@ -72,15 +65,6 @@ curl http://localhost:8007/api/v1/health/
 
 ## 🌐 Access Services
 
-### **Via API Gateway (Recommended):**
-```bash
-# All services go through Traefik at localhost:8000
-curl http://localhost:8000/api/v1/identity/tenants/
-curl http://localhost:8000/api/v1/audit/logs/
-curl http://localhost:8000/api/v1/notification/notifications/
-# etc.
-```
-
 ### **Direct Access:**
 - **Identity**: http://localhost:8001/api/v1/
 - **Audit**: http://localhost:8002/api/v1/
@@ -90,79 +74,83 @@ curl http://localhost:8000/api/v1/notification/notifications/
 - **Project**: http://localhost:8006/api/v1/
 - **Sales**: http://localhost:8007/api/v1/
 
-## 📊 Monitoring Dashboards
+### **Via API Gateway (if Traefik is running):**
+```bash
+# Start Traefik first
+./start-traefik.sh
 
-### **Grafana** (Password: admin):
-```
-URL: http://localhost:3001
-Username: admin
-Password: admin
-```
-
-### **Prometheus:**
-```
-URL: http://localhost:9090
-```
-
-### **RabbitMQ Management** (User: admin, Pass: admin):
-```
-URL: http://localhost:15672
-```
-
-### **Jaeger Tracing:**
-```
-URL: http://localhost:16686
+# All services go through Traefik at localhost:8000
+curl http://localhost:8000/api/v1/identity/tenants/
+curl http://localhost:8000/api/v1/audit/logs/
+curl http://localhost:8000/api/v1/notification/notifications/
+# etc.
 ```
 
 ## 📝 View Logs
 
 ### **All Services:**
 ```bash
-docker compose -f docker-compose.dev.yml logs -f
+./view-logs.sh all
 ```
 
 ### **Specific Service:**
 ```bash
-docker compose -f docker-compose.dev.yml logs -f identity-service
-docker compose -f docker-compose.dev.yml logs -f audit-service
-docker compose -f docker-compose.dev.yml logs -f notification-service
+./view-logs.sh identity-service
+./view-logs.sh audit-service
+./view-logs.sh notification-service
 # etc.
 ```
 
-### **Last 100 Lines:**
+### **Manual Log Viewing:**
 ```bash
-docker compose -f docker-compose.dev.yml logs --tail=100
+# Tail all logs
+tail -f services/logs/*.log
+
+# Tail specific log
+tail -f services/logs/identity-service.log
+
+# Last 100 lines
+tail -100 services/logs/identity-service.log
 ```
 
 ## 🛑 Stop Services
 
 ### **Stop All:**
 ```bash
-docker compose -f docker-compose.dev.yml down
-```
-
-### **Stop and Remove Volumes:**
-```bash
-docker compose -f docker-compose.dev.yml down -v
+./stop-local-services.sh
 ```
 
 ### **Stop Specific Service:**
 ```bash
-docker compose -f docker-compose.dev.yml stop identity-service
-docker compose -f docker-compose.dev.yml stop audit-service
-# etc.
+# Using PID
+kill $(cat services/logs/identity-service.pid)
+
+# Using process name
+pkill -f 'identity-service.*runserver'
+```
+
+### **Stop Traefik:**
+```bash
+./stop-traefik.sh
 ```
 
 ## 🔄 Restart Services
 
 ### **Restart All:**
 ```bash
-docker compose -f docker-compose.dev.yml restart
+./stop-local-services.sh
+./start-local-services.sh
 ```
 
 ### **Restart Specific Service:**
 ```bash
-docker compose -f docker-compose.dev.yml restart identity-service
+cd services/identity-service
+source venv/bin/activate
+# Kill existing process
+kill $(cat ../../services/logs/identity-service.pid)
+# Start new process
+nohup python manage.py runserver 0.0.0.0:8001 > ../../services/logs/identity-service.log 2>&1 &
+echo $! > ../../services/logs/identity-service.pid
 ```
 
 ## 🐛 Troubleshooting
@@ -170,27 +158,45 @@ docker compose -f docker-compose.dev.yml restart identity-service
 ### **Service Won't Start:**
 ```bash
 # Check logs
-docker compose -f docker-compose.dev.yml logs [service-name]
+tail -f services/logs/identity-service.log
 
 # Check if port is already in use
-netstat -tuln | grep [port]
+netstat -tuln | grep 8001
 
 # Stop and restart
-docker compose -f docker-compose.dev.yml down
-docker compose -f docker-compose.dev.yml up -d
+kill $(cat services/logs/identity-service.pid)
+cd services/identity-service
+source venv/bin/activate
+nohup python manage.py runserver 0.0.0.0:8001 > ../../services/logs/identity-service.log 2>&1 &
 ```
 
 ### **Database Connection Issues:**
 ```bash
 # Check PostgreSQL is running
-docker compose -f docker-compose.dev.yml ps postgres
+sudo systemctl status postgresql
 
 # Check logs
-docker compose -f docker-compose.dev.yml logs postgres
+grep -i "database" services/logs/*.log
 
-# Recreate database
-docker compose -f docker-compose.dev.yml down -v postgres
-docker compose -f docker-compose.dev.yml up -d postgres
+# Test connection
+psql -U django_microservices -d identity_db -c "SELECT 1;"
+
+# Run migrations
+cd services/identity-service
+source venv/bin/activate
+python manage.py migrate
+```
+
+### **Redis Connection Issues:**
+```bash
+# Check Redis is running
+sudo systemctl status redis
+
+# Test connection
+redis-cli ping
+
+# Restart Redis
+sudo systemctl restart redis
 ```
 
 ### **Port Conflicts:**
@@ -200,8 +206,8 @@ lsof -i :8001
 lsof -i :8002
 # etc.
 
-# Kill processes if needed (development only!)
-# Kill processes on ports 8001-8007, 5432, 6379, 5672
+# Kill processes if needed
+sudo kill -9 <PID>
 ```
 
 ## 🎯 Common Tasks
@@ -209,90 +215,113 @@ lsof -i :8002
 ### **Run Database Migrations:**
 ```bash
 # For each service
-docker compose -f docker-compose.dev.yml exec identity-service python manage.py migrate
-docker compose -f docker-compose.dev.yml exec audit-service python manage.py migrate
-docker compose -f docker-compose.dev.yml exec notification-service python manage.py migrate
-# etc.
+cd services/identity-service
+source venv/bin/activate
+python manage.py migrate
+
+cd ../audit-service
+source venv/bin/activate
+python manage.py migrate
+# ... repeat for all services
 ```
 
 ### **Create Superuser:**
 ```bash
 # Identity service
-docker compose -f docker-compose.dev.yml exec identity-service python manage.py createsuperuser
-
-# Follow prompts for email, password
-```
-
-### **Collect Static Files:**
-```bash
-docker compose -f docker-compose.dev.yml exec identity-service python manage.py collectstatic --noinput
-# Repeat for other services
+cd services/identity-service
+source venv/bin/activate
+python manage.py createsuperuser
 ```
 
 ### **Access Django Admin:**
 ```bash
 # Identity service
 # URL: http://localhost:8001/admin/
-# Create superuser first with: docker compose exec identity-service python manage.py createsuperuser
+# Create superuser first with: python manage.py createsuperuser
 
 # Other services
 # URL: http://localhost:[port]/admin/
 ```
 
+### **Check Service Processes:**
+```bash
+# List all running Django processes
+ps aux | grep 'python manage.py runserver'
+
+# Check specific service is running
+ps -p $(cat services/logs/identity-service.pid)
+```
+
+### **Environment Variables:**
+```bash
+# Check .env file for a service
+cat services/identity-service/.env
+
+# Verify environment variables
+cd services/identity-service
+source venv/bin/activate
+python manage.py check
+```
+
 ## 📚 Documentation Links
 
-- **Complete Overview**: `MICROSERVICES_PHASE2_COMPLETE.md`
-- **Session Summary**: `SESSION_SUMMARY.md`
+- **Complete Overview**: `docs/overview/README.md`
+- **Microservices Architecture**: `docs/MICROSERVICES_ARCHITECTURE.md`
 - **Service READMEs**: `services/[service-name]/README.md`
-- **Backend Docs**: `backend/README.md`
-- **Setup Guide**: `docs/setup/`
 - **API Documentation**: `docs/api/`
+- **Troubleshooting**: `docs/guides/TROUBLESHOOTING.md`
+- **Quick Reference**: `docs/quick-start/QUICK_REFERENCE.md`
 
 ## 🎯 Next Steps
 
 ### **Immediate (After Starting Services):**
-1. ✅ Verify all services are healthy
+1. ✅ Verify all services are healthy: `./check-services.sh`
 2. ✅ Test API endpoints
-3. ✅ Check Grafana dashboards
-4. ✅ Review service logs
-5. ✅ Test inter-service communication
+3. ✅ Review service logs: `./view-logs.sh all`
+4. ✅ Test inter-service communication
 
 ### **Development:**
 1. Implement serializers and views for each service
 2. Add CRUD API endpoints
 3. Implement service-to-service communication
-4. Add event bus integration (RabbitMQ)
+4. Add event bus integration
 5. Write integration tests
 6. Add API documentation (OpenAPI)
 
 ### **Production:**
-1. Create Kubernetes manifests
-2. Configure AWS EKS clusters
-3. Set up AWS RDS for PostgreSQL
-4. Configure AWS ElastiCache for Redis
-5. Set up AWS SQS or RabbitMQ Cluster
-6. Configure ALB/NLB with SSL
-7. Set up CloudWatch monitoring
-8. Configure Sentry error tracking
-9. Implement secrets management
-10. Configure auto-scaling policies
+1. Set up PostgreSQL cluster
+2. Configure Redis cluster
+3. Set up reverse proxy (nginx/traefik)
+4. Configure SSL certificates
+5. Set up monitoring (Prometheus/Grafana)
+6. Configure logging (Loki/ELK)
+7. Implement secrets management
+8. Set up load balancing
 
 ## 🚀 Production Deployment
 
-### **Quick Deploy to AWS EKS:**
+### **Using Systemd:**
 ```bash
-# Build and push images
-docker build -t ghcr.io/your-org/identity-service ./services/identity-service
-docker build -t ghcr.io/your-org/audit-service ./services/audit-service
-# ... repeat for all services
+# Create systemd service for each service
+sudo cp utils/systemd/identity-service.service /etc/systemd/system/
+sudo systemctl enable identity-service
+sudo systemctl start identity-service
+```
 
-# Push to registry
-docker push ghcr.io/your-org/identity-service
-docker push ghcr.io/your-org/audit-service
-# ... repeat for all services
+### **Using Gunicorn:**
+```bash
+cd services/identity-service
+source venv/bin/activate
+gunicorn --bind 0.0.0.0:8001 --workers 4 identity_service.wsgi:application
+```
 
-# Deploy to EKS
-kubectl apply -f k8s/production/
+### **Using Nginx Reverse Proxy:**
+```bash
+# Configure nginx to forward requests
+# to individual services or to Traefik gateway
+sudo cp utils/nginx/djangocrm.conf /etc/nginx/sites-available/
+sudo ln -s /etc/nginx/sites-available/djangocrm.conf /etc/nginx/sites-enabled/
+sudo systemctl reload nginx
 ```
 
 ## 📞 Support
@@ -300,11 +329,11 @@ kubectl apply -f k8s/production/
 ### **Check Documentation:**
 - This guide
 - Service-specific READMEs
-- Backend documentation
 - API documentation
+- Troubleshooting guide
 
 ### **Common Issues:**
-- See `TROUBLESHOOTING.md`
+- See `docs/guides/TROUBLESHOOTING.md`
 - Check service logs
 - Verify environment variables
 - Check database connectivity
@@ -313,18 +342,16 @@ kubectl apply -f k8s/production/
 
 You're successfully running all microservices if:
 - ✅ All 7 services return 200 OK on health check
-- ✅ Grafana shows metrics from all services
-- ✅ Loki is receiving logs from all services
 - ✅ No errors in service logs
-- ✅ Can access services via API gateway
+- ✅ Can access services directly
+- ✅ Can access services via API gateway (if Traefik is running)
 - ✅ Database migrations ran successfully
-- ✅ RabbitMQ queues are created
 
 ---
 
 **🎉 You're ready to develop with a complete microservices architecture!** 🚀
 
-**Total Setup Time**: 3-5 minutes
-**Total Services**: 7 microservices + 8 infrastructure
-**Total RAM**: 4-6 GB (optimized from 8-12 GB)
+**Total Setup Time**: 2-3 minutes
+**Total Services**: 7 microservices
+**Total RAM**: 7-14 GB (1-2 GB per service)
 **Ready for**: Development, Testing, Production

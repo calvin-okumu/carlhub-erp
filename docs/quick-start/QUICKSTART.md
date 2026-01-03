@@ -1,4 +1,6 @@
-# DjangoCRM Quick Start Guide
+# DjangoCRM Quick Start Guide (Legacy Monolithic)
+
+⚠️ **This document is for the legacy monolithic architecture. For the current microservices setup, see [QUICKSTART_MICROSERVICES.md](./QUICKSTART_MICROSERVICES.md).**
 
 This step-by-step guide walks you through setting up DjangoCRM from scratch, progressing from local development to Docker deployment and staging preparation. Follow each phase in order.
 

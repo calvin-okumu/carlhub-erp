@@ -1,26 +1,23 @@
 # DjangoCRM Manual
 
-A concise guide to getting started with DjangoCRM. For detailed documentation, see the `docs/` directory.
+A concise guide to getting started with DjangoCRM microservices. For detailed documentation, see the `docs/` directory.
 
 ## Quick Start
 
 ```bash
-# Clone and setup
-git clone <repository-url>
-cd DjangoCRM
-./setup.sh
+# Start all microservices
+./start-local-services.sh
 
-# Start development
-make dev
+# Check health
+./check-services.sh
 
-# Access points
-# API: http://localhost:8000/api
-# Admin: http://localhost:8000/admin
-# Frontend: http://localhost:3000
+# View logs
+./view-logs.sh all
 ```
 
 ## Key Features
 
+- ✅ **Microservices architecture** - 7 independent services
 - ✅ **Multi-tenant architecture** with complete data isolation
 - ✅ **Comprehensive user management** with role-based permissions
 - ✅ **Project lifecycle management** with automated progress tracking
@@ -33,72 +30,75 @@ make dev
 ## Documentation Structure
 
 - **`docs/README.md`** - Complete documentation index
-- **`docs/setup/`** - Installation and configuration guides
 - **`docs/api/`** - API reference and examples
-- **`docs/features/`** - Feature documentation
-- **`docs/applications/`** - Application-specific guides
+- **`docs/guides/`** - Implementation guides
+- **`docs/quick-start/`** - Quick start guides
+
+## Microservices
+
+| Service | Port | Description |
+|---------|------|-------------|
+| Identity | 8001 | User management & authentication |
+| Audit | 8002 | Audit logging & tracking |
+| Notification | 8003 | User notifications |
+| Accounting | 8004 | Invoices & payments |
+| HR | 8005 | Leave management |
+| Project | 8006 | Project management |
+| Sales | 8007 | CRM & sales |
 
 ## Development Commands
 
 ```bash
-# Backend development
-cd backend && python manage.py runserver
+# Start all services
+./start-local-services.sh
 
-# Frontend development
-cd frontend && npm run dev
+# Stop all services
+./stop-local-services.sh
 
-# Run tests
-make test
+# Check health
+./check-services.sh
 
-# Generate API schema
-cd backend && python manage.py spectacular --file schema.yml
+# View logs
+./view-logs.sh [service-name]
 
-# Load sample data
-cd backend && python manage.py generate_sample_data
+# Start Traefik (optional API gateway)
+./start-traefik.sh
+
+# Stop Traefik
+./stop-traefik.sh
 ```
 
 ## Default Credentials
 
-- **Superuser**: `admin@example.com` / `admin123`
-- **Database**: `saascrm_user` / `saascrm_password`
-- **API Base**: `http://localhost:8000/api`
+- **Database**: `django_microservices` / (password in .env files)
+- **API Base**: http://localhost:8001 (Identity Service)
 
-## Support
+## Access Points
 
-- 📖 **Documentation**: `docs/` directory
-- 🐛 **Issues**: GitHub Issues
-- 📧 **API Docs**: http://localhost:8000/api/schema/swagger-ui/
+### Direct Access
+- Identity: http://localhost:8001
+- Audit: http://localhost:8002
+- Notification: http://localhost:8003
+- Accounting: http://localhost:8004
+- HR: http://localhost:8005
+- Project: http://localhost:8006
+- Sales: http://localhost:8007
 
-## Quick Start
-
-```bash
-# Clone repository
-git clone <repository-url>
-cd DjangoCRM
-
-# Automated setup
-./setup.sh
-
-# Start development servers
-make dev
-
-# Access applications
-# Backend API: http://localhost:8000
-# Frontend: http://localhost:3000
-# Admin: http://localhost:8000/admin (admin@example.com / admin123)
-```
+### Via Traefik Gateway (if running)
+- API Gateway: http://localhost:8000
+- Traefik Dashboard: http://localhost:8080
 
 ## Prerequisites
 
 - Python 3.8+
-- Node.js 18+
-- PostgreSQL (local or Docker)
+- PostgreSQL 12+
+- Redis
 - Git
-- Docker & Docker Compose (optional, for containerized deployment)
+- Node.js 18+ (for frontend)
 
 ## Installation
 
-### Automated Setup (Recommended)
+### Automated Setup
 
 The setup script handles the entire installation process:
 
@@ -106,149 +106,124 @@ The setup script handles the entire installation process:
 ./setup.sh
 ```
 
-This creates virtual environments, installs dependencies, sets up the database, runs migrations, creates user groups, generates sample data, and creates a superuser.
-
-#### Setup Script Flags
-- `--backend-only`: Setup only the backend components
-- `--frontend-only`: Setup only the frontend components
-- `--docker`: Initialize Docker environment instead of local setup
-- `--help`: Display usage information
-
-#### Advanced Setup Options
-For more control, use the Django management command directly:
-
-```bash
-cd backend
-python manage.py setup_project [options]
-```
-
-**Available options:**
-- `--skip-sample-data`: Skip sample data generation
-- `--production`: Production mode (skips sample data and superuser)
-- `--skip-db-setup`: Skip database creation if it already exists
-
 ### Manual Setup
 
-For custom installations:
-
-#### Backend
+#### Database Setup
 ```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp env.example .env
-# Edit .env
-python manage.py migrate
-python manage.py setup_groups
-python manage.py createsuperuser
+# Setup PostgreSQL databases and user
+sudo -u postgres createuser django_microservices
+sudo -u postgres psql -c "ALTER USER django_microservices WITH PASSWORD 'your_password';"
+
+# Create databases
+sudo -u postgres createdb saascrm_db -O django_microservices
+sudo -u postgres createdb identity_db -O django_microservices
+sudo -u postgres createdb audit_db -O django_microservices
+sudo -u postgres createdb notification_db -O django_microservices
+sudo -u postgres createdb accounting_db -O django_microservices
+sudo -u postgres createdb hr_db -O django_microservices
+sudo -u postgres createdb project_db -O django_microservices
+sudo -u postgres createdb sales_db -O django_microservices
 ```
 
-#### Frontend
+#### Individual Services
 ```bash
-cd frontend
-npm install
-cp .env.example .env.local
-# Edit .env.local
-npm run setup
+cd services/identity-service
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your database credentials
+python manage.py migrate
 ```
 
 ## Configuration
 
 ### Environment Variables
 
-#### Backend (.env)
-| Variable | Description | Default |
+Each service has its own `.env` file in `services/[service-name]/.env`:
+
+| Variable | Description | Example |
 |----------|-------------|---------|
 | SECRET_KEY | Django secret key | Required |
-| DEBUG | Debug mode | True |
-| ALLOWED_HOSTS | Allowed domains | localhost,127.0.0.1 |
-| DB_NAME | Database name | saascrm_db |
-| DB_USER | Database user | saascrm_user |
+| DEBUG | Debug mode | True/False |
+| ALLOWED_HOSTS | Allowed domains | localhost |
+| DB_NAME | Database name | identity_db |
+| DB_USER | Database user | django_microservices |
 | DB_PASSWORD | Database password | Required |
 | DB_HOST | Database host | localhost |
 | DB_PORT | Database port | 5432 |
-| MULTI_TENANCY_ENABLED | Enable tenant isolation | False |
 
-#### Frontend (.env.local)
+### Frontend (.env.local)
 | Variable | Description | Default |
 |----------|-------------|---------|
-| NEXT_PUBLIC_API_URL | Backend API URL | http://localhost:8000/api |
-| NEXT_PUBLIC_APP_ENV | Environment | development |
-
-### Database Setup
-
-#### Docker (Recommended)
-```bash
-docker-compose up -d db
-```
-
-#### Local PostgreSQL
-```bash
-sudo -u postgres createuser saascrm_user
-sudo -u postgres createdb saascrm_db -O saascrm_user
-sudo -u postgres psql -c "ALTER USER saascrm_user PASSWORD 'saascrm_password';"
-```
+| NEXT_PUBLIC_API_URL | Backend API URL | http://localhost:8000 |
 
 ## Development
 
-### Setup Differences: Local vs Docker
+### Starting Services
 
-| Feature | Local Development | Docker Development |
-|---------|------------------|-------------------|
-| Database | Local PostgreSQL | Docker container |
-| Groups Created | Yes | Yes |
-| Sample Data | Yes (development) | No (production mode) |
-| Superuser | Yes | No |
-| Virtual Environment | Required | Not needed |
-| Port Access | Direct (8000, 3000) | Through containers |
-
-### Starting Servers
 ```bash
-make dev          # Both backend and frontend
-make dev-backend  # Backend only (http://localhost:8000)
-make dev-frontend # Frontend only (http://localhost:3000)
+# All services
+./start-local-services.sh
+
+# Single service (manual)
+cd services/identity-service
+source venv/bin/activate
+nohup python manage.py runserver 0.0.0.0:8001 > ../../services/logs/identity-service.log 2>&1 &
 ```
 
-### Utility Commands
+### Monitoring
+
 ```bash
-make env-check    # Validate environment configuration
-make db-backup    # Create database backup
-make db-restore   # Restore from latest backup
-make shell        # Open Django shell
-make dbshell      # Open database shell
+# Check all services
+./check-services.sh
+
+# View all logs
+./view-logs.sh all
+
+# View specific service logs
+./view-logs.sh identity-service
 ```
 
-### Health Monitoring
-```bash
-# API health check
-curl http://localhost:8000/api/health/
+### Service Process Management
 
-# Docker health status
-docker ps
+```bash
+# Check running processes
+ps aux | grep 'python manage.py runserver'
+
+# Check specific service PID
+cat services/logs/identity-service.pid
+
+# Stop specific service
+kill $(cat services/logs/identity-service.pid)
 ```
 
 ### Project Structure
 ```
 DjangoCRM/
-├── backend/          # Django REST API
-│   ├── accounts/     # Authentication & tenants
-│   ├── project/      # CRM models & views
-│   └── saasCRM/      # Settings & URLs
+├── services/          # 7 Microservices
+│   ├── identity-service/
+│   ├── audit-service/
+│   ├── notification-service/
+│   ├── accounting-service/
+│   ├── hr-service/
+│   ├── project-service/
+│   └── sales-service/
+├── utils/            # Setup & utility scripts
+├── docs/             # Documentation
 ├── frontend/         # Next.js application
-│   └── src/
-│       ├── app/      # App router pages
-│       ├── components/ # React components
-│       └── api/      # API client
-├── docker-compose.yml
-├── Makefile          # Development commands
-└── setup.sh          # Automated setup
+├── start-local-services.sh
+├── stop-local-services.sh
+├── check-services.sh
+└── view-logs.sh
 ```
 
 ### Code Quality
+
 ```bash
-# Backend
-cd backend
+# Backend (per service)
+cd services/identity-service
+source venv/bin/activate
 python manage.py check
 python manage.py test
 
@@ -261,195 +236,122 @@ npx tsc --noEmit
 ## Testing
 
 ### Running Tests
+
 ```bash
-make test         # All tests
-make test-backend # Backend only
-make test-frontend # Frontend only
+# Individual service
+cd services/identity-service
+source venv/bin/activate
+python manage.py test
+
+# All services (loop)
+for service in services/*-service; do
+  cd $service
+  source venv/bin/activate
+  python manage.py test
+  cd ../..
+done
 ```
 
-### Test Coverage
-- Backend: 48+ tests covering API, models, permissions
-- Frontend: Linting and TypeScript checking
-- Integration: API contract testing
+### Health Checks
 
-### Manual Testing
-- API Docs: http://localhost:8000/docs/
-- Swagger UI: http://localhost:8000/api/schema/swagger-ui/
-- Admin Interface: http://localhost:8000/admin/
+```bash
+# All services
+./check-services.sh
+
+# Individual service
+curl http://localhost:8001/api/v1/health/
+```
 
 ## Deployment
 
-### Docker Deployment
+### Local Development
 ```bash
-make docker-up
-# Services: Backend (8000), Frontend (3000), PostgreSQL (5432)
+# Start all services
+./start-local-services.sh
+
+# Optional: Start Traefik gateway
+./start-traefik.sh
 ```
 
 ### Production Setup
-1. Set MULTI_TENANCY_ENABLED=True
-2. Configure subdomain routing
-3. Build frontend: make build-frontend
-4. Collect static files: python manage.py collectstatic
-5. Use production server (gunicorn/uwsgi)
-
-### CI/CD
-Automated deployments via GitHub Actions:
-- main branch → Production
-- dev branch → Staging
-- Pull requests → CI testing
+1. Set DEBUG=False in all .env files
+2. Configure ALLOWED_HOSTS
+3. Use production server (gunicorn)
+4. Set up reverse proxy (nginx/traefik)
+5. Configure SSL certificates
+6. Set up PostgreSQL cluster
+7. Configure Redis cluster
 
 ## API Usage
 
 ### Authentication
 ```bash
 # Login
-curl -X POST http://localhost:8000/api/login/ \
+curl -X POST http://localhost:8001/api/v1/auth/login/ \
   -H "Content-Type: application/json" \
-  -d '{"email": "admin@example.com", "password": "admin123"}'
+  -d '{"email": "user@example.com", "password": "password"}'
 
 # Authenticated request
 curl -H "Authorization: Token YOUR_TOKEN" \
-  http://localhost:8000/api/clients/
+  http://localhost:8001/api/v1/users/
 ```
-
-### URL Structure
-- **Projects**: Use slug-based URLs (e.g., `/api/projects/my-project-name/`)
-- **Clients**: Use slug-based URLs (e.g., `/api/clients/client-name/`)
-- **Users**: Use slug-based URLs (e.g., `/api/users/john-doe/`)
-- **Other entities**: Use ID-based URLs (e.g., `/api/tasks/123/`)
-
-Slugs are auto-generated from names but can be customized for better readability.
 
 ### Key Endpoints
-| Endpoint | Methods | Description |
-|----------|---------|-------------|
-| /api/login/ | POST | Authentication |
-| /api/signup/ | POST | User registration |
-| /api/tenants/ | GET, POST | Tenant management |
-| /api/users/{slug}/ | GET, PUT, DELETE | User detail (slug-based) |
-| /api/clients/{slug}/ | GET, PUT, DELETE | Client detail (slug-based) |
-| /api/clients/ | GET, POST | Client list |
-| /api/projects/{slug}/ | GET, PUT, DELETE | Project detail (slug-based) |
-| /api/projects/ | GET, POST | Project list |
-| /api/tasks/ | GET, POST, PUT, DELETE | Task management |
-| /api/invoices/ | GET, POST, PUT, DELETE | Invoice processing |
-| /api/accounts/audit-logs/ | GET | Audit log access (admin only) |
 
-### Documentation
-- Interactive API Docs: http://localhost:8000/docs/
-- Swagger UI: http://localhost:8000/api/schema/swagger-ui/
-- OpenAPI Schema: http://localhost:8000/api/schema/
-
-For detailed API documentation, see backend/API_DOCUMENTATION.md.
-
-## Progress Tracking
-
-DjangoCRM includes sophisticated automated progress tracking that provides real-time visibility into project completion across all levels of the hierarchy.
-
-### Progress Hierarchy
-
-#### Task Level Progress
-Tasks have progress based on their current status:
-- **To Do**: 0% (not started)
-- **In Progress**: 25% (work has begun)
-- **In Review**: 50% (work completed, awaiting review)
-- **Testing**: 75% (in testing phase)
-- **Done**: 100% (completed)
-
-#### Sprint Level Progress
-Sprints use binary progress calculation:
-- **0%**: Sprint is planned or active (not yet completed)
-- **100%**: Sprint status is "completed"
-
-#### Milestone Level Progress
-Milestone progress = (Completed Sprints / Total Sprints) × 100
-
-#### Project Level Progress
-Project progress = Average of all milestone progress values
-
-### Automatic Updates
-
-Progress values update automatically through Django signals:
-- Task status changes trigger sprint completion checks
-- Sprint completions update milestone progress
-- Milestone changes update project progress
-- All updates cascade upward in real-time
-
-### Manual Refresh
-
-For data consistency, use the manual refresh endpoint:
-```bash
-curl -X POST http://localhost:8000/api/projects/{id}/refresh_project_progress/ \
-  -H "Authorization: Token YOUR_TOKEN"
-```
-
-### Frontend Integration
-
-Progress data is available in all API responses. Frontend applications can:
-
-```javascript
-// Fetch project with progress
-const project = await fetch('/api/projects/1/');
-console.log(`Project Progress: ${project.progress}%`);
-
-// Display progress bars
-<ProgressBar value={project.progress} max={100} />
-
-// Real-time updates
-setInterval(() => {
-  fetch('/api/projects/1/').then(r => r.json())
-    .then(data => updateProgress(data.progress));
-}, 30000);
-```
-
-### Benefits
-
-- **Real-time Visibility**: Progress updates automatically as work progresses
-- **Hierarchical Tracking**: Understand progress at task, sprint, milestone, and project levels
-- **Data Integrity**: Signals ensure progress stays synchronized
-- **Performance**: Efficient database queries for bulk updates
+| Service | Endpoints |
+|---------|-----------|
+| Identity | /api/v1/auth/, /api/v1/users/, /api/v1/tenants/ |
+| Audit | /api/v1/logs/, /api/v1/events/ |
+| Notification | /api/v1/notifications/ |
+| Accounting | /api/v1/invoices/, /api/v1/payments/ |
+| HR | /api/v1/leaves/, /api/v1/employees/ |
+| Project | /api/v1/projects/, /api/v1/tasks/, /api/v1/milestones/ |
+| Sales | /api/v1/leads/, /api/v1/clients/, /api/v1/deals/ |
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Backend Won't Start**
-- Check database connection and credentials
-- Ensure port 8000 is available
-- Verify Python dependencies: pip install -r requirements.txt
+**Service Won't Start**
+- Check database connection: `psql -U django_microservices -d identity_db`
+- Verify port is available: `netstat -tulpn | grep :8001`
+- Check logs: `tail -f services/logs/identity-service.log`
+- Restart service: `kill $(cat services/logs/identity-service.pid)`
 
-**Frontend Won't Start**
-- Confirm port 3000 is free
-- Check NEXT_PUBLIC_API_URL in .env.local
-- Reinstall dependencies: npm install
+**Database Connection Issues**
+- Check PostgreSQL: `sudo systemctl status postgresql`
+- Test connection: `psql -U django_microservices -d identity_db -c "SELECT 1;"`
+- Run migrations: `python manage.py migrate`
 
-**Tests Failing**
-- Ensure database is running
-- Check environment variables
-- Run setup: ./setup.sh
-
-**Docker Issues**
-- Verify Docker daemon is running
-- Check port conflicts in docker-compose.yml
-- Clear cache: docker system prune
+**Redis Connection Issues**
+- Check Redis: `sudo systemctl status redis`
+- Test connection: `redis-cli ping`
+- Restart Redis: `sudo systemctl restart redis`
 
 ### Useful Commands
+
 ```bash
-# Reset database
-make docker-down
-docker volume rm djangocrm_postgres_data
-make docker-up
+# Restart all services
+./stop-local-services.sh
+./start-local-services.sh
 
-# Clear caches
-make clean
+# Check PostgreSQL
+sudo systemctl status postgresql
 
-# Check environment
-cd backend && python check_env.py
+# Check Redis
+sudo systemctl status redis
+
+# View all service logs
+tail -f services/logs/*.log
+
+# Kill stuck processes
+pkill -9 -f 'python manage.py runserver'
 ```
 
 ---
 
-**Default Credentials**
-- Superuser: admin@example.com / admin123
-- API Base: http://localhost:8000/api
-- Frontend: http://localhost:3000
+## Support
+
+- 📖 **Documentation**: `docs/` directory
+- 🐛 **Issues**: GitHub Issues
+- 📚 **API Docs**: Individual service documentation
