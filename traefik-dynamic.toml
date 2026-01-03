@@ -1,74 +1,96 @@
-# Traefik Dynamic Configuration
-# Service routers and middlewares for local microservices
+# Traefik v3 Dynamic Configuration
 
-# Identity Service
+# Middlewares - ReplacePathRegex to rewrite paths correctly
+# /api/v1/identity/health/ -> /api/v1/health/
+[http.middlewares.identity-rewrite.replacePathRegex]
+  regex = "^/api/v1/identity(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.audit-rewrite.replacePathRegex]
+  regex = "^/api/v1/audit(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.notification-rewrite.replacePathRegex]
+  regex = "^/api/v1/notification(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.accounting-rewrite.replacePathRegex]
+  regex = "^/api/v1/accounting(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.hr-rewrite.replacePathRegex]
+  regex = "^/api/v1/hr(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.project-rewrite.replacePathRegex]
+  regex = "^/api/v1/project(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.sales-rewrite.replacePathRegex]
+  regex = "^/api/v1/sales(/.*)$$"
+  replacement = "/api/v1$1"
+
+# Routers
 [http.routers.identity]
   rule = "PathPrefix(`/api/v1/identity`)"
   service = "identity"
+  middlewares = ["identity-rewrite"]
 
-[http.services.identity]
-  [[http.services.identity.loadBalancer.servers]]
-    url = "http://localhost:8001"
-
-# Audit Service
 [http.routers.audit]
   rule = "PathPrefix(`/api/v1/audit`)"
   service = "audit"
+  middlewares = ["audit-rewrite"]
 
-[http.services.audit]
-  [[http.services.audit.loadBalancer.servers]]
-    url = "http://localhost:8002"
-
-# Notification Service
 [http.routers.notification]
   rule = "PathPrefix(`/api/v1/notification`)"
   service = "notification"
+  middlewares = ["notification-rewrite"]
 
-[http.services.notification]
-  [[http.services.notification.loadBalancer.servers]]
-    url = "http://localhost:8003"
-
-# Accounting Service
 [http.routers.accounting]
   rule = "PathPrefix(`/api/v1/accounting`)"
   service = "accounting"
+  middlewares = ["accounting-rewrite"]
 
-[http.services.accounting]
-  [[http.services.accounting.loadBalancer.servers]]
-    url = "http://localhost:8004"
-
-# HR Service
 [http.routers.hr]
   rule = "PathPrefix(`/api/v1/hr`)"
   service = "hr"
+  middlewares = ["hr-rewrite"]
 
-[http.services.hr]
-  [[http.services.hr.loadBalancer.servers]]
-    url = "http://localhost:8005"
-
-# Project Service
 [http.routers.project]
   rule = "PathPrefix(`/api/v1/project`)"
   service = "project"
+  middlewares = ["project-rewrite"]
 
-[http.services.project]
-  [[http.services.project.loadBalancer.servers]]
-    url = "http://localhost:8006"
-
-# Sales Service
 [http.routers.sales]
   rule = "PathPrefix(`/api/v1/sales`)"
   service = "sales"
+  middlewares = ["sales-rewrite"]
 
-[http.services.sales]
+# Services
+[http.services.identity.loadBalancer]
+  [[http.services.identity.loadBalancer.servers]]
+    url = "http://localhost:8001"
+
+[http.services.audit.loadBalancer]
+  [[http.services.audit.loadBalancer.servers]]
+    url = "http://localhost:8002"
+
+[http.services.notification.loadBalancer]
+  [[http.services.notification.loadBalancer.servers]]
+    url = "http://localhost:8003"
+
+[http.services.accounting.loadBalancer]
+  [[http.services.accounting.loadBalancer.servers]]
+    url = "http://localhost:8004"
+
+[http.services.hr.loadBalancer]
+  [[http.services.hr.loadBalancer.servers]]
+    url = "http://localhost:8005"
+
+[http.services.project.loadBalancer]
+  [[http.services.project.loadBalancer.servers]]
+    url = "http://localhost:8006"
+
+[http.services.sales.loadBalancer]
   [[http.services.sales.loadBalancer.servers]]
     url = "http://localhost:8007"
-
-# Health Check Router
-[http.routers.health]
-  rule = "PathPrefix(`/health`)"
-  service = "health-all"
-
-[http.services.health-all]
-  [[http.services.health-all.loadBalancer.servers]]
-    url = "http://localhost:8001"  # Default to identity service
