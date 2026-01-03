@@ -1,0 +1,29 @@
+# Traefik Static Configuration for Local Development
+# This configuration routes requests to locally running microservices
+
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+# Entry Points
+[entryPoints]
+  [entryPoints.web]
+    address = ":8000"
+
+  [entryPoints.traefik]
+    address = ":8080"
+
+# API Dashboard
+[api]
+  dashboard = true
+  insecure = true
+
+# Log Configuration
+[log]
+  level = "INFO"
+
+# Static File Providers
+[providers]
+  [providers.file]
+    filename = "traefik-dynamic.toml"
+    watch = true

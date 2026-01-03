@@ -1,0 +1,74 @@
+# Traefik Dynamic Configuration
+# Service routers and middlewares for local microservices
+
+# Identity Service
+[http.routers.identity]
+  rule = "PathPrefix(`/api/v1/identity`)"
+  service = "identity"
+
+[http.services.identity]
+  [[http.services.identity.loadBalancer.servers]]
+    url = "http://localhost:8001"
+
+# Audit Service
+[http.routers.audit]
+  rule = "PathPrefix(`/api/v1/audit`)"
+  service = "audit"
+
+[http.services.audit]
+  [[http.services.audit.loadBalancer.servers]]
+    url = "http://localhost:8002"
+
+# Notification Service
+[http.routers.notification]
+  rule = "PathPrefix(`/api/v1/notification`)"
+  service = "notification"
+
+[http.services.notification]
+  [[http.services.notification.loadBalancer.servers]]
+    url = "http://localhost:8003"
+
+# Accounting Service
+[http.routers.accounting]
+  rule = "PathPrefix(`/api/v1/accounting`)"
+  service = "accounting"
+
+[http.services.accounting]
+  [[http.services.accounting.loadBalancer.servers]]
+    url = "http://localhost:8004"
+
+# HR Service
+[http.routers.hr]
+  rule = "PathPrefix(`/api/v1/hr`)"
+  service = "hr"
+
+[http.services.hr]
+  [[http.services.hr.loadBalancer.servers]]
+    url = "http://localhost:8005"
+
+# Project Service
+[http.routers.project]
+  rule = "PathPrefix(`/api/v1/project`)"
+  service = "project"
+
+[http.services.project]
+  [[http.services.project.loadBalancer.servers]]
+    url = "http://localhost:8006"
+
+# Sales Service
+[http.routers.sales]
+  rule = "PathPrefix(`/api/v1/sales`)"
+  service = "sales"
+
+[http.services.sales]
+  [[http.services.sales.loadBalancer.servers]]
+    url = "http://localhost:8007"
+
+# Health Check Router
+[http.routers.health]
+  rule = "PathPrefix(`/health`)"
+  service = "health-all"
+
+[http.services.health-all]
+  [[http.services.health-all.loadBalancer.servers]]
+    url = "http://localhost:8001"  # Default to identity service
