@@ -1,7 +1,9 @@
 # Traefik v3 Dynamic Configuration
 
-# Middlewares - ReplacePathRegex to rewrite paths correctly
+# ==============================================
+# API Middlewares - ReplacePathRegex for API routing
 # /api/v1/identity/health/ -> /api/v1/health/
+# ==============================================
 [http.middlewares.identity-rewrite.replacePathRegex]
   regex = "^/api/v1/identity(/.*)$$"
   replacement = "/api/v1$1"
@@ -30,7 +32,42 @@
   regex = "^/api/v1/sales(/.*)$$"
   replacement = "/api/v1$1"
 
-# Routers
+# ==============================================
+# Admin Routers - Subdomain-based routing for admin interfaces
+# Provides better security and isolation from API
+# NO PATH REWRITING - Admin stays at /admin/
+# ==============================================
+[http.routers.admin-identity]
+  rule = "Host(`admin.identity.localhost`)"
+  service = "identity"
+
+[http.routers.admin-audit]
+  rule = "Host(`admin.audit.localhost`)"
+  service = "audit"
+
+[http.routers.admin-notification]
+  rule = "Host(`admin.notification.localhost`)"
+  service = "notification"
+
+[http.routers.admin-accounting]
+  rule = "Host(`admin.accounting.localhost`)"
+  service = "accounting"
+
+[http.routers.admin-hr]
+  rule = "Host(`admin.hr.localhost`)"
+  service = "hr"
+
+[http.routers.admin-project]
+  rule = "Host(`admin.project.localhost`)"
+  service = "project"
+
+[http.routers.admin-sales]
+  rule = "Host(`admin.sales.localhost`)"
+  service = "sales"
+
+# ==============================================
+# API Routers - Path-based routing for API endpoints
+# ==============================================
 [http.routers.identity]
   rule = "PathPrefix(`/api/v1/identity`)"
   service = "identity"
