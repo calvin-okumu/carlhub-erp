@@ -1,0 +1,25 @@
+{% load static %}
+
+Your leave request has been approved
+
+Hello {{ employee.first_name }},
+
+Great news! Your leave request has been approved.
+
+Leave Details:
+- Type: {{ leave_request.get_leave_type_display }}
+- Duration: {{ leave_request.start_date }} to {{ leave_request.end_date }} ({{ leave_request.days_requested }} days)
+- Reason: {{ leave_request.reason }}
+- Approved by: {{ approver.get_full_name }}
+{% if leave_request.approval_notes %}
+- Notes: {{ leave_request.approval_notes }}
+{% endif %}
+
+Please ensure you update your out-of-office settings and hand over any pending tasks to your colleagues before your leave begins.
+
+View Leave Details: {{ leave_details_url }}
+
+This is an automated notification from {{ site_name }}. If you have any questions, please contact your manager or our support team at {{ support_email }}.
+
+Best regards,
+The {{ site_name }} Team

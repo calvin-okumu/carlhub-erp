@@ -1,112 +1,33 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
-
-# Django stuff:
-*.log
-logs/
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# celery beat schedule file
-celerybeat-schedule
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
 venv/
+env/
+.venv/
 ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
-.spyderproject
-.spyproject
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+/static/
+/media/
 
-# Rope project settings
-.ropeproject
+# Environment
+.env.local
+.env.*.local
+.env.production
+*.key
+*.pem
 
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
@@ -115,29 +36,19 @@ dmypy.json
 
 # OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Frontend
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
 
-# Static files
-staticfiles/README_UPDATED.md
+# Docker (we're not using Docker)
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile*
+.dockerignore
 
-# Django
-*.pid
-
-# Agents
-AGENTS.md
-#employee Documents
-backend/employee_documents/
-
-# Temporary backup
-.tmp_backup/
+# Traefik
+acme.json
+traefik.db

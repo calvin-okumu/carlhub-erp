@@ -2,8 +2,9 @@
 Views for notification service.
 """
 from rest_framework import viewsets, filters, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
@@ -13,6 +14,7 @@ from .serializers import (
     NotificationCreateSerializer,
     NotificationUpdateSerializer,
 )
+from notification import EmailService
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -128,3 +130,132 @@ class NotificationViewSet(viewsets.ModelViewSet):
         ).delete()[0]
         
         return Response({'deleted': count})
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_invitation_email(request):
+    """Send invitation email to new user"""
+    email = request.data.get('email')
+    tenant_name = request.data.get('tenant_name')
+    role = request.data.get('role')
+    token = request.data.get('token')
+    expires_at = request.data.get('expires_at')
+    is_resend = request.data.get('is_resend', False)
+    
+    try:
+        EmailService.send_invitation_email(email, tenant_name, role, token, expires_at, is_resend)
+        return Response(
+            {'message': 'Invitation email sent successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_welcome_email(request):
+    """Send welcome email to new user"""
+    user_data = request.data.get('user')
+    tenant_data = request.data.get('tenant')
+    
+    try:
+        EmailService.send_welcome_email(user_data, tenant_data)
+        return Response(
+            {'message': 'Welcome email sent successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_password_reset_email(request):
+    """Send password reset email"""
+    user_data = request.data.get('user')
+    reset_url = request.data.get('reset_url')
+    
+    try:
+        EmailService.send_password_reset_email(user_data, reset_url)
+        return Response(
+            {'message': 'Password reset email sent successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_leave_approved_email(request):
+    """Send leave approval email"""
+    leave_request_data = request.data.get('leave_request')
+    
+    try:
+        EmailService.send_leave_approved_email(leave_request_data)
+        return Response(
+            {'message': 'Leave approved email sent successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_leave_rejected_email(request):
+    """Send leave rejection email"""
+    leave_request_data = request.data.get('leave_request')
+    
+    try:
+        EmailService.send_leave_rejected_email(leave_request_data)
+        return Response(
+            {'message': 'Leave rejected email sent successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_notification_email(request):
+    """Send general notification email"""
+    recipient_email = request.data.get('recipient_email')
+    subject = request.data.get('subject')
+    message = request.data.get('message')
+    html_message = request.data.get('html_message')
+    
+    try:
+        EmailService.send_notification_email(
+            recipient_email,
+            subject,
+            message,
+            html_message
+        )
+        return Response(
+            {'message': 'Notification email sent successfully'},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

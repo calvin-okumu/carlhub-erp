@@ -1,0 +1,25 @@
+{% load static %}
+
+Your leave request has been rejected
+
+Hello {{ employee.first_name }},
+
+Unfortunately, your leave request has been rejected.
+
+Leave Details:
+- Type: {{ leave_request.get_leave_type_display }}
+- Duration: {{ leave_request.start_date }} to {{ leave_request.end_date }} ({{ leave_request.days_requested }} days)
+- Reason: {{ leave_request.reason }}
+- Rejected by: {{ approver.get_full_name }}
+{% if leave_request.approval_notes %}
+- Reason for rejection: {{ leave_request.approval_notes }}
+{% endif %}
+
+If you have any questions about this decision or would like to discuss alternative arrangements, please contact your manager directly.
+
+View Leave Details: {{ leave_details_url }}
+
+This is an automated notification from {{ site_name }}. If you have any questions, please contact your manager or our support team at {{ support_email }}.
+
+Best regards,
+The {{ site_name }} Team

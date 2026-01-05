@@ -23,8 +23,8 @@ class TaskAdmin(admin.ModelAdmin):
 
 @admin.register(Milestone)
 class MilestoneAdmin(admin.ModelAdmin):
-    list_display = ['name', 'project_id', 'due_date', 'status', 'created_at']
+    list_display = ['title', 'project_id', 'due_date', 'status', 'created_at']
     list_filter = ['status', 'created_at']
-    search_fields = ['name']
+    search_fields = ['title']
     readonly_fields = ['id', 'created_at', 'updated_at']
     ordering = ['-created_at']

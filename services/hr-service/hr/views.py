@@ -72,7 +72,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
-        """Approve a leave request"""
+        """Approve a leave request and send email"""
         leave_request = self.get_object()
         
         if leave_request.status not in ['pending_department_manager', 'pending_hr_manager', 'pending_general_manager']:
@@ -84,12 +84,21 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         leave_request.status = 'approved'
         leave_request.save()
         
+        # Send approval email
+        try:
+            from .email_service import EmailService
+            EmailService.send_leave_approved_email(leave_request)
+        except Exception as e:
+            # Log error but don't fail the approval
+            import logging
+            logging.error(f"Failed to send leave approval email: {e}")
+        
         serializer = self.get_serializer(leave_request)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def reject(self, request, pk=None):
-        """Reject a leave request"""
+        """Reject a leave request and send email"""
         leave_request = self.get_object()
         
         if leave_request.status not in ['pending_department_manager', 'pending_hr_manager', 'pending_general_manager']:
@@ -100,6 +109,15 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         
         leave_request.status = 'rejected'
         leave_request.save()
+        
+        # Send rejection email
+        try:
+            from .email_service import EmailService
+            EmailService.send_leave_rejected_email(leave_request)
+        except Exception as e:
+            # Log error but don't fail the rejection
+            import logging
+            logging.error(f"Failed to send leave rejection email: {e}")
         
         serializer = self.get_serializer(leave_request)
         return Response(serializer.data)

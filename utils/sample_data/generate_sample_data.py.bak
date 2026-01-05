@@ -1,0 +1,345 @@
+#!/usr/bin/env python3
+"""
+Generate sample data for all microservices.
+Development tool only - DO NOT USE IN PRODUCTION.
+
+Usage:
+    python utils/sample_data/generate_sample_data.py
+    
+Environment Variables (optional):
+    NUM_TENANTS=3 (default: 3)
+    NUM_USERS=10 (default: 10)
+    NUM_PROJECTS=5 (default: 5)
+    NUM_TASKS=20 (default: 20)
+    NUM_INVOICES=8 (default: 8)
+"""
+import os
+import sys
+import django
+
+# Configure Django settings for each service
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'services.identity-service.identity_service.settings')
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+django.setup()
+
+from django.conf import settings
+from django.utils import timezone
+
+# Import shared factories
+import factories
+
+# Configuration
+NUM_TENANTS = int(os.getenv('NUM_TENANTS', 3))
+NUM_USERS = int(os.getenv('NUM_USERS', 10))
+NUM_PROJECTS = int(os.getenv('NUM_PROJECTS', 5))
+NUM_TASKS = int(os.getenv('NUM_TASKS', 20))
+NUM_INVOICES = int(os.getenv('NUM_INVOICES', 8))
+NUM_LEADS = int(os.getenv('NUM_LEADS', 10))
+NUM_LEAVE_REQUESTS = int(os.getenv('NUM_LEAVE_REQUESTS', 5))
+
+def print_success(msg):
+    print(f"✅ {msg}")
+
+def print_warning(msg):
+    print(f"⚠️  {msg}")
+
+def print_error(msg):
+    print(f"❌ {msg}")
+
+def print_header(msg):
+    print(f"\n{'='*60}")
+    print(f"  {msg}")
+    print(f"{'='*60}\n")
+
+def generate_identity_data():
+    """Generate data for Identity Service."""
+    print_header("Generating Identity Service Data")
+    
+    # Create tenants
+    tenants = []
+    for i in range(NUM_TENANTS):
+        tenant = factories.TenantFactory(
+            name=f"Sample Tenant {i+1}",
+            domain=f"tenant{i+1}.sample.com"
+        )
+        tenants.append(tenant)
+    print_success(f"Created {NUM_TENANTS} tenants")
+    
+    # Create users
+    users = []
+    for i, tenant in enumerate(tenants):
+        # Create tenant owner
+        owner = factories.UserFactory(
+            email=f"owner{i+1}@tenant{i+1}.sample.com",
+            first_name=f"Tenant{i+1}",
+            last_name="Owner",
+        )
+        users.append(owner)
+        
+        # Create regular users
+        for j in range(NUM_USERS // NUM_TENANTS):
+            user = factories.UserFactory(
+                email=f"user{i+1}-{j+1}@tenant{i+1}.sample.com",
+                first_name=f"User{i+1}-{j+1}",
+                last_name="Sample",
+            )
+            users.append(user)
+    print_success(f"Created {len(users)} users ({NUM_USERS // NUM_TENANTS} per tenant)")
+    
+    return tenants, users
+
+
+def generate_project_data(tenants, users):
+    """Generate data for Project Service."""
+    print_header("Generating Project Service Data")
+    
+    # Create clients
+    clients = []
+    for tenant in tenants:
+        for _ in range(2):  # 2 clients per tenant
+            client = factories.ClientFactory(tenant_id=tenant.id)
+            clients.append(client)
+    print_success(f"Created {len(clients)} clients")
+    
+    # Create projects
+    projects = []
+    for i, (tenant, client) in enumerate(zip(tenants, clients)):
+        for _ in range(NUM_PROJECTS // NUM_TENANTS):
+            project = factories.ProjectFactory(
+                tenant_id=tenant.id,
+                client_id=client.id,
+                name=f"Sample Project {i+1}",
+                status="active"
+            )
+            projects.append(project)
+    print_success(f"Created {len(projects)} projects")
+    
+    # Create milestones
+    milestones = []
+    for project in projects:
+        for _ in range(2):  # 2 milestones per project
+            milestone = factories.MilestoneFactory(
+                project_id=project.id,
+                tenant_id=project.tenant_id
+            )
+            milestones.append(milestone)
+    print_success(f"Created {len(milestones)} milestones")
+    
+    # Create tasks
+    tasks = []
+    for milestone in milestones:
+        for _ in range(NUM_TASKS // len(milestones)):
+            task = factories.TaskFactory(
+                milestone_id=milestone.id,
+                tenant_id=milestone.tenant_id,
+                project_id=projects[0].id  # Link to first project
+            )
+            tasks.append(task)
+    print_success(f"Created {len(tasks)} tasks")
+    
+    return clients, projects, milestones, tasks
+
+
+def generate_hr_data(tenants, users):
+    """Generate data for HR Service."""
+    print_header("Generating HR Service Data")
+    
+    # Create employees
+    employees = []
+    for i, (tenant, user) in enumerate(zip(tenants, users)):
+        employee = factories.EmployeeFactory(
+            tenant_id=tenant.id,
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name
+        )
+        employees.append(employee)
+    print_success(f"Created {len(employees)} employees")
+    
+    # Create leave balances
+    leave_balances = []
+    for employee in employees:
+        for year in [2024, 2025, 2026]:
+            balance = factories.LeaveBalanceFactory(
+                employee_id=employee.id,
+                tenant_id=employee.tenant_id,
+                year=year
+            )
+            leave_balances.append(balance)
+    print_success(f"Created {len(leave_balances)} leave balances")
+    
+    # Create leave requests
+    leave_requests = []
+    for employee in employees[:NUM_LEAVE_REQUESTS]:
+        request = factories.LeaveRequestFactory(
+            employee_id=employee.id,
+            tenant_id=employee.tenant_id
+        )
+        leave_requests.append(request)
+    print_success(f"Created {len(leave_requests)} leave requests")
+    
+    return employees, leave_balances, leave_requests
+
+
+def generate_accounting_data(tenants, projects):
+    """Generate data for Accounting Service."""
+    print_header("Generating Accounting Service Data")
+    
+    # Create invoices
+    invoices = []
+    for tenant in tenants:
+        for _ in range(NUM_INVOICES // NUM_TENANTS):
+            if projects:
+                invoice = factories.InvoiceFactory(
+                    tenant_id=tenant.id,
+                    project_id=projects[0].id
+                )
+            else:
+                invoice = factories.InvoiceFactory(tenant_id=tenant.id)
+            invoices.append(invoice)
+    print_success(f"Created {len(invoices)} invoices")
+    
+    # Create payments
+    payments = []
+    for invoice in invoices:
+        if invoice.status == "paid":
+            payment = factories.PaymentFactory(
+                tenant_id=invoice.tenant_id,
+                invoice_id=invoice.id,
+                amount=invoice.amount
+            )
+            payments.append(payment)
+    print_success(f"Created {len(payments)} payments")
+    
+    return invoices, payments
+
+
+def generate_sales_data(tenants):
+    """Generate data for Sales Service."""
+    print_header("Generating Sales Service Data")
+    
+    # Create contacts
+    contacts = []
+    for tenant in tenants:
+        for _ in range(NUM_LEADS // NUM_TENANTS):
+            contact = factories.ContactFactory(tenant_id=tenant.id)
+            contacts.append(contact)
+    print_success(f"Created {len(contacts)} contacts")
+    
+    # Create leads
+    leads = []
+    for i, contact in enumerate(contacts):
+        lead = factories.LeadFactory(
+            tenant_id=contact.tenant_id,
+            contact_id=contact.id
+        )
+        leads.append(lead)
+    print_success(f"Created {len(leads)} leads")
+    
+    # Create deals
+    deals = []
+    for i, lead in enumerate(leads):
+        if i < len(leads) // 2:  # Half of leads become deals
+            deal = factories.DealFactory(
+                tenant_id=lead.tenant_id,
+                lead_id=lead.id,
+                status="open"
+            )
+            deals.append(deal)
+    print_success(f"Created {len(deals)} deals")
+    
+    return contacts, leads, deals
+
+
+def generate_audit_data(tenants, users):
+    """Generate data for Audit Service."""
+    print_header("Generating Audit Service Data")
+    
+    # Create audit logs
+    audit_logs = []
+    actions = [
+        "user_login", "user_logout", "project_created", "project_updated",
+        "member_invited", "member_joined", "invoice_created", "leave_requested",
+        "leave_approved", "leave_rejected"
+    ]
+    
+    for tenant in tenants:
+        for user in users[:2]:  # First 2 users per tenant
+            for action in actions:
+                audit_log = factories.AuditLogFactory(
+                    tenant_id=tenant.id,
+                    user_id=user.id,
+                    action=action
+                )
+                audit_logs.append(audit_log)
+    print_success(f"Created {len(audit_logs)} audit logs")
+    
+    return audit_logs
+
+
+def generate_notification_data(tenants, users):
+    """Generate data for Notification Service."""
+    print_header("Skipping Notification Service Data")
+    print_warning("Notification service does not need sample data")
+    print_warning("Notifications are created dynamically based on user actions")
+    
+    return []  # Return empty list - no sample data needed
+
+
+def main():
+    """Main function to generate all sample data."""
+    print_header("🚀 Generating Sample Data for Microservices")
+    print(f"⚙️  Configuration:")
+    print(f"   - Tenants: {NUM_TENANTS}")
+    print(f"   - Users: {NUM_USERS}")
+    print(f"   - Projects: {NUM_PROJECTS}")
+    print(f"   - Tasks: {NUM_TASKS}")
+    print(f"   - Invoices: {NUM_INVOICES}")
+    print(f"   - Leads: {NUM_LEADS}")
+    print(f"   - Leave Requests: {NUM_LEAVE_REQUESTS}")
+    
+    if not settings.DEBUG:
+        print_warning("DEBUG is False. Sample data should only be generated in development.")
+        response = input("Continue anyway? (y/N): ")
+        if response.lower() != 'y':
+            print("Aborting.")
+            return
+    
+    try:
+        # Generate data for each service
+        tenants, users = generate_identity_data()
+        clients, projects, milestones, tasks = generate_project_data(tenants, users)
+        employees, leave_balances, leave_requests = generate_hr_data(tenants, users)
+        invoices, payments = generate_accounting_data(tenants, projects)
+        contacts, leads, deals = generate_sales_data(tenants)
+        audit_logs = generate_audit_data(tenants, users)
+        notifications = generate_notification_data(tenants, users)
+        
+        print_header("✅ Sample Data Generated Successfully!")
+        
+        print(f"\n📊 Summary:")
+        print(f"   Identity:   {len(tenants)} tenants, {len(users)} users")
+        print(f"   Project:    {len(projects)} projects, {len(tasks)} tasks")
+        print(f"   HR:         {len(employees)} employees, {len(leave_requests)} leave requests")
+        print(f"   Accounting: {len(invoices)} invoices, {len(payments)} payments")
+        print(f"   Sales:      {len(leads)} leads, {len(deals)} deals")
+        print(f"   Audit:       {len(audit_logs)} audit logs")
+        print(f"   Notification: Skipped (dynamic only)")
+        print(f"\n🌐 Access Points:")
+        print(f"   Identity:   http://localhost:8001")
+        print(f"   Project:    http://localhost:8006")
+        print(f"   HR:         http://localhost:8005")
+        print(f"   Accounting: http://localhost:8004")
+        print(f"   Sales:      http://localhost:8007")
+        print(f"   Audit:       http://localhost:8002")
+        print(f"   Notification: http://localhost:8003")
+        
+    except Exception as e:
+        print_error(f"Error generating sample data: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()

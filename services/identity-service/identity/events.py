@@ -10,7 +10,10 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth import user_logged_in, user_logged_out
 from .models import User, Tenant
-from backend.shared.event_bus import event_bus, BaseEvent
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from shared.event_bus import event_bus, BaseEvent
 
 logger = logging.getLogger(__name__)
 

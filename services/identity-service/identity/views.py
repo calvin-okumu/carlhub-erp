@@ -1,7 +1,7 @@
 """
 Identity Service Views
 
-This module contains API views for the Identity Service microservice.
+This module contains API views for Identity Service microservice.
 """
 
 import uuid
@@ -14,6 +14,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from .jwt_tokens import CustomRefreshToken
 from .models import User, Tenant, RefreshToken as RefreshTokenModel, UserSession
 from .serializers import (
     UserSerializer, UserCreateSerializer, UserUpdateSerializer,
@@ -22,6 +23,7 @@ from .serializers import (
     ChangePasswordSerializer, PasswordResetSerializer,
     PasswordResetConfirmSerializer
 )
+from .email_service import EmailService, EmailError
 
 
 class TenantListCreateView(generics.ListCreateAPIView):
@@ -116,8 +118,8 @@ class LoginView(APIView):
         if serializer.is_valid():
             user = serializer.validated_data['user']
 
-            # Create JWT tokens
-            refresh = RefreshToken.for_user(user)
+            # Create JWT tokens with custom claims
+            refresh = CustomRefreshToken.for_user(user)
             access_token = str(refresh.access_token)
 
             # Store refresh token in database
@@ -301,12 +303,40 @@ def password_reset(request):
     """Request password reset"""
     serializer = PasswordResetSerializer(data=request.data)
     if serializer.is_valid():
-        # In a real implementation, send email with reset token
-        # For now, just return success
-        return Response(
-            {'message': 'Password reset email sent'},
-            status=status.HTTP_200_OK
-        )
+        email = serializer.validated_data.get('email')
+        
+        try:
+            # Get user by email
+            from .models import User
+            user = User.objects.get(email=email, is_active=True)
+            
+            # Generate reset token (in real implementation)
+            reset_token = str(uuid.uuid4())
+            reset_url = f"{settings.FRONTEND_URL}/reset-password/?token={reset_token}"
+            
+            # Send email
+            EmailService.send_password_reset_email(user, reset_url)
+            
+            return Response(
+                {'message': 'Password reset email sent'},
+                status=status.HTTP_200_OK
+            )
+        except User.DoesNotExist:
+            # Don't reveal if email exists or not for security
+            return Response(
+                {'message': 'Password reset email sent'},
+                status=status.HTTP_200_OK
+            )
+        except EmailError as e:
+            return Response(
+                {'error': e.user_message},
+                status=e.status_code
+            )
+        except Exception as e:
+            return Response(
+                {'error': 'Failed to send password reset email'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

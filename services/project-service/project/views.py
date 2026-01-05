@@ -22,6 +22,8 @@ from .serializers import (
     TaskCreateSerializer,
     TaskUpdateSerializer,
 )
+from .email_service import EmailService, EmailError
+
 
 
 class ClientViewSet(viewsets.ModelViewSet):
@@ -220,3 +222,59 @@ class TaskViewSet(viewsets.ModelViewSet):
         page = self.paginate_queryset(queryset)
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def invite_team_member(self, request):
+        """Send invitation email to team member"""
+        email = request.data.get('email')
+        project_id = request.data.get('project_id')
+        role = request.data.get('role', 'team_member')
+        
+        if not email or not project_id:
+            return Response(
+                {'error': 'email and project_id are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from .models import Project
+            project = Project.objects.get(id=project_id)
+            
+            # Generate invitation token
+            import uuid
+            from datetime import timedelta, datetime
+            token = str(uuid.uuid4())
+            expires_at = datetime.utcnow() + timedelta(hours=24)
+            
+            # Send invitation email
+            EmailService.send_invitation_email(
+                email=email,
+                tenant={
+                    'name': project.name,
+                    'id': project.tenant_id
+                },
+                role=role,
+                token=token,
+                expires_at=expires_at,
+                is_resend=False
+            )
+            
+            return Response(
+                {'message': 'Invitation email sent successfully'},
+                status=status.HTTP_200_OK
+            )
+        except Project.DoesNotExist:
+            return Response(
+                {'error': 'Project not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except EmailError as e:
+            return Response(
+                {'error': e.user_message},
+                status=e.status_code
+            )
+        except Exception as e:
+            return Response(
+                {'error': 'Failed to send invitation email'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

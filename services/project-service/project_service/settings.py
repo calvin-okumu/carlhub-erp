@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+import sys
+
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -94,20 +96,9 @@ DATABASES = {
 }
 
 # Password validation
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+# Using Django's built-in User model with UUID primary key from identity-service
+# AUTH_USER_MODEL is set at the Django framework level
+# Services use identity-service for authentication via JWT tokens
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
@@ -122,11 +113,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'jwt_auth.SimpleJWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+}
+
+# Shared JWT secret key (same across all services)
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'django-insecure-jwt-secret-key-2024-microservices')
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': 60 * 60,
+    'REFRESH_TOKEN_LIFETIME': 60 * 60 * 24 * 7,
+    'SIGNING_KEY': JWT_SECRET_KEY,
 }
 
 # CORS settings
@@ -141,6 +141,19 @@ CORS_ALLOWED_ORIGINS = [
 
 # JWT settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': 60 * 60,  # 1 hour
+    'ACCESS_TOKEN_LIFETIME': 60 * 60,  #1 hour
     'REFRESH_TOKEN_LIFETIME': 60 * 60 * 24 * 7,  # 7 days
 }
+
+# Email settings
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.getenv('EMAIL_HOST', '')
+EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@djangocrm.com')
+SITE_NAME = os.getenv('SITE_NAME', 'DjangoCRM')
+FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
+

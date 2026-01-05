@@ -1,0 +1,33 @@
+Welcome aboard, {{ user.first_name }}! 🎉
+
+Great news! Your account has been successfully created and you're now part of the {{ tenant.name }} team.
+
+GET STARTED
+Click the link below to log in and start exploring your new workspace:
+{{ login_url }}
+
+WHAT'S NEXT?
+- Complete your profile: Add your photo and update your preferences
+- Explore projects: Check out active projects and your assigned tasks
+- Connect with your team: Start collaborating with colleagues
+- Set up notifications: Configure how you want to stay updated
+
+QUICK LINKS:
+- Login Page: {{ login_url }}
+- Profile Settings: {{ profile_url }}
+- Dashboard: {{ dashboard_url }}
+- Help & Support: {{ help_url }}
+
+SECURITY REMINDER: Keep your login credentials secure and never share them with others. If you suspect any unauthorized access to your account, please contact us immediately.
+
+We're excited to have you join our team! If you have any questions or need help getting started, don't hesitate to reach out to your team lead or contact our support team at {{ support_email }}.
+
+Welcome to the team!
+
+Best regards,
+The {{ tenant.name }} Team
+
+---
+{{ site_name }} - Professional Project Management
+This email was sent to {{ user.email }}. If you have any questions, contact {{ support_email }}.
+© {{ current_year }} {{ site_name }}. All rights reserved.
