@@ -396,7 +396,9 @@ def get_queryset(self):
 ## Documentation
 
 - [Microservices Architecture](docs/MICROSERVICES_ARCHITECTURE.md) - Detailed architecture
+- [Microservices Connections](docs/MICROSERVICES_CONNECTIONS.md) - How services communicate and authenticate
 - [API Documentation](docs/api/README.md) - Complete API reference
+- [Troubleshooting Guide](docs/guides/TROUBLESHOOTING.md) - Common issues and solutions
 - [Troubleshooting Guide](docs/guides/TROUBLESHOOTING.md) - Common issues
 
 ---
