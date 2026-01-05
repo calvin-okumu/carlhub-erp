@@ -123,7 +123,7 @@ class Milestone(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=255, default="New Milestone")
+    title = models.CharField(max_length=255, default="New Task")
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="planning")
@@ -166,7 +166,7 @@ class Task(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=255, default="New Milestone")
+    title = models.CharField(max_length=255, default="New Task")
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="to_do", db_index=True)
