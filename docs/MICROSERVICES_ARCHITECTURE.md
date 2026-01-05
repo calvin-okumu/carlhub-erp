@@ -159,45 +159,59 @@ DjangoCRM is a microservices-based CRM system with the following components:
 ---
 
 ### 6. Project Service (Port 8006)
-**Purpose:** Project and task management
+**Purpose:** Project management with tasks, milestones, and client tracking
 
 **Responsibilities:**
-- Manage clients
-- Create and track projects
-- Manage milestones
-- Assign and track tasks
+- Manage projects and their lifecycles
+- Track project tasks and milestones
+- Client management for projects
+- Progress tracking and reporting
+- Multi-tenant project data
 
 **API Endpoints:**
-- `POST /api/v1/project/clients/` - Create client
-- `GET /api/v1/project/clients/` - List clients
-- `POST /api/v1/project/projects/` - Create project
-- `GET /api/v1/project/projects/` - List projects
-- `POST /api/v1/project/tasks/` - Create task
-- `GET /api/v1/project/tasks/` - List tasks
+- `GET /api/v1/projects/` - List all projects
+- `POST /api/v1/projects/` - Create project
+- `GET /api/v1/projects/{id}/` - Get project details
+- `GET /api/v1/projects/active/` - Get active projects
+- `GET /api/v1/projects/statistics/` - Get project statistics
+- `GET /api/v1/projects/by_client/?client_id=<id>` - Filter by client
+- `GET /api/v1/clients/` - List all clients
+- `GET /api/v1/tasks/` - List all tasks
+- `GET /api/v1/tasks/by_milestone/?milestone_id=<id>` - Filter by milestone
+- `GET /api/v1/tasks/by_assignee/?assignee_id=<id>` - Filter by assignee
+- `GET /api/v1/milestones/` - List all milestones
+- `GET /api/v1/milestones/by_project/?project_id=<id>` - Filter by project
 - `GET /api/v1/health/` - Health check
 
 **Models:**
+- `Project` - Project model with denormalized owner fields
+  - name, status, priority, budget
+  - start_date, end_date, progress
+  - tenant_id (for multi-tenancy)
+  - client_id (foreign key to Client)
+  - owner_id, owner_email, owner_name (denormalized from JWT)
 - `Client` - Client model
-  - Name, contact info, address
-  - Industry, company size
-- `Project` - Project model
-  - Client reference
-  - Name, description, status
-  - Start date, due date
-  - Progress tracking
+  - name, email, phone, status
+  - industry, company_size, website
+  - tenant_id (for multi-tenancy)
+- `Task` - Task model with denormalized assignee fields
+  - title, description, status
+  - start_date, end_date, estimated_hours
+  - tenant_id, project_id, milestone_id
+  - assignee_id, assignee_email, assignee_name (denormalized from JWT)
 - `Milestone` - Milestone model
-  - Project reference
-  - Name, target date
-  - Status
-  - Completion percentage
-- `Task` - Task model
-  - Project reference
-  - Assignee (UUID from Identity/HR service)
-  - Name, description, status
-  - Priority, due date
-  - Completion percentage
+  - title, description, status, progress
+  - planned_start, actual_start, due_date
+  - tenant_id, project_id, assignee_id
 
 **Database:** `project_db`
+
+**All Endpoints Working:** ✅
+- Projects list, create, update, delete
+- Clients list, create, update, delete
+- Tasks list, create, update, delete
+- Milestones list, create, update, delete
+- Active projects and statistics endpoints functional
 
 ---
 
@@ -234,6 +248,131 @@ DjangoCRM is a microservices-based CRM system with the following components:
   - Notes, outcome
 
 **Database:** `sales_db`
+
+---
+
+## Authentication Architecture
+
+### JWT Token Flow
+
+1. **User Login (Identity Service):**
+   ```bash
+   POST /api/v1/auth/login/
+   {
+     "email": "user@example.com",
+     "password": "password"
+   }
+   ```
+
+2. **Identity Service Response:**
+   ```json
+   {
+     "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "user": {
+       "id": "369cbc89-9728-49aa-a2c7-5ffc0c4991a4",
+       "email": "user@example.com",
+       "tenant_id": "43add5ae-9720-4fd2-94eb-9bec6976f8df",
+       "role": "Tenant Owner",
+       "is_owner": true,
+       "is_approved": true,
+       "full_name": "Test User"
+     }
+   }
+   ```
+
+3. **Using JWT for Other Services:**
+   ```bash
+   curl -H "Authorization: Bearer <access_token>" \
+     http://localhost:8006/api/v1/projects/
+   ```
+
+### Custom JWT Implementation
+
+**CustomRefreshToken (Identity Service):**
+- Location: `services/identity-service/identity/jwt_tokens.py`
+- Extends `rest_framework_simplejwt.tokens.RefreshToken`
+- Overrides `for_user()` to add custom claims
+- Includes in token: `tenant_id`, `user_id`, `role`, `is_owner`, `is_approved`
+- Supports UUID user IDs
+
+**SimpleJWTAuthentication (All Other Services):**
+- Location: `services/<service>/jwt_auth.py` (one per service)
+- Location: `services/shared/auth/jwt_auth.py` (shared module)
+- Extends `rest_framework_simplejwt.authentication.JWTAuthentication`
+- Overrides `get_user()` to create SimpleUser from token
+- **No Database Lookups:** User object created from JWT payload
+- **UUID Support:** Handles UUID user IDs correctly
+- **Tenant Isolation:** User's `tenant_id` available for filtering
+
+**SimpleUser Class:**
+- Lightweight user object without database queries
+- Contains: `id`, `email`, `tenant_id`, `role`, permissions
+- `is_authenticated = True`, `is_anonymous = False`
+- Works with DRF permissions system
+
+### Tenant-Based Access Control
+
+**All users must belong to at least one tenant.**
+
+**JWT Token Payload:**
+```json
+{
+  "user_id": "369cbc89-9728-49aa-a2c7-5ffc0c4991a4",
+  "tenant_id": "43add5ae-9720-4fd2-94eb-9bec6976f8df",
+  "role": "Tenant Owner",
+  "is_owner": true,
+  "is_approved": true,
+  "department_id": null,
+  "email": "user@example.com",
+  "first_name": "Test",
+  "last_name": "User",
+  "full_name": "Test User",
+  "is_staff": false,
+  "is_superuser": false
+}
+```
+
+**Data Isolation:**
+- All services filter data by `tenant_id`
+- Services can implement `get_queryset()` with tenant filtering:
+  ```python
+  def get_queryset(self):
+      queryset = super().get_queryset()
+      tenant_id = self.request.user.tenant_id
+      if tenant_id:
+          queryset = queryset.filter(tenant_id=tenant_id)
+      return queryset
+  ```
+
+### Authentication Configuration
+
+**Identity Service:**
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+```
+
+**Other Services:**
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'jwt_auth.SimpleJWTAuthentication',  # Custom auth, no DB lookups
+    ],
+}
+```
+
+### Benefits
+
+✅ **UUID Support** - No integer ID conversion issues
+✅ **Tenant Isolation** - All users belong to at least one tenant
+✅ **Performance** - No database lookups for authentication
+✅ **Scalability** - Stateless authentication, easy to scale
+✅ **Security** - JWT tokens with expiration and refresh flow
+✅ **Multi-Tenancy** - Built-in tenant_id for data isolation
 
 ---
 
