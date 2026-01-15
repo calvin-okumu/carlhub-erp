@@ -16,6 +16,9 @@ import sys
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
+SERVICES_DIR = BASE_DIR.parent
+if str(SERVICES_DIR) not in sys.path:
+    sys.path.append(str(SERVICES_DIR))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -31,6 +34,7 @@ ALLOWED_HOSTS = ['*']
 # Environment variables
 import os
 from dotenv import load_dotenv
+from shared.email_settings import apply_email_settings
 load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY', SECRET_KEY)
@@ -46,12 +50,14 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'project',
+    'drf_spectacular',
+    'project.apps.ProjectConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'project.middleware.TenantFromJWTMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -65,7 +71,7 @@ ROOT_URLCONF = 'project_service.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -118,11 +124,13 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
 }
 
-# Shared JWT secret key (same across all services)
-JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'django-insecure-jwt-secret-key-2024-microservices')
-
+# JWT settings
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': 60 * 60,
     'REFRESH_TOKEN_LIFETIME': 60 * 60 * 24 * 7,
@@ -139,21 +147,4 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
 ]
 
-# JWT settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': 60 * 60,  #1 hour
-    'REFRESH_TOKEN_LIFETIME': 60 * 60 * 24 * 7,  # 7 days
-}
-
-# Email settings
-EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.getenv('EMAIL_HOST', '')
-EMAIL_PORT = os.getenv('EMAIL_PORT', 587)
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@djangocrm.com')
-SITE_NAME = os.getenv('SITE_NAME', 'DjangoCRM')
-FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:3000')
-
+apply_email_settings(globals())

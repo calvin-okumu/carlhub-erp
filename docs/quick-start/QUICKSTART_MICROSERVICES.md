@@ -80,10 +80,36 @@ curl http://localhost:8007/api/v1/health/
 ./start-traefik.sh
 
 # All services go through Traefik at localhost:8000
+curl http://localhost:8000/api/v1/identity/health/
 curl http://localhost:8000/api/v1/identity/tenants/
 curl http://localhost:8000/api/v1/audit/logs/
 curl http://localhost:8000/api/v1/notification/notifications/
 # etc.
+```
+
+**Operate via Traefik (gateway URLs):**
+- **Base URL**: `http://localhost:8000`
+- **API pattern**: `http://localhost:8000/api/v1/<service>/...`
+- **Service routes**:
+  - `identity` → `http://localhost:8000/api/v1/identity/`
+  - `audit` → `http://localhost:8000/api/v1/audit/`
+  - `notification` → `http://localhost:8000/api/v1/notification/`
+  - `accounting` → `http://localhost:8000/api/v1/accounting/`
+  - `hr` → `http://localhost:8000/api/v1/hr/`
+  - `project` → `http://localhost:8000/api/v1/project/`
+  - `sales` → `http://localhost:8000/api/v1/sales/`
+- **Admin routes (per service)**: `http://admin.<service>.localhost:8000/admin/`
+
+**Example calls via Traefik:**
+```bash
+# Health check via gateway
+curl http://localhost:8000/api/v1/project/health/
+
+# List projects via gateway
+curl http://localhost:8000/api/v1/project/projects/
+
+# List sprints via gateway
+curl http://localhost:8000/api/v1/project/sprints/
 ```
 
 ## 📝 View Logs
@@ -265,8 +291,8 @@ python manage.py check
 
 ## 📚 Documentation Links
 
-- **Complete Overview**: `docs/overview/README.md`
-- **Microservices Architecture**: `docs/MICROSERVICES_ARCHITECTURE.md`
+- **Complete Overview**: `docs/legacy/overview/README.md`
+- **Microservices Architecture**: `docs/architecture/MICROSERVICES_ARCHITECTURE.md`
 - **Service READMEs**: `services/[service-name]/README.md`
 - **API Documentation**: `docs/api/`
 - **Troubleshooting**: `docs/guides/TROUBLESHOOTING.md`

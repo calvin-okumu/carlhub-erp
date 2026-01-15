@@ -1,19 +1,19 @@
 """
-URL configuration for project app.
+URL configuration for project service API routes.
 """
-from django.http import JsonResponse
 from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from rest_framework import permissions
-from .views import ClientViewSet, ProjectViewSet, MilestoneViewSet, TaskViewSet
+from rest_framework import routers
+from . import views
 
-router = DefaultRouter()
-router.register(r'clients', ClientViewSet, basename='client')
-router.register(r'projects', ProjectViewSet, basename='project')
-router.register(r'milestones', MilestoneViewSet, basename='milestone')
-router.register(r'tasks', TaskViewSet, basename='task')
+router = routers.DefaultRouter()
+router.register(r'clients', views.ClientViewSet, basename='client')
+router.register(r'projects', views.ProjectViewSet, basename='project')
+router.register(r'milestones', views.MilestoneViewSet, basename='milestone')
+router.register(r'sprints', views.SprintViewSet, basename='sprint')
+router.register(r'tasks', views.TaskViewSet, basename='task')
+router.register(r'backups', views.BackupViewSet, basename='database-backup')
 
 urlpatterns = [
-    path('health/', lambda request: JsonResponse({'status': 'healthy', 'service': 'project-service'}), name='health'),
     path('', include(router.urls)),
+    path('health/', views.health_check, name='health_check'),
 ]
