@@ -20,9 +20,10 @@ from .serializers import (
     SalesActivityCreateSerializer,
     SalesActivityUpdateSerializer,
 )
+from shared.tenant import TenantScopedModelViewSet
 
 
-class CustomerViewSet(viewsets.ModelViewSet):
+class CustomerViewSet(TenantScopedModelViewSet):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -37,15 +38,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update']:
             return CustomerUpdateSerializer
         return CustomerSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        return queryset
 
     @action(detail=False, methods=['get'])
     def prospects(self, request):
@@ -75,10 +67,6 @@ class CustomerViewSet(viewsets.ModelViewSet):
         """Get customer statistics"""
         queryset = self.get_queryset()
         
-        tenant_id = request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
         stats = {
             'total_customers': queryset.count(),
             'by_status': list(queryset.values('status').annotate(count=Count('id'))),
@@ -90,7 +78,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
         return Response(stats)
 
 
-class OpportunityViewSet(viewsets.ModelViewSet):
+class OpportunityViewSet(TenantScopedModelViewSet):
     queryset = Opportunity.objects.all()
     serializer_class = OpportunitySerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -106,23 +94,10 @@ class OpportunityViewSet(viewsets.ModelViewSet):
             return OpportunityUpdateSerializer
         return OpportunitySerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        return queryset
-
     @action(detail=False, methods=['get'])
     def pipeline(self, request):
         """Get opportunity pipeline by stage"""
         queryset = self.get_queryset()
-        
-        tenant_id = request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
         
         pipeline = list(queryset.values('stage').annotate(
             count=Count('id'),
@@ -170,7 +145,7 @@ class OpportunityViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class SalesActivityViewSet(viewsets.ModelViewSet):
+class SalesActivityViewSet(TenantScopedModelViewSet):
     queryset = SalesActivity.objects.all()
     serializer_class = SalesActivitySerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -185,15 +160,6 @@ class SalesActivityViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update']:
             return SalesActivityUpdateSerializer
         return SalesActivitySerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        return queryset
 
     @action(detail=False, methods=['get'])
     def scheduled(self, request):

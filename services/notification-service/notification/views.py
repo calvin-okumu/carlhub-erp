@@ -4,7 +4,8 @@ Views for notification service.
 from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
@@ -15,9 +16,32 @@ from .serializers import (
     NotificationUpdateSerializer,
 )
 from notification import EmailService
+from shared.tenant import TenantScopedModelViewSet, get_tenant_id_for_write
 
 
-class NotificationViewSet(viewsets.ModelViewSet):
+def get_request_tenant_id(request):
+    user = getattr(request, "user", None)
+    if user and (getattr(user, "is_superuser", False) or getattr(user, "is_staff", False)):
+        return None
+    return getattr(request, "tenant_id", None) or getattr(user, "tenant_id", None)
+
+
+def validate_tenant_access(request, payload_tenant_id=None):
+    user = getattr(request, "user", None)
+    if user and (getattr(user, "is_superuser", False) or getattr(user, "is_staff", False)):
+        return None
+
+    request_tenant_id = get_request_tenant_id(request)
+    if not request_tenant_id:
+        raise ValidationError({"tenant_id": "Tenant context is required."})
+
+    if payload_tenant_id and str(payload_tenant_id) != str(request_tenant_id):
+        raise PermissionDenied("Tenant mismatch.")
+
+    return request_tenant_id
+
+
+class NotificationViewSet(TenantScopedModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -35,17 +59,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        
-        # Filter by tenant
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        # Filter by user
+
         user_id = self.request.query_params.get('user_id')
         if user_id:
             queryset = queryset.filter(user_id=user_id)
-        
+
         return queryset
 
     @action(detail=False, methods=['get'])
@@ -60,12 +78,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def count(self, request):
         """Get notification count by status"""
         queryset = self.get_queryset()
-        tenant_id = request.query_params.get('tenant_id')
         user_id = request.query_params.get('user_id')
-        
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         
@@ -93,7 +106,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def mark_all_read(self, request):
         """Mark all notifications as read for a user"""
         user_id = request.data.get('user_id')
-        tenant_id = request.data.get('tenant_id')
+        tenant_id = get_tenant_id_for_write(request) or request.data.get('tenant_id')
         
         if not user_id or not tenant_id:
             return Response(
@@ -116,7 +129,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def clear_all(self, request):
         """Clear all notifications for a user"""
         user_id = request.query_params.get('user_id')
-        tenant_id = request.query_params.get('tenant_id')
+        tenant_id = get_tenant_id_for_write(request) or request.query_params.get('tenant_id')
         
         if not user_id or not tenant_id:
             return Response(
@@ -133,7 +146,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def send_invitation_email(request):
     """Send invitation email to new user"""
     email = request.data.get('email')
@@ -142,6 +155,9 @@ def send_invitation_email(request):
     token = request.data.get('token')
     expires_at = request.data.get('expires_at')
     is_resend = request.data.get('is_resend', False)
+    tenant_id = request.data.get('tenant_id')
+
+    validate_tenant_access(request, tenant_id)
     
     try:
         EmailService.send_invitation_email(email, tenant_name, role, token, expires_at, is_resend)
@@ -157,11 +173,16 @@ def send_invitation_email(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def send_welcome_email(request):
     """Send welcome email to new user"""
     user_data = request.data.get('user')
     tenant_data = request.data.get('tenant')
+    tenant_id = None
+    if isinstance(tenant_data, dict):
+        tenant_id = tenant_data.get('id') or tenant_data.get('tenant_id')
+
+    validate_tenant_access(request, tenant_id)
     
     try:
         EmailService.send_welcome_email(user_data, tenant_data)
@@ -177,11 +198,16 @@ def send_welcome_email(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def send_password_reset_email(request):
     """Send password reset email"""
     user_data = request.data.get('user')
     reset_url = request.data.get('reset_url')
+    tenant_id = None
+    if isinstance(user_data, dict):
+        tenant_id = user_data.get('tenant_id')
+
+    validate_tenant_access(request, tenant_id)
     
     try:
         EmailService.send_password_reset_email(user_data, reset_url)
@@ -197,10 +223,15 @@ def send_password_reset_email(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def send_leave_approved_email(request):
     """Send leave approval email"""
     leave_request_data = request.data.get('leave_request')
+    tenant_id = None
+    if isinstance(leave_request_data, dict):
+        tenant_id = leave_request_data.get('tenant_id')
+
+    validate_tenant_access(request, tenant_id)
     
     try:
         EmailService.send_leave_approved_email(leave_request_data)
@@ -216,10 +247,15 @@ def send_leave_approved_email(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def send_leave_rejected_email(request):
     """Send leave rejection email"""
     leave_request_data = request.data.get('leave_request')
+    tenant_id = None
+    if isinstance(leave_request_data, dict):
+        tenant_id = leave_request_data.get('tenant_id')
+
+    validate_tenant_access(request, tenant_id)
     
     try:
         EmailService.send_leave_rejected_email(leave_request_data)
@@ -235,13 +271,16 @@ def send_leave_rejected_email(request):
 
 
 @api_view(['POST'])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def send_notification_email(request):
     """Send general notification email"""
     recipient_email = request.data.get('recipient_email')
     subject = request.data.get('subject')
     message = request.data.get('message')
     html_message = request.data.get('html_message')
+    tenant_id = request.data.get('tenant_id')
+
+    validate_tenant_access(request, tenant_id)
     
     try:
         EmailService.send_notification_email(

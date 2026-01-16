@@ -1,11 +1,13 @@
 """
 Views for accounting service.
 """
-from rest_framework import viewsets, filters, status
+from django.http import JsonResponse
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, filters, status, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
 
+from .db_backup import DatabaseBackup
 from .models import Invoice, Payment
 from .serializers import (
     InvoiceSerializer,
@@ -15,9 +17,10 @@ from .serializers import (
     PaymentCreateSerializer,
     PaymentUpdateSerializer,
 )
+from shared.tenant import TenantScopedModelViewSet
 
 
-class InvoiceViewSet(viewsets.ModelViewSet):
+class InvoiceViewSet(TenantScopedModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -33,15 +36,6 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             return InvoiceUpdateSerializer
         return InvoiceSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        return queryset
-
     @action(detail=False, methods=['get'])
     def overdue(self, request):
         """Get all overdue invoices"""
@@ -53,14 +47,9 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """Get invoice statistics"""
-        queryset = self.get_queryset()
-        
-        tenant_id = request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
         from django.db.models import Sum, Count
-        
+
+        queryset = self.get_queryset()
         stats = {
             'total_invoices': queryset.count(),
             'total_amount': queryset.aggregate(total=Sum('amount'))['total'] or 0,
@@ -70,7 +59,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             'overdue_amount': queryset.filter(status='overdue').aggregate(total=Sum('amount'))['total'] or 0,
             'by_status': list(queryset.values('status').annotate(count=Count('id'))),
         }
-        
+
         return Response(stats)
 
     @action(detail=True, methods=['post'])
@@ -79,14 +68,15 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         invoice = self.get_object()
         invoice.status = 'paid'
         from django.utils import timezone
+
         invoice.paid_at = timezone.now()
         invoice.save()
-        
+
         serializer = self.get_serializer(invoice)
         return Response(serializer.data)
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(TenantScopedModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -102,30 +92,99 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return PaymentUpdateSerializer
         return PaymentSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        return queryset
-
     @action(detail=False, methods=['get'])
     def statistics(self, request):
         """Get payment statistics"""
-        queryset = self.get_queryset()
-        
-        tenant_id = request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
         from django.db.models import Sum, Count
-        
+
+        queryset = self.get_queryset()
         stats = {
             'total_payments': queryset.count(),
             'total_amount': queryset.aggregate(total=Sum('amount'))['total'] or 0,
             'by_method': list(queryset.values('payment_method').annotate(count=Count('id'))),
         }
-        
+
         return Response(stats)
+
+
+class BackupViewSet(viewsets.ViewSet):
+    """
+    ViewSet for database backup operations
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.backup_manager = DatabaseBackup('accounting-service')
+
+    def list(self, request):
+        """
+        List all available backups
+        """
+        try:
+            backups = self.backup_manager.list_backups()
+            return Response({
+                'backups': backups,
+                'count': len(backups)
+            })
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def create(self, request):
+        """
+        Create a new database backup
+        """
+        try:
+            backup_metadata = self.backup_manager.create_backup()
+            return Response({
+                'message': 'Backup created successfully',
+                'backup': backup_metadata
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'])
+    def restore(self, request):
+        """
+        Restore database from backup
+        """
+        backup_id = request.data.get('backup_id')
+
+        if not backup_id:
+            return Response(
+                {'error': 'backup_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            result = self.backup_manager.restore_backup(backup_id)
+            return Response(result)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def destroy(self, request, pk=None):
+        """
+        Delete a backup
+        """
+        try:
+            result = self.backup_manager.delete_backup(pk)
+            return Response(result)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+def health_check(request):
+    """Health check endpoint for load balancers"""
+    return JsonResponse({'status': 'healthy', 'service': 'accounting-service'})

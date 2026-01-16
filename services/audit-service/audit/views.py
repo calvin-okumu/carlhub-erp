@@ -11,9 +11,10 @@ from datetime import timedelta
 
 from .models import AuditLog
 from .serializers import AuditLogSerializer, AuditLogCreateSerializer
+from shared.tenant import TenantScopedModelViewSet, get_scoped_queryset
 
 
-class AuditLogViewSet(viewsets.ModelViewSet):
+class AuditLogViewSet(TenantScopedModelViewSet):
     queryset = AuditLog.objects.all()
     serializer_class = AuditLogSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -21,6 +22,7 @@ class AuditLogViewSet(viewsets.ModelViewSet):
     ordering_fields = ['timestamp', 'action', 'resource_type']
     ordering = ['-timestamp']
     search_fields = ['resource_id']
+    set_tenant_on_create = False
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -40,7 +42,7 @@ class AuditLogViewSet(viewsets.ModelViewSet):
         days = int(request.query_params.get('days', 30))
         start_date = timezone.now() - timedelta(days=days)
         
-        recent_logs = AuditLog.objects.filter(timestamp__gte=start_date)
+        recent_logs = get_scoped_queryset(request, AuditLog.objects.filter(timestamp__gte=start_date))
         
         stats = {
             'total_logs': recent_logs.count(),
@@ -54,13 +56,9 @@ class AuditLogViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def timeline(self, request):
         """Get audit log timeline for a tenant"""
-        tenant_id = request.query_params.get('tenant_id')
         resource_id = request.query_params.get('resource_id')
         
         queryset = self.get_queryset()
-        
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
         
         if resource_id:
             queryset = queryset.filter(resource_id=resource_id)

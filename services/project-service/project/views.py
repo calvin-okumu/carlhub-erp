@@ -2,7 +2,6 @@
 Views for project service.
 """
 from rest_framework import viewsets, filters, status, permissions
-from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -30,32 +29,10 @@ from .serializers import (
 )
 from .email_service import EmailService, EmailError
 from .db_backup import DatabaseBackup
+from shared.tenant import TenantScopedModelViewSet, get_tenant_id_for_write
 
 
-def get_scoped_queryset(request, queryset):
-    user = getattr(request, "user", None)
-    if user and (getattr(user, "is_superuser", False) or getattr(user, "is_staff", False)):
-        return queryset
-
-    tenant_id = getattr(request, "tenant_id", None) or getattr(user, "tenant_id", None)
-    if tenant_id:
-        return queryset.filter(tenant_id=tenant_id)
-
-    return queryset.none()
-
-
-def get_tenant_id_for_write(request):
-    user = getattr(request, "user", None)
-    if user and (getattr(user, "is_superuser", False) or getattr(user, "is_staff", False)):
-        return None
-
-    tenant_id = getattr(request, "tenant_id", None) or getattr(user, "tenant_id", None)
-    if not tenant_id:
-        raise ValidationError({"tenant_id": "Tenant context is required."})
-    return tenant_id
-
-
-class ClientViewSet(viewsets.ModelViewSet):
+class ClientViewSet(TenantScopedModelViewSet):
     queryset = Client.objects.all()
     serializer_class = ClientSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -71,18 +48,8 @@ class ClientViewSet(viewsets.ModelViewSet):
             return ClientUpdateSerializer
         return ClientSerializer
 
-    def get_queryset(self):
-        return get_scoped_queryset(self.request, super().get_queryset())
 
-    def perform_create(self, serializer):
-        tenant_id = get_tenant_id_for_write(self.request)
-        if tenant_id:
-            serializer.save(tenant_id=tenant_id)
-            return
-        serializer.save()
-
-
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(TenantScopedModelViewSet):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -97,16 +64,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update']:
             return ProjectUpdateSerializer
         return ProjectSerializer
-
-    def get_queryset(self):
-        return get_scoped_queryset(self.request, super().get_queryset())
-
-    def perform_create(self, serializer):
-        tenant_id = get_tenant_id_for_write(self.request)
-        if tenant_id:
-            serializer.save(tenant_id=tenant_id)
-            return
-        serializer.save()
 
     @action(detail=False, methods=['get'])
     def active(self, request):
@@ -146,7 +103,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Response(stats)
 
 
-class MilestoneViewSet(viewsets.ModelViewSet):
+class MilestoneViewSet(TenantScopedModelViewSet):
     queryset = Milestone.objects.all()
     serializer_class = MilestoneSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
@@ -163,20 +120,13 @@ class MilestoneViewSet(viewsets.ModelViewSet):
         return MilestoneSerializer
 
     def get_queryset(self):
-        queryset = get_scoped_queryset(self.request, super().get_queryset())
+        queryset = super().get_queryset()
 
         project_id = self.request.query_params.get('project_id')
         if project_id:
             queryset = queryset.filter(project_id=project_id)
         
         return queryset
-
-    def perform_create(self, serializer):
-        tenant_id = get_tenant_id_for_write(self.request)
-        if tenant_id:
-            serializer.save(tenant_id=tenant_id)
-            return
-        serializer.save()
 
     @action(detail=False, methods=['get'])
     def by_project(self, request):
@@ -194,7 +144,7 @@ class MilestoneViewSet(viewsets.ModelViewSet):
         return self.get_paginated_response(serializer.data)
 
 
-class TaskViewSet(viewsets.ModelViewSet):
+class TaskViewSet(TenantScopedModelViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -211,20 +161,13 @@ class TaskViewSet(viewsets.ModelViewSet):
         return TaskSerializer
 
     def get_queryset(self):
-        queryset = get_scoped_queryset(self.request, super().get_queryset())
+        queryset = super().get_queryset()
 
         milestone_id = self.request.query_params.get('milestone_id')
         if milestone_id:
             queryset = queryset.filter(milestone_id=milestone_id)
         
         return queryset
-
-    def perform_create(self, serializer):
-        tenant_id = get_tenant_id_for_write(self.request)
-        if tenant_id:
-            serializer.save(tenant_id=tenant_id)
-            return
-        serializer.save()
 
     @action(detail=False, methods=['get'])
     def by_milestone(self, request):
@@ -315,7 +258,7 @@ class TaskViewSet(viewsets.ModelViewSet):
             )
 
 
-class SprintViewSet(viewsets.ModelViewSet):
+class SprintViewSet(TenantScopedModelViewSet):
     queryset = Sprint.objects.all()
     serializer_class = SprintSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
@@ -332,7 +275,7 @@ class SprintViewSet(viewsets.ModelViewSet):
         return SprintSerializer
 
     def get_queryset(self):
-        queryset = get_scoped_queryset(self.request, super().get_queryset())
+        queryset = super().get_queryset()
 
         project_id = self.request.query_params.get('project_id')
         if project_id:
@@ -343,13 +286,6 @@ class SprintViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(milestone_id=milestone_id)
 
         return queryset
-
-    def perform_create(self, serializer):
-        tenant_id = get_tenant_id_for_write(self.request)
-        if tenant_id:
-            serializer.save(tenant_id=tenant_id)
-            return
-        serializer.save()
 
     @action(detail=False, methods=['get'])
     def by_project(self, request):

@@ -20,9 +20,10 @@ from .serializers import (
     LeaveApprovalCreateSerializer,
     LeaveApprovalUpdateSerializer,
 )
+from shared.tenant import TenantScopedModelViewSet
 
 
-class LeaveRequestViewSet(viewsets.ModelViewSet):
+class LeaveRequestViewSet(TenantScopedModelViewSet):
     queryset = LeaveRequest.objects.all()
     serializer_class = LeaveRequestSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
@@ -37,15 +38,6 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update']:
             return LeaveRequestUpdateSerializer
         return LeaveRequestSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        return queryset
 
     @action(detail=False, methods=['get'])
     def pending(self, request):
@@ -123,7 +115,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class LeaveBalanceViewSet(viewsets.ModelViewSet):
+class LeaveBalanceViewSet(TenantScopedModelViewSet):
     queryset = LeaveBalance.objects.all()
     serializer_class = LeaveBalanceSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
@@ -137,15 +129,6 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update']:
             return LeaveBalanceUpdateSerializer
         return LeaveBalanceSerializer
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
-        if tenant_id:
-            queryset = queryset.filter(tenant_id=tenant_id)
-        
-        return queryset
 
     @action(detail=False, methods=['get'])
     def my_balances(self, request):
@@ -163,13 +146,14 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
         return self.get_paginated_response(serializer.data)
 
 
-class LeaveApprovalViewSet(viewsets.ModelViewSet):
+class LeaveApprovalViewSet(TenantScopedModelViewSet):
     queryset = LeaveApproval.objects.all()
     serializer_class = LeaveApprovalSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['leave_request_id', 'approver_id', 'approval_level', 'status']
     ordering_fields = ['order', 'approved_date']
     ordering = ['leave_request_id', 'order']
+    set_tenant_on_create = False
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -180,9 +164,12 @@ class LeaveApprovalViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        
-        tenant_id = self.request.query_params.get('tenant_id')
+        user = getattr(self.request, "user", None)
+        if user and (getattr(user, "is_superuser", False) or getattr(user, "is_staff", False)):
+            return queryset
+
+        tenant_id = getattr(self.request, "tenant_id", None) or getattr(user, "tenant_id", None)
         if tenant_id:
-            queryset = queryset.filter(leave_request__tenant_id=tenant_id)
-        
-        return queryset
+            return queryset.filter(leave_request__tenant_id=tenant_id)
+
+        return queryset.none()

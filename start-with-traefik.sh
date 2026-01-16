@@ -108,7 +108,11 @@ start_service() {
     
     # Start service
     echo "  Starting Django server for $SERVICE_NAME..."
-    nohup python manage.py runserver 0.0.0.0:$PORT > ../../services/logs/$SERVICE_NAME.log 2>&1 &
+    RUNSERVER_ARGS=""
+    if [ "$SERVICE_NAME" = "identity-service" ]; then
+        RUNSERVER_ARGS="--noreload"
+    fi
+    nohup python manage.py runserver 0.0.0.0:$PORT $RUNSERVER_ARGS > ../../services/logs/$SERVICE_NAME.log 2>&1 &
     SERVICE_PID=$!
     echo $SERVICE_PID > ../../services/logs/$SERVICE_NAME.pid
     
