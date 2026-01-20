@@ -1,4 +1,4 @@
-a# Local Microservices Quick Reference
+# Local Microservices Quick Reference
 
 ## Quick Start
 

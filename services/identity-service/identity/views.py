@@ -26,6 +26,20 @@ from .serializers import (
 from .email_service import EmailService, EmailError
 
 
+def get_user_tenant_id(user):
+    if not user or not user.is_authenticated:
+        return None
+    tenant_id = getattr(user, "tenant_id", None)
+    if tenant_id:
+        return tenant_id
+    user_tenant = getattr(user, "usertenant", None)
+    if user_tenant and getattr(user_tenant, "tenant_id", None):
+        return user_tenant.tenant_id
+    if user_tenant and getattr(user_tenant, "tenant", None):
+        return user_tenant.tenant.id
+    return None
+
+
 class TenantListCreateView(generics.ListCreateAPIView):
     """List and create tenants"""
 
@@ -39,7 +53,10 @@ class TenantListCreateView(generics.ListCreateAPIView):
         if user.is_superuser:
             return Tenant.objects.all()
         # Regular users can only see their own tenant
-        return Tenant.objects.filter(id=user.tenant_id, is_active=True)
+        tenant_id = get_user_tenant_id(user)
+        if not tenant_id:
+            return Tenant.objects.none()
+        return Tenant.objects.filter(id=tenant_id, is_active=True)
 
 
 class TenantDetailView(generics.RetrieveUpdateAPIView):
@@ -55,7 +72,10 @@ class TenantDetailView(generics.RetrieveUpdateAPIView):
         if user.is_superuser:
             return Tenant.objects.all()
         # Regular users can only access their own tenant
-        return Tenant.objects.filter(id=user.tenant_id)
+        tenant_id = get_user_tenant_id(user)
+        if not tenant_id:
+            return Tenant.objects.none()
+        return Tenant.objects.filter(id=tenant_id)
 
 
 class UserListCreateView(generics.ListCreateAPIView):
@@ -76,13 +96,14 @@ class UserListCreateView(generics.ListCreateAPIView):
         if user.is_superuser:
             return User.objects.all()
         # Regular users can only see users in their tenant
-        return User.objects.filter(tenant_id=user.tenant_id)
+        tenant_id = get_user_tenant_id(user)
+        if not tenant_id:
+            return User.objects.none()
+        return User.objects.filter(usertenant__tenant_id=tenant_id)
 
     def perform_create(self, serializer):
         """Set tenant for new user if not specified"""
         user = self.request.user
-        if not serializer.validated_data.get('tenant_id') and not user.is_superuser:
-            serializer.validated_data['tenant_id'] = user.tenant_id
         serializer.save()
 
 
@@ -104,7 +125,10 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
         if user.is_superuser:
             return User.objects.all()
         # Users can access their own profile and other users in their tenant
-        return User.objects.filter(tenant_id=user.tenant_id)
+        tenant_id = get_user_tenant_id(user)
+        if not tenant_id:
+            return User.objects.none()
+        return User.objects.filter(usertenant__tenant_id=tenant_id)
 
 
 class LoginView(APIView):

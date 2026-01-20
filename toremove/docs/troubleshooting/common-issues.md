@@ -176,7 +176,7 @@ python manage.py showmigrations --plan
 **Solutions:**
 ```bash
 # Check token format
-curl -H "Authorization: Token abc123..." http://localhost:8000/api/
+curl -H "Authorization: Bearer abc123..." http://localhost:8000/api/
 
 # Generate new token
 curl -X POST http://localhost:8000/api/login/ \

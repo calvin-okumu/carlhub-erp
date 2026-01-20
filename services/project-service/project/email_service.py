@@ -268,9 +268,20 @@ class EmailService:
                 )
                 raise Exception(error_msg)
 
+            tenant_name = getattr(tenant, "name", None)
+            if tenant_name is None:
+                if isinstance(tenant, dict):
+                    tenant_name = tenant.get("name")
+                elif isinstance(tenant, str):
+                    tenant_name = tenant
+
+            tenant_context = tenant
+            if isinstance(tenant, str):
+                tenant_context = {"name": tenant_name}
+
             context = {
                 "email": email,
-                "tenant": tenant,
+                "tenant": tenant_context,
                 "role": role,
                 "confirmation_url": f"{settings.FRONTEND_URL}{settings.FRONTEND_CONFIRMATION_PATH}/?token={token}",
                 "signup_url": f"{settings.FRONTEND_URL}{settings.FRONTEND_SIGNUP_PATH}/?token={token}",
@@ -293,7 +304,7 @@ class EmailService:
                     f"Email template rendering failed: {template_error}"
                 ) from template_error
 
-            subject = f"Invitation to join {tenant.name}"
+            subject = f"Invitation to join {tenant_name}"
             if is_resend:
                 subject += " (Resent)"
 

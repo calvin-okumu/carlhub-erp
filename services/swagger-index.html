@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="refresh" content="5;url=/swagger/project/swagger/">
+    <title>API Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .message {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        a {
+            display: block;
+            padding: 12px 24px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 10px 0;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        a:hover {
+            background: #0056b3;
+        transform: translateY(-2px);
+        }
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="message">
+        <h1>📚 API Documentation</h1>
+        
+        <p>Welcome to the DjangoCRM Microservices API Documentation!</p>
+        <p style="color: #666;">Access documentation for each microservice:</p>
+        
+        <div class="links">
+            <a href="/swagger/identity/swagger/">
+                <div>🔑 Identity Service</div>
+                <div>Authentication, users, tenants</div>
+            </a>
+            
+            <a href="/swagger/project/swagger/">
+                <div>📊 Project Service</div>
+                <div>Projects, tasks, sprints, contracts <strong>(Main API)</strong></div>
+            </a>
+            
+            <a href="/swagger/audit/swagger/">
+                <div>📋 Audit Service</div>
+                <div>Logs and trails</div>
+            </a>
+            
+            <a href="/swagger/notification/swagger/">
+                <div>🔔 Notification Service</div>
+                <div>Email and in-app notifications</div>
+            </a>
+            
+            <a href="/swagger/accounting/swagger/">
+                <div>💰 Accounting Service</div>
+                <div>Invoices, payments</div>
+            </a>
+            
+            <a href="/swagger/hr/swagger/">
+                <div>👥 HR Service</div>
+                <div>Employees, leave, payroll</div>
+            </a>
+            
+            <a href="/swagger/sales/swagger/">
+                <div>💼 Sales Service</div>
+                <div>Leads, opportunities</div>
+            </a>
+        </div>
+        
+        <p style="color: #666; margin-top: 30px;">
+            Or access each service directly:<br>
+            <a href="http://localhost:8001/api/swagger/" target="_blank" style="color: white;">identity</a> |
+            <a href="http://localhost:8002/api/swagger/" target="_blank" style="color: white;">audit</a> |
+            <a href="http://localhost:8003/api/swagger/" target="_blank" style="color: white;">notification</a> |
+            <a href="http://localhost:8004/api/swagger/" target="_blank" style="color: white;">accounting</a> |
+            <a href="http://localhost:8005/api/swagger/" target="_blank" style="color: white;">hr</a> |
+            <a href="http://localhost:8006/api/swagger/" target="_blank" style="color: white;">project</a> |
+            <a href="http://localhost:8007/api/swagger/" target="_blank" style="color: white;">sales</a>
+        </p>
+    </div>
+    
+    <script>
+        // Check if accessed via Traefik (port 8000)
+        if (window.location.port === 8000 || window.location.hostname === 'localhost' && window.location.port === '8000') {
+            // Add link to root page
+            console.log('Accessed via Traefik on port 8000');
+        }
+        
+        // Auto-redirect to project service after 2 seconds if user clicks main API link
+        const links = document.querySelectorAll('.links a');
+        links.forEach(link => {
+            if (link.getAttribute('href').includes('/swagger/project/swagger/') && link.textContent.includes('Main API')) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    setTimeout(() => {
+                        window.location.href = '/swagger/project/swagger/';
+                    }, 2000);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

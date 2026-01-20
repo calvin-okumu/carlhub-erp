@@ -54,7 +54,7 @@ The Admin Panel is built on Django's admin interface and provides:
 **Database Backup API**:
 ```bash
 curl -X POST http://localhost:8000/api/database-backup/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Response**:

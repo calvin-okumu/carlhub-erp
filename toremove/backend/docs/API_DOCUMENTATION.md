@@ -7,7 +7,7 @@ Complete API documentation for the DjangoCRM multi-tenant Customer Relationship 
 All API endpoints require authentication except for login and registration endpoints.
 
 ### Methods
-- **Token Authentication**: Include `Authorization: Token YOUR_TOKEN` header
+- **Token Authentication**: Include `Authorization: Bearer YOUR_TOKEN` header
 - **OAuth**: Redirect to `/accounts/google/login/` or `/accounts/github/login/`
 - **Session Authentication**: For web interface and admin panel
 
@@ -42,7 +42,7 @@ Response:
 #### List Leave Requests
 ```bash
 GET /api/leave-requests/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 **Access Control:**
@@ -53,7 +53,7 @@ Authorization: Token YOUR_TOKEN
 #### Create Leave Request
 ```bash
 POST /api/leave-requests/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -72,7 +72,7 @@ Content-Type: application/json
 #### Update Leave Request
 ```bash
 PUT /api/leave-requests/{id}/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -84,7 +84,7 @@ Content-Type: application/json
 #### Cancel Leave Request
 ```bash
 POST /api/leave-requests/{id}/cancel/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 **Access Control:**
@@ -100,7 +100,7 @@ The system supports a 3-level approval workflow:
 #### Get Workflow Status
 ```bash
 GET /api/leave-requests/{id}/workflow-status/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 **Response:**
@@ -152,7 +152,7 @@ Authorization: Token YOUR_TOKEN
 #### Approve at Current Level
 ```bash
 POST /api/leave-requests/{id}/approve-level/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -170,7 +170,7 @@ Content-Type: application/json
 #### Reject at Current Level
 ```bash
 POST /api/leave-requests/{id}/reject-level/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -218,7 +218,7 @@ Departments are used for organizing employees and defining approval chains in th
 #### List Departments
 ```bash
 GET /api/departments/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 **Response:**
@@ -245,7 +245,7 @@ Authorization: Token YOUR_TOKEN
 #### Create Department
 ```bash
 POST /api/departments/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -264,7 +264,7 @@ Content-Type: application/json
 #### Update Department
 ```bash
 PUT /api/departments/{id}/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -315,7 +315,7 @@ Departments support hierarchical structure:
 #### List Leave Balances
 ```bash
 GET /api/leave-balances/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 **Access Control:**
@@ -344,7 +344,7 @@ Authorization: Token YOUR_TOKEN
 #### List Leave Policies
 ```bash
 GET /api/leave-policies/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 **Access Control:**
@@ -355,7 +355,7 @@ Authorization: Token YOUR_TOKEN
 #### Create Leave Policy
 ```bash
 POST /api/leave-policies/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -561,7 +561,7 @@ TOKEN=$(curl -s -X POST http://127.0.0.1:8000/api/login/ \
   | jq -r '.token')
 
 # Use token to access protected endpoint
-curl -H "Authorization: Token $TOKEN" \
+curl -H "Authorization: Bearer $TOKEN" \
   http://127.0.0.1:8000/api/leave-requests/
 ```
 

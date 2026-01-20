@@ -10,7 +10,7 @@ Tasks can be created through the API:
 
 ```bash
 curl -X POST http://localhost:8000/api/tasks/?milestone=milestone-slug \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Implement user authentication",
@@ -37,34 +37,34 @@ curl -X POST http://localhost:8000/api/tasks/?milestone=milestone-slug \
 
 ```bash
 # Get all tasks
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/tasks/
 
 # Filter by status
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/tasks/?status=in_progress"
 
 # Filter by assignee
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/tasks/?assignee=user-uuid"
 
 # Filter by project
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/tasks/?project=project-slug"
 
 # Get backlog tasks (not assigned to sprints)
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/tasks/?backlog=true"
 
 # Get assigned tasks (in sprints)
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/tasks/?backlog=false"
 ```
 
 ### Get Task Details
 
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/tasks/123/
 ```
 
@@ -72,7 +72,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 ```bash
 curl -X PUT http://localhost:8000/api/tasks/123/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status": "in_progress", "assignee": "new-user-uuid"}'
 ```
@@ -81,7 +81,7 @@ curl -X PUT http://localhost:8000/api/tasks/123/ \
 
 ```bash
 curl -X DELETE http://localhost:8000/api/tasks/123/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## Task Assignment
@@ -102,7 +102,7 @@ Multiple tasks can be assigned simultaneously:
 
 ```bash
 curl -X POST http://localhost:8000/api/tasks/bulk_update_tasks/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "task_ids": ["task-uuid-1", "task-uuid-2", "task-uuid-3"],
@@ -120,13 +120,13 @@ Tasks can be assigned to sprints within milestones or kept in a backlog for futu
 ```bash
 # Assign task to sprint
 curl -X POST http://localhost:8000/api/sprints/456/assign_task/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"task_id": 123}'
 
 # Remove task from sprint
 curl -X POST http://localhost:8000/api/sprints/456/unassign_task/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"task_id": 123}'
 ```
@@ -231,7 +231,7 @@ Administrators can restore soft-deleted tasks:
 
 ```bash
 curl -X POST http://localhost:8000/api/tasks/task-slug/restore/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Response:**

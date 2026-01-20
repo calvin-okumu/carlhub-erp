@@ -12,8 +12,8 @@ Used for most list endpoints to ensure consistent ordering and efficient databas
 ```json
 {
   "count": 150,
-  "next": "http://localhost:8000/api/projects/?cursor=abc123",
-  "previous": "http://localhost:8000/api/projects/?cursor=def456",
+  "next": "http://localhost:8000/api/v1/project/projects/?cursor=abc123",
+  "previous": "http://localhost:8000/api/v1/project/projects/?cursor=def456",
   "results": [
     {
       "id": "uuid",
@@ -36,8 +36,8 @@ Available for some endpoints that require page-based navigation.
 ```json
 {
   "count": 150,
-  "next": "http://localhost:8000/api/projects/?page=3",
-  "previous": "http://localhost:8000/api/projects/?page=1",
+  "next": "http://localhost:8000/api/v1/project/projects/?page=3",
+  "previous": "http://localhost:8000/api/v1/project/projects/?page=1",
   "results": [...]
 }
 ```
@@ -52,16 +52,16 @@ Available for some endpoints that require page-based navigation.
 
 ```bash
 # Get first page (default)
-curl -H "Authorization: Token YOUR_TOKEN" \
-  http://localhost:8000/api/projects/
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8000/api/v1/project/projects/
 
 # Get specific page size
-curl -H "Authorization: Token YOUR_TOKEN" \
-  "http://localhost:8000/api/projects/?page_size=50"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/project/projects/?page_size=50"
 
 # Navigate using cursor
-curl -H "Authorization: Token YOUR_TOKEN" \
-  "http://localhost:8000/api/projects/?cursor=abc123"
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  "http://localhost:8000/api/v1/project/projects/?cursor=abc123"
 ```
 
 ### JavaScript Example
@@ -72,9 +72,9 @@ async function fetchProjects(cursor = null) {
   if (cursor) params.append('cursor', cursor);
   params.append('page_size', '20');
 
-  const response = await fetch(`/api/projects/?${params}`, {
+  const response = await fetch(`/api/v1/project/projects/?${params}`, {
     headers: {
-      'Authorization': `Token ${token}`,
+      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -103,10 +103,10 @@ function usePaginatedProjects() {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/projects/?${cursor ? `cursor=${cursor}&` : ''}page_size=20`,
+        `/api/v1/project/projects/?${cursor ? `cursor=${cursor}&` : ''}page_size=20`,
         {
           headers: {
-            'Authorization': `Token ${token}`
+            'Authorization': `Bearer ${token}`
           }
         }
       );
@@ -136,10 +136,10 @@ function usePaginatedProjects() {
 
 ```bash
 # Small pages for mobile
-curl "http://localhost:8000/api/projects/?page_size=10"
+curl "http://localhost:8000/api/v1/project/projects/?page_size=10"
 
 # Large pages for data export
-curl "http://localhost:8000/api/projects/?page_size=100"
+curl "http://localhost:8000/api/v1/project/projects/?page_size=100"
 ```
 
 ## 🔍 Filtering with Pagination
@@ -148,10 +148,10 @@ Pagination works seamlessly with filtering:
 
 ```bash
 # Filter and paginate
-curl "http://localhost:8000/api/projects/?status=active&page_size=50"
+curl "http://localhost:8000/api/v1/project/projects/?status=active&page_size=50"
 
 # Search with pagination
-curl "http://localhost:8000/api/projects/?search=website&cursor=abc123"
+curl "http://localhost:8000/api/v1/project/projects/?search=website&cursor=abc123"
 ```
 
 ## 📊 Performance Considerations
@@ -197,15 +197,9 @@ curl "http://localhost:8000/api/projects/?search=website&cursor=abc123"
 
 ```bash
 # Check pagination metadata
-curl -v "http://localhost:8000/api/projects/?page_size=1"
+curl -v "http://localhost:8000/api/v1/project/projects/?page_size=1"
 
 # Response headers include pagination info
 # X-Total-Count: 150
-# Link: <http://localhost:8000/api/projects/?cursor=next>; rel="next"
-```</content>
-</xai:function_call"> 
-
-Assistant: Now create the filtering-search.md file. 
-
-<xai:function_call name="write">
-<parameter name="filePath">docs/api/filtering-search.md
+# Link: <http://localhost:8000/api/v1/project/projects/?cursor=next>; rel="next"
+```

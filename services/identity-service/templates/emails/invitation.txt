@@ -1,0 +1,37 @@
+You're invited to join {{ tenant.name }}!
+
+You've been invited to join {{ tenant.name }} as a {{ role }}.
+
+STEP 1: Confirm your email
+Click the link below to confirm your email address and verify your identity:
+{{ confirmation_url }}
+
+This link will expire on {{ expires_at|date:"F j, Y" }}
+
+STEP 2: Create your account
+After confirming your email, click here to set up your account:
+{{ signup_url }}
+
+IMPORTANT: This invitation expires on {{ expires_at|date:"F j, Y" }}.
+
+{% if is_resend %}
+This is a resent invitation. If you've already confirmed your email, you can proceed directly to account creation.
+{% endif %}
+
+What you can do with {{ tenant.name }}:
+- Manage projects and track progress
+- Collaborate with your team
+- Handle client relationships
+- Generate reports and analytics
+
+If you didn't expect this invitation, please ignore this email. No account will be created.
+
+We look forward to having you on board!
+
+Best regards,
+The {{ tenant.name }} Team
+
+---
+{{ site_name }} - Professional Project Management
+This email was sent to {{ email }}. If you have any questions, contact {{ support_email }}.
+© 2025 {{ site_name }}. All rights reserved.

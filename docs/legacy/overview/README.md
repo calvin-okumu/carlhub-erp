@@ -1,5 +1,7 @@
 # DjangoCRM
 
+⚠️ **Legacy overview:** This document reflects the original monolithic app. For the microservices architecture, use `docs/README.md` and `docs/quick-start/QUICKSTART_MICROSERVICES.md`.
+
 A comprehensive multi-tenant Customer Relationship Management system with a modern Next.js frontend and Django REST API backend.
 
 ## 🚀 Features
@@ -172,7 +174,7 @@ make db-backup     # Create timestamped database backup
 make db-restore    # Restore from latest backup
 
 # Health monitoring
-curl http://localhost:8000/api/health/  # Check API health status
+curl http://localhost:8000/api/v1/identity/health/  # Check gateway health
 ```
 
 ### Docker Deployment
@@ -238,11 +240,7 @@ Progress data is available in all API responses. Frontend applications can displ
 
 ### Manual Refresh
 
-For data consistency, use the manual refresh endpoint:
-```bash
-curl -X POST http://localhost:8000/api/projects/{id}/refresh_project_progress/ \
-  -H "Authorization: Token YOUR_TOKEN"
-```
+Project progress updates automatically in the microservices stack. There is no manual refresh endpoint exposed.
 
 For detailed technical documentation, see the `docs/` directory.
 
@@ -277,28 +275,28 @@ make test-frontend
 ## 📖 API Documentation
 
 Complete API documentation is available at:
-- **Swagger UI**: http://localhost:8000/api/schema/swagger-ui/ (when running)
+- **Swagger UI (direct)**: http://localhost:8001/api/swagger/ (Identity), http://localhost:8006/api/swagger/ (Project), etc.
 - **API Documentation**: `docs/api/` directory
 
 ### Sample API Usage
 ```bash
 # Login
-curl -X POST http://localhost:8000/api/login/ \
+curl -X POST http://localhost:8000/api/v1/identity/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "password"}'
 
 # Get clients
-curl -H "Authorization: Token YOUR_TOKEN" \
-  http://localhost:8000/api/clients/
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8000/api/v1/project/clients/
 
 # Get project with progress
-curl -H "Authorization: Token YOUR_TOKEN" \
-  http://localhost:8000/api/projects/project-alpha/
-# Returns: {"id": "uuid", "name": "Project Alpha", "slug": "project-alpha", "progress": 75, ...}
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8000/api/v1/project/projects/{project_id}/
+# Returns: {"id": "uuid", "name": "Project Alpha", "progress": 75, ...}
 
 # Health check (no auth required)
-curl http://localhost:8000/api/health/
-# Returns: {"status": "healthy", "timestamp": "2025-10-19T05:21:07.965244+00:00", "service": "DjangoCRM API"}
+curl http://localhost:8000/api/v1/identity/health/
+# Returns: {"status": "healthy", "service": "identity-service"}
 ```
 
 ## 📊 Sample Data
@@ -381,10 +379,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ### Getting Help
 - **Issues**: Open an issue on GitHub with error logs
 - **Documentation**: See `docs/` directory for detailed setup and usage
-- **API Docs**: Available at http://localhost:8000/api/schema/swagger-ui/ when running
+- **API Docs**: Use service-specific Swagger UIs (for example, http://localhost:8001/api/swagger/)
 
 ---
 
 **Default Superuser**: admin@example.com / admin123
-**API Base URL**: http://localhost:8000/api
+**API Base URL**: http://localhost:8000/api/v1
 **Frontend URL**: http://localhost:3000

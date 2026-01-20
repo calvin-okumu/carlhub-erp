@@ -26,7 +26,7 @@ backup_docs() {
     cp docs/*.md "$backup_dir/" 2>/dev/null
     cp docs/api/*.md "$backup_dir/" 2>/dev/null
     cp docs/guides/*.md "$backup_dir/" 2>/dev/null
-    cp docs/overview/*.md "$backup_dir/" 2>/dev/null
+    cp docs/legacy/overview/*.md "$backup_dir/" 2>/dev/null
     cp docs/quick-start/*.md "$backup_dir/" 2>/dev/null
     
     if [ $? -eq 0 ]; then
@@ -193,7 +193,7 @@ remove_make_dev() {
 
 remove_monolithic_db_setup() {
     echo - "${YELLOW}Removing monolithic database setup...${NC}"
-    local files=(docs/quick-start/QUICKSTART.md docs/guides/MANUAL.md)
+    local files=(docs/legacy/quick-start/QUICKSTART.md docs/guides/MANUAL.md)
     local count=0
     
     for file in "${files[@]}"; do
@@ -280,9 +280,9 @@ main() {
 }
 
 # Check for cleanup_plan.md and update it
-if [ -f "docs/DOCUMENTATION_CLEANUP_PLAN.md" ]; then
+if [ -f "docs/maintenance/DOCUMENTATION_CLEANUP_PLAN.md" ]; then
     echo -e "${YELLOW}Updating cleanup plan status...${NC}"
-    echo -e "This cleanup plan has been executed successfully." > docs/DOCUMENTATION_CLEANUP_PLAN.md
+    echo -e "This cleanup plan has been executed successfully." > docs/maintenance/DOCUMENTATION_CLEANUP_PLAN.md
 fi
 }
 
@@ -291,10 +291,10 @@ if [[ "${BASH_SOURCE[0]}" = "${0}" ]]; then
     main
 fi
 SCRIPT'
-chmod +x docs/cleanup_monolithic_refs.sh
-echo "✓ Cleanup script created at: docs/cleanup_monolithic_refs.sh"
+chmod +x docs/maintenance/cleanup_monolithic_refs.sh
+echo "✓ Cleanup script created at: docs/maintenance/cleanup_monolithic_refs.sh"
 echo ""
 echo "To run cleanup:"
 echo "  cd docs"
-echo "  ./cleanup_monolithic_refs.sh"
+echo "  ./maintenance/cleanup_monolithic_refs.sh"
 echo ""

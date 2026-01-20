@@ -84,14 +84,14 @@ Users have granular permissions for different operations:
 
 ```bash
 # Get all users (admin only)
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/users/
 ```
 
 ### Get User Profile
 
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/users/123/
 ```
 
@@ -99,7 +99,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 ```bash
 curl -X PUT http://localhost:8000/api/users/123/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "first_name": "Updated Name",
@@ -115,7 +115,7 @@ Tenant owners can invite new members via email:
 
 ```bash
 curl -X POST http://localhost:8000/api/invite-member/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "newmember@example.com",
@@ -208,7 +208,7 @@ Pending members need approval from tenant owners before they can access the syst
 
 ```bash
 curl -X POST http://localhost:8000/api/approve-member/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"user_id": 123}'
 ```
@@ -264,12 +264,12 @@ When a member is removed from a tenant, they receive a clear notification email:
 
 ```bash
 # List tenant members
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/members/
 
 # Update member role
 curl -X PUT http://localhost:8000/api/members/456/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"role": "Manager"}'
 ```
@@ -293,7 +293,7 @@ Employees can upload and manage their personal documents such as contracts, cert
 
 curl -X POST http://localhost:8000/api/accounts/documents/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -F "title=Employment Contract" \
 
@@ -305,7 +305,7 @@ curl -X POST http://localhost:8000/api/accounts/documents/ \
 
 # List user documents
 
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
 
   http://localhost:8000/api/accounts/documents/
 
@@ -315,7 +315,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 curl -X PUT http://localhost:8000/api/accounts/documents/123/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -327,7 +327,7 @@ curl -X PUT http://localhost:8000/api/accounts/documents/123/ \
 
 curl -X DELETE http://localhost:8000/api/accounts/documents/123/ \
 
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 
 ```
 
@@ -405,7 +405,7 @@ Audit logs are available to tenant administrators for compliance and security mo
 
 # Get audit logs (admin only)
 
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
 
   "http://localhost:8000/api/accounts/audit-logs/?action=user_login"
 
@@ -439,7 +439,7 @@ Users can update their own profiles, while administrators can manage all profile
 ```bash
 # Update current user's profile
 curl -X PUT http://localhost:8000/api/users/me/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "first_name": "Updated Name",

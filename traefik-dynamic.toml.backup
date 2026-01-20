@@ -1,0 +1,263 @@
+# Traefik v3 Dynamic Configuration
+
+# ==============================================
+# API Middlewares - ReplacePathRegex for API routing
+# /api/v1/identity/health/ -> /api/v1/health/
+# ==============================================
+[http.middlewares.identity-rewrite.replacePathRegex]
+  regex = "^/api/v1/identity(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.audit-rewrite.replacePathRegex]
+  regex = "^/api/v1/audit(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.notification-rewrite.replacePathRegex]
+  regex = "^/api/v1/notification(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.accounting-rewrite.replacePathRegex]
+  regex = "^/api/v1/accounting(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.hr-rewrite.replacePathRegex]
+  regex = "^/api/v1/hr(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.project-rewrite.replacePathRegex]
+  regex = "^/api/v1/project(/.*)$$"
+  replacement = "/api/v1$1"
+
+[http.middlewares.sales-rewrite.replacePathRegex]
+  regex = "^/api/v1/sales(/.*)$$"
+  replacement = "/api/v1$1"
+
+# ==============================================
+# Swagger Root Middleware - For /api/swagger/ direct access
+# Uses RegEx to match only EXACT root paths, not service-specific subpaths
+# ==============================================
+[http.middlewares.swagger-root.replacePathRegex]
+  regex = "^/api/(swagger|docs|schema)/?$"
+  replacement = "/api/$1"
+
+# ==============================================
+# Admin Routers - Path-based routing for admin interfaces
+# Currently commented out - uncomment to enable
+# Access via: http://localhost:8000/admin/{service}/
+# ==============================================
+[http.routers.admin-identity]
+  rule = "Host(`admin.identity.localhost`)"
+  service = "identity"
+
+[http.middlewares.audit-swagger.replacePathRegex]
+  regex = "^/swagger/audit/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.notification-swagger.replacePathRegex]
+  regex = "^/swagger/notification/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.accounting-swagger.replacePathRegex]
+  regex = "^/swagger/accounting/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.hr-swagger.replacePathRegex]
+  regex = "^/swagger/hr/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.project-swagger.replacePathRegex]
+  regex = "^/swagger/project/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.sales-swagger.replacePathRegex]
+  regex = "^/swagger/sales/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.identity-docs.replacePathRegex]
+  regex = "^/docs/identity/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.audit-docs.replacePathRegex]
+  regex = "^/docs/audit/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.notification-docs.replacePathRegex]
+  regex = "^/docs/notification/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.accounting-docs.replacePathRegex]
+  regex = "^/docs/accounting/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.hr-docs.replacePathRegex]
+  regex = "^/docs/hr/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.project-docs.replacePathRegex]
+  regex = "^/docs/project/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.sales-docs.replacePathRegex]
+  regex = "^/docs/sales/(.*)$$"
+  replacement = "/api/$1"
+
+# ==============================================
+# Admin Routers - Path-based routing for admin interfaces
+# Currently commented out - uncomment to enable
+# Access via: http://localhost:8000/admin/{service}/
+# ==============================================
+  rule = "Host(`admin.identity.localhost`)"
+  service = "identity"
+
+[http.routers.admin-audit]
+  rule = "Host(`admin.audit.localhost`)"
+  service = "audit"
+
+[http.routers.admin-notification]
+  rule = "Host(`admin.notification.localhost`)"
+  service = "notification"
+
+[http.routers.admin-accounting]
+  rule = "Host(`admin.accounting.localhost`)"
+  service = "accounting"
+
+[http.routers.admin-hr]
+  rule = "Host(`admin.hr.localhost`)"
+  service = "hr"
+
+[http.routers.admin-project]
+  rule = "Host(`admin.project.localhost`)"
+  service = "project"
+
+[http.routers.admin-sales]
+  rule = "Host(`admin.sales.localhost`)"
+  service = "sales"
+
+[http.routers.admin-hr]
+  rule = "Host(`admin.hr.localhost`)"
+  service = "hr"
+
+[http.routers.admin-project]
+  rule = "Host(`admin.project.localhost`)"
+  service = "project"
+
+[http.routers.admin-sales]
+  rule = "Host(`admin.sales.localhost`)"
+  service = "sales"
+
+# ==============================================
+# API Routers - Path-based routing for API endpoints
+# ==============================================
+[http.routers.identity]
+  rule = "PathPrefix(`/api/v1/identity`)"
+  service = "identity"
+  middlewares = ["identity-rewrite"]
+
+[http.routers.audit]
+  rule = "PathPrefix(`/api/v1/audit`)"
+  service = "audit"
+  middlewares = ["audit-rewrite"]
+
+[http.routers.notification]
+  rule = "PathPrefix(`/api/v1/notification`)"
+  service = "notification"
+  middlewares = ["notification-rewrite"]
+
+[http.routers.accounting]
+  rule = "PathPrefix(`/api/v1/accounting`)"
+  service = "accounting"
+  middlewares = ["accounting-rewrite"]
+
+[http.routers.hr]
+  rule = "PathPrefix(`/api/v1/hr`)"
+  service = "hr"
+  middlewares = ["hr-rewrite"]
+
+[http.routers.project]
+  rule = "PathPrefix(`/api/v1/project`)"
+  service = "project"
+  middlewares = ["project-rewrite"]
+
+[http.routers.sales]
+  rule = "PathPrefix(`/api/v1/sales`)"
+  service = "sales"
+  middlewares = ["sales-rewrite"]
+
+# ==============================================
+# Admin Routers - Path-based routing for admin interfaces
+# Currently commented out - uncomment to enable
+# Access via: http://localhost:8000/admin/{service}/
+# ==============================================
+[http.routers.admin-identity]
+  rule = "Host(`admin.identity.localhost`)"
+  service = "identity"
+  service = "sales"
+  middlewares = ["sales-swagger"]
+
+# ==============================================
+# Admin Routers - Path-based routing for admin interfaces
+# Currently commented out - uncomment to enable
+# Access via: http://localhost:8000/admin/{service}/
+# ==============================================
+  rule = "PathPrefix(`/admin/identity`)"
+  service = "identity"
+  middlewares = ["admin-identity-rewrite"]
+# ==============================================
+# Admin Rewrite Middlewares - Uncomment with admin routers
+# ==============================================
+# [http.middlewares.admin-identity-rewrite.replacePathRegex]
+#   regex = "^/admin/identity(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-audit-rewrite.replacePathRegex]
+#   regex = "^/admin/audit(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-notification-rewrite.replacePathRegex]
+#   regex = "^/admin/notification(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-accounting-rewrite.replacePathRegex]
+#   regex = "^/admin/accounting(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-hr-rewrite.replacePathRegex]
+#   regex = "^/admin/hr(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-project-rewrite.replacePathRegex]
+#   regex = "^/admin/project(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-sales-rewrite.replacePathRegex]
+#   regex = "^/admin/sales(/.*)$$"
+#   replacement = "/admin$1"
+
+# Services
+[http.services.identity.loadBalancer]
+  [[http.services.identity.loadBalancer.servers]]
+    url = "http://localhost:8001"
+
+[http.services.audit.loadBalancer]
+  [[http.services.audit.loadBalancer.servers]]
+    url = "http://localhost:8002"
+
+[http.services.notification.loadBalancer]
+  [[http.services.notification.loadBalancer.servers]]
+    url = "http://localhost:8003"
+
+[http.services.accounting.loadBalancer]
+  [[http.services.accounting.loadBalancer.servers]]
+    url = "http://localhost:8004"
+
+[http.services.hr.loadBalancer]
+  [[http.services.hr.loadBalancer.servers]]
+    url = "http://localhost:8005"
+
+[http.services.project.loadBalancer]
+  [[http.services.project.loadBalancer.servers]]
+    url = "http://localhost:8006"
+
+[http.services.sales.loadBalancer]
+  [[http.services.sales.loadBalancer.servers]]
+    url = "http://localhost:8007"

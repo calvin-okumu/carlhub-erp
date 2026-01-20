@@ -68,13 +68,13 @@ Tenant owners and administrators can restore soft deleted resources through API 
 #### Restore Single Project
 ```bash
 POST /api/projects/{project_slug}/restore/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 #### Bulk Restore Projects
 ```bash
 POST /api/projects/bulk_restore_projects/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -85,13 +85,13 @@ Content-Type: application/json
 #### Restore Single Task
 ```bash
 POST /api/tasks/{task_slug}/restore/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 #### Bulk Restore Tasks
 ```bash
 POST /api/tasks/bulk_restore_tasks/
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 Content-Type: application/json
 
 {
@@ -136,11 +136,11 @@ Administrators can access deleted records through special endpoints:
 ```bash
 # List all projects including deleted ones
 GET /api/projects/?include_deleted=true
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 
 # List only deleted projects
 GET /api/projects/?deleted_only=true
-Authorization: Token YOUR_TOKEN
+Authorization: Bearer YOUR_TOKEN
 ```
 
 ### Database Queries

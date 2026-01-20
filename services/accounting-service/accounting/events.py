@@ -2,13 +2,13 @@
 Accounting Service Event Publishers
 
 This module contains event publishers for Accounting Service.
-Events are published when invoices, payments, or accounts are created/updated.
+Events are published when invoices or payments are created/updated.
 """
 
 import logging
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
-from .models import Invoice, Payment, Account
+from .models import Invoice, Payment
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -44,12 +44,6 @@ class PaymentReceivedEvent(BaseEvent):
 class PaymentProcessedEvent(BaseEvent):
     """Event published when a payment is processed"""
     event_type: str = "payment.processed"
-    source_service: str = "accounting"
-
-
-class AccountCreatedEvent(BaseEvent):
-    """Event published when a new account is created"""
-    event_type: str = "account.created"
     source_service: str = "accounting"
 
 
@@ -161,28 +155,6 @@ class AccountingEventPublisher:
         except Exception as e:
             logger.error(f"Failed to publish payment.processed event: {e}")
 
-    @staticmethod
-    def publish_account_created(account):
-        """Publish account created event"""
-        try:
-            event = AccountCreatedEvent(
-                data={
-                    'account_id': str(account.id),
-                    'account_number': account.account_number,
-                    'account_name': account.account_name,
-                    'account_type': account.account_type,
-                    'tenant_id': str(account.tenant_id) if account.tenant_id else None,
-                    'created_at': account.created_at.isoformat() if account.created_at else None,
-                },
-                correlation_id=f"account-{account.id}",
-                target_service="audit-service"
-            )
-            event_bus.publish_event_async(event)
-            logger.info(f"Published account.created event for {account.account_number}")
-        except Exception as e:
-            logger.error(f"Failed to publish account.created event: {e}")
-
-
 # Django signal handlers for automatic event publishing
 
 @receiver(post_save, sender=Invoice)
@@ -198,9 +170,3 @@ def handle_payment_save(sender, instance, created, **kwargs):
         AccountingEventPublisher.publish_payment_received(instance)
     else:
         AccountingEventPublisher.publish_payment_processed(instance)
-
-@receiver(post_save, sender=Account)
-def handle_account_save(sender, instance, created, **kwargs):
-    """Handle account save events"""
-    if created:
-        AccountingEventPublisher.publish_account_created(instance)

@@ -18,6 +18,18 @@ from shared.event_bus import event_bus, BaseEvent
 logger = logging.getLogger(__name__)
 
 
+def get_user_tenant_id(user: User):
+    tenant_id = getattr(user, "tenant_id", None)
+    if tenant_id:
+        return tenant_id
+    user_tenant = getattr(user, "usertenant", None)
+    if user_tenant and getattr(user_tenant, "tenant_id", None):
+        return user_tenant.tenant_id
+    if user_tenant and getattr(user_tenant, "tenant", None):
+        return user_tenant.tenant.id
+    return None
+
+
 class UserCreatedEvent(BaseEvent):
     """Event published when a new user is created"""
     event_type: str = "user.created"
@@ -74,7 +86,7 @@ class IdentityEventPublisher:
                     'first_name': user.first_name,
                     'last_name': user.last_name,
                     'is_active': user.is_active,
-                    'tenant_id': str(user.tenant_id) if user.tenant_id else None,
+                    'tenant_id': str(get_user_tenant_id(user)) if get_user_tenant_id(user) else None,
                     'created_at': user.date_joined.isoformat(),
                 },
                 correlation_id=f"user-{user.id}",
@@ -96,7 +108,7 @@ class IdentityEventPublisher:
                     'first_name': user.first_name,
                     'last_name': user.last_name,
                     'is_active': user.is_active,
-                    'tenant_id': str(user.tenant_id) if user.tenant_id else None,
+                    'tenant_id': str(get_user_tenant_id(user)) if get_user_tenant_id(user) else None,
                     'changes': changes or {},
                 },
                 correlation_id=f"user-{user.id}",
@@ -115,7 +127,7 @@ class IdentityEventPublisher:
                 data={
                     'user_id': str(user.id),
                     'email': user.email,
-                    'tenant_id': str(user.tenant_id) if user.tenant_id else None,
+                    'tenant_id': str(get_user_tenant_id(user)) if get_user_tenant_id(user) else None,
                 },
                 correlation_id=f"user-{user.id}",
                 target_service="audit-service"
@@ -133,7 +145,7 @@ class IdentityEventPublisher:
                 data={
                     'user_id': str(user.id),
                     'email': user.email,
-                    'tenant_id': str(user.tenant_id) if user.tenant_id else None,
+                    'tenant_id': str(get_user_tenant_id(user)) if get_user_tenant_id(user) else None,
                     'ip_address': ip_address,
                     'user_agent': user_agent,
                     'login_time': user.last_login.isoformat() if user.last_login else None,
@@ -154,7 +166,7 @@ class IdentityEventPublisher:
                 data={
                     'user_id': str(user.id),
                     'email': user.email,
-                    'tenant_id': str(user.tenant_id) if user.tenant_id else None,
+                    'tenant_id': str(get_user_tenant_id(user)) if get_user_tenant_id(user) else None,
                     'logout_time': user.last_login.isoformat() if user.last_login else None,
                 },
                 correlation_id=f"logout-{user.id}",

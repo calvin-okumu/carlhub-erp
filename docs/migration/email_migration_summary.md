@@ -87,7 +87,7 @@ FRONTEND_URL=https://yourdomain.com
 ### Send Invitation Email (Project Service)
 ```bash
 curl -X POST http://localhost:8006/api/v1/projects/invite_team_member/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -106,7 +106,7 @@ curl -X POST http://localhost:8001/api/v1/password_reset/ \
 ### Send Leave Approval Email (HR Service)
 ```bash
 curl -X POST http://localhost:8005/api/v1/leaves/{id}/approve/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## 🔧 Testing

@@ -37,10 +37,10 @@ http://localhost:8000/api/v1/project/
 
 ## 🔐 Authentication
 
-All API requests require authentication using Token Authentication:
+All API requests require authentication using JWT Bearer tokens:
 
 ```bash
-Authorization: Token <your-token>
+Authorization: Bearer <your-token>
 ```
 
 ### Getting a Token
@@ -57,7 +57,7 @@ Authorization: Token <your-token>
 2. **Use token in subsequent requests:**
    ```bash
    GET http://localhost:8001/api/v1/users/
-   Headers: Authorization: Token abc123...
+   Headers: Authorization: Bearer abc123...
    ```
 
 ## 📊 Response Format
@@ -76,46 +76,40 @@ All responses follow a consistent JSON structure:
 
 ## 🏷️ URL Structure
 
-- **Projects**: `/api/v1/projects/{slug}/` (slug-based URLs)
-- **Clients**: `/api/v1/clients/{slug}/` (slug-based URLs)
-- **Users**: `/api/v1/users/{slug}/` (slug-based URLs)
-- **Other entities**: `/api/v1/{resource}/{id}/` (ID-based URLs)
+- **Gateway detail URLs**: `/api/v1/{service}/{resource}/{id}/`
+- **Direct service URLs**: `/api/v1/{resource}/{id}/`
 
-Slugs are auto-generated from names but can be customized for better readability.
+Most services use UUIDs for detail routes. Some resources store slugs for display, but the API does not assume slug-based lookups unless explicitly documented per service.
 
 ## 📖 Interactive Documentation
 
-Each service provides its own API documentation:
+Only the Project Service currently exposes Swagger UI:
 
-- **Identity Service**: http://localhost:8001/api/v1/schema/swagger-ui/
-- **Audit Service**: http://localhost:8002/api/v1/schema/swagger-ui/
-- **Notification**: http://localhost:8003/api/v1/schema/swagger-ui/
-- **Accounting**: http://localhost:8004/api/v1/schema/swagger-ui/
-- **HR**: http://localhost:8005/api/v1/schema/swagger-ui/
-- **Project**: http://localhost:8006/api/v1/schema/swagger-ui/
-- **Sales**: http://localhost:8007/api/v1/schema/swagger-ui/
+- **Project Service**: http://localhost:8006/api/swagger/
+
+Other services do not yet publish Swagger routes.
 
 ## 🚀 Quick Examples
 
 ### List Projects
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
-  http://localhost:8006/api/v1/projects/
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8000/api/v1/project/projects/
 ```
 
 ### Get Project Details
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
-  http://localhost:8006/api/v1/projects/my-project-slug/
+curl -H "Authorization: Bearer YOUR_TOKEN" \
+  http://localhost:8000/api/v1/project/projects/{project_id}/
 ```
 
 ### Create a Project
 ```bash
 curl -X POST \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name": "New Project", "client": "client-uuid"}' \
-  http://localhost:8006/api/v1/projects/
+  http://localhost:8000/api/v1/project/projects/
 ```
 
 ### Login
@@ -123,7 +117,7 @@ curl -X POST \
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"email": "user@example.com", "password": "password"}' \
-  http://localhost:8001/api/v1/auth/login/
+  http://localhost:8000/api/v1/identity/auth/login/
 ```
 
 ### Service Health Check
@@ -142,31 +136,31 @@ curl http://localhost:8006/api/v1/health/
 
 ### Identity Service (Port 8001)
 - **Endpoints**: Auth, Users, Tenants, Permissions
-- **Documentation**: http://localhost:8001/api/v1/schema/swagger-ui/
+- **Documentation**: Not published (use `docs/api/`)
 
 ### Audit Service (Port 8002)
 - **Endpoints**: Audit Logs, Events, Tracking
-- **Documentation**: http://localhost:8002/api/v1/schema/swagger-ui/
+- **Documentation**: Not published (use `docs/api/`)
 
 ### Notification Service (Port 8003)
 - **Endpoints**: Notifications, Subscriptions, Preferences
-- **Documentation**: http://localhost:8003/api/v1/schema/swagger-ui/
+- **Documentation**: Not published (use `docs/api/`)
 
 ### Accounting Service (Port 8004)
 - **Endpoints**: Invoices, Payments, Transactions
-- **Documentation**: http://localhost:8004/api/v1/schema/swagger-ui/
+- **Documentation**: Not published (use `docs/api/`)
 
 ### HR Service (Port 8005)
 - **Endpoints**: Employees, Leaves, Attendance
-- **Documentation**: http://localhost:8005/api/v1/schema/swagger-ui/
+- **Documentation**: Not published (use `docs/api/`)
 
 ### Project Service (Port 8006)
 - **Endpoints**: Projects, Tasks, Milestones, Sprints
-- **Documentation**: http://localhost:8006/api/v1/schema/swagger-ui/
+- **Documentation**: http://localhost:8006/api/swagger/
 
 ### Sales Service (Port 8007)
 - **Endpoints**: Leads, Clients, Deals, Contacts
-- **Documentation**: http://localhost:8007/api/v1/schema/swagger-ui/
+- **Documentation**: Not published (use `docs/api/`)
 
 ## 🔗 Inter-Service Communication
 
@@ -176,7 +170,7 @@ Services communicate with each other using REST APIs. Example:
 # Audit Service logs an action from Identity Service
 curl -X POST http://localhost:8002/api/v1/logs/ \
   -H "Content-Type: application/json" \
-  -H "Authorization: Token INTERNAL_SERVICE_KEY" \
+  -H "Authorization: Bearer INTERNAL_SERVICE_KEY" \
   -d '{
     "service": "identity",
     "action": "user_login",
@@ -191,22 +185,22 @@ curl -X POST http://localhost:8002/api/v1/logs/ \
 
 ### Pagination
 ```bash
-curl "http://localhost:8006/api/v1/projects/?page=1&page_size=20"
+curl "http://localhost:8000/api/v1/project/projects/?page=1&page_size=20"
 ```
 
 ### Filtering
 ```bash
-curl "http://localhost:8006/api/v1/projects/?status=active"
+curl "http://localhost:8000/api/v1/project/projects/?status=active"
 ```
 
 ### Search
 ```bash
-curl "http://localhost:8006/api/v1/projects/?search=project"
+curl "http://localhost:8000/api/v1/project/projects/?search=project"
 ```
 
 ### Ordering
 ```bash
-curl "http://localhost:8006/api/v1/projects/?ordering=-created_at"
+curl "http://localhost:8000/api/v1/project/projects/?ordering=-created_at"
 ```
 
 ## 📊 Health Checks

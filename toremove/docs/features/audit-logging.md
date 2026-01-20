@@ -42,19 +42,19 @@ Access audit logs programmatically via `/api/accounts/audit-logs/`:
 
 ```bash
 # Get all audit logs (paginated)
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/accounts/audit-logs/
 
 # Filter by action
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/accounts/audit-logs/?action=user_login"
 
 # Filter by user
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/accounts/audit-logs/?user=user-uuid"
 
 # Sort by timestamp (newest first)
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/accounts/audit-logs/?ordering=-timestamp"
 ```
 
@@ -263,11 +263,11 @@ AuditLogger.log_event(
 ### Log Analysis Tools
 ```bash
 # Count events by action type
-curl -H "Authorization: Token TOKEN" \
+curl -H "Authorization: Bearer TOKEN" \
   "http://localhost:8000/api/accounts/audit-logs/" | jq '.results | group_by(.action) | map({action: .[0].action, count: length})'
 
 # Find recent security events
-curl -H "Authorization: Token TOKEN" \
+curl -H "Authorization: Bearer TOKEN" \
   "http://localhost:8000/api/accounts/audit-logs/?action__startswith=security&ordering=-timestamp"
 ```</content>
 </xai:function_call"> 

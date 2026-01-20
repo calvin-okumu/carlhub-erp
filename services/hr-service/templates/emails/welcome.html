@@ -1,0 +1,46 @@
+{% extends "emails/base.html" %}
+{% load static %}
+
+{% block subject %}Welcome to {{ tenant.name }}!{% endblock %}
+
+{% block recipient %}{{ user.email }}{% endblock %}
+
+{% block content %}
+<h2>Welcome aboard, {{ user.first_name }}! 🎉</h2>
+
+<p>Great news! Your account has been successfully created and you're now part of the <strong>{{ tenant.name }}</strong> team.</p>
+
+<div style="margin: 30px 0;">
+    <h3>Get Started</h3>
+    <p>Click the button below to log in and start exploring your new workspace:</p>
+    <a href="{{ login_url }}" class="button">Log In to Your Account</a>
+</div>
+
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #495057;">What's Next?</h3>
+    <ul style="color: #495057; line-height: 1.6; margin: 0; padding-left: 20px;">
+        <li><strong>Complete your profile:</strong> Add your photo and update your preferences</li>
+        <li><strong>Explore projects:</strong> Check out active projects and your assigned tasks</li>
+        <li><strong>Connect with your team:</strong> Start collaborating with colleagues</li>
+        <li><strong>Set up notifications:</strong> Configure how you want to stay updated</li>
+    </ul>
+</div>
+
+<p><strong>Quick Links:</strong></p>
+<ul style="color: #555; line-height: 1.6;">
+    <li><a href="{{ login_url }}">Login Page</a> - Access your account</li>
+    <li><a href="{{ profile_url }}">Profile Settings</a> - Update your information</li>
+    <li><a href="{{ dashboard_url }}">Dashboard</a> - Overview of your work</li>
+    <li><a href="{{ help_url }}">Help & Support</a> - Get assistance</li>
+</ul>
+
+<div class="warning-text">
+    <strong>Security Reminder:</strong> Keep your login credentials secure and never share them with others. If you suspect any unauthorized access to your account, please contact us immediately.
+</div>
+
+<p>We're excited to have you join our team! If you have any questions or need help getting started, don't hesitate to reach out to your team lead or contact our support team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Welcome to the team!</p>
+
+<p>Best regards,<br>The {{ tenant.name }} Team</p>
+{% endblock %}

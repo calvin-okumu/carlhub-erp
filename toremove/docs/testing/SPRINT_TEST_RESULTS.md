@@ -8,7 +8,7 @@ The DjangoCRM sprint creation API has been successfully tested using curl comman
 
 ### 1. **Authentication**
 - Token-based authentication works correctly
-- Format: `Authorization: Token <token_key>`
+- Format: `Authorization: Bearer <token_key>`
 - Login endpoint: `/api/login/`
 
 ### 2. **Sprint Creation**
@@ -21,7 +21,7 @@ The DjangoCRM sprint creation API has been successfully tested using curl comman
 ```bash
 curl -X POST http://localhost:8000/api/sprints/ \
   -H "Content-Type: application/json" \
-  -H "Authorization: Token b89c6866fe0a0a2e395dfc8f81d9e0a8f378a129" \
+  -H "Authorization: Bearer b89c6866fe0a0a2e395dfc8f81d9e0a8f378a129" \
   -d '{
     "name": "Test Sprint API",
     "status": "planned",
@@ -68,7 +68,7 @@ curl -X POST http://localhost:8000/api/sprints/ \
 ```bash
 # This should fail but doesn't
 curl -X POST http://localhost:8000/api/sprints/ \
-  -H "Authorization: Token <token>" \
+  -H "Authorization: Bearer <token>" \
   -d '{
     "name": "Invalid Date Sprint",
     "start_date": "2025-12-01",
@@ -162,17 +162,17 @@ TOKEN=$(curl -s -X POST http://localhost:8000/api/login/ \
   | python3 -c "import sys, json; print(json.load(sys.stdin)['token'])")
 
 # 2. List existing milestones
-curl -H "Authorization: Token $TOKEN" \
+curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/milestones/
 
 # 3. Create sprint
 curl -X POST http://localhost:8000/api/sprints/ \
   -H "Content-Type: application/json" \
-  -H "Authorization: Token $TOKEN" \
+  -H "Authorization: Bearer $TOKEN" \
   -d '{"name": "New Sprint", "milestone": "existing-milestone-slug"}'
 
 # 4. List sprints
-curl -H "Authorization: Token $TOKEN" \
+curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8000/api/sprints/
 ```
 

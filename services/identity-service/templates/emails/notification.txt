@@ -1,0 +1,25 @@
+{% load static %}
+
+{{ notification_title }}
+
+Hello {{ recipient.first_name }},
+
+{{ notification_message }}
+
+{% if notification_details %}
+{{ notification_details }}
+{% endif %}
+
+{% if action_url %}
+{{ action_text|default:"View Details" }}: {{ action_url }}
+{% endif %}
+
+{% if additional_info %}
+Additional Information:
+{{ additional_info }}
+{% endif %}
+
+This is an automated notification from {{ site_name }}. If you have any questions, please contact our support team at {{ support_email }}.
+
+Best regards,
+The {{ site_name }} Team

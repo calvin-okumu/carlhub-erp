@@ -110,7 +110,7 @@ cat frontend/src/api/services.ts
 **Goal:** Document current architecture and create helpful guides
 
 **New Documentation Files:**
-1. `docs/MICROSERVICES_ARCHITECTURE.md`
+1. `docs/architecture/MICROSERVICES_ARCHITECTURE.md`
    - Service boundaries and responsibilities
    - Data flow between services
    - Event bus usage pattern

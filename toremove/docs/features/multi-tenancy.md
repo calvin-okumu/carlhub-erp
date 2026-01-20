@@ -24,7 +24,7 @@ Tenants can be accessed via:
 
 ```bash
 curl -X POST http://localhost:8000/api/tenants/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Acme Corporation",
@@ -99,7 +99,7 @@ Users with access to multiple tenants can switch contexts:
 
 ```bash
 # Get user's tenants
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/members/
 
 # Switch tenant context (via frontend)

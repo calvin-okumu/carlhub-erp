@@ -260,7 +260,7 @@ cd backend && python manage.py runserver
 
 # In another terminal, test invitation
 curl -X POST http://localhost:8000/api/invite-member/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "role": "Employee"}'
 

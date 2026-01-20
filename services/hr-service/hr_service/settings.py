@@ -26,11 +26,6 @@ if str(SERVICES_DIR) not in sys.path:
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-hr-service-secret-key-2024'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
 # Environment variables
 import os
 from dotenv import load_dotenv
@@ -38,6 +33,8 @@ from shared.email_settings import apply_email_settings
 load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY', SECRET_KEY)
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 
@@ -133,7 +130,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'jwt_auth.SimpleJWTAuthentication',
+        'shared.auth.jwt_auth.SimpleJWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',

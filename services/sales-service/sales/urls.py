@@ -1,6 +1,7 @@
 """
 URL configuration for sales app.
 """
+from django.http import JsonResponse
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework import permissions
@@ -15,5 +16,3 @@ urlpatterns = [
     path('health/', lambda request: JsonResponse({'status': 'healthy', 'service': 'sales-service'}), name='health'),
     path('', include(router.urls)),
 ]
-
-from django.http import JsonResponse

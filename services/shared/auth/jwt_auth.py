@@ -6,8 +6,8 @@ Services validate tokens using the shared SECRET_KEY and extract user data
 from the token payload without database lookup.
 """
 
-from django.contrib.auth.backends import BaseBackend
-from django.utils.translation import gettext_lazy as _
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 
 
 class SimpleUser:
@@ -73,27 +73,11 @@ class SimpleUser:
         return self.is_staff or self.is_superuser
 
 
-class SimpleJWTAuthentication(BaseBackend):
-    """
-    Custom JWT authentication backend that creates a SimpleUser from JWT token payload.
-    This allows services to authenticate without needing a local User model.
-    """
+class SimpleJWTAuthentication(JWTAuthentication):
+    """JWT authentication without database lookup, supporting UUID user IDs."""
 
-    def authenticate(self, request, token=None):
-        """
-        Authenticate user by validating JWT token and extracting user data.
-        """
-        from rest_framework_simplejwt.authentication import JWTAuthentication
-        from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-
-        # Use standard JWT authentication to validate the token
-        jwt_auth = JWTAuthentication()
-
+    def get_user(self, validated_token):
         try:
-            # Validate the token
-            validated_token = jwt_auth.get_validated_token(token)
-
-            # Extract user information from the token payload
             user_id = validated_token.get('user_id')
             email = validated_token.get('email')
             first_name = validated_token.get('first_name', '')
@@ -107,7 +91,9 @@ class SimpleJWTAuthentication(BaseBackend):
             is_approved = validated_token.get('is_approved', True)
             department_id = validated_token.get('department_id')
 
-            # Create a SimpleUser object from the token data
+            if not user_id or not email:
+                raise AuthenticationFailed('Token contained no recognizable user identification')
+
             return SimpleUser(
                 id=user_id,
                 email=email,
@@ -121,18 +107,7 @@ class SimpleJWTAuthentication(BaseBackend):
                 is_owner=is_owner,
                 is_approved=is_approved,
                 department_id=department_id,
-                token=token,
+                token=validated_token,
             )
-
-        except (InvalidToken, TokenError) as e:
-            # Token is invalid or expired
-            return None
-
-    def get_user(self, user_id):
-        """
-        This method is not used because user data comes from the JWT token.
-        Kept for compatibility with BaseBackend.
-        """
-        # In microservices architecture, we don't need to look up users
-        # User data is always in the JWT token
-        return None
+        except Exception as exc:
+            raise AuthenticationFailed(f'Invalid token payload: {exc}')

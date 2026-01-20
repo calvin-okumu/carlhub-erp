@@ -64,7 +64,7 @@ The Financial Suite integrates financial management with project management to p
 ### Invoice Creation
 ```bash
 curl -X POST http://localhost:8000/api/invoices/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "client": "client-uuid",
@@ -96,7 +96,7 @@ curl -X POST http://localhost:8000/api/invoices/ \
 ### Payment Recording
 ```bash
 curl -X POST http://localhost:8000/api/payments/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "invoice": "invoice-uuid",

@@ -1,0 +1,831 @@
+"""
+Views for project service.
+"""
+import uuid
+from datetime import datetime, timedelta
+from decimal import Decimal
+
+from rest_framework import viewsets, filters, status, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Count, Avg, Q
+from django.utils import timezone
+from django.http import HttpResponse
+
+from .models import Client, Project, Milestone, Sprint, Task, Contract
+from .serializers import (
+    ClientSerializer,
+    ClientCreateSerializer,
+    ClientUpdateSerializer,
+    ContractSerializer,
+    ContractCreateSerializer,
+    ContractUpdateSerializer,
+    ProjectSerializer,
+    ProjectCreateSerializer,
+    ProjectUpdateSerializer,
+    MilestoneSerializer,
+    MilestoneCreateSerializer,
+    MilestoneUpdateSerializer,
+    SprintSerializer,
+    SprintCreateSerializer,
+    SprintUpdateSerializer,
+    TaskSerializer,
+    TaskCreateSerializer,
+    TaskUpdateSerializer,
+    BulkUpdateSprintSerializer,
+    BulkUpdateTaskSerializer,
+)
+from .email_service import EmailService, EmailError
+from .permissions import (
+    CanManageClients,
+    CanManageProjects,
+    CanManageMilestones,
+    CanManageSprints,
+    CanManageTasks,
+    CanManageContracts,
+)
+
+
+class ClientViewSet(viewsets.ModelViewSet):
+    queryset = Client.objects.all()
+    serializer_class = ClientSerializer
+    permission_classes = [CanManageClients]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['tenant_id', 'status', 'industry', 'company_size', 'lead_source']
+    ordering_fields = ['name', 'created_at', 'lead_score', 'satisfaction_score']
+    ordering = ['name']
+    search_fields = ['name', 'email', 'company_name']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ClientCreateSerializer
+        if self.action in ['update', 'partial_update']:
+            return ClientUpdateSerializer
+        return ClientSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        return queryset
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete_clients(self, request):
+        """Bulk delete multiple clients"""
+        client_ids = request.data.get('client_ids', [])
+
+        if not client_ids:
+            return Response(
+                {'error': 'client_ids are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = self.get_queryset().filter(id__in=client_ids)
+
+        for client in queryset:
+            client.delete()
+
+        return Response(
+            {'message': f'Successfully deleted {queryset.count()} clients'},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=False, methods=['get'])
+    def excel_export(self, request):
+        """Export clients to Excel file"""
+        try:
+            from .excel_utils import ClientExcelHandler
+
+            tenant_id = request.query_params.get('tenant_id')
+            handler = ClientExcelHandler(tenant_id=tenant_id)
+
+            output = handler.export_clients()
+
+            filename = f'clients_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+            response = HttpResponse(
+                output.getvalue(),
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to export clients: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'])
+    def excel_import(self, request):
+        """Import clients from Excel file"""
+        try:
+            from .excel_utils import ClientExcelHandler
+
+            file = request.FILES.get('file')
+            if not file:
+                return Response(
+                    {'error': 'file is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            tenant_id = request.data.get('tenant_id')
+            handler = ClientExcelHandler(tenant_id=tenant_id)
+
+            result = handler.import_clients(file)
+
+            return Response(result, status=status.HTTP_200_OK)
+
+        except ImportError as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to import clients: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+    permission_classes = [CanManageProjects]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['tenant_id', 'client_id', 'status', 'priority', 'phase', 'risk_level']
+    ordering_fields = ['name', 'start_date', 'end_date', 'progress', 'status', 'created_at']
+    ordering = ['-created_at']
+    search_fields = ['name', 'description', 'tags']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ProjectCreateSerializer
+        if self.action in ['update', 'partial_update']:
+            return ProjectUpdateSerializer
+        return ProjectSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def active(self, request):
+        """Get all active projects"""
+        queryset = self.get_queryset().filter(status='active')
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def by_client(self, request):
+        """Get projects by client"""
+        client_id = request.query_params.get('client_id')
+        if not client_id:
+            return Response(
+                {'error': 'client_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = self.get_queryset().filter(client_id=client_id)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get project statistics"""
+        queryset = self.get_queryset()
+
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        stats = {
+            'total_projects': queryset.count(),
+            'by_status': list(queryset.values('status').annotate(count=Count('id'))),
+            'by_priority': list(queryset.values('priority').annotate(count=Count('id'))),
+            'by_phase': list(queryset.values('phase').annotate(count=Count('id'))),
+            'by_risk_level': list(queryset.values('risk_level').annotate(count=Count('id'))),
+            'average_progress': queryset.aggregate(avg=Avg('progress'))['avg'] or 0,
+        }
+
+        return Response(stats)
+
+    @action(detail=True, methods=['post'])
+    def refresh_project_progress(self, request, pk=None):
+        """Manually recalculate and update project progress"""
+        project = self.get_object()
+
+        new_progress = project.calculate_progress()
+        project.progress = new_progress
+        project.save(update_fields=['progress'])
+
+        return Response({
+            'message': 'Project progress refreshed successfully',
+            'progress': new_progress
+        })
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete_projects(self, request):
+        """Bulk delete multiple projects"""
+        project_ids = request.data.get('project_ids', [])
+
+        if not project_ids:
+            return Response(
+                {'error': 'project_ids are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = self.get_queryset().filter(id__in=project_ids)
+
+        for project in queryset:
+            project.delete()
+
+        return Response(
+            {'message': f'Successfully deleted {queryset.count()} projects'},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restore a soft-deleted project"""
+        try:
+            project = Project.all_objects.get(id=pk)
+            project.restore()
+            serializer = self.get_serializer(project)
+            return Response(serializer.data)
+        except Project.DoesNotExist:
+            return Response(
+                {'error': 'Project not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class ContractViewSet(viewsets.ModelViewSet):
+    queryset = Contract.objects.all()
+    serializer_class = ContractSerializer
+    permission_classes = [CanManageContracts]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['tenant_id', 'client_id', 'status']
+    ordering_fields = ['created_at', 'status', 'signed_date']
+    ordering = ['-created_at']
+    search_fields = ['contract_number', 'title', 'description']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ContractCreateSerializer
+        if self.action in ['update', 'partial_update']:
+            return ContractUpdateSerializer
+        return ContractSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        """Approve a contract"""
+        contract = self.get_object()
+
+        if contract.status != 'draft':
+            return Response(
+                {'error': 'Only draft contracts can be approved.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        contract.status = 'sent'
+        contract.approved_by_id = request.data.get('approved_by_id')
+        contract.approved_date = timezone.now()
+        contract.save()
+
+        serializer = self.get_serializer(contract)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def sign(self, request, pk=None):
+        """Mark contract as signed and update project phase"""
+        contract = self.get_object()
+
+        if contract.status not in ['sent', 'active']:
+            return Response(
+                {'error': 'Contract must be sent before signing.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        contract.status = 'signed'
+        contract.signed_date = timezone.now()
+        contract.save()
+
+        try:
+            project = Project.objects.get(id=contract.project_id)
+            project.status = 'active'
+            project.phase = 'execution'
+            project.save(update_fields=['status', 'phase'])
+        except Project.DoesNotExist:
+            pass
+
+        serializer = self.get_serializer(contract)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restore a soft-deleted contract"""
+        try:
+            contract = Contract.all_objects.get(id=pk)
+            contract.restore()
+            serializer = self.get_serializer(contract)
+            return Response(serializer.data)
+        except Contract.DoesNotExist:
+            return Response(
+                {'error': 'Contract not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class SprintViewSet(viewsets.ModelViewSet):
+    queryset = Sprint.objects.all()
+    serializer_class = SprintSerializer
+    permission_classes = [CanManageSprints]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['tenant_id', 'project_id', 'milestone_id', 'status']
+    ordering_fields = ['start_date', 'status', 'progress', 'created_at']
+    ordering = ['-created_at']
+    search_fields = ['name', 'description']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return SprintCreateSerializer
+        if self.action in ['update', 'partial_update']:
+            return SprintUpdateSerializer
+        return SprintSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        project_id = self.request.query_params.get('project_id')
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+
+        milestone_id = self.request.query_params.get('milestone_id')
+        if milestone_id:
+            queryset = queryset.filter(milestone_id=milestone_id)
+
+        return queryset
+
+    @action(detail=True, methods=['post'])
+    def assign_task(self, request, pk=None):
+        """Assign task to sprint"""
+        sprint = self.get_object()
+        task_id = request.data.get('task_id')
+
+        if not task_id:
+            return Response(
+                {'error': 'task_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            task = Task.objects.get(id=task_id)
+            if task.milestone_id != sprint.milestone_id:
+                return Response(
+                    {'error': 'Task milestone must match sprint milestone'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            task.sprint_id = sprint.id
+            task.save(update_fields=['sprint_id'])
+
+            return Response({'message': 'Task assigned successfully'})
+        except Task.DoesNotExist:
+            return Response(
+                {'error': 'Task not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=True, methods=['post'])
+    def unassign_task(self, request, pk=None):
+        """Unassign task from sprint"""
+        sprint = self.get_object()
+        task_id = request.data.get('task_id')
+
+        if not task_id:
+            return Response(
+                {'error': 'task_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            task = Task.objects.get(id=task_id, sprint_id=sprint.id)
+            task.sprint_id = None
+            task.save(update_fields=['sprint_id'])
+
+            return Response({'message': 'Task unassigned successfully'})
+        except Task.DoesNotExist:
+            return Response(
+                {'error': 'Task not found or not assigned to this sprint'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=False, methods=['patch'])
+    def bulk_update_sprints(self, request):
+        """Bulk update sprint statuses"""
+        serializer = BulkUpdateSprintSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        sprint_ids = serializer.validated_data['sprint_ids']
+        update_data = {}
+        if 'status' in serializer.validated_data:
+            update_data['status'] = serializer.validated_data['status']
+
+        updated_count = Sprint.objects.filter(id__in=sprint_ids).update(**update_data)
+
+        return Response({
+            'message': f'Successfully updated {updated_count} sprints',
+            'updated_count': updated_count
+        })
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restore a soft-deleted sprint"""
+        try:
+            sprint = Sprint.all_objects.get(id=pk)
+            sprint.restore()
+            serializer = self.get_serializer(sprint)
+            return Response(serializer.data)
+        except Sprint.DoesNotExist:
+            return Response(
+                {'error': 'Sprint not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class MilestoneViewSet(viewsets.ModelViewSet):
+    queryset = Milestone.objects.all()
+    serializer_class = MilestoneSerializer
+    permission_classes = [CanManageMilestones]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['tenant_id', 'project_id', 'assignee_id', 'status']
+    ordering_fields = ['title', 'planned_start', 'due_date', 'progress', 'created_at']
+    ordering = ['-created_at']
+    search_fields = ['title', 'description']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return MilestoneCreateSerializer
+        if self.action in ['update', 'partial_update']:
+            return MilestoneUpdateSerializer
+        return MilestoneSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        project_id = self.request.query_params.get('project_id')
+        if project_id:
+            queryset = queryset.filter(project_id=project_id)
+
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def by_project(self, request):
+        """Get milestones by project"""
+        project_id = request.query_params.get('project_id')
+        if not project_id:
+            return Response(
+                {'error': 'project_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = self.get_queryset().filter(project_id=project_id)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restore a soft-deleted milestone"""
+        try:
+            milestone = Milestone.all_objects.get(id=pk)
+            milestone.restore()
+            serializer = self.get_serializer(milestone)
+            return Response(serializer.data)
+        except Milestone.DoesNotExist:
+            return Response(
+                {'error': 'Milestone not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    permission_classes = [CanManageTasks]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['tenant_id', 'milestone_id', 'sprint_id', 'assignee_id', 'status']
+    ordering_fields = ['title', 'start_date', 'end_date', 'status', 'created_at']
+    ordering = ['-created_at']
+    search_fields = ['title', 'description']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return TaskCreateSerializer
+        if self.action in ['update', 'partial_update']:
+            return TaskUpdateSerializer
+        return TaskSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+
+        milestone_id = self.request.query_params.get('milestone_id')
+        if milestone_id:
+            queryset = queryset.filter(milestone_id=milestone_id)
+
+        sprint_id = self.request.query_params.get('sprint_id')
+        if sprint_id:
+            queryset = queryset.filter(sprint_id=sprint_id)
+
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def by_milestone(self, request):
+        """Get tasks by milestone"""
+        milestone_id = request.query_params.get('milestone_id')
+        if not milestone_id:
+            return Response(
+                {'error': 'milestone_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = self.get_queryset().filter(milestone_id=milestone_id)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def by_assignee(self, request):
+        """Get tasks by assignee"""
+        assignee_id = request.query_params.get('assignee_id')
+        if not assignee_id:
+            return Response(
+                {'error': 'assignee_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = self.get_queryset().filter(assignee_id=assignee_id)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['patch'])
+    def bulk_update_tasks(self, request):
+        """Bulk update task statuses"""
+        serializer = BulkUpdateTaskSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        task_ids = serializer.validated_data['task_ids']
+        update_data = {}
+        if 'status' in serializer.validated_data:
+            update_data['status'] = serializer.validated_data['status']
+        if 'assignee_id' in serializer.validated_data:
+            update_data['assignee_id'] = serializer.validated_data['assignee_id']
+
+        updated_count = Task.objects.filter(id__in=task_ids).update(**update_data)
+
+        return Response({
+            'message': f'Successfully updated {updated_count} tasks',
+            'updated_count': updated_count
+        })
+
+    @action(detail=False, methods=['post'])
+    def bulk_delete_tasks(self, request):
+        """Bulk delete multiple tasks"""
+        task_ids = request.data.get('task_ids', [])
+
+        if not task_ids:
+            return Response(
+                {'error': 'task_ids are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        queryset = self.get_queryset().filter(id__in=task_ids)
+
+        for task in queryset:
+            task.delete()
+
+        return Response(
+            {'message': f'Successfully deleted {queryset.count()} tasks'},
+            status=status.HTTP_200_OK
+        )
+
+    @action(detail=True, methods=['post'])
+    def restore(self, request, pk=None):
+        """Restore a soft-deleted task"""
+        try:
+            task = Task.all_objects.get(id=pk)
+            task.restore()
+            serializer = self.get_serializer(task)
+            return Response(serializer.data)
+        except Task.DoesNotExist:
+            return Response(
+                {'error': 'Task not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(detail=False, methods=['post'])
+    def invite_team_member(self, request):
+        """Send invitation email to team member"""
+        email = request.data.get('email')
+        project_id = request.data.get('project_id')
+        role = request.data.get('role', 'team_member')
+
+        if not email or not project_id:
+            return Response(
+                {'error': 'email and project_id are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            project = Project.objects.get(id=project_id)
+
+            token = str(uuid.uuid4())
+            expires_at = datetime.utcnow() + timezone.timedelta(hours=24)
+
+            EmailService.send_invitation_email(
+                email=email,
+                tenant={
+                    'name': project.name,
+                    'id': project.tenant_id
+                },
+                role=role,
+                token=token,
+                expires_at=expires_at,
+                is_resend=False
+            )
+
+            return Response(
+                {'message': 'Invitation email sent successfully'},
+                status=status.HTTP_200_OK
+            )
+        except Project.DoesNotExist:
+            return Response(
+                {'error': 'Project not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except EmailError as e:
+            return Response(
+                {'error': e.user_message},
+                status=e.status_code
+            )
+        except Exception as e:
+            return Response(
+                {'error': 'Failed to send invitation email'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+        queryset = self.get_queryset().filter(project_id=project_id)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter, filters.SearchFilter]
+    filterset_fields = ['tenant_id', 'milestone_id', 'assignee_id', 'status']
+    ordering_fields = ['title', 'start_date', 'end_date', 'status']
+    ordering = ['-created_at']
+    search_fields = ['title', 'description']
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return TaskCreateSerializer
+        if self.action in ['update', 'partial_update']:
+            return TaskUpdateSerializer
+        return TaskSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        tenant_id = self.request.query_params.get('tenant_id')
+        if tenant_id:
+            queryset = queryset.filter(tenant_id=tenant_id)
+        
+        milestone_id = self.request.query_params.get('milestone_id')
+        if milestone_id:
+            queryset = queryset.filter(milestone_id=milestone_id)
+        
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def by_milestone(self, request):
+        """Get tasks by milestone"""
+        milestone_id = request.query_params.get('milestone_id')
+        if not milestone_id:
+            return Response(
+                {'error': 'milestone_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(milestone_id=milestone_id)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def by_assignee(self, request):
+        """Get tasks by assignee"""
+        assignee_id = request.query_params.get('assignee_id')
+        if not assignee_id:
+            return Response(
+                {'error': 'assignee_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        queryset = self.get_queryset().filter(assignee_id=assignee_id)
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+    
+    @action(detail=False, methods=['post'])
+    def invite_team_member(self, request):
+        """Send invitation email to team member"""
+        email = request.data.get('email')
+        project_id = request.data.get('project_id')
+        role = request.data.get('role', 'team_member')
+        
+        if not email or not project_id:
+            return Response(
+                {'error': 'email and project_id are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            from .models import Project
+            project = Project.objects.get(id=project_id)
+            
+            # Generate invitation token
+            import uuid
+            from datetime import timedelta, datetime
+            token = str(uuid.uuid4())
+            expires_at = datetime.utcnow() + timedelta(hours=24)
+            
+            # Send invitation email
+            EmailService.send_invitation_email(
+                email=email,
+                tenant={
+                    'name': project.name,
+                    'id': project.tenant_id
+                },
+                role=role,
+                token=token,
+                expires_at=expires_at,
+                is_resend=False
+            )
+            
+            return Response(
+                {'message': 'Invitation email sent successfully'},
+                status=status.HTTP_200_OK
+            )
+        except Project.DoesNotExist:
+            return Response(
+                {'error': 'Project not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except EmailError as e:
+            return Response(
+                {'error': e.user_message},
+                status=e.status_code
+            )
+        except Exception as e:
+            return Response(
+                {'error': 'Failed to send invitation email'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

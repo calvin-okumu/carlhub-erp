@@ -10,7 +10,7 @@ Clients can be created through the API or admin interface:
 
 ```bash
 curl -X POST http://localhost:8000/api/clients/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Acme Corporation",
@@ -33,18 +33,18 @@ curl -X POST http://localhost:8000/api/clients/ \
 
 ```bash
 # Get all clients
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/clients/
 
 # Filter by status
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/clients/?status=active"
 ```
 
 ### Get Client Details
 
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/clients/client-slug/
 ```
 
@@ -52,7 +52,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 ```bash
 curl -X PUT http://localhost:8000/api/clients/client-slug/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status": "active", "phone": "+1-555-0124"}'
 ```
@@ -74,7 +74,7 @@ Delete multiple clients in a single operation:
 
 curl -X POST http://localhost:8000/api/clients/bulk_delete_clients/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -108,7 +108,7 @@ Import client data from Excel:
 
 curl -X POST http://localhost:8000/api/excel-import/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -F "model=clients" \
 
@@ -124,7 +124,7 @@ Export client data to Excel:
 
 ```bash
 
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
 
   "http://localhost:8000/api/excel-export/?model=clients" \
 
@@ -136,7 +136,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 ```bash
 curl -X DELETE http://localhost:8000/api/clients/client-slug/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## Client Relationships

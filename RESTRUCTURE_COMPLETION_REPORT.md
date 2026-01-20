@@ -93,7 +93,7 @@ Successfully completed codebase restructure with **zero code changes to working 
 
 **Goal:** Document current working architecture
 
-**Created:** `docs/MICROSERVICES_ARCHITECTURE.md`
+**Created:** `docs/architecture/MICROSERVICES_ARCHITECTURE.md`
 
 **Content:**
 - Overview of all 7 microservices
@@ -121,7 +121,7 @@ Successfully completed codebase restructure with **zero code changes to working 
 ### New Files
 ```
 .env.example
-docs/MICROSERVICES_ARCHITECTURE.md
+docs/architecture/MICROSERVICES_ARCHITECTURE.md
 ```
 
 ### Migrations Created (6 services)
@@ -205,7 +205,7 @@ scripts/update-manage-files.sh
 
 **After:**
 - ✅ `.env.example` with all variables
-- ✅ `docs/MICROSERVICES_ARCHITECTURE.md` (comprehensive guide)
+- ✅ `docs/architecture/MICROSERVICES_ARCHITECTURE.md` (comprehensive guide)
 - ✅ Clear setup instructions
 
 ### 3. Repository Hygiene
@@ -260,7 +260,7 @@ Root-level environment variable template containing:
 - Message queue settings
 - Security placeholders
 
-### docs/MICROSERVICES_ARCHITECTURE.md
+### docs/architecture/MICROSERVICES_ARCHITECTURE.md
 Comprehensive architecture guide covering:
 - Service responsibilities
 - API endpoints per service
@@ -296,7 +296,7 @@ Comprehensive architecture guide covering:
 If issues arise:
 1. Delete new migrations: `find services/*/migrations -name "0001_initial.py" -delete`
 2. Rollback databases: `python manage.py migrate <app> zero`
-3. Remove new docs: `rm .env.example docs/MICROSERVICES_ARCHITECTURE.md`
+3. Remove new docs: `rm .env.example docs/architecture/MICROSERVICES_ARCHITECTURE.md`
 
 ---
 

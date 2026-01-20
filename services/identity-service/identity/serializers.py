@@ -60,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model"""
 
     full_name = serializers.CharField(read_only=True)
-    tenant = TenantSerializer(read_only=True)
+    tenant = serializers.SerializerMethodField()
     profile = UserProfileSerializer(read_only=True)
     user_tenant = serializers.SerializerMethodField()
 
@@ -81,6 +81,15 @@ class UserSerializer(serializers.ModelSerializer):
             usertenant = obj.usertenant
             if usertenant:
                 return UserTenantSerializer(usertenant).data
+            return None
+        except:
+            return None
+
+    def get_tenant(self, obj):
+        try:
+            usertenant = obj.usertenant
+            if usertenant and usertenant.tenant:
+                return TenantSerializer(usertenant.tenant).data
             return None
         except:
             return None

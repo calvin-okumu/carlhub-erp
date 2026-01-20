@@ -58,7 +58,7 @@ curl -X POST 'http://127.0.0.1:8000/api/login/' \
 ```bash
 curl -X GET 'http://127.0.0.1:8000/api/projects/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Token e8c98b679f56cd70874489682a7c9b1d967940ef'
+  -H 'Authorization: Bearer e8c98b679f56cd70874489682a7c9b1d967940ef'
 ```
 
 **Available Projects:**
@@ -75,7 +75,7 @@ curl -X GET 'http://127.0.0.1:8000/api/projects/' \
 curl -X POST 'http://127.0.0.1:8000/api/milestones/' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Token e8c98b679f56cd70874489682a7c9b1d967940ef' \
+  -H 'Authorization: Bearer e8c98b679f56cd70874489682a7c9b1d967940ef' \
   -d '{
     "name": "milestone drew",
     "description": "Test milestone for drew",
@@ -124,7 +124,7 @@ Now you can create a sprint for this milestone:
 curl -X POST 'http://127.0.0.1:8000/api/sprints/' \
   -H 'accept: application/json' \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Token e8c98b679f56cd70874489682a7c9b1d967940ef' \
+  -H 'Authorization: Bearer e8c98b679f56cd70874489682a7c9b1d967940ef' \
   -d '{
     "name": "sprint for milestone drew",
     "status": "planned",
@@ -138,12 +138,12 @@ curl -X POST 'http://127.0.0.1:8000/api/sprints/' \
 
 1. **Always check existing data first**:
    ```bash
-   curl -H "Authorization: Token YOUR_TOKEN" http://127.0.0.1:8000/api/projects/
+   curl -H "Authorization: Bearer YOUR_TOKEN" http://127.0.0.1:8000/api/projects/
    ```
 
 2. **Use Token authentication** (not session cookies):
    ```bash
-   -H "Authorization: Token YOUR_TOKEN"
+   -H "Authorization: Bearer YOUR_TOKEN"
    ```
 
 3. **Let Django auto-generate slugs** - don't provide them manually

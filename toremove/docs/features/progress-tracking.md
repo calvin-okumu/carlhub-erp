@@ -41,7 +41,7 @@ For data consistency, use the manual refresh endpoint:
 
 ```bash
 curl -X POST http://localhost:8000/api/projects/{id}/refresh_project_progress/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## Frontend Integration

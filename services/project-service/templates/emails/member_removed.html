@@ -1,0 +1,43 @@
+{% extends "emails/base.html" %}
+{% load static %}
+
+{% block subject %}Your access to {{ tenant_name }} has been removed{% endblock %}
+
+{% block recipient %}{{ email }}{% endblock %}
+
+{% block content %}
+<h2>Access Removed from {{ tenant_name }}</h2>
+
+<p>This email is to inform you that your membership and access to <strong>{{ tenant_name }}</strong> has been removed.</p>
+
+<div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+    <h3 style="margin-top: 0; color: #856404;">What This Means</h3>
+    <ul style="color: #856404; line-height: 1.6; margin: 0; padding-left: 20px;">
+        <li>You no longer have access to {{ tenant_name }} projects and resources</li>
+        <li>Your account credentials remain active for other organizations</li>
+        <li>You can still log in to access other tenants where you have membership</li>
+        <li>All your data and work history in {{ tenant_name }} remains intact</li>
+    </ul>
+</div>
+
+<p>If you believe this action was taken in error or if you have questions about this change, please contact the tenant administrator or reach out to our support team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #495057;">Need Access to Another Organization?</h3>
+    <p style="color: #495057; margin: 10px 0;">If you need to join another organization or have been invited to a different tenant:</p>
+    <ul style="color: #495057; line-height: 1.6; margin: 0; padding-left: 20px;">
+        <li>Check your email for any pending invitations</li>
+        <li>Contact the organization administrator for access</li>
+        <li>Visit our main site to explore available opportunities</li>
+    </ul>
+</div>
+
+<p><strong>Quick Links:</strong></p>
+<ul style="color: #555; line-height: 1.6;">
+    <li><a href="{{ site_url }}">Main Site</a> - Explore other opportunities</li>
+</ul>
+
+<p>We appreciate your contributions to {{ tenant_name }} and wish you the best in your future endeavors.</p>
+
+<p>Best regards,<br>The {{ tenant_name }} Team</p>
+{% endblock %}

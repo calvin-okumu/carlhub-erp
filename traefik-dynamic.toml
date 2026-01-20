@@ -33,75 +33,227 @@
   replacement = "/api/v1$1"
 
 # ==============================================
-# Admin Routers - Subdomain-based routing for admin interfaces
-# Provides better security and isolation from API
-# NO PATH REWRITING - Admin stays at /admin/
+# Swagger Root Routers - EXACT path match, HIGHEST PRIORITY
+# Routes to project service (most comprehensive API)
+# Must come BEFORE service-specific routers
+# ==============================================
+[http.middlewares.swagger-root.replacePathRegex]
+  regex = "^/api/(swagger|docs|schema)/?$"
+  replacement = "/api/$1"
+
+[http.routers.swagger-root]
+  rule = "Path(`/api/swagger`) || Path(`/api/docs`) || Path(`/api/schema`)"
+  service = "project"
+  middlewares = ["swagger-root"]
+
+# ==============================================
+# API Routers - API routing through gateway
+# Access API: http://localhost:8000/api/v1/{service}/
+# ==============================================
+[http.routers.api-identity]
+    rule = "PathPrefix(`/api/v1/identity`)"
+    service = "identity"
+    middlewares = ["identity-rewrite"]
+
+[http.routers.api-audit]
+    rule = "PathPrefix(`/api/v1/audit`)"
+    service = "audit"
+    middlewares = ["audit-rewrite"]
+
+[http.routers.api-notification]
+    rule = "PathPrefix(`/api/v1/notification`)"
+    service = "notification"
+    middlewares = ["notification-rewrite"]
+
+[http.routers.api-accounting]
+    rule = "PathPrefix(`/api/v1/accounting`)"
+    service = "accounting"
+    middlewares = ["accounting-rewrite"]
+
+[http.routers.api-hr]
+    rule = "PathPrefix(`/api/v1/hr`)"
+    service = "hr"
+    middlewares = ["hr-rewrite"]
+
+[http.routers.api-project]
+    rule = "PathPrefix(`/api/v1/project`)"
+    service = "project"
+    middlewares = ["project-rewrite"]
+
+[http.routers.api-sales]
+  rule = "PathPrefix(`/api/v1/sales`)"
+  service = "sales"
+  middlewares = ["sales-rewrite"]
+
+# ==============================================
+# Swagger Routers - Service-specific Swagger UI routing
+# Access Swagger UI: http://localhost:8000/swagger/{service}/swagger/
+# ==============================================
+[http.routers.swagger-identity]
+  rule = "PathPrefix(`/swagger/identity`)"
+  service = "identity"
+  middlewares = ["identity-swagger"]
+
+[http.routers.swagger-audit]
+  rule = "PathPrefix(`/swagger/audit`)"
+  service = "audit"
+  middlewares = ["audit-swagger"]
+
+[http.routers.swagger-notification]
+  rule = "PathPrefix(`/swagger/notification`)"
+  service = "notification"
+  middlewares = ["notification-swagger"]
+
+[http.routers.swagger-accounting]
+  rule = "PathPrefix(`/swagger/accounting`)"
+  service = "accounting"
+  middlewares = ["accounting-swagger"]
+
+[http.routers.swagger-hr]
+  rule = "PathPrefix(`/swagger/hr`)"
+  service = "hr"
+  middlewares = ["hr-swagger"]
+
+[http.routers.swagger-project]
+  rule = "PathPrefix(`/swagger/project`)"
+  service = "project"
+  middlewares = ["project-swagger"]
+
+[http.routers.swagger-sales]
+  rule = "PathPrefix(`/swagger/sales`)"
+  service = "sales"
+  middlewares = ["sales-swagger"]
+
+# ==============================================
+# Docs Routers - ReDoc UI routing
+# Access ReDoc UI: http://localhost:8000/docs/{service}/docs/
+# ==============================================
+[http.routers.docs-identity]
+  rule = "PathPrefix(`/docs/identity`)"
+  service = "identity"
+  middlewares = ["identity-docs"]
+
+[http.routers.docs-audit]
+  rule = "PathPrefix(`/docs/audit`)"
+  service = "audit"
+  middlewares = ["audit-docs"]
+
+[http.routers.docs-notification]
+  rule = "PathPrefix(`/docs/notification`)"
+  service = "notification"
+  middlewares = ["notification-docs"]
+
+[http.routers.docs-accounting]
+  rule = "PathPrefix(`/docs/accounting`)"
+  service = "accounting"
+  middlewares = ["accounting-docs"]
+
+[http.routers.docs-hr]
+  rule = "PathPrefix(`/docs/hr`)"
+  service = "hr"
+  middlewares = ["hr-docs"]
+
+[http.routers.docs-project]
+  rule = "PathPrefix(`/docs/project`)"
+  service = "project"
+  middlewares = ["project-docs"]
+
+[http.routers.docs-sales]
+  rule = "PathPrefix(`/docs/sales`)"
+  service = "sales"
+  middlewares = ["sales-docs"]
+
+# ==============================================
+# Admin Routers - Path-based routing for admin interfaces
+# Currently commented out - uncomment to enable
+# Access via: http://localhost:8000/admin/{service}/
 # ==============================================
 [http.routers.admin-identity]
   rule = "Host(`admin.identity.localhost`)"
   service = "identity"
 
-[http.routers.admin-audit]
-  rule = "Host(`admin.audit.localhost`)"
-  service = "audit"
+[http.middlewares.identity-swagger.replacePathRegex]
+  regex = "^/swagger/identity/(.*)$$"
+  replacement = "/api/$1"
 
-[http.routers.admin-notification]
-  rule = "Host(`admin.notification.localhost`)"
-  service = "notification"
+[http.middlewares.audit-swagger.replacePathRegex]
+  regex = "^/swagger/audit/(.*)$$"
+  replacement = "/api/$1"
 
-[http.routers.admin-accounting]
-  rule = "Host(`admin.accounting.localhost`)"
-  service = "accounting"
+[http.middlewares.notification-swagger.replacePathRegex]
+  regex = "^/swagger/notification/(.*)$$"
+  replacement = "/api/$1"
 
-[http.routers.admin-hr]
-  rule = "Host(`admin.hr.localhost`)"
-  service = "hr"
+[http.middlewares.accounting-swagger.replacePathRegex]
+  regex = "^/swagger/accounting/(.*)$$"
+  replacement = "/api/$1"
 
-[http.routers.admin-project]
-  rule = "Host(`admin.project.localhost`)"
-  service = "project"
+[http.middlewares.hr-swagger.replacePathRegex]
+  regex = "^/swagger/hr/(.*)$$"
+  replacement = "/api/$1"
 
-[http.routers.admin-sales]
-  rule = "Host(`admin.sales.localhost`)"
-  service = "sales"
+[http.middlewares.project-swagger.replacePathRegex]
+  regex = "^/swagger/project/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.sales-swagger.replacePathRegex]
+  regex = "^/swagger/sales/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.identity-docs.replacePathRegex]
+  regex = "^/docs/identity/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.audit-docs.replacePathRegex]
+  regex = "^/docs/audit/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.notification-docs.replacePathRegex]
+  regex = "^/docs/notification/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.accounting-docs.replacePathRegex]
+  regex = "^/docs/accounting/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.hr-docs.replacePathRegex]
+  regex = "^/docs/hr/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.project-docs.replacePathRegex]
+  regex = "^/docs/project/(.*)$$"
+  replacement = "/api/$1"
+
+[http.middlewares.sales-docs.replacePathRegex]
+  regex = "^/docs/sales/(.*)$$"
+  replacement = "/api/$1"
 
 # ==============================================
-# API Routers - Path-based routing for API endpoints
+# Admin Routers - Subdomain-based routing for admin interfaces
 # ==============================================
-[http.routers.identity]
-  rule = "PathPrefix(`/api/v1/identity`)"
-  service = "identity"
-  middlewares = ["identity-rewrite"]
-
-[http.routers.audit]
-  rule = "PathPrefix(`/api/v1/audit`)"
-  service = "audit"
-  middlewares = ["audit-rewrite"]
-
-[http.routers.notification]
-  rule = "PathPrefix(`/api/v1/notification`)"
-  service = "notification"
-  middlewares = ["notification-rewrite"]
-
-[http.routers.accounting]
-  rule = "PathPrefix(`/api/v1/accounting`)"
-  service = "accounting"
-  middlewares = ["accounting-rewrite"]
-
-[http.routers.hr]
-  rule = "PathPrefix(`/api/v1/hr`)"
-  service = "hr"
-  middlewares = ["hr-rewrite"]
-
-[http.routers.project]
-  rule = "PathPrefix(`/api/v1/project`)"
-  service = "project"
-  middlewares = ["project-rewrite"]
-
-[http.routers.sales]
-  rule = "PathPrefix(`/api/v1/sales`)"
-  service = "sales"
-  middlewares = ["sales-rewrite"]
+# [http.routers.admin-identity]
+#   rule = "Host(`admin.identity.localhost`)"
+#   service = "identity"
+#
+# [http.middlewares.admin-notification-rewrite.replacePathRegex]
+#   regex = "^/admin/notification(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-accounting-rewrite.replacePathRegex]
+#   regex = "^/admin/accounting(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-hr-rewrite.replacePathRegex]
+#   regex = "^/admin/hr(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-project-rewrite.replacePathRegex]
+#   regex = "^/admin/project(/.*)$$"
+#   replacement = "/admin$1"
+#
+# [http.middlewares.admin-sales-rewrite.replacePathRegex]
+#   regex = "^/admin/sales(/.*)$$"
+#   replacement = "/admin$1"
 
 # Services
 [http.services.identity.loadBalancer]

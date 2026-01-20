@@ -18,9 +18,8 @@ DjangoCRM implements comprehensive error handling across all API endpoints to en
 
 The following critical API endpoints now have comprehensive error handling:
 
-- **Authentication**: `/api/login/`, `/api/signup/`
-- **User Management**: `/api/approve-member/`, `/api/invite-member/`
-- **Invitations**: `/api/confirm-invitation/`, `/api/resend-invitation/`
+- **Authentication**: `/api/v1/identity/auth/login/`, `/api/v1/identity/auth/password-reset/`
+- **User Management**: `/api/v1/identity/users/`
 - **All ViewSets**: Automatic error handling via Django REST framework
 
 ## 📊 HTTP Status Codes
@@ -299,7 +298,7 @@ async function apiRequest(url, options = {}) {
   try {
     const response = await fetch(url, {
       headers: {
-        'Authorization': `Token ${token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
         ...options.headers
       },
@@ -432,39 +431,39 @@ tail -f backend/logs/django.log
 Use the health check endpoint to verify API status:
 
 ```bash
-curl http://localhost:8000/api/health/
+curl http://localhost:8000/api/v1/identity/health/
 ```
 
 ### Common Debug Steps
 
 1. **Check request format:**
    ```bash
-   curl -v -H "Authorization: Token YOUR_TOKEN" \
+   curl -v -H "Authorization: Bearer YOUR_TOKEN" \
      -H "Content-Type: application/json" \
-     http://localhost:8000/api/projects/
+     http://localhost:8000/api/v1/project/projects/
    ```
 
 2. **Verify token validity:**
    ```bash
-   curl -H "Authorization: Token YOUR_TOKEN" \
-     http://localhost:8000/api/users/me/
+   curl -H "Authorization: Bearer YOUR_TOKEN" \
+     http://localhost:8000/api/v1/identity/users/profile/
    ```
 
 3. **Check permissions:**
    ```bash
    # Try with different user roles
-   curl -H "Authorization: Token ADMIN_TOKEN" \
-     http://localhost:8000/api/projects/
+   curl -H "Authorization: Bearer ADMIN_TOKEN" \
+     http://localhost:8000/api/v1/project/projects/
    ```
 
 4. **Validate data:**
    ```bash
    # Test with minimal valid data
    curl -X POST \
-     -H "Authorization: Token YOUR_TOKEN" \
+     -H "Authorization: Bearer YOUR_TOKEN" \
      -H "Content-Type: application/json" \
      -d '{"name": "Test Project"}' \
-     http://localhost:8000/api/projects/
+     http://localhost:8000/api/v1/project/projects/
    ```
 
 ## 📞 Support
@@ -478,10 +477,4 @@ When reporting API errors, include:
 - Browser/client information
 - Server logs (if available)
 
-This helps diagnose issues quickly and provide accurate solutions.</content>
-</xai:function_call"> 
-
-Assistant: Now I need to update the main docs/README.md to remove the references to non-existent files and update the structure. 
-
-<xai:function_call name="edit">
-<parameter name="filePath">docs/README.md
+This helps diagnose issues quickly and provide accurate solutions.

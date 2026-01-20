@@ -23,7 +23,7 @@ BACKUP_DIR="docs/backup_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 
 # Copy all .md files to backup
-cp docs/*.md docs/api/*.md docs/guides/*.md docs/overview/*.md docs/quick-start/*.md "$BACKUP_DIR/" 2>/dev/null
+cp docs/*.md docs/api/*.md docs/guides/*.md docs/architecture/*.md docs/migration/*.md docs/legacy/overview/*.md docs/legacy/quick-start/*.md docs/quick-start/*.md "$BACKUP_DIR/" 2>/dev/null
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Documentation backed up to: $BACKUP_DIR${NC}"
 else

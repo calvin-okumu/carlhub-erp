@@ -1,0 +1,3 @@
+"""
+Accounting service package.
+"""

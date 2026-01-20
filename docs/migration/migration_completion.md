@@ -116,10 +116,10 @@ POST /api/v1/leaves/{id}/reject/ - Sends rejection email
 - ✅ `services/hr-service/` - EmailService + leave emails
 
 ### Documentation Added:
-- ✅ `docs/functionality_analysis.md` - Full feature comparison
-- ✅ `docs/migration_gaps.md` - Priority-ranked gaps
-- ✅ `docs/email_migration_summary.md` - Email migration guide
-- ✅ `docs/migration_completion.md` - This file
+- ✅ `docs/migration/functionality_analysis.md` - Full feature comparison
+- ✅ `docs/migration/migration_gaps.md` - Priority-ranked gaps
+- ✅ `docs/migration/email_migration_summary.md` - Email migration guide
+- ✅ `docs/migration/migration_completion.md` - This file
 
 ---
 
@@ -169,7 +169,7 @@ tail -f services/logs/identity-service.log
 **Test Team Invitation:**
 ```bash
 curl -X POST http://localhost:8006/api/v1/projects/invite_team_member/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "email": "newuser@example.com",
@@ -181,7 +181,7 @@ curl -X POST http://localhost:8006/api/v1/projects/invite_team_member/ \
 **Test Leave Approval:**
 ```bash
 curl -X POST http://localhost:8005/api/v1/leaves/{id}/approve/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ### 3. Restart Services

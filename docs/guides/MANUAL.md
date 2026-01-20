@@ -292,7 +292,7 @@ curl -X POST http://localhost:8001/api/v1/auth/login/ \
   -d '{"email": "user@example.com", "password": "password"}'
 
 # Authenticated request
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8001/api/v1/users/
 ```
 
@@ -302,10 +302,10 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 |---------|-----------|
 | Identity | /api/v1/auth/, /api/v1/users/, /api/v1/tenants/ |
 | Audit | /api/v1/logs/, /api/v1/events/ |
-| Notification | /api/v1/notifications/ |
+| Notification | /api/v1/notification/notifications/ |
 | Accounting | /api/v1/invoices/, /api/v1/payments/ |
 | HR | /api/v1/leaves/, /api/v1/employees/ |
-| Project | /api/v1/projects/, /api/v1/tasks/, /api/v1/milestones/ |
+| Project | /api/v1/project/projects/, /api/v1/project/tasks/, /api/v1/project/milestones/ |
 | Sales | /api/v1/leads/, /api/v1/clients/, /api/v1/deals/ |
 
 ## Troubleshooting

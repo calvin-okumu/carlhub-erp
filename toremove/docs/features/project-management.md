@@ -10,7 +10,7 @@ Projects can be created through the API or admin interface:
 
 ```bash
 curl -X POST http://localhost:8000/api/projects/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Website Redesign",
@@ -87,7 +87,7 @@ Projects require essential information:
 
 curl -X POST http://localhost:8000/api/projects/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -139,7 +139,7 @@ curl -X POST http://localhost:8000/api/projects/ \
 
 ```bash
 curl -X POST http://localhost:8000/api/milestones/?project=project-slug \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Phase 1: Requirements & Design",
@@ -180,7 +180,7 @@ Milestones track progress through associated sprints and tasks.
 ```bash
 # Create sprint
 curl -X POST http://localhost:8000/api/sprints/?milestone=milestone-slug \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Sprint 1 - Foundation",
@@ -195,7 +195,7 @@ curl -X POST http://localhost:8000/api/sprints/?milestone=milestone-slug \
 
 curl -X POST http://localhost:8000/api/sprints/bulk_update_sprints/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -219,7 +219,7 @@ curl -X POST http://localhost:8000/api/sprints/bulk_update_sprints/ \
 
 ```bash
 curl -X POST http://localhost:8000/api/tasks/?milestone=milestone-slug&sprint=sprint-slug \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
     "title": "Implement user authentication",
@@ -262,7 +262,7 @@ curl -X POST http://localhost:8000/api/tasks/?milestone=milestone-slug&sprint=sp
 
 curl -X POST http://localhost:8000/api/tasks/bulk_update_tasks/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -282,7 +282,7 @@ curl -X POST http://localhost:8000/api/tasks/bulk_update_tasks/ \
 
 curl -X POST http://localhost:8000/api/tasks/bulk_delete_tasks/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -308,7 +308,7 @@ curl -X POST http://localhost:8000/api/tasks/bulk_delete_tasks/ \
 
 curl -X POST http://localhost:8000/api/invoices/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -336,7 +336,7 @@ curl -X POST http://localhost:8000/api/invoices/ \
 
 curl -X POST http://localhost:8000/api/payments/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -H "Content-Type: application/json" \
 
@@ -370,7 +370,7 @@ Import project data:
 
 curl -X POST http://localhost:8000/api/excel-import/ \
 
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
 
   -F "model=projects" \
 
@@ -386,7 +386,7 @@ Export project data:
 
 ```bash
 
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
 
   "http://localhost:8000/api/excel-export/?model=projects" \
 
@@ -430,7 +430,7 @@ Advanced filtering options:
 
 # Complex filtering
 
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
 
   "http://localhost:8000/api/projects/?status=active&priority=high&client=client-uuid&search=website"
 
@@ -450,14 +450,14 @@ Access hierarchical data:
 
 # Get project with all related data
 
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
 
   http://localhost:8000/api/projects/project-slug/
 
 
 
 # Get sprints for a specific project
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/sprints/?project=project-slug"
 
 ```
@@ -489,22 +489,22 @@ Project
 
 ```bash
 # Get all projects
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/projects/
 
 # Filter by status
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/projects/?status=active"
 
 # Filter by client
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   "http://localhost:8000/api/projects/?client=client-slug"
 ```
 
 ### Get Project Details
 
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_TOKEN" \
   http://localhost:8000/api/projects/project-slug/
 ```
 
@@ -512,7 +512,7 @@ curl -H "Authorization: Token YOUR_TOKEN" \
 
 ```bash
 curl -X PUT http://localhost:8000/api/projects/project-slug/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"status": "active", "description": "Updated description"}'
 ```
@@ -521,7 +521,7 @@ curl -X PUT http://localhost:8000/api/projects/project-slug/ \
 
 ```bash
 curl -X DELETE http://localhost:8000/api/projects/project-slug/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## Project Progress Tracking
@@ -601,7 +601,7 @@ Administrators can restore soft-deleted projects:
 
 ```bash
 curl -X POST http://localhost:8000/api/projects/project-slug/restore/ \
-  -H "Authorization: Token YOUR_TOKEN"
+  -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 **Response:**

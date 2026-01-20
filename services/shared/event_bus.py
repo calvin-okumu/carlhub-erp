@@ -68,9 +68,12 @@ class EventBus:
         self.connection = None
         self.channel = None
         self.lock = threading.Lock()  # Thread safety fix
-        self._connect()
-        self._declare_exchanges()
-        self._declare_dlq()  # Dead Letter Queue fix
+        try:
+            self._connect()
+            self._declare_exchanges()
+            self._declare_dlq()  # Dead Letter Queue fix
+        except Exception as e:
+            logger.error(f"Event bus initialization failed: {e}")
 
     def _connect(self):
         """Thread-safe connection establishment"""

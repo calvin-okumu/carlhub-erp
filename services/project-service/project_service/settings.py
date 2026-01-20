@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 
 import sys
 
@@ -26,11 +27,6 @@ if str(SERVICES_DIR) not in sys.path:
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-project-service-secret-key-2024'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['*']
-
 # Environment variables
 import os
 from dotenv import load_dotenv
@@ -38,6 +34,8 @@ from shared.email_settings import apply_email_settings
 load_dotenv()
 
 SECRET_KEY = os.getenv('SECRET_KEY', SECRET_KEY)
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -119,7 +117,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'jwt_auth.SimpleJWTAuthentication',
+        'shared.auth.jwt_auth.SimpleJWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
@@ -132,8 +130,8 @@ REST_FRAMEWORK = {
 # JWT settings
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', SECRET_KEY)
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': 60 * 60,
-    'REFRESH_TOKEN_LIFETIME': 60 * 60 * 24 * 7,
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'SIGNING_KEY': JWT_SECRET_KEY,
 }
 

@@ -145,7 +145,7 @@ http://admin.sales.localhost:8000/admin/
 **These files focus on CURRENT microservices architecture:**
 
 ### Architecture Docs:**
-- ✅ `docs/MICROSERVICES_ARCHITECTURE.md` - Complete microservices architecture
+- ✅ `docs/architecture/MICROSERVICES_ARCHITECTURE.md` - Complete microservices architecture
 
 ### API Docs:**
 - ✅ `docs/api/README.md` - Current API endpoints
@@ -154,7 +154,7 @@ http://admin.sales.localhost:8000/admin/
 - ✅ `docs/guides/SHARED_SETTINGS_GUIDE.md` - (marked as legacy - but documents intended microservices pattern)
 
 ### Admin Subdomains:**
-- ✅ `docs/ADMIN_SUBDOMAINS.md` - Complete admin subdomain setup
+- ✅ `docs/architecture/ADMIN_SUBDOMAINS.md` - Complete admin subdomain setup
 
 ### Environment:**
 - ✅ `.env.example` - Environment template
@@ -256,7 +256,7 @@ http://admin.sales.localhost:8000/admin/
 
 ### Architecture Docs
 ```
-✅ docs/MICROSERVICES_ARCHITECTURE.md - Complete microservices architecture
+✅ docs/architecture/MICROSERVICES_ARCHITECTURE.md - Complete microservices architecture
 ```
 
 ### API Docs
@@ -283,7 +283,7 @@ http://admin.sales.localhost:8000/admin/
 
 ### Admin Subdomains
 ```
-✅ docs/ADMIN_SUBDOMAINS.md - Admin subdomain configuration
+✅ docs/architecture/ADMIN_SUBDOMAINS.md - Admin subdomain configuration
 ```
 
 ---
@@ -309,26 +309,24 @@ docs/
 ├── quick-start/
 │   ├── QUICKSTART_MICROSERVICES.md
 │   └── QUICK_REFERENCE.md
-├── overview/
-│   ├── README.md           # System overview
-│   └── CLEAN_STRUCTURE.md
-├── microservices/            # Microservices architecture
-└── ADMIN_SUBDOMAINS.md        # Admin subdomains
+├── legacy/
+│   └── overview/
+│       ├── README.md           # Legacy monolith overview
+│       └── CLEAN_STRUCTURE.md
+├── architecture/
+│   ├── MICROSERVICES_ARCHITECTURE.md
+│   ├── MICROSERVICES_CONNECTIONS.md
+│   └── ADMIN_SUBDOMAINS.md
 
 ## After Cleanup - What's Left
 
 ### ✅ Microservices Documentation (KEEP) - Current Architecture
-- ✅ `docs/MICROSERVICES_ARCHITECTURE.md`
-- ✅ `docs/overview/README.md`
-- ✅ `docs/ADMIN_SUBDOMAINS.md`
+- ✅ `docs/architecture/MICROSERVICES_ARCHITECTURE.md`
+- ✅ `docs/architecture/ADMIN_SUBDOMAINS.md`
 
-### ❌ Monolithic Documentation (REMOVE)
-- ❌ `docs/guides/MANUAL.md` - Old user management
-- ❌ `docs/guides/SHARED_SETTINGS_GUIDE.md` - Old shared settings approach
-- ❌ `docs/api/authentication.md` - Old authentication patterns
-- ❌ `docs/quick-start/QUICKSTART_MICROSERVICES.md` - Docker-based setup
-- ❌ `docs/quick-start/QUICKSTART_MICROSERVICES.md` - Monolithic workflow
-- ❌ `docs/guides/MANUAL.md` - Monolithic backend operations
+### ❌ Monolithic Documentation (LEGACY)
+- ❌ `docs/legacy/overview/README.md` - Legacy monolith overview
+- ❌ `docs/legacy/quick-start/QUICKSTART.md` - Legacy quick start
 
 ---
 

@@ -1,0 +1,47 @@
+{% extends "emails/base.html" %}
+{% load static %}
+
+{% block subject %}Welcome to {{ tenant_name }} - Your membership has been approved{% endblock %}
+
+{% block recipient %}{{ email }}{% endblock %}
+
+{% block content %}
+<h2>Welcome to {{ tenant_name }}! 🎉</h2>
+
+<p>Great news! Your membership request has been approved and you now have access to <strong>{{ tenant_name }}</strong> as a <strong>{{ role }}</strong>.</p>
+
+<div style="margin: 30px 0;">
+    <h3>Get Started</h3>
+    <p>Click the button below to log in and start exploring your new workspace:</p>
+    <a href="{{ login_url }}" class="button">Log In to Your Account</a>
+</div>
+
+<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3 style="margin-top: 0; color: #495057;">Your Role & Permissions</h3>
+    <p style="color: #495057; margin: 10px 0;">You have been assigned the role of <strong>{{ role }}</strong> in {{ tenant_name }}.</p>
+    <ul style="color: #495057; line-height: 1.6; margin: 0; padding-left: 20px;">
+        <li><strong>Access your dashboard:</strong> View projects and tasks assigned to you</li>
+        <li><strong>Collaborate with your team:</strong> Work on projects and communicate with colleagues</li>
+        <li><strong>Manage your profile:</strong> Update your information and preferences</li>
+        {% if role == "Tenant Owner" %}
+        <li><strong>Administrative access:</strong> Manage team members, projects, and settings</li>
+        {% endif %}
+    </ul>
+</div>
+
+<p><strong>Quick Links:</strong></p>
+<ul style="color: #555; line-height: 1.6;">
+    <li><a href="{{ login_url }}">Login Page</a> - Access your account</li>
+    <li><a href="{{ site_url }}">Dashboard</a> - Overview of your work</li>
+</ul>
+
+<div class="warning-text">
+    <strong>Security Reminder:</strong> Keep your login credentials secure and never share them with others. If you suspect any unauthorized access to your account, please contact us immediately.
+</div>
+
+<p>We're excited to have you join our team! If you have any questions or need help getting started, don't hesitate to reach out to your team lead or contact our support team at <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+
+<p>Welcome aboard!</p>
+
+<p>Best regards,<br>The {{ tenant_name }} Team</p>
+{% endblock %}
