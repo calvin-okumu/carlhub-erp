@@ -119,6 +119,8 @@ export default function TicketModal({ isOpen, onClose, mode, ticket, onSave }: T
   const onSubmit = (data: FormData) => {
     if (!data.title || (!data.client && mode === "add")) return;
 
+    const dueAtValue = data.due_at ? new Date(data.due_at).toISOString() : null;
+
     const base = {
       title: data.title,
       description: data.description || undefined,
@@ -129,7 +131,7 @@ export default function TicketModal({ isOpen, onClose, mode, ticket, onSave }: T
       requester_name: data.requester_name || undefined,
       requester_email: data.requester_email || undefined,
       assignee: data.assignee ? Number(data.assignee) : null,
-      due_at: data.due_at || null,
+      due_at: dueAtValue,
     };
 
     if (mode === "add") {

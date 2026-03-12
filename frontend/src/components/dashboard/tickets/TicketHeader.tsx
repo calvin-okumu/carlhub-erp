@@ -21,7 +21,11 @@ export default function TicketHeader({ searchValue, onSearchChange, onAddTicket 
   useEffect(() => {
     const fetchAllTickets = async () => {
       const token = localStorage.getItem("access_token");
-      if (!token) return;
+      if (!token) {
+        setAllTickets([]);
+        setLoading(false);
+        return;
+      }
 
       try {
         const data = await getTickets(token, { limit: 1000 });

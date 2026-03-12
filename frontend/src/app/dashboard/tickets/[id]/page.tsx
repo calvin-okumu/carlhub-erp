@@ -1,7 +1,7 @@
 "use client";
 
-import { deleteTicket, getTicket, updateTicket } from "@/api/tickets";
-import type { Ticket, UpdateTicketData } from "@/api/types";
+import { deleteTicket, getTicket, getTicketAttachments, updateTicket, uploadTicketAttachment } from "@/api/tickets";
+import type { Ticket, TicketAttachment, UpdateTicketData } from "@/api/types";
 import TicketDetailSection from "@/components/dashboard/tickets/TicketDetailSection";
 import TicketModal from "@/components/dashboard/tickets/TicketModal";
 import Loader from "@/components/shared/Loader";
@@ -14,9 +14,12 @@ export default function TicketDetailPage() {
   const router = useRouter();
   const ticketId = Array.isArray(params.id) ? params.id[0] : params.id;
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [attachments, setAttachments] = useState<TicketAttachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -28,8 +31,12 @@ export default function TicketDetailPage() {
 
       setLoading(true);
       try {
-        const data = await getTicket(token, String(ticketId));
-        setTicket(data);
+        const [ticketData, attachmentData] = await Promise.all([
+          getTicket(token, String(ticketId)),
+          getTicketAttachments(token, String(ticketId)),
+        ]);
+        setTicket(ticketData);
+        setAttachments(attachmentData);
       } catch (err) {
         console.error(err);
         setError("Failed to load ticket details.");
@@ -72,6 +79,24 @@ export default function TicketDetailPage() {
     }
   };
 
+  const handleUpload = async (file: File) => {
+    if (!ticketId) return;
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const uploaded = await uploadTicketAttachment(token, String(ticketId), file);
+      setAttachments((prev) => [uploaded, ...prev]);
+    } catch (err) {
+      console.error(err);
+      setUploadError(err instanceof Error ? err.message : "Failed to upload attachment.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   if (loading) {
     return <Loader />;
   }
@@ -93,7 +118,15 @@ export default function TicketDetailPage() {
         </div>
         <Button variant="outline" onClick={() => router.push("/dashboard/tickets")}>Back to Tickets</Button>
       </div>
-      <TicketDetailSection ticket={ticket} onEdit={() => setModalOpen(true)} onDelete={handleDelete} />
+      <TicketDetailSection
+        ticket={ticket}
+        attachments={attachments}
+        uploading={uploading}
+        uploadError={uploadError}
+        onUploadAttachment={handleUpload}
+        onEdit={() => setModalOpen(true)}
+        onDelete={handleDelete}
+      />
       <TicketModal isOpen={modalOpen} onClose={() => setModalOpen(false)} mode="edit" ticket={ticket} onSave={handleSave} />
     </div>
   );

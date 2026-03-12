@@ -184,6 +184,20 @@ class TicketInboundSerializer(serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.existing_ticket = None
 
+    def to_internal_value(self, data):
+        if hasattr(data, "copy"):
+            normalized = data.copy()
+        else:
+            normalized = dict(data)
+
+        if "external_id" not in normalized:
+            for alias in ("externalId", "externalID"):
+                if alias in normalized:
+                    normalized["external_id"] = normalized.get(alias)
+                    break
+
+        return super().to_internal_value(normalized)
+
     def validate(self, attrs):
         request = self.context.get("request")
         integration = getattr(request, "client_integration", None)

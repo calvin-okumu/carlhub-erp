@@ -84,13 +84,20 @@ export function useTickets() {
       const ticketToRemove = tickets.find((ticket) => ticket.id === ticketId);
       if (!ticketToRemove) return;
 
+      const ticketIndex = tickets.findIndex((ticket) => ticket.id === ticketId);
+
       setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId));
 
       setLoading(true);
       try {
         await deleteTicket(token, ticketId);
       } catch (err) {
-        setTickets((prev) => [...prev, ticketToRemove]);
+        setTickets((prev) => {
+          const next = [...prev];
+          const insertIndex = ticketIndex >= 0 ? ticketIndex : next.length;
+          next.splice(insertIndex, 0, ticketToRemove);
+          return next;
+        });
         setError(err instanceof Error ? err.message : "Failed to delete ticket.");
       } finally {
         setLoading(false);

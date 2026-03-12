@@ -6,6 +6,8 @@ class CustomPageNumberPagination(PageNumberPagination):
     Custom pagination class that extends PageNumberPagination to include
     'first' and 'last' page links in the response.
     """
+    page_size_query_param = "limit"
+    max_page_size = 100
 
     def get_paginated_response(self, data):
         """

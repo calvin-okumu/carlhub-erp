@@ -1,12 +1,16 @@
 "use client";
 
-import type { Ticket } from "@/api/types";
+import type { Ticket, TicketAttachment } from "@/api/types";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { Edit, Trash2 } from "lucide-react";
 
 interface TicketDetailSectionProps {
   ticket: Ticket;
+  attachments: TicketAttachment[];
+  uploading: boolean;
+  uploadError: string | null;
+  onUploadAttachment: (file: File) => void;
   onEdit: () => void;
   onDelete: () => void;
 }
@@ -36,7 +40,21 @@ const formatDateTime = (value?: string | null) => {
   return new Date(value).toLocaleString();
 };
 
-export default function TicketDetailSection({ ticket, onEdit, onDelete }: TicketDetailSectionProps) {
+const getAttachmentName = (fileUrl: string) => {
+  const clean = fileUrl.split("?")[0];
+  const parts = clean.split("/");
+  return parts[parts.length - 1] || "Attachment";
+};
+
+export default function TicketDetailSection({
+  ticket,
+  attachments,
+  uploading,
+  uploadError,
+  onUploadAttachment,
+  onEdit,
+  onDelete,
+}: TicketDetailSectionProps) {
   return (
     <div className="space-y-6">
       <Card className="p-6">
@@ -127,6 +145,47 @@ export default function TicketDetailSection({ ticket, onEdit, onDelete }: Ticket
           </div>
         </Card>
       </div>
+
+      <Card className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Attachments</h3>
+          <label className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 cursor-pointer">
+            <input
+              type="file"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) {
+                  onUploadAttachment(file);
+                }
+                event.target.value = "";
+              }}
+              disabled={uploading}
+            />
+            {uploading ? "Uploading..." : "Upload File"}
+          </label>
+        </div>
+        {uploadError ? <p className="text-sm text-red-500 mb-3">{uploadError}</p> : null}
+        {attachments.length === 0 ? (
+          <p className="text-sm text-gray-500">No attachments uploaded yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {attachments.map((attachment) => (
+              <li key={attachment.id} className="flex items-center justify-between text-sm">
+                <a
+                  href={attachment.file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 hover:text-blue-700 hover:underline"
+                >
+                  {getAttachmentName(attachment.file)}
+                </a>
+                <span className="text-gray-500">{formatDateTime(attachment.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
     </div>
   );
 }

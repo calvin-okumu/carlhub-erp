@@ -33,7 +33,7 @@ class ClientIntegrationAdmin(admin.ModelAdmin):
     @admin.action(description="Regenerate API key (shown once)")
     def regenerate_api_key(self, request, queryset):
         for integration in queryset:
-            raw_key = ClientIntegration.generate_key()
+            raw_key = ClientIntegration.generate_raw_key()
             integration.set_key(raw_key)
             integration.save(update_fields=["api_key_prefix", "api_key_hash"])
             self.message_user(

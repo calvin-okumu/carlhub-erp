@@ -58,6 +58,7 @@ Request body (standard payload)
 
 Notes
 - `external_id` must be unique per client to prevent duplicates.
+- Alias support: `externalId` and `externalID` are accepted and normalized to `external_id`.
 - Inbound requests are idempotent: if a ticket already exists for the `external_id`, the API returns `200 OK` with the existing ticket.
 - When an inbound ticket already exists, the request is treated as a no-op (attachments are not re-created).
 - Attachments are stored locally (MEDIA_ROOT).

@@ -14,6 +14,7 @@ export type {
   Sprint,
   Task,
   Ticket,
+  TicketAttachment,
   UpdateClientData,
   UpdateTicketData,
   User,
@@ -78,7 +79,9 @@ export {
   createTicket,
   deleteTicket,
   getTicket,
+  getTicketAttachments,
   getTickets,
+  uploadTicketAttachment,
   updateTicket,
 } from "./tickets";
 

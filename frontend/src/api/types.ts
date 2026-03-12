@@ -207,6 +207,15 @@ export interface Ticket {
   updated_at: string;
 }
 
+export interface TicketAttachment {
+  id: string;
+  ticket: string;
+  comment?: string | null;
+  file: string;
+  uploaded_by?: number | null;
+  created_at: string;
+}
+
 export interface CreateTicketData {
   client: string;
   assignee?: number | null;
@@ -229,6 +238,9 @@ export interface UpdateTicketData {
   status?: string;
   priority?: string;
   category?: string;
+  source?: string;
+  requester_name?: string;
+  requester_email?: string;
   due_at?: string | null;
 }
 
@@ -236,6 +248,8 @@ export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
+  first?: string | null;
+  last?: string | null;
   results: T[];
 }
 
