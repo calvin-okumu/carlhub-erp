@@ -24,6 +24,12 @@ DjangoCRM provides a comprehensive set of features for managing client relations
 - Time estimation and assignee management
 - Bulk operations for efficient task management
 
+### [Ticketing](./ticketing.md)
+- Inbound client ticket intake with idempotency
+- End-to-end lifecycle tracking from open to closed
+- Local attachment storage and audit-ready status history
+- Internal agent queue with filtering and reporting
+
 ### [User Management](./user-management.md)
 - Multi-tenant user accounts with role-based permissions
 - Custom permissions system with tenant-isolated permission groups

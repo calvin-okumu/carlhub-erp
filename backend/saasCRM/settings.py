@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "accounts",
     "project",
+    "ticketing",
     "leave_management",
     "rest_framework",
     "django_filters",
@@ -355,6 +356,9 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = []
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -447,6 +451,7 @@ SPECTACULAR_SETTINGS = {
         {"name": "tasks", "description": "Individual task management"},
         {"name": "invoices", "description": "Invoice and billing management"},
         {"name": "payments", "description": "Payment tracking"},
+        {"name": "tickets", "description": "Ticketing and support management"},
         {"name": "users", "description": "User and team management"},
         {"name": "invitations", "description": "Invitation system"},
         {"name": "authentication", "description": "User authentication and signup"},

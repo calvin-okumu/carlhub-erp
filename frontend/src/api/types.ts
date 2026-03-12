@@ -183,6 +183,55 @@ export interface Task {
   updated_at: string;
 }
 
+export interface Ticket {
+  id: string;
+  tenant: string;
+  client: string;
+  client_name: string;
+  assignee?: number | null;
+  assignee_name?: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  category: string;
+  source: string;
+  external_id?: string | null;
+  requester_name: string;
+  requester_email: string;
+  first_logged_at: string;
+  first_response_at?: string | null;
+  due_at?: string | null;
+  closed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTicketData {
+  client: string;
+  assignee?: number | null;
+  title: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
+  source?: string;
+  external_id?: string | null;
+  requester_name?: string;
+  requester_email?: string;
+  due_at?: string | null;
+}
+
+export interface UpdateTicketData {
+  assignee?: number | null;
+  title?: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  category?: string;
+  due_at?: string | null;
+}
+
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;

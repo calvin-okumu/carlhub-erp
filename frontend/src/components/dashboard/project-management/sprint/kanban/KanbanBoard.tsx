@@ -6,9 +6,10 @@ interface KanbanBoardProps {
     tasks: Task[];
     onTaskClick: (task: Task) => void;
     onStatusChange: (taskSlug: string, newStatus: string) => void;
+    onQuickAdd: (status: string, title: string) => void;
 }
 
-export default function KanbanBoard({ tasks, onTaskClick, onStatusChange }: KanbanBoardProps) {
+export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuickAdd }: KanbanBoardProps) {
       const columns = [
            { id: 'to_do', title: 'To Do', status: 'to_do' },
            { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
@@ -31,15 +32,16 @@ export default function KanbanBoard({ tasks, onTaskClick, onStatusChange }: Kanb
       return (
            <div className="grid grid-cols-4 gap-6 pb-4">
               {columns.map(column => (
-                   <KanbanColumn
-                       key={column.id}
-                       title={column.title}
-                       tasks={tasksByStatus[column.id]}
-                       color={colorMap[column.status]}
-                       onTaskClick={onTaskClick}
-                       onStatusChange={onStatusChange}
-                   />
-              ))}
-         </div>
-     );
+                    <KanbanColumn
+                        key={column.id}
+                        title={column.title}
+                        tasks={tasksByStatus[column.id]}
+                        color={colorMap[column.status]}
+                        onTaskClick={onTaskClick}
+                        onStatusChange={onStatusChange}
+                        onQuickAdd={(title) => onQuickAdd(column.status, title)}
+                    />
+               ))}
+          </div>
+      );
 }

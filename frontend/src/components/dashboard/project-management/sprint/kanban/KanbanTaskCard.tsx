@@ -1,4 +1,5 @@
 import React from 'react';
+import { User } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import type { Task } from '@/api/types';
@@ -24,6 +25,21 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
 };
 
 export default function KanbanTaskCard({ task, onClick, onStatusChange }: KanbanTaskCardProps) {
+    const formatDueDate = (date?: string) => {
+        if (!date) return null;
+        const parsed = new Date(date);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsed);
+    };
+
+    const statusBandStyles: Record<string, string> = {
+        done: 'border-l-emerald-500',
+        in_progress: 'border-l-pink-500',
+        in_review: 'border-l-blue-500',
+        testing: 'border-l-green-500',
+        to_do: 'border-l-gray-400'
+    };
+
     const getNextStatuses = (currentStatus: string) => {
         const statusFlow: Record<string, string[]> = {
             'to_do': ['in_progress'],
@@ -35,6 +51,7 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
     };
 
     const nextStatuses = getNextStatuses(task.status);
+    const dueDate = formatDueDate(task.end_date);
 
     const getButtonText = (status: string) => {
         if (status === 'in_progress') return 'Move to Progress';
@@ -54,16 +71,30 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
         return colorMap[status] || 'bg-gray-500 hover:bg-gray-600 text-white';
     };
     return (
-        <Card className="mb-3 cursor-pointer hover:shadow-md transition-shadow" onClick={onClick}>
+        <Card className={`mb-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBandStyles[task.status] || 'border-l-gray-400'}`} onClick={onClick}>
             <div className="p-3">
                 <h3 className="font-medium text-gray-900 mb-2">{task.title}</h3>
                 <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
                 <div className="flex justify-between items-center mb-2">
-                    <PriorityBadge priority={task.priority} />
-                    <div className="text-xs text-gray-500">
-                        {task.assignee && <span>Assigned to: {task.assignee}</span>}
-                        {task.estimated_hours && <span className="ml-2">{task.estimated_hours}h</span>}
+                    <div className="flex items-center gap-2">
+                        <PriorityBadge priority={task.priority} />
+                        {dueDate && (
+                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                                Due {dueDate}
+                            </span>
+                        )}
                     </div>
+                     <div className="text-xs text-gray-500">
+                         {task.assignee && (
+                             <span className="inline-flex items-center gap-2">
+                                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                                     <User className="h-3.5 w-3.5" />
+                                 </span>
+                                 Assigned
+                             </span>
+                         )}
+                         {task.estimated_hours && <span className="ml-2">{task.estimated_hours}h</span>}
+                     </div>
                 </div>
                 <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-medium text-gray-600">

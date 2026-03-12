@@ -139,5 +139,6 @@
 - Avoid destructive commands unless explicitly requested.
 - Run the smallest relevant tests after non-trivial changes.
 - Prefer explicit, readable code over cleverness.
+- @frontend-dev must preserve the current dashboard UI design/look/feel for all UI design changes; follow existing typography, color palette, spacing, and component patterns unless explicitly directed otherwise.
 - After every successful change by @frontend-dev, @test-runner should run tests to verify nothing broke.
 - @test-runner must use curl to test endpoints and must not run project test files.

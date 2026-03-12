@@ -14,6 +14,7 @@ This comprehensive documentation provides detailed information about the DjangoC
 ### [🔌 API Reference](./api/README.md)
 - [Authentication](./api/authentication.md)
 - [Core Endpoints](./api/core-endpoints.md)
+- [Tickets](./api/tickets.md)
 - [Pagination](./api/pagination.md)
 - [Filtering & Search](./api/filtering-search.md)
 - [Error Handling](./api/error-handling.md)
@@ -22,6 +23,7 @@ This comprehensive documentation provides detailed information about the DjangoC
 - [Client Management](./features/client-management.md)
 - [Project Management](./features/project-management.md)
 - [Task Management](./features/task-management.md)
+- [Ticketing](./features/ticketing.md)
 - [User Management](./features/user-management.md)
 - [Progress Tracking](./features/progress-tracking.md)
 - [Audit Logging](./features/audit-logging.md) ✅

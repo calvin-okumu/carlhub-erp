@@ -2,6 +2,7 @@
 export type {
   Client,
   CreateClientData,
+  CreateTicketData,
   LeaveBalance,
   LeavePolicy,
   LeaveRequest,
@@ -12,7 +13,9 @@ export type {
   SignupResponse,
   Sprint,
   Task,
+  Ticket,
   UpdateClientData,
+  UpdateTicketData,
   User,
   UserTenant,
 } from "./types";
@@ -70,7 +73,15 @@ export {
   updateLeaveRequest,
 } from "./leave";
 
+// Export Ticketing functions
+export {
+  createTicket,
+  deleteTicket,
+  getTicket,
+  getTickets,
+  updateTicket,
+} from "./tickets";
+
 // Export API base URL
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
-

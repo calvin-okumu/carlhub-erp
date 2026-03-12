@@ -38,6 +38,8 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [users, setUsers] = useState<UserTenant[]>([]);
     const [addError, setAddError] = useState<string | null>(null);
+    const [quickAddError, setQuickAddError] = useState<string | null>(null);
+    const [dueSoonOnly, setDueSoonOnly] = useState(false);
 
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('access_token');
@@ -121,6 +123,89 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedTask(null);
+    };
+
+    const normalizeDate = (value?: string) => (value || '').slice(0, 10);
+
+    const isDueSoon = (date?: string) => {
+        if (!date) return false;
+        const normalized = normalizeDate(date);
+        if (!normalized) return false;
+        const today = new Date();
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const target = new Date(normalized);
+        if (Number.isNaN(target.getTime())) return false;
+        const diffDays = Math.ceil((target.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 7;
+    };
+
+    const resolveMilestoneSlug = () => {
+        if (!sprint) return '';
+        const normalize = (value: string | undefined) => (value || '').trim().toLowerCase();
+        const sprintMilestoneRaw = sprint.milestone || '';
+        const sprintMilestoneValue = sprint.milestone_name || sprintMilestoneRaw;
+        const sprintMilestoneNameOnly = sprintMilestoneRaw.includes('(')
+            ? sprintMilestoneRaw.split('(')[0].trim()
+            : sprintMilestoneRaw;
+        const sprintMilestoneNormalized = normalize(sprintMilestoneValue);
+        const sprintMilestoneNameNormalized = normalize(sprintMilestoneNameOnly);
+
+        const milestoneMatch = milestones.find((milestone) => {
+            const milestoneName = normalize(milestone.name);
+            const milestoneSlug = normalize(milestone.slug);
+            return (
+                milestone.id === sprintMilestoneValue ||
+                milestone.slug === sprintMilestoneValue ||
+                milestoneName === sprintMilestoneNormalized ||
+                milestoneSlug === sprintMilestoneNormalized ||
+                milestoneName === sprintMilestoneNameNormalized
+            );
+        });
+
+        const fallbackSlug = sprintMilestoneRaw && /^[a-z0-9-]+$/.test(sprintMilestoneRaw)
+            ? sprintMilestoneRaw
+            : '';
+
+        return milestoneMatch?.slug || fallbackSlug;
+    };
+
+    const handleQuickAdd = async (status: string, title: string) => {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        setQuickAddError(null);
+
+        if (!project?.id || !sprint) {
+            setQuickAddError('Project or sprint data is missing. Please refresh and try again.');
+            return;
+        }
+
+        const milestoneSlug = resolveMilestoneSlug();
+        if (!milestoneSlug) {
+            setQuickAddError('Milestone data is missing. Please reload the sprint and try again.');
+            return;
+        }
+
+        const startDate = normalizeDate(sprint.start_date);
+        const endDate = normalizeDate(sprint.end_date);
+        if (!startDate || !endDate) {
+            setQuickAddError('Sprint dates are required for quick add.');
+            return;
+        }
+
+        try {
+            await createTask(token, project.id, {
+                title,
+                status,
+                milestone: milestoneSlug,
+                sprint: sprint.slug,
+                start_date: startDate,
+                end_date: endDate,
+            });
+            await fetchData();
+        } catch (error) {
+            console.error('Error creating quick task:', error);
+            setQuickAddError(error instanceof Error ? error.message : 'Failed to create task');
+        }
     };
 
     // Sprint progress calculated on frontend as average of task progress (inheriting backend averaging pattern)
@@ -299,12 +384,27 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     return (
         <div className="min-h-screen bg-gray-50 p-6">
             <div className="max-w-7xl mx-auto">
-                <KanbanHeader sprint={sprint} onBack={handleBack} />
+                <KanbanHeader
+                    sprint={sprint}
+                    onBack={handleBack}
+                    dueSoonOnly={dueSoonOnly}
+                    onToggleDueSoon={() => setDueSoonOnly((prev) => !prev)}
+                />
                 <div className="flex gap-2 mb-4">
                     <Button className='bg-green-600 hover:bg-green-400' onClick={handleAddTask}>Add Task</Button>
                     <Button onClick={handleCreateTask}>Create Task</Button>
                 </div>
-                <KanbanBoard tasks={tasks} onTaskClick={handleTaskClick} onStatusChange={handleStatusChange} />
+                {quickAddError && (
+                    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                        {quickAddError}
+                    </div>
+                )}
+                <KanbanBoard
+                    tasks={dueSoonOnly ? tasks.filter((task) => isDueSoon(task.end_date)) : tasks}
+                    onTaskClick={handleTaskClick}
+                    onStatusChange={handleStatusChange}
+                    onQuickAdd={handleQuickAdd}
+                />
                 {selectedTask && (
                     <ViewTaskModal
                         isOpen={isModalOpen}
@@ -322,6 +422,8 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                     sprints={sprints}
                     milestones={milestones}
                     assignees={users}
+                    projectStartDate={project?.start_date}
+                    projectEndDate={project?.end_date}
                     onSave={handleSaveTask}
                     isKanban={true}
                     sprintContext={sprint}

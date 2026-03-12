@@ -8,6 +8,8 @@ interface KanbanHeaderProps {
     sprint: Sprint;
     onBack: () => void;
     isModal?: boolean;
+    dueSoonOnly?: boolean;
+    onToggleDueSoon?: () => void;
 }
 
 const StatusBadge = ({ status }: { status: string }) => {
@@ -25,22 +27,37 @@ const StatusBadge = ({ status }: { status: string }) => {
     );
 };
 
-export default function KanbanHeader({ sprint, onBack, isModal = false }: KanbanHeaderProps) {
+export default function KanbanHeader({ sprint, onBack, isModal = false, dueSoonOnly = false, onToggleDueSoon }: KanbanHeaderProps) {
     return (
         <Card className="mb-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center space-x-4">
                     <h1 className="text-2xl font-bold text-gray-900">{sprint.name}</h1>
                     <StatusBadge status={sprint.status} />
                     <span className="text-sm text-gray-600">Progress: {sprint.progress}%</span>
                 </div>
 
-                {!isModal && (
-                    <Button onClick={onBack} variant="outline">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Sprints
-                    </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {onToggleDueSoon && (
+                        <button
+                            type="button"
+                            onClick={onToggleDueSoon}
+                            className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
+                                dueSoonOnly
+                                    ? 'border-slate-900 bg-slate-900 text-white'
+                                    : 'border-slate-200/70 bg-white text-slate-500 hover:border-slate-300'
+                            }`}
+                        >
+                            Due soon
+                        </button>
+                    )}
+                    {!isModal && (
+                        <Button onClick={onBack} variant="outline">
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Back to Sprints
+                        </Button>
+                    )}
+                </div>
             </div>
         </Card>
     );

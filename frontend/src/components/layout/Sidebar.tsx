@@ -104,6 +104,12 @@ const operationsItems: NavItem[] = [
         description: "Segments",
     },
     {
+        name: "Tickets",
+        href: "/dashboard/tickets",
+        icon: LifeBuoy,
+        description: "Support queue",
+    },
+    {
         name: "Vendors",
         href: "/dashboard/vendors/vendor-list",
         icon: Building2,

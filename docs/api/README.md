@@ -6,6 +6,7 @@ This section provides comprehensive documentation for the DjangoCRM REST API.
 
 - [Authentication](./authentication.md)
 - [Core Endpoints](./core-endpoints.md)
+- [Tickets](./tickets.md)
 - [Pagination](./pagination.md)
 - [Filtering & Search](./filtering-search.md)
 - [Error Handling](./error-handling.md)

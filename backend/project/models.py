@@ -348,6 +348,12 @@ class Task(SoftDeleteMixin, models.Model):
             raise ValidationError('Task start date must be after milestone start date.')
         if self.milestone and self.end_date and self.milestone.due_date and self.end_date > self.milestone.due_date:
             raise ValidationError('Task end date must be before milestone end date.')
+        if self.milestone and self.milestone.project:
+            project = self.milestone.project
+            if self.start_date and project.start_date and self.start_date < project.start_date:
+                raise ValidationError('Task start date must be after project start date.')
+            if self.end_date and project.end_date and self.end_date > project.end_date:
+                raise ValidationError('Task end date must be before project end date.')
 
     @property
     def progress(self):

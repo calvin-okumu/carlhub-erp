@@ -327,6 +327,37 @@ class TaskSerializer(serializers.ModelSerializer):
         # Set tenant
         attrs['tenant'] = tenant
 
+        milestone_instance = attrs.get('milestone') or getattr(self.instance, 'milestone', None)
+        project_instance = milestone_instance.project if milestone_instance and milestone_instance.project else None
+        start_date = attrs.get('start_date') or getattr(self.instance, 'start_date', None)
+        end_date = attrs.get('end_date') or getattr(self.instance, 'end_date', None)
+
+        errors = {}
+
+        if milestone_instance:
+            if not start_date:
+                errors['start_date'] = 'Task start date is required for milestone tasks.'
+            if not end_date:
+                errors['end_date'] = 'Task end date is required for milestone tasks.'
+
+        if start_date and end_date and start_date > end_date:
+            errors['end_date'] = 'End date must be after start date.'
+
+        if milestone_instance:
+            if milestone_instance.planned_start and start_date and start_date < milestone_instance.planned_start:
+                errors['start_date'] = 'Task start date must be after milestone start date.'
+            if milestone_instance.due_date and end_date and end_date > milestone_instance.due_date:
+                errors['end_date'] = 'Task end date must be before milestone end date.'
+
+        if project_instance:
+            if project_instance.start_date and start_date and start_date < project_instance.start_date:
+                errors['start_date'] = 'Task start date must be after project start date.'
+            if project_instance.end_date and end_date and end_date > project_instance.end_date:
+                errors['end_date'] = 'Task end date must be before project end date.'
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
         return attrs
 
         help_texts = {

@@ -19,6 +19,7 @@ export default function BacklogSection() {
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [searchValue, setSearchValue] = useState('');
+    const [dueSoonOnly, setDueSoonOnly] = useState(false);
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [sprints, setSprints] = useState<Sprint[]>([]);
     const [users, setUsers] = useState<UserTenant[]>([]);
@@ -83,12 +84,23 @@ export default function BacklogSection() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <SearchInput
                     value={searchValue}
                     onChange={setSearchValue}
                     placeholder="Search tasks..."
                 />
+                <button
+                    type="button"
+                    onClick={() => setDueSoonOnly((prev) => !prev)}
+                    className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
+                        dueSoonOnly
+                            ? 'border-slate-900 bg-slate-900 text-white'
+                            : 'border-slate-200/70 bg-white text-slate-500 hover:border-slate-300'
+                    }`}
+                >
+                    Due soon
+                </button>
                 <Button onClick={handleAddTask}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task
@@ -102,6 +114,7 @@ export default function BacklogSection() {
                 onDeleteTask={removeTask}
                 onAddTask={handleAddTask}
                 searchValue={searchValue}
+                dueSoonOnly={dueSoonOnly}
             />
             <CreateTaskModal
                 isOpen={modalOpen}
@@ -111,6 +124,8 @@ export default function BacklogSection() {
                 sprints={sprints}
                 assignees={users}
                 milestones={milestones}
+                projectStartDate={project?.start_date}
+                projectEndDate={project?.end_date}
                 onSave={handleSaveTask}
                 isBacklog={true}
             />

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import Table from '@/components/ui/Table';
 import Loader from '@/components/shared/Loader';
 import type { Task } from '@/api/types';
-import { Edit, Trash2, AlertCircle } from 'lucide-react';
+import { Edit, Trash2, AlertCircle, User } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
 interface BacklogTableProps {
@@ -15,18 +15,32 @@ interface BacklogTableProps {
     onDeleteTask: (slug: string) => void;
     onAddTask: () => void;
     searchValue: string;
+    dueSoonOnly?: boolean;
 }
 
-const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, onEditTask, onDeleteTask, onAddTask, searchValue }: BacklogTableProps) {
+const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, onEditTask, onDeleteTask, onAddTask, searchValue, dueSoonOnly = false }: BacklogTableProps) {
     const [page, setPage] = useState(1);
 
-    const filteredTasks = useMemo(() =>
-        tasks.filter(task =>
+    const isDueSoon = useCallback((date?: string) => {
+        if (!date) return false;
+        const normalized = date.slice(0, 10);
+        const target = new Date(normalized);
+        if (Number.isNaN(target.getTime())) return false;
+        const today = new Date();
+        const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const diffDays = Math.ceil((target.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
+        return diffDays >= 0 && diffDays <= 7;
+    }, []);
+
+    const filteredTasks = useMemo(() => {
+        const base = dueSoonOnly
+            ? tasks.filter((task) => isDueSoon(task.end_date))
+            : tasks;
+        return base.filter(task =>
             task.title.toLowerCase().includes(searchValue.toLowerCase()) ||
             (task.description && task.description.toLowerCase().includes(searchValue.toLowerCase()))
-        ),
-        [tasks, searchValue]
-    );
+        );
+    }, [tasks, searchValue, dueSoonOnly, isDueSoon]);
 
     const itemsPerPage = 10;
     const totalPages = useMemo(() =>
@@ -50,10 +64,38 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
 
     const headers = ["Title", "Description", "Status", "Priority", "Progress", "Milestone", "Assignee", "Actions"];
 
-    const rows = visibleTasks.map(task => ({
+    const formatDueDate = (date?: string) => {
+        if (!date) return null;
+        const parsed = new Date(date);
+        if (Number.isNaN(parsed.getTime())) return null;
+        return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parsed);
+    };
+
+    const statusBandStyles: Record<string, string> = {
+        done: 'bg-emerald-500',
+        in_progress: 'bg-pink-500',
+        in_review: 'bg-blue-500',
+        testing: 'bg-green-500',
+        to_do: 'bg-gray-400'
+    };
+
+    const rows = visibleTasks.map(task => {
+        const dueDate = formatDueDate(task.end_date);
+
+        return {
         key: task.id,
         data: [
-            task.title,
+            <div key={task.id + '-title'} className="flex items-center gap-3">
+                <span className={`h-10 w-1 rounded-full ${statusBandStyles[task.status] || 'bg-gray-400'}`} />
+                <div className="flex flex-col">
+                    <span className="font-medium text-gray-900">{task.title}</span>
+                    {dueDate && (
+                        <span className="mt-1 inline-flex w-fit items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
+                            Due {dueDate}
+                        </span>
+                    )}
+                </div>
+            </div>,
             task.description || "-",
             <span
                 key={task.id + '-status'}
@@ -92,7 +134,14 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
                 </div>
             </div>,
             task.milestone_name || "-",
-            task.assignee ? "Assigned" : "-", // Placeholder
+            task.assignee ? (
+                <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                        <User className="h-3.5 w-3.5" />
+                    </span>
+                    <span className="text-xs text-slate-600">Assigned</span>
+                </div>
+            ) : "-",
             <div key={task.id + '-actions'} className="flex gap-2">
                 <Button onClick={() => handleEdit(task)} variant="outline" size="sm">
                     <Edit className="h-4 w-4" />
@@ -102,7 +151,8 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
                 </Button>
             </div>
         ]
-    }));
+        };
+    });
 
     if (loading) {
         return <Loader />;
