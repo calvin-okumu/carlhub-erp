@@ -40,6 +40,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     const [addError, setAddError] = useState<string | null>(null);
     const [quickAddError, setQuickAddError] = useState<string | null>(null);
     const [dueSoonOnly, setDueSoonOnly] = useState(false);
+    const [bulkSelection, setBulkSelection] = useState<Record<string, Task>>({});
 
     const fetchData = useCallback(async () => {
         const token = localStorage.getItem('access_token');
@@ -243,6 +244,52 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
         }
     };
 
+    const handleToggleSelect = (task: Task, checked: boolean) => {
+        setBulkSelection((prev) => {
+            const next = { ...prev };
+            if (checked) {
+                next[task.slug] = task;
+            } else {
+                delete next[task.slug];
+            }
+            return next;
+        });
+    };
+
+    const handleClearSelection = () => {
+        setBulkSelection({});
+    };
+
+    const handleBulkMove = async (status: string) => {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+        const selected = Object.values(bulkSelection);
+        if (selected.length === 0) return;
+
+        try {
+            await Promise.all(selected.map((task) => updateTask(token, task.slug, { status })));
+            const updatedTasks = tasks.map((task) =>
+                bulkSelection[task.slug]
+                    ? { ...task, status, progress: getTaskProgress(status) }
+                    : task
+            );
+            setTasks(updatedTasks);
+
+            const newSprintProgress = updatedTasks.length > 0
+                ? Math.round(updatedTasks.reduce((sum, task) => sum + task.progress, 0) / updatedTasks.length)
+                : 0;
+            if (sprint) {
+                setSprint({ ...sprint, progress: newSprintProgress });
+            }
+
+            handleClearSelection();
+            fetchData();
+        } catch (error) {
+            console.error('Error bulk updating tasks:', error);
+            alert('Failed to move tasks. Please try again.');
+        }
+    };
+
     // Helper function to get task progress based on status (matching backend Task.progress property)
     const getTaskProgress = (status: string): number => {
         const statusWeights: Record<string, number> = {
@@ -348,11 +395,11 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-slate-50 p-6">
+                <div className="max-w-screen-2xl mx-auto">
                     <KanbanHeader sprint={{ id: '0', slug: 'error', name: 'Error', status: 'planned', start_date: '', end_date: '', progress: 0, tasks_count: 0, created_at: '', milestone: '0', milestone_name: '' }} onBack={handleBack} />
-                    <div className="text-center">
-                        <div className="text-red-500 mb-4">{error}</div>
+                    <div className="text-center rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-red-700">
+                        <div className="mb-4 text-sm font-semibold">{error}</div>
                         <button
                             onClick={() => {
                                 setError(null);
@@ -360,7 +407,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                                 setSprint(null);
                                 fetchData();
                             }}
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            className="px-4 py-2 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800"
                         >
                             Retry
                         </button>
@@ -372,30 +419,63 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
 
     if (!sprint) {
         return (
-            <div className="min-h-screen bg-gray-50 p-6">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen bg-slate-50 p-6">
+                <div className="max-w-screen-2xl mx-auto">
                     <KanbanHeader sprint={{ id: '0', slug: 'not-found', name: 'Not Found', status: 'planned', start_date: '', end_date: '', progress: 0, tasks_count: 0, created_at: '', milestone: '0', milestone_name: '' }} onBack={handleBack} />
-                    <div className="text-center">Sprint not found</div>
+                    <div className="text-center rounded-2xl border border-slate-200/70 bg-white/90 px-6 py-10 text-slate-600 shadow-sm">Sprint not found</div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-7xl mx-auto">
+        <div className="min-h-screen bg-slate-50 p-6">
+            <div className="max-w-screen-2xl mx-auto">
                 <KanbanHeader
                     sprint={sprint}
                     onBack={handleBack}
                     dueSoonOnly={dueSoonOnly}
                     onToggleDueSoon={() => setDueSoonOnly((prev) => !prev)}
                 />
-                <div className="flex gap-2 mb-4">
-                    <Button className='bg-green-600 hover:bg-green-400' onClick={handleAddTask}>Add Task</Button>
-                    <Button onClick={handleCreateTask}>Create Task</Button>
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm mb-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button onClick={handleAddTask} variant="outline" className="rounded-full">
+                            Add Task
+                        </Button>
+                        <Button onClick={handleCreateTask} className="rounded-full">
+                            Create Task
+                        </Button>
+                    </div>
+                    <div className="text-xs text-slate-500">Manage sprint scope and active delivery.</div>
                 </div>
+                {Object.keys(bulkSelection).length > 0 && (
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                        <div className="text-sm font-semibold text-slate-700">
+                            {Object.keys(bulkSelection).length} selected
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                            {['to_do', 'in_progress', 'in_review', 'testing', 'done'].map((status) => (
+                                <button
+                                    key={status}
+                                    type="button"
+                                    onClick={() => handleBulkMove(status)}
+                                    className="rounded-full border border-slate-200/70 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600"
+                                >
+                                    Move to {status.replace('_', ' ')}
+                                </button>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={handleClearSelection}
+                                className="rounded-full border border-slate-200/70 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500"
+                            >
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {quickAddError && (
-                    <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                    <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
                         {quickAddError}
                     </div>
                 )}
@@ -404,6 +484,8 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                     onTaskClick={handleTaskClick}
                     onStatusChange={handleStatusChange}
                     onQuickAdd={handleQuickAdd}
+                    selectedTaskIds={new Set(Object.keys(bulkSelection))}
+                    onToggleSelect={handleToggleSelect}
                 />
                 {selectedTask && (
                     <ViewTaskModal
@@ -431,46 +513,46 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                 {addModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center">
                         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setAddModalOpen(false)}></div>
-                        <div className="relative z-10 bg-white rounded-2xl shadow-lg w-full max-w-2xl p-6">
+                        <div className="relative z-10 bg-white rounded-2xl border border-slate-200/70 shadow-xl w-full max-w-2xl p-6">
                             <button
                                 onClick={() => setAddModalOpen(false)}
-                                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
                             >
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Tasks from Backlog</h3>
+                            <h3 className="text-lg font-semibold text-slate-900 mb-4">Add Tasks from Backlog</h3>
                             {addError && (
-                                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
                                     {addError}
                                 </div>
                             )}
                             <div className="max-h-96 overflow-y-auto">
                                 {backlogTasks.length === 0 ? (
-                                    <p className="text-gray-500">No backlog tasks available.</p>
+                                    <p className="text-slate-500">No backlog tasks available.</p>
                                 ) : (
                                     backlogTasks.map(task => (
-                                        <div key={task.id} className="flex items-center space-x-3 p-3 border-b">
+                                        <div key={task.id} className="flex items-center space-x-3 p-3 border-b border-slate-100">
                                             <input
                                                 type="checkbox"
                                                 checked={selectedTasks.some(item => item.id === task.id)}
                                                 onChange={(e) => handleTaskSelection(task, e.target.checked)}
-                                                className="h-4 w-4 text-blue-600"
+                                                className="h-4 w-4 text-slate-900"
                                             />
                                             <div>
-                                                <p className="font-medium">{task.title}</p>
-                                                <p className="text-sm text-gray-600">{task.description || 'No description'}</p>
+                                                <p className="font-medium text-slate-900">{task.title}</p>
+                                                <p className="text-sm text-slate-500">{task.description || 'No description'}</p>
                                             </div>
                                         </div>
                                     ))
                                 )}
                             </div>
                             <div className="mt-6 flex justify-end space-x-3">
-                                <Button onClick={() => setAddModalOpen(false)} variant="outline">
+                                <Button onClick={() => setAddModalOpen(false)} variant="outline" className="rounded-full">
                                     Cancel
                                 </Button>
-                                <Button onClick={handleAddSelectedTasks} variant="gradient">
+                                <Button onClick={handleAddSelectedTasks} variant="gradient" className="rounded-full">
                                     Add Selected ({selectedTasks.length})
                                 </Button>
                             </div>

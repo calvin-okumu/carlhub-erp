@@ -4,6 +4,8 @@ import MetricsGrid from './MetricsGrid';
 import ProjectTimeline from './ProjectTimeline';
 import ProjectHealth from './ProjectHealth';
 import ProjectInformation from './ProjectInformation';
+import DueSoonTray from './DueSoonTray';
+import QuickAddActions from './QuickAddActions';
 import { getSprints, getTasks, getMilestones } from '@/api/project_mgmt';
 import type { Project, Milestone } from '@/api/types';
 
@@ -12,9 +14,9 @@ import type { Project, Milestone } from '@/api/types';
  }
 
 export default function OverviewSection({ project }: OverviewSectionProps) {
-      const [sprintsCount, setSprintsCount] = useState(0);
-      const [tasksCount, setTasksCount] = useState(0);
-      const [milestones, setMilestones] = useState<Milestone[]>([]);
+    const [sprintsCount, setSprintsCount] = useState(0);
+    const [tasksCount, setTasksCount] = useState(0);
+    const [milestones, setMilestones] = useState<Milestone[]>([]);
 
        useEffect(() => {
            const fetchSprintsCount = async () => {
@@ -58,28 +60,37 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
             fetchMilestones();
         }, [project.slug]);
 
-       // Calculate project progress as average of milestone progress
-       const calculateProjectProgress = () => {
-           if (milestones.length === 0) return 0;
-           const totalProgress = milestones.reduce((sum, milestone) => sum + milestone.progress, 0);
-           return Math.round(totalProgress / milestones.length);
-       };
+    // Calculate project progress as average of milestone progress
+    const calculateProjectProgress = () => {
+        if (milestones.length === 0) return 0;
+        const totalProgress = milestones.reduce((sum, milestone) => sum + milestone.progress, 0);
+        return Math.round(totalProgress / milestones.length);
+    };
 
     return (
         <div className="space-y-6">
-             <MetricsGrid
-                 milestonesCount={project.milestones_count}
-                 tasksCount={tasksCount}
-                 sprintsCount={sprintsCount}
-                 teamMembersCount={project.team_members.length}
-             />
-            <ProjectProgress progress={calculateProjectProgress()} />
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ProjectTimeline milestonesCount={project.milestones_count} />
-                <ProjectInformation project={project} />
+            <div className="grid grid-cols-1 xl:grid-cols-[2fr,1fr] gap-6">
+                <ProjectProgress progress={calculateProjectProgress()} />
+                <QuickAddActions />
             </div>
-            <ProjectHealth project={project} />
+
+            <MetricsGrid
+                milestonesCount={project.milestones_count}
+                tasksCount={tasksCount}
+                sprintsCount={sprintsCount}
+                teamMembersCount={project.team_members.length}
+            />
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                <div className="xl:col-span-2 space-y-6">
+                    <ProjectTimeline milestonesCount={project.milestones_count} />
+                    <DueSoonTray milestones={milestones} />
+                </div>
+                <div className="space-y-6">
+                    <ProjectInformation project={project} />
+                    <ProjectHealth project={project} />
+                </div>
+            </div>
         </div>
     );
 }

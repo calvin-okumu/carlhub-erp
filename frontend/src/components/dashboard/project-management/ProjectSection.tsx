@@ -38,10 +38,10 @@ export default function ProjectSection() {
                             key={item.label}
                             type="button"
                             onClick={() => setStatusFilter(item.status)}
-                            className={`rounded-2xl border p-4 text-left shadow-[0_18px_45px_-35px_rgba(15,23,42,0.4)] transition-all ${
+                            className={`rounded-2xl border p-4 text-left shadow-[0_18px_45px_-35px_rgba(15,23,42,0.3)] transition-all ${
                                 isActive
                                     ? 'border-slate-900 bg-slate-900 text-white'
-                                    : 'border-slate-200/70 bg-white/85 text-slate-900 hover:-translate-y-0.5 hover:border-slate-300'
+                                    : 'border-slate-200/70 bg-white/90 text-slate-900 hover:-translate-y-0.5 hover:border-slate-300'
                             }`}
                         >
                             <p className={`text-xs font-semibold uppercase tracking-[0.28em] ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
@@ -54,14 +54,14 @@ export default function ProjectSection() {
                 })}
             </div>
             {statusFilter && (
-                <div className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/85 px-4 py-3 text-sm text-slate-600">
+                <div className="flex items-center justify-between rounded-2xl border border-slate-200/70 bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-sm">
                     <span>
                         Active filter: <span className="font-semibold text-slate-900">{statusFilter.replace('_', ' ')}</span>
                     </span>
                     <button
                         type="button"
                         onClick={() => setStatusFilter('')}
-                        className="rounded-full border border-slate-200/70 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500"
+                        className="rounded-full border border-slate-200/70 bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] text-slate-500 hover:border-slate-300"
                     >
                         Clear
                     </button>

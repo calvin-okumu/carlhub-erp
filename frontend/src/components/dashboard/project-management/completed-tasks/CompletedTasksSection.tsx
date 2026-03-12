@@ -74,41 +74,45 @@ export default function CompletedTasksSection() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold text-gray-900">Completed Tasks</h2>
-                <div className="text-sm text-gray-500">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+                <div>
+                    <h2 className="text-xl font-semibold text-slate-900">Completed Tasks</h2>
+                    <p className="text-xs text-slate-500">Delivered work across sprints.</p>
+                </div>
+                <div className="text-sm text-slate-500">
                     {tasks.length} completed task{tasks.length !== 1 ? 's' : ''}
                 </div>
             </div>
 
-             {tasks.length === 0 ? (
-                 <Card className="text-center py-12">
-                     <div className="text-gray-400 text-lg mb-2">No completed tasks yet</div>
-                     <p className="text-gray-500">Tasks will appear here once they are marked as completed in sprints.</p>
-                 </Card>
-             ) : (
-                <Table
-                    headers={['Title', 'Description', 'Sprint', 'Completed Date', 'Actions']}
-                    rows={tasks.map(task => ({
-                        key: task.id,
-                        data: [
-                            task.title,
-                            <span key="desc" className="max-w-xs truncate block">{task.description || 'No description'}</span>,
-                            task.sprint_name || task.sprint || 'N/A',
-                            task.updated_at ? new Date(task.updated_at).toLocaleDateString() : 'N/A',
-                            <Button
-                                key="delete"
-                                onClick={() => handleDeleteTask(task.slug)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-800"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                            </Button>
-                        ]
-                    }))}
-                    className="shadow-lg"
-                />
+            {tasks.length === 0 ? (
+                <Card className="!rounded-2xl !border-slate-200/70 !shadow-sm text-center py-12">
+                    <div className="text-slate-400 text-lg mb-2">No completed tasks yet</div>
+                    <p className="text-slate-500">Tasks will appear here once they are marked as completed in sprints.</p>
+                </Card>
+            ) : (
+                <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+                    <Table
+                        headers={['Title', 'Description', 'Sprint', 'Completed Date', 'Actions']}
+                        rows={tasks.map(task => ({
+                            key: task.id,
+                            data: [
+                                task.title,
+                                <span key="desc" className="max-w-xs truncate block">{task.description || 'No description'}</span>,
+                                task.sprint_name || task.sprint || 'N/A',
+                                task.updated_at ? new Date(task.updated_at).toLocaleDateString() : 'N/A',
+                                <Button
+                                    key="delete"
+                                    onClick={() => handleDeleteTask(task.slug)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-red-600 hover:text-red-800"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            ]
+                        }))}
+                    />
+                </div>
             )}
         </div>
     );

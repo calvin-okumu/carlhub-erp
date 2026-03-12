@@ -8,6 +8,8 @@ interface KanbanTaskCardProps {
     task: Task;
     onClick: () => void;
     onStatusChange: (taskSlug: string, newStatus: string) => void;
+    isSelected?: boolean;
+    onSelect?: (checked: boolean) => void;
 }
 
 const PriorityBadge = ({ priority }: { priority: string }) => {
@@ -24,7 +26,7 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
     );
 };
 
-export default function KanbanTaskCard({ task, onClick, onStatusChange }: KanbanTaskCardProps) {
+export default function KanbanTaskCard({ task, onClick, onStatusChange, isSelected = false, onSelect }: KanbanTaskCardProps) {
     const formatDueDate = (date?: string) => {
         if (!date) return null;
         const parsed = new Date(date);
@@ -71,54 +73,65 @@ export default function KanbanTaskCard({ task, onClick, onStatusChange }: Kanban
         return colorMap[status] || 'bg-gray-500 hover:bg-gray-600 text-white';
     };
     return (
-        <Card className={`mb-3 cursor-pointer hover:shadow-md transition-shadow border-l-4 ${statusBandStyles[task.status] || 'border-l-gray-400'}`} onClick={onClick}>
-            <div className="p-3">
-                <h3 className="font-medium text-gray-900 mb-2">{task.title}</h3>
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{task.description}</p>
-                <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center gap-2">
-                        <PriorityBadge priority={task.priority} />
-                        {dueDate && (
-                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
-                                Due {dueDate}
-                            </span>
+        <Card
+            className={`!p-0 cursor-pointer border-l-4 border-slate-200/70 !shadow-sm rounded-xl transition-shadow hover:shadow-md ${statusBandStyles[task.status] || 'border-l-gray-400'}`}
+            onClick={onClick}
+        >
+            <div className="space-y-2 p-3">
+                <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2">
+                        {onSelect && (
+                            <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(event) => onSelect(event.target.checked)}
+                                onClick={(event) => event.stopPropagation()}
+                                className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-200"
+                            />
                         )}
+                        <h3 className="text-sm font-semibold text-slate-900 line-clamp-2">{task.title}</h3>
                     </div>
-                     <div className="text-xs text-gray-500">
-                         {task.assignee && (
-                             <span className="inline-flex items-center gap-2">
-                                 <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-600">
-                                     <User className="h-3.5 w-3.5" />
-                                 </span>
-                                 Assigned
-                             </span>
-                         )}
-                         {task.estimated_hours && <span className="ml-2">{task.estimated_hours}h</span>}
-                     </div>
+                    {task.assignee && (
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                            <User className="h-3.5 w-3.5" />
+                        </span>
+                    )}
                 </div>
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-600">
-                        Progress: {task.progress}%
-                    </span>
-                    <div className="w-16 h-1 bg-gray-200 rounded">
+                {task.description && (
+                    <p className="text-xs text-slate-500 line-clamp-2">{task.description}</p>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                    <PriorityBadge priority={task.priority} />
+                    {dueDate && (
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                            Due {dueDate}
+                        </span>
+                    )}
+                    {task.estimated_hours && (
+                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                            {task.estimated_hours}h
+                        </span>
+                    )}
+                </div>
+                <div className="flex items-center justify-between text-[10px] text-slate-500">
+                    <span>{task.progress}%</span>
+                    <div className="h-1.5 w-20 rounded-full bg-slate-200">
                         <div
-                            className={`h-1 rounded transition-all duration-300 ${
-                                task.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
-                            }`}
-                            style={{ width: `${task.progress}%` }}
+                            className={`h-1.5 rounded-full ${task.progress === 100 ? 'bg-emerald-500' : 'bg-slate-600'}`}
+                            style={{ width: `${Math.min(100, Math.max(0, task.progress))}%` }}
                         />
                     </div>
                 </div>
                 {nextStatuses.length > 0 && (
-                    <div className="flex gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
                         {nextStatuses.map(status => (
-                             <Button
-                                 key={status}
-                                 onClick={() => onStatusChange(task.slug, status)}
-                                 variant="outline"
-                                 size="sm"
-                                 className={`text-xs px-2 py-1 ${getButtonColor(status)}`}
-                             >
+                            <Button
+                                key={status}
+                                onClick={() => onStatusChange(task.slug, status)}
+                                variant="outline"
+                                size="sm"
+                                className={`text-[10px] px-2 py-1 border-transparent ${getButtonColor(status)}`}
+                            >
                                 {getButtonText(status)}
                             </Button>
                         ))}

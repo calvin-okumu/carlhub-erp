@@ -61,10 +61,13 @@ export default function ProjectHealth({ project, overdueTasks = 0 }: ProjectHeal
     };
 
     return (
-        <Card className="p-6 space-y-4">
+        <Card className="!rounded-2xl !border-slate-200/70 !shadow-sm p-6 space-y-4">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800">Project Health</h2>
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-medium ${getHealthColor()}`}>
+                <div>
+                    <h2 className="text-lg font-semibold text-slate-900">Project Health</h2>
+                    <p className="text-xs text-slate-500">Delivery risk overview</p>
+                </div>
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-semibold ${getHealthColor()}`}>
                     {getHealthIcon()}
                     <span>{healthStatus}</span>
                 </div>
@@ -72,11 +75,11 @@ export default function ProjectHealth({ project, overdueTasks = 0 }: ProjectHeal
 
             <div className="space-y-4">
                 <div>
-                    <div className="flex justify-between text-sm mb-2">
+                    <div className="flex justify-between text-sm mb-2 text-slate-600">
                         <span>Health Score</span>
-                        <span className="font-medium text-gray-900">{healthScore}%</span>
+                        <span className="font-semibold text-slate-900">{healthScore}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-slate-100 rounded-full h-2">
                         <div
                             className={`h-2 rounded-full transition-all duration-500 ${getProgressColor()}`}
                             style={{ width: `${healthScore}%` }}
@@ -84,20 +87,20 @@ export default function ProjectHealth({ project, overdueTasks = 0 }: ProjectHeal
                     </div>
                 </div>
 
-                <div className="space-y-3 text-sm text-gray-600">
+                <div className="space-y-3 text-sm text-slate-600">
                     <div className="flex justify-between">
                         <span>Milestones Completed</span>
-                        <span className="font-medium text-gray-900">{project.milestones_count ?? 0}</span>
+                        <span className="font-semibold text-slate-900">{project.milestones_count ?? 0}</span>
                     </div>
                     <div className="flex justify-between">
                         <span>Tasks Overdue</span>
-                        <span className={overdueTasks > 0 ? "text-red-600 font-medium" : "text-gray-900 font-medium"}>
+                        <span className={overdueTasks > 0 ? "text-red-600 font-semibold" : "text-slate-900 font-semibold"}>
                             {overdueTasks}
                         </span>
                     </div>
                     <div className="flex justify-between">
                         <span>Progress</span>
-                        <span className="font-medium text-gray-900">{project.progress ?? 0}%</span>
+                        <span className="font-semibold text-slate-900">{project.progress ?? 0}%</span>
                     </div>
                 </div>
             </div>

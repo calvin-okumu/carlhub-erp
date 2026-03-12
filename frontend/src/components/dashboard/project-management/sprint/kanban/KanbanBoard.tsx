@@ -7,9 +7,11 @@ interface KanbanBoardProps {
     onTaskClick: (task: Task) => void;
     onStatusChange: (taskSlug: string, newStatus: string) => void;
     onQuickAdd: (status: string, title: string) => void;
+    selectedTaskIds: Set<string>;
+    onToggleSelect: (task: Task, checked: boolean) => void;
 }
 
-export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuickAdd }: KanbanBoardProps) {
+export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuickAdd, selectedTaskIds, onToggleSelect }: KanbanBoardProps) {
       const columns = [
            { id: 'to_do', title: 'To Do', status: 'to_do' },
            { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
@@ -18,10 +20,10 @@ export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuic
        ];
 
       const colorMap: Record<string, string> = {
-           to_do: 'bg-gray-100',
-           in_progress: 'bg-pink-100',
-            in_review: 'bg-blue-100',
-           testing: 'bg-green-100'
+           to_do: 'bg-slate-300',
+           in_progress: 'bg-pink-400',
+            in_review: 'bg-blue-400',
+           testing: 'bg-emerald-400'
        };
 
       const tasksByStatus = columns.reduce((acc, column) => {
@@ -30,7 +32,7 @@ export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuic
       }, {} as Record<string, Task[]>);
 
       return (
-           <div className="grid grid-cols-4 gap-6 pb-4">
+           <div className="grid gap-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
               {columns.map(column => (
                     <KanbanColumn
                         key={column.id}
@@ -40,6 +42,8 @@ export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuic
                         onTaskClick={onTaskClick}
                         onStatusChange={onStatusChange}
                         onQuickAdd={(title) => onQuickAdd(column.status, title)}
+                        selectedTaskIds={selectedTaskIds}
+                        onToggleSelect={onToggleSelect}
                     />
                ))}
           </div>

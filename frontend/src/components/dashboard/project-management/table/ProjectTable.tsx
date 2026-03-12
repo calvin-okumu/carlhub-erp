@@ -88,24 +88,24 @@ export default function ProjectTable({
 
     const statusClasses = (status: string) => (
         status === "active"
-            ? "bg-green-100 text-green-800"
+            ? "bg-emerald-100 text-emerald-800"
             : status === "completed"
                 ? "bg-blue-100 text-blue-800"
                 : status === "planning"
-                    ? "bg-yellow-100 text-yellow-800"
+                    ? "bg-amber-100 text-amber-800"
                     : status === "on_hold"
                         ? "bg-orange-100 text-orange-800"
                         : status === "archived"
-                            ? "bg-gray-200 text-gray-700"
-                            : "bg-gray-100 text-gray-800"
+                            ? "bg-slate-200 text-slate-700"
+                            : "bg-slate-100 text-slate-800"
     );
 
     const priorityClasses = (priority: string) => (
         priority === "high"
             ? "bg-red-100 text-red-800"
             : priority === "medium"
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-green-100 text-green-800"
+                ? "bg-amber-100 text-amber-800"
+                : "bg-emerald-100 text-emerald-800"
     );
 
     const rows = filteredProjects.map(p => ({
@@ -113,12 +113,12 @@ export default function ProjectTable({
         data: [
             <td key={p.id + '-project'} className="px-4 py-4">
                 <div className="flex flex-col gap-1">
-                    <Link href={`/dashboard/project-management/${p.slug}`} className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                    <Link href={`/dashboard/project-management/${p.slug}`} className="text-sm font-semibold text-slate-900 hover:text-slate-700 hover:underline">
                         {p.name}
                     </Link>
-                    <div className="text-xs text-gray-500">Client: {p.client_name}</div>
-                    <div className="inline-flex items-center gap-2 text-xs text-gray-500">
-                        <span className={`rounded-full px-2 py-0.5 font-medium ${priorityClasses(p.priority)}`}>
+                    <div className="text-xs text-slate-500">Client: {p.client_name}</div>
+                    <div className="inline-flex items-center gap-2 text-xs text-slate-500">
+                        <span className={`rounded-full px-2 py-0.5 font-semibold ${priorityClasses(p.priority)}`}>
                             Priority: {p.priority}
                         </span>
                     </div>
@@ -133,19 +133,19 @@ export default function ProjectTable({
                     </span>
                 </div>
             </td>,
-            <td key={p.id + '-timeline'} className="px-4 py-4 text-sm text-gray-700">
+            <td key={p.id + '-timeline'} className="px-4 py-4 text-sm text-slate-700">
                 <div className="flex flex-col gap-1">
                     <span>{new Date(p.start_date).toLocaleDateString()}</span>
-                    <span className="text-xs text-gray-500">to {new Date(p.end_date).toLocaleDateString()}</span>
+                    <span className="text-xs text-slate-500">to {new Date(p.end_date).toLocaleDateString()}</span>
                 </div>
             </td>,
-            <td key={p.id + '-budget'} className="px-4 py-4 text-sm text-gray-900">
-                <div className="font-medium">{p.budget ? `$${p.budget}` : "-"}</div>
+            <td key={p.id + '-budget'} className="px-4 py-4 text-sm text-slate-900">
+                <div className="font-semibold">{p.budget ? `$${p.budget}` : "-"}</div>
             </td>,
             <td key={p.id + '-progress'} className="px-4 py-4">
                 <div className="flex flex-col gap-2">
-                    <div className="text-sm font-medium text-gray-900">{p.progress}%</div>
-                    <div className="h-2 w-32 rounded-full bg-gray-200">
+                    <div className="text-sm font-semibold text-slate-900">{p.progress}%</div>
+                    <div className="h-2 w-32 rounded-full bg-slate-100">
                         <div
                             className="h-2 rounded-full bg-blue-500"
                             style={{ width: `${Math.min(100, Math.max(0, p.progress))}%` }}
@@ -153,9 +153,9 @@ export default function ProjectTable({
                     </div>
                 </div>
             </td>,
-            <td key={p.id + '-milestones'} className="px-4 py-4 text-sm text-gray-900">
-                <div className="font-medium">{p.milestones_count}</div>
-                <div className="text-xs text-gray-500">milestones</div>
+            <td key={p.id + '-milestones'} className="px-4 py-4 text-sm text-slate-900">
+                <div className="font-semibold">{p.milestones_count}</div>
+                <div className="text-xs text-slate-500">milestones</div>
             </td>,
             <td key={p.id + '-actions'} className="px-4 py-4">
                 <div className="flex items-center gap-2">
@@ -180,11 +180,11 @@ export default function ProjectTable({
 
     return (
         <>
-            <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-                <div className="p-5 border-b border-gray-200 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <div className="text-lg font-semibold text-gray-900">Projects</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-lg font-semibold text-slate-900">Projects</div>
+                        <div className="text-sm text-slate-500">
                             Showing {filteredProjects.length} of {totalItems} projects
                         </div>
                     </div>
@@ -194,7 +194,7 @@ export default function ProjectTable({
                             placeholder="Search projects by name or client..."
                             value={searchValue}
                             onChange={(e) => setSearchValue(e.target.value)}
-                            className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full sm:w-64 px-4 py-2.5 border border-slate-200/70 rounded-full bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-300"
                         />
                         <Button onClick={handleNewProject}>
                             <Plus className="h-4 w-4 mr-2" />
@@ -203,7 +203,7 @@ export default function ProjectTable({
                     </div>
                 </div>
                 {filteredProjects.length === 0 ? (
-                    <div className="p-8 text-center text-gray-500">
+                    <div className="p-8 text-center text-slate-500">
                         {searchValue ? `No projects found matching "${searchValue}"` : 'No projects found'}
                     </div>
                 ) : (

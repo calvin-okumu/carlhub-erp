@@ -81,17 +81,19 @@ export default function SprintSection() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center space-x-4">
-                    <SearchInput
-                        value={searchValue}
-                        onChange={setSearchValue}
-                        placeholder="Search sprints..."
-                    />
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                <div className="flex flex-1 flex-wrap items-center gap-3">
+                    <div className="min-w-[220px] flex-1">
+                        <SearchInput
+                            value={searchValue}
+                            onChange={setSearchValue}
+                            placeholder="Search sprints..."
+                        />
+                    </div>
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-3 py-2.5 border border-slate-200/70 rounded-full bg-white text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-300"
                     >
                         <option value="all">All Statuses</option>
                         <option value="planned">Planned</option>
@@ -100,7 +102,7 @@ export default function SprintSection() {
                         <option value="canceled">Canceled</option>
                     </select>
                 </div>
-                <Button onClick={handleAddSprint} >
+                <Button onClick={handleAddSprint}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Sprint
                 </Button>

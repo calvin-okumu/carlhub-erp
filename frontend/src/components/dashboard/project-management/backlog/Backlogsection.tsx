@@ -84,23 +84,27 @@ export default function BacklogSection() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <SearchInput
-                    value={searchValue}
-                    onChange={setSearchValue}
-                    placeholder="Search tasks..."
-                />
-                <button
-                    type="button"
-                    onClick={() => setDueSoonOnly((prev) => !prev)}
-                    className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
-                        dueSoonOnly
-                            ? 'border-slate-900 bg-slate-900 text-white'
-                            : 'border-slate-200/70 bg-white text-slate-500 hover:border-slate-300'
-                    }`}
-                >
-                    Due soon
-                </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                <div className="flex flex-1 flex-wrap items-center gap-3">
+                    <div className="min-w-[220px] flex-1">
+                        <SearchInput
+                            value={searchValue}
+                            onChange={setSearchValue}
+                            placeholder="Search tasks..."
+                        />
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setDueSoonOnly((prev) => !prev)}
+                        className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
+                            dueSoonOnly
+                                ? 'border-slate-900 bg-slate-900 text-white'
+                                : 'border-slate-200/70 bg-white text-slate-500 hover:border-slate-300'
+                        }`}
+                    >
+                        Due soon
+                    </button>
+                </div>
                 <Button onClick={handleAddTask}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Task

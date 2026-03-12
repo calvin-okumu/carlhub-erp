@@ -15,10 +15,12 @@ export default function ProjectTimeline({
     const hasMilestones = milestonesCount > 0;
 
     return (
-        <Card className="p-5">
-            {/* Header */}
+        <Card className="!rounded-2xl !border-slate-200/70 !shadow-sm p-6">
             <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Project Timeline</h2>
+                <div>
+                    <h2 className="text-lg font-semibold text-slate-900">Project Timeline</h2>
+                    <p className="text-xs text-slate-500">Milestones and key delivery checkpoints.</p>
+                </div>
                 <Button
                     variant="outline"
                     size="sm"
@@ -29,16 +31,14 @@ export default function ProjectTimeline({
                 </Button>
             </div>
 
-            {/* Content */}
             {hasMilestones ? (
                 <div className="space-y-3">
-                    {/* Placeholder timeline — replace with actual milestone list */}
-                    <p className="text-gray-700">Milestones timeline coming soon…</p>
+                    <p className="text-slate-700">Milestones timeline coming soon…</p>
                 </div>
             ) : (
-                <div className="flex flex-col items-center justify-center text-center py-10 text-gray-500 border border-dashed border-gray-200 rounded-lg">
+                <div className="flex flex-col items-center justify-center text-center py-10 text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50/70">
                     <p className="text-sm">No milestones yet</p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                         Create a milestone to start tracking progress
                     </p>
                 </div>

@@ -64,12 +64,12 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
                 <span
                     key={sprint.id + '-status'}
                     className={`px-2 py-1 text-xs font-semibold rounded-full ${sprint.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-emerald-100 text-emerald-800'
                         : sprint.status === 'active'
                             ? 'bg-blue-100 text-blue-800'
                             : sprint.status === 'planned'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-gray-100 text-gray-800'
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-slate-100 text-slate-800'
                         }`}
                 >
                     {sprint.status}
@@ -104,7 +104,7 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
             rows.push({
                 key: sprint.id + '-kanban',
                 data: [
-                    <td key={sprint.id + '-kanban-td'} colSpan={headers.length} className="p-4 bg-gray-50 border-t">
+                    <td key={sprint.id + '-kanban-td'} colSpan={headers.length} className="p-4 bg-slate-50/70 border-t border-slate-100">
                         <KanbanSection sprintSlug={sprint.slug} onBack={() => setExpandedSprintId(null)} />
                     </td>
                 ]
@@ -122,9 +122,9 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
 
     if (filteredSprints.length === 0) {
         return (
-            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500 mb-4">No sprints found</p>
+            <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm p-8 text-center">
+                <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                <p className="text-slate-500 mb-4">No sprints found</p>
                 <Button onClick={onAddSprint} className='mx-auto'>
                     Create Your First Sprint
                 </Button>
@@ -133,7 +133,7 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+        <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
             <Table headers={headers} rows={rows} currentPage={page} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} totalItems={filteredSprints.length} />
         </div>
     );

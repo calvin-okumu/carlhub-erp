@@ -27,24 +27,21 @@ export function MetricCard({
     return (
         <div
             onClick={onClick}
-            className={`group flex items-center p-6 rounded-2xl bg-white border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 ${onClick ? "cursor-pointer" : ""
+            className={`group flex items-center justify-between gap-4 p-5 rounded-2xl bg-white/90 border border-slate-200/70 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${onClick ? "cursor-pointer" : ""
                 }`}
         >
-            {/* Icon Section */}
-            <div
-                className={`relative flex items-center justify-center p-3.5 mr-4 rounded-xl ${baseColor.bg} ${baseColor.text} ring-4 ${baseColor.ring}`}
-            >
-                <Icon className="h-7 w-7" />
-            </div>
-
-            {/* Content Section */}
-            <div className="flex items-center">
-                <span className="text-3xl font-semibold text-gray-900 leading-tight mr-2">
-                    {value}
-                </span>
-                <span className="text-sm text-gray-500 font-medium tracking-wide">
-                    {title}
-                </span>
+            <div className="flex items-center gap-4">
+                <div
+                    className={`relative flex items-center justify-center p-3 rounded-xl ${baseColor.bg} ${baseColor.text} ring-4 ${baseColor.ring}`}
+                >
+                    <Icon className="h-6 w-6" />
+                </div>
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{title}</p>
+                    <p className="mt-2 text-3xl font-semibold text-slate-900 leading-tight">
+                        {value}
+                    </p>
+                </div>
             </div>
         </div>
     );

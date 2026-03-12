@@ -15,13 +15,13 @@ interface KanbanHeaderProps {
 const StatusBadge = ({ status }: { status: string }) => {
     const styles: Record<string, string> = {
         active: 'bg-blue-100 text-blue-700 border-blue-200',
-        planned: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-        completed: 'bg-green-100 text-green-700 border-green-200',
+        planned: 'bg-amber-100 text-amber-700 border-amber-200',
+        completed: 'bg-emerald-100 text-emerald-700 border-emerald-200',
         canceled: 'bg-red-100 text-red-700 border-red-200'
     };
 
     return (
-        <span className={`px-3 py-1 rounded-md text-xs font-medium border ${styles[status] || styles.planned}`}>
+        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[status] || styles.planned}`}>
             {status.charAt(0).toUpperCase() + status.slice(1)}
         </span>
     );
@@ -29,12 +29,15 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 export default function KanbanHeader({ sprint, onBack, isModal = false, dueSoonOnly = false, onToggleDueSoon }: KanbanHeaderProps) {
     return (
-        <Card className="mb-6">
+        <Card className="!rounded-2xl !border-slate-200/70 !shadow-sm mb-6 p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center space-x-4">
-                    <h1 className="text-2xl font-bold text-gray-900">{sprint.name}</h1>
-                    <StatusBadge status={sprint.status} />
-                    <span className="text-sm text-gray-600">Progress: {sprint.progress}%</span>
+                <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <h1 className="text-2xl font-semibold text-slate-900">{sprint.name}</h1>
+                        <StatusBadge status={sprint.status} />
+                        <span className="text-sm text-slate-500">Progress: <span className="font-semibold text-slate-900">{sprint.progress}%</span></span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">Sprint focus board and delivery flow.</p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -52,7 +55,7 @@ export default function KanbanHeader({ sprint, onBack, isModal = false, dueSoonO
                         </button>
                     )}
                     {!isModal && (
-                        <Button onClick={onBack} variant="outline">
+                        <Button onClick={onBack} variant="outline" className="rounded-full">
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to Sprints
                         </Button>

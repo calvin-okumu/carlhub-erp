@@ -78,13 +78,15 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <SearchInput
-                    value={searchValue}
-                    onChange={setSearchValue}
-                    placeholder="Search milestones..."
-                />
-                <Button onClick={handleAddMilestone} >
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                <div className="min-w-[220px] flex-1">
+                    <SearchInput
+                        value={searchValue}
+                        onChange={setSearchValue}
+                        placeholder="Search milestones..."
+                    />
+                </div>
+                <Button onClick={handleAddMilestone}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Milestone
                 </Button>

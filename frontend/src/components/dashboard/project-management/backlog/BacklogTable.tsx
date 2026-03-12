@@ -164,9 +164,9 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
 
     if (filteredTasks.length === 0) {
         return (
-            <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-                <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-gray-500 mb-4">No tasks in backlog</p>
+            <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm p-8 text-center">
+                <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
+                <p className="text-slate-500 mb-4">No tasks in backlog</p>
                 <Button className='mx-auto' onClick={onAddTask}>
                     Create Your First Task
                 </Button>
@@ -175,7 +175,7 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
     }
 
     return (
-        <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+        <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
             <Table headers={headers} rows={rows} currentPage={page} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} totalItems={filteredTasks.length} />
         </div>
     );
