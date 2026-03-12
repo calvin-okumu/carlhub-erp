@@ -1,5 +1,5 @@
 export interface LoginResponse {
-  token: string;
+  access: string;
   user_id: number;
   email: string;
   first_name: string;
@@ -8,7 +8,7 @@ export interface LoginResponse {
 }
 
 export interface SignupResponse {
-  token: string;
+  access: string;
   user_id: number;
   email: string;
   first_name: string;

@@ -19,10 +19,10 @@ http://localhost:8000/api
 
 ## 🔐 Authentication
 
-All API requests require authentication using Token Authentication:
+All API requests require authentication using JWT access tokens:
 
 ```bash
-Authorization: Token <your-token>
+Authorization: Bearer <your-access-token>
 ```
 
 ### Getting a Token
@@ -36,10 +36,10 @@ Authorization: Token <your-token>
    }
    ```
 
-2. **Use token in subsequent requests:**
+2. **Use access token in subsequent requests:**
    ```bash
    GET /api/projects/
-   Headers: Authorization: Token abc123...
+   Headers: Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
    ```
 
 ## 📊 Response Format
@@ -74,27 +74,21 @@ Slugs are auto-generated from names but can be customized for better readability
 
 ### List Projects
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   http://localhost:8000/api/projects/
 ```
 
 ### Get Project Details
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   http://localhost:8000/api/projects/my-project-slug/
 ```
 
 ### Create a Project
 ```bash
 curl -X POST \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"name": "New Project", "client": "client-uuid"}' \
   http://localhost:8000/api/projects/
-```</content>
-</xai:function_call"> 
-
-Assistant: Now create the authentication.md file. I need to check how authentication works in the backend. From earlier, it's TokenAuthentication. Let me create the file. 
-
-<xai:function_call name="write">
-<parameter name="filePath">docs/api/authentication.md
+```

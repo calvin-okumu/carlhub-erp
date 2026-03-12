@@ -10,6 +10,7 @@ export async function login(
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({ email, password }),
   });
 
@@ -42,6 +43,7 @@ export async function signup(
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -120,7 +122,7 @@ export async function deleteInvitation(token: string, invitationSlug: string): P
   const response = await fetch(`${API_BASE}/invitations/${invitationSlug}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -135,7 +137,7 @@ export async function changePassword(token: string, currentPassword: string, new
   const response = await fetch(`${API_BASE}/change-password/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
@@ -148,4 +150,30 @@ export async function changePassword(token: string, currentPassword: string, new
   }
 
   return data;
+}
+
+export async function refreshAccessToken(): Promise<string | null> {
+  const response = await fetch(`${API_BASE}/token/refresh/`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  if (data?.access) {
+    localStorage.setItem("access_token", data.access);
+    return data.access as string;
+  }
+
+  return null;
+}
+
+export async function logout(): Promise<void> {
+  await fetch(`${API_BASE}/logout/`, {
+    method: "POST",
+    credentials: "include",
+  });
 }

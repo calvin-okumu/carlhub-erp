@@ -22,7 +22,16 @@ export type {
 } from "./types";
 
 // Export auth functions
-export { login, signup, confirmEmail, getInvitationDetails, resendInvitation, deleteInvitation } from "./auth";
+export {
+  login,
+  signup,
+  confirmEmail,
+  getInvitationDetails,
+  resendInvitation,
+  deleteInvitation,
+  refreshAccessToken,
+  logout,
+} from "./auth";
 
 // Export CRM functions
 export {

@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
@@ -14,10 +15,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from drf_spectacular.types import OpenApiTypes
 from rest_framework import permissions, status, viewsets
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
+from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 
 from accounts.models import CustomUser, Invitation, Tenant, UserTenant
 from accounts.audit import AuditLogger, get_client_ip
@@ -96,6 +100,56 @@ class TenantViewSet(viewsets.ModelViewSet):
                 tenant = tenant
 
         serializer.save(tenant=tenant)
+
+
+def _build_auth_response(user, request):
+    refresh = RefreshToken.for_user(user)
+    access_token = str(refresh.access_token)
+    response = Response({
+        "access": access_token,
+        "user_id": user.id,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "message": "Authentication successful",
+    })
+    response.set_cookie(
+        "refresh_token",
+        str(refresh),
+        httponly=True,
+        secure=not settings.DEBUG,
+        samesite="Lax",
+        path="/api/",
+    )
+    return response
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    serializer_class = TokenRefreshSerializer
+
+    def post(self, request, *args, **kwargs):
+        data = request.data.copy()
+        if "refresh" not in data:
+            refresh_cookie = request.COOKIES.get("refresh_token")
+            if refresh_cookie:
+                data["refresh"] = refresh_cookie
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        validated = dict(serializer.validated_data)
+        refresh_value = validated.pop("refresh", None)
+
+        response = Response(validated, status=status.HTTP_200_OK)
+        if refresh_value:
+            response.set_cookie(
+                "refresh_token",
+                refresh_value,
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite="Lax",
+                path="/api/",
+            )
+        return response
 
 
 @extend_schema_view(
@@ -1274,7 +1328,7 @@ def login_page(request):
 
 @extend_schema(
     summary="User login",
-    description="Authenticate user with email and password, return token and user info.",
+    description="Authenticate user with email and password, return access token and user info.",
     request={
         'application/json': {
             'type': 'object',
@@ -1290,7 +1344,7 @@ def login_page(request):
             'description': 'Login successful',
             'type': 'object',
             'properties': {
-                'token': {'type': 'string'},
+                'access': {'type': 'string'},
                 'user_id': {'type': 'integer'},
                 'email': {'type': 'string'},
                 'first_name': {'type': 'string'},
@@ -1320,8 +1374,6 @@ def login_view(request):
 
         user = authenticate(username=email, password=password)
         if user and user.is_active:
-            token, created = Token.objects.get_or_create(user=user)
-
             # Log successful login (with error handling)
             try:
                 tenant = None
@@ -1342,14 +1394,9 @@ def login_view(request):
                 logger.error(f"Failed to log login audit event: {e}")
                 # Continue with login even if audit logging fails
 
-            return Response({
-                'token': token.key,
-                'user_id': user.id,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'message': 'Login successful'
-            })
+            response = _build_auth_response(user, request)
+            response.data["message"] = "Login successful"
+            return response
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
     except Exception as e:
         logger.error(f"Login view error: {e}")
@@ -1383,7 +1430,7 @@ def login_view(request):
             'description': 'Signup successful',
             'type': 'object',
             'properties': {
-                'token': {'type': 'string'},
+                'access': {'type': 'string'},
                 'user_id': {'type': 'integer'},
                 'email': {'type': 'string'},
                 'first_name': {'type': 'string'},
@@ -1495,8 +1542,6 @@ def signup_view(request):
                 group, created = Group.objects.get_or_create(name=group_name)
                 user.groups.add(group)
 
-        token, _ = Token.objects.get_or_create(user=user)
-
         # Log successful signup (with error handling)
         try:
             AuditLogger.log_user_signup(
@@ -1509,18 +1554,42 @@ def signup_view(request):
             logger.error(f"Failed to log signup audit event: {e}")
             # Continue with signup even if audit logging fails
 
-        return Response({
-            'token': token.key,
-            'user_id': user.id,
-            'email': user.email,
-            'first_name': user.first_name,
-            'last_name': user.last_name,
-            'tenant': tenant.name,
-            'message': 'Signup successful'
-        }, status=status.HTTP_201_CREATED)
+        response = _build_auth_response(user, request)
+        response.data["tenant"] = tenant.name
+        response.data["message"] = "Signup successful"
+        response.status_code = status.HTTP_201_CREATED
+        return response
     except Exception as e:
         logger.error(f"Signup view error: {e}")
         return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+@authentication_classes([SessionAuthentication])
+def oauth_token_view(request):
+    if not request.user.is_authenticated:
+        return Response({"error": "Authentication required"}, status=status.HTTP_401_UNAUTHORIZED)
+
+    response = _build_auth_response(request.user, request)
+    response.data["message"] = "OAuth authentication successful"
+    return response
+
+
+@api_view(["POST"])
+@permission_classes([permissions.AllowAny])
+def logout_view(request):
+    refresh_cookie = request.COOKIES.get("refresh_token")
+    if refresh_cookie:
+        try:
+            token = RefreshToken(refresh_cookie)
+            token.blacklist()
+        except Exception:
+            pass
+
+    response = Response({"message": "Logged out"}, status=status.HTTP_200_OK)
+    response.delete_cookie("refresh_token", path="/api/")
+    return response
 
 
 @extend_schema(

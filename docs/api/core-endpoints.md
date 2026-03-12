@@ -7,7 +7,7 @@ This document describes the main REST API endpoints for DjangoCRM, including aut
 ### Login
 **POST** `/api/login/`
 
-Authenticate a user and receive an API token.
+Authenticate a user and receive an access token.
 
 **Request:**
 ```json
@@ -20,7 +20,7 @@ Authenticate a user and receive an API token.
 **Response:**
 ```json
 {
-  "token": "abc123def456...",
+  "access": "eyJhbGciOiJIUzI1NiIs...",
   "user_id": "uuid",
   "email": "user@example.com",
   "first_name": "John",
@@ -51,7 +51,7 @@ Register a new user account. Supports both invitation-based and direct signup.
 **Response:**
 ```json
 {
-  "token": "user-token",
+  "access": "eyJhbGciOiJIUzI1NiIs...",
   "user_id": "uuid",
   "email": "user@example.com",
   "first_name": "John",
@@ -62,6 +62,11 @@ Register a new user account. Supports both invitation-based and direct signup.
 ```
 
 **Error Handling:** Robust validation and error handling for all signup scenarios.
+
+### Token Refresh
+**POST** `/api/token/refresh/`
+
+Refresh access tokens using the HttpOnly refresh cookie. Response includes a new `access` token.
 
 ### Approve Member
 **POST** `/api/approve-member/`
@@ -834,7 +839,7 @@ Returns Excel file (.xlsx) with the requested data.
 
 **Example:**
 ```bash
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   "http://localhost:8000/api/excel-export/?model=clients" \
   -o clients.xlsx
 ```
@@ -872,7 +877,7 @@ Import data from Excel file. Supports clients and projects.
 **Example:**
 ```bash
 curl -X POST http://localhost:8000/api/excel-import/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -F "file=@clients.xlsx"
 ```
 

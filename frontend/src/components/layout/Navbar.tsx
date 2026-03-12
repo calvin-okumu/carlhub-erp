@@ -11,6 +11,7 @@ import {
     Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { logout } from "@/api";
 import { useEffect, useRef, useState } from "react";
 
 export default function Header() {
@@ -160,9 +161,9 @@ export default function Header() {
                                         </button>
                                         <div className="my-2 border-t border-slate-100" />
                                         <button
-                                            onClick={() => {
+                                            onClick={async () => {
+                                                await logout();
                                                 localStorage.removeItem("access_token");
-                                                localStorage.removeItem("refresh_token");
                                                 localStorage.removeItem("user");
                                                 setIsProfileMenuOpen(false);
                                                 router.push("/login");

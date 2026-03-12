@@ -1,5 +1,6 @@
 import { User, UserTenant, UserProfile } from './types';
 import { API_BASE } from './index';
+import { authFetch } from './client';
 
 // Type for API response that might contain nested arrays
 interface ApiResponse {
@@ -13,10 +14,10 @@ interface ApiResponse {
 
 export async function getUsers(token: string): Promise<User[]> {
   const url = `${API_BASE}/members/`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -89,10 +90,10 @@ export async function getCurrentUser(token: string): Promise<User> {
 
 export async function getUserProfile(token: string, id: number): Promise<UserProfile> {
   const url = `${API_BASE}/accounts/profile/`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -145,10 +146,10 @@ export async function getUserProfile(token: string, id: number): Promise<UserPro
 
 export async function updateUserProfile(token: string, id: number, profileData: Partial<UserProfile>): Promise<UserProfile> {
   const url = `${API_BASE}/accounts/profile/`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "PATCH",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(profileData),
@@ -196,10 +197,10 @@ export async function createUser(token: string, userData: {
   // First, create the user account (assuming there's a user creation endpoint)
   // If not, this might need to be done through signup or another endpoint
   const createUserUrl = `${API_BASE}/users/`;
-   const userResponse = await fetch(createUserUrl, {
+   const userResponse = await authFetch(createUserUrl, {
      method: "POST",
      headers: {
-       Authorization: `Token ${token}`,
+       Authorization: `Bearer ${token}`,
        "Content-Type": "application/json",
      },
      body: JSON.stringify({
@@ -317,10 +318,10 @@ export async function updateUser(token: string, id: number, userData: Partial<{
 
   if (Object.keys(userUpdateData).length > 0) {
     const userUrl = `${API_BASE}/users/${id}/`;
-    const userResponse = await fetch(userUrl, {
+    const userResponse = await authFetch(userUrl, {
       method: "PATCH",
       headers: {
-        Authorization: `Token ${token}`,
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(userUpdateData),
@@ -371,10 +372,10 @@ export async function updateUser(token: string, id: number, userData: Partial<{
 
 export async function deleteUser(token: string, id: number): Promise<void> {
   const url = `${API_BASE}/users/${id}/`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 

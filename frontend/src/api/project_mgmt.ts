@@ -1,5 +1,6 @@
 import { Project, Milestone, Sprint, Task, PaginatedResponse } from './types';
 import { API_BASE } from './index';
+import { authFetch } from './client';
 
 function getProjectErrorMessage(data: unknown, fallback: string) {
   if (data && typeof data === "object") {
@@ -43,10 +44,10 @@ export async function getProjects(token: string, params?: { tenant?: string; sea
   if (params?.limit) query.append('limit', params.limit.toString());
 
   const url = `${API_BASE}/projects/?${query.toString()}`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -65,10 +66,10 @@ export async function getProject(token: string, slug: string, tenant?: string): 
   const query = new URLSearchParams();
   if (tenant) query.append('tenant', tenant.toString());
   const url = `${API_BASE}/projects/${slug}/${query.toString() ? `?${query.toString()}` : ''}`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -94,10 +95,10 @@ export async function createProject(token: string, projectData: {
   team_members?: number[];
   access_groups?: number[];
 }): Promise<Project> {
-  const response = await fetch(`${API_BASE}/projects/`, {
+  const response = await authFetch(`${API_BASE}/projects/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(projectData),
@@ -132,10 +133,10 @@ export async function updateProject(token: string, slug: string, projectData: Pa
   team_members?: number[];
   access_groups?: number[];
 }>): Promise<Project> {
-  const response = await fetch(`${API_BASE}/projects/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/projects/${slug}/`, {
     method: "PUT",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(projectData),
@@ -156,10 +157,10 @@ export async function updateProject(token: string, slug: string, projectData: Pa
 }
 
 export async function deleteProject(token: string, slug: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/projects/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/projects/${slug}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -186,10 +187,10 @@ export async function getMilestones(token: string, params?: { projectId?: string
   if (params?.limit) query.append('limit', params.limit.toString());
   if (query.toString()) url += `?${query.toString()}`;
 
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -205,10 +206,10 @@ export async function getMilestones(token: string, params?: { projectId?: string
 }
 
 export async function getMilestone(token: string, id: string): Promise<Milestone> {
-  const response = await fetch(`${API_BASE}/milestones/${id}/`, {  // Keep global for individual milestone access
+  const response = await authFetch(`${API_BASE}/milestones/${id}/`, {  // Keep global for individual milestone access
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -232,10 +233,10 @@ export async function createMilestone(token: string, milestoneData: {
   assignee?: number;
   project: string;
 }): Promise<Milestone> {
-  const response = await fetch(`${API_BASE}/milestones/`, {
+  const response = await authFetch(`${API_BASE}/milestones/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -266,10 +267,10 @@ type MilestoneUpdateData = Partial<{
 }>;
 
 export async function updateMilestone(token: string, slug: string, milestoneData: MilestoneUpdateData): Promise<Milestone> {
-  const response = await fetch(`${API_BASE}/milestones/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/milestones/${slug}/`, {
     method: "PUT",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -288,10 +289,10 @@ export async function updateMilestone(token: string, slug: string, milestoneData
 }
 
 export async function deleteMilestone(token: string, slug: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/milestones/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/milestones/${slug}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -317,10 +318,10 @@ export async function getSprints(token: string, params?: { projectId?: string; p
   if (params?.limit) query.append('limit', params.limit.toString());
   if (query.toString()) url += `?${query.toString()}`;
 
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -336,10 +337,10 @@ export async function getSprints(token: string, params?: { projectId?: string; p
 }
 
 export async function getSprint(token: string, id: string): Promise<Sprint> {
-  const response = await fetch(`${API_BASE}/sprints/${id}/`, {
+  const response = await authFetch(`${API_BASE}/sprints/${id}/`, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -360,10 +361,10 @@ export async function createSprint(token: string, sprintData: {
   end_date?: string;
   milestone: string;
 }): Promise<Sprint> {
-  const response = await fetch(`${API_BASE}/sprints/`, {
+  const response = await authFetch(`${API_BASE}/sprints/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(sprintData),
@@ -385,10 +386,10 @@ export async function updateSprint(token: string, slug: string, sprintData: Part
   end_date: string;
   milestone: string;
 }>): Promise<Sprint> {
-  const response = await fetch(`${API_BASE}/sprints/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/sprints/${slug}/`, {
     method: "PUT",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(sprintData),
@@ -404,10 +405,10 @@ export async function updateSprint(token: string, slug: string, sprintData: Part
 }
 
 export async function deleteSprint(token: string, slug: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/sprints/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/sprints/${slug}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 
@@ -429,10 +430,10 @@ export async function createTaskInSprint(token: string, projectId: string, sprin
   estimated_hours?: number;
 }): Promise<Task> {
   const taskDataWithSprint = { ...taskData, sprint: sprintSlug };
-  const response = await fetch(`${API_BASE}/tasks/`, {
+  const response = await authFetch(`${API_BASE}/tasks/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(taskDataWithSprint),
@@ -456,10 +457,10 @@ export async function assignTaskToSprint(token: string, sprintSlug: string, task
   if (!payload.task_slug && !payload.task_id) {
     throw new Error('task_slug or task_id is required');
   }
-  const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/assign_task/`, {
+  const response = await authFetch(`${API_BASE}/sprints/${sprintSlug}/assign_task/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -483,10 +484,10 @@ export async function unassignTaskFromSprint(token: string, sprintSlug: string, 
   if (!payload.task_slug && !payload.task_id) {
     throw new Error('task_slug or task_id is required');
   }
-  const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/unassign_task/`, {
+  const response = await authFetch(`${API_BASE}/sprints/${sprintSlug}/unassign_task/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(payload),
@@ -524,10 +525,10 @@ export async function getTasks(token: string, params?: { milestoneSlug?: string;
     url += `?${query.toString()}`;
   }
 
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -548,10 +549,10 @@ export async function getTasks(token: string, params?: { milestoneSlug?: string;
 }
 
 export async function getTask(token: string, slug: string): Promise<Task> {
-  const response = await fetch(`${API_BASE}/tasks/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/tasks/${slug}/`, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
   });
@@ -576,10 +577,10 @@ export async function createTask(token: string, projectId: string, taskData: {
   end_date?: string;
   estimated_hours?: number;
 }): Promise<Task> {
-  const response = await fetch(`${API_BASE}/tasks/`, {
+  const response = await authFetch(`${API_BASE}/tasks/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(taskData),
@@ -606,10 +607,10 @@ export async function updateTask(token: string, slug: string, taskData: Partial<
   end_date: string;
   estimated_hours: number;
 }>): Promise<Task> {
-  const response = await fetch(`${API_BASE}/tasks/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/tasks/${slug}/`, {
     method: "PATCH",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(taskData),
@@ -625,10 +626,10 @@ export async function updateTask(token: string, slug: string, taskData: Partial<
 }
 
 export async function deleteTask(token: string, slug: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/tasks/${slug}/`, {
+  const response = await authFetch(`${API_BASE}/tasks/${slug}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   });
 

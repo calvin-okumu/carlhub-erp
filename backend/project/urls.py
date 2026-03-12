@@ -1,5 +1,6 @@
 from django.urls import include, path
 from rest_framework import routers
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView
 
 from . import views
 
@@ -41,6 +42,11 @@ urlpatterns = [
     path('', include(router.urls)),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/refresh/', views.CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('oauth/token/', views.oauth_token_view, name='oauth_token'),
+    path('logout/', views.logout_view, name='logout'),
     path('change-password/', views.change_password_view, name='change_password'),
     path('approve-member/', views.approve_member_view, name='approve_member'),
     path('invite-member/', views.invite_member_view, name='invite_member'),

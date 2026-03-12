@@ -1,12 +1,12 @@
 # Authentication
 
-DjangoCRM uses Token-based authentication for API access. All API requests require a valid authentication token.
+DjangoCRM uses JWT-based authentication for API access. All API requests require a valid access token.
 
 ## 🔐 Authentication Methods
 
-### Token Authentication
+### JWT Authentication
 
-DjangoCRM uses Django REST Framework's Token Authentication system.
+DjangoCRM uses JSON Web Tokens (JWT) with short-lived access tokens and refresh tokens.
 
 #### Getting a Token
 
@@ -23,19 +23,16 @@ DjangoCRM uses Django REST Framework's Token Authentication system.
 **Response:**
 ```json
 {
-  "token": "abc123def456...",
-  "user": {
-    "id": "uuid",
-    "email": "user@example.com",
-    "first_name": "John",
-    "last_name": "Doe"
-  },
-  "tenant": {
-    "id": "uuid",
-    "name": "Company Name"
-  }
+  "access": "eyJhbGciOiJIUzI1NiIs...",
+  "user_id": 123,
+  "email": "user@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "message": "Login successful"
 }
 ```
+
+> Refresh tokens are stored in an HttpOnly cookie and are not returned in the response body.
 
 **Example:**
 ```bash
@@ -47,15 +44,23 @@ curl -X POST \
 
 #### Using the Token
 
-Include the token in the `Authorization` header for all subsequent requests:
+Include the access token in the `Authorization` header for all subsequent requests:
 
 ```
-Authorization: Token abc123def456...
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
 ```
+
+#### Refreshing Access Tokens
+
+Access tokens expire quickly. Use the refresh endpoint to obtain a new access token.
+
+**Endpoint:** `POST /api/token/refresh/`
+
+Refresh tokens are stored in an HttpOnly cookie. The response includes a new `access` token.
 
 **Example:**
 ```bash
-curl -H "Authorization: Token abc123def456..." \
+curl -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..." \
   http://localhost:8000/api/projects/
 ```
 
@@ -87,7 +92,7 @@ Tenant owners can invite new team members via email:
 ```bash
 curl -X POST \
   http://localhost:8000/api/invite-member/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"email": "john@example.com", "role": "Employee"}'
 ```
@@ -163,7 +168,7 @@ Tenant owners must approve new members before they can access the system:
 ```bash
 curl -X POST \
   http://localhost:8000/api/approve-member/ \
-  -H "Authorization: Token YOUR_TOKEN" \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"user_id": 123}'
 ```
@@ -188,17 +193,13 @@ After email confirmation, users can create their account:
 **Response:**
 ```json
 {
-  "token": "user-auth-token",
-  "user": {
-    "id": 123,
-    "email": "user@example.com",
-    "first_name": "John",
-    "last_name": "Doe"
-  },
-  "tenant": {
-    "id": 456,
-    "name": "Company Name"
-  }
+  "access": "eyJhbGciOiJIUzI1NiIs...",
+  "user_id": 123,
+  "email": "user@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "tenant": "Company Name",
+  "message": "Signup successful"
 }
 ```
 
@@ -248,7 +249,7 @@ To logout and invalidate a token:
 
 **Endpoint:** `POST /api/logout/`
 
-**Headers:** `Authorization: Token <token>`
+**Headers:** `Authorization: Bearer <access>`
 
 **Response:** `204 No Content`
 
@@ -294,11 +295,11 @@ Some deployments may include token refresh functionality. Check with your specif
 
 ```bash
 # Test token validity
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   http://localhost:8000/api/health/
 
 # Check user permissions
-curl -H "Authorization: Token YOUR_TOKEN" \
+curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
   http://localhost:8000/api/users/me/
 ```
 

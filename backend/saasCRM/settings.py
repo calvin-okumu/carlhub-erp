@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -121,7 +122,8 @@ INSTALLED_APPS = [
     "leave_management",
     "rest_framework",
     "django_filters",
-    "rest_framework.authtoken",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
@@ -368,8 +370,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -387,6 +388,14 @@ REST_FRAMEWORK = {
         "anon": "100/hour",
         "user": "1000/hour",
     },
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
 }
 
 use_redis = os.getenv('USE_REDIS_CACHE', 'false').lower() == 'true'
@@ -430,9 +439,9 @@ SPECTACULAR_SETTINGS = {
     - **Users & Teams**: User management and role-based access control
 
     ## Authentication
-    - Use `Authorization: Token <token>` header for API requests
+    - Use `Authorization: Bearer <access>` header for API requests
     - Obtain tokens via `/api/login/` or `/api/signup/` endpoints
-    - Session authentication is also supported for web users
+    - Refresh tokens via `/api/token/refresh/`
 
     ## Multi-tenancy
     In production with multi-tenancy enabled, all data is automatically scoped to the current tenant based on the request context.

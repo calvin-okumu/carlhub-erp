@@ -1,4 +1,5 @@
 import { API_BASE } from "./index";
+import { authFetch } from "./client";
 import type { CreateTicketData, PaginatedResponse, Ticket, TicketAttachment, UpdateTicketData } from "./types";
 
 export async function getTickets(
@@ -27,13 +28,12 @@ export async function getTickets(
   if (params?.limit) query.append("limit", params.limit.toString());
 
   const url = `${API_BASE}/tickets/?${query.toString()}`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -49,13 +49,12 @@ export async function getTickets(
 }
 
 export async function getTicket(token: string, ticketId: string): Promise<Ticket> {
-  const response = await fetch(`${API_BASE}/tickets/${ticketId}/`, {
+  const response = await authFetch(`${API_BASE}/tickets/${ticketId}/`, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -67,14 +66,13 @@ export async function getTicket(token: string, ticketId: string): Promise<Ticket
 }
 
 export async function createTicket(token: string, ticketData: CreateTicketData): Promise<Ticket> {
-  const response = await fetch(`${API_BASE}/tickets/`, {
+  const response = await authFetch(`${API_BASE}/tickets/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(ticketData),
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -90,14 +88,13 @@ export async function updateTicket(
   ticketId: string,
   ticketData: UpdateTicketData
 ): Promise<Ticket> {
-  const response = await fetch(`${API_BASE}/tickets/${ticketId}/`, {
+  const response = await authFetch(`${API_BASE}/tickets/${ticketId}/`, {
     method: "PATCH",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(ticketData),
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -109,13 +106,12 @@ export async function updateTicket(
 }
 
 export async function deleteTicket(token: string, ticketId: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/tickets/${ticketId}/`, {
+  const response = await authFetch(`${API_BASE}/tickets/${ticketId}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, { token });
 
   if (!response.ok) {
     const data = await response.json();
@@ -124,12 +120,11 @@ export async function deleteTicket(token: string, ticketId: string): Promise<voi
 }
 
 export async function getTicketAttachments(token: string, ticketId: string): Promise<TicketAttachment[]> {
-  const response = await fetch(`${API_BASE}/tickets/${ticketId}/attachments/`, {
+  const response = await authFetch(`${API_BASE}/tickets/${ticketId}/attachments/`, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
     },
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -148,13 +143,12 @@ export async function uploadTicketAttachment(
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${API_BASE}/tickets/${ticketId}/attachments/`, {
+  const response = await authFetch(`${API_BASE}/tickets/${ticketId}/attachments/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
     },
     body: formData,
-  });
+  }, { token });
 
   const data = await response.json();
 

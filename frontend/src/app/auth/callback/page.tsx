@@ -10,17 +10,19 @@ export default function AuthCallbackPage() {
     useEffect(() => {
         const fetchToken = async () => {
             try {
-                const response = await fetch(`${API_BASE}/get-token/`, {
+                const response = await fetch(`${API_BASE}/oauth/token/`, {
                     method: "GET",
                     credentials: "include",
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    localStorage.setItem("access_token", data.token);
+                    localStorage.setItem("access_token", data.access);
                     localStorage.setItem("user", JSON.stringify({
                         id: data.user_id,
-                        username: data.username,
+                        email: data.email,
+                        first_name: data.first_name,
+                        last_name: data.last_name,
                     }));
                     router.push("/dashboard");
                 } else {

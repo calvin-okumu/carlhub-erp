@@ -4,7 +4,7 @@
 The ticketing API supports inbound ticket creation from client systems and internal ticket management by agents/admins.
 
 ## Authentication
-- Internal access: `Authorization: Token <token>`
+- Internal access: `Authorization: Bearer <access>`
 - Inbound client access: `X-Client-Token: <api_key>`
 
 ## Endpoints

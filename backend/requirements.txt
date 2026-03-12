@@ -10,6 +10,7 @@ django-cors-headers==4.3.1
 django-filter==24.2
 django-oauth2-provider==0.2.6.1
 djangorestframework==3.15.1
+djangorestframework-simplejwt==5.3.1
 djangorestframework-oauth==1.1.0
 drf-spectacular==0.27.2
 drf-spectacular-sidecar==2025.10.1

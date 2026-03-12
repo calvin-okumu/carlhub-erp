@@ -1,6 +1,7 @@
 import { Client, CreateClientData, UpdateClientData, UserTenant } from './types';
 import { API_BASE } from './index';
 import { PaginatedResponse } from './types';
+import { authFetch } from './client';
 
 export async function getClients(token: string, params?: { tenant?: string; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[] | PaginatedResponse<Client>> {
   const query = new URLSearchParams();
@@ -12,13 +13,12 @@ export async function getClients(token: string, params?: { tenant?: string; sear
   if (params?.limit) query.append('limit', params.limit.toString());
 
   const url = `${API_BASE}/clients/?${query.toString()}`;
-  const response = await fetch(url, {
+  const response = await authFetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -36,14 +36,13 @@ export async function getClients(token: string, params?: { tenant?: string; sear
 }
 
 export async function createClient(token: string, clientData: CreateClientData): Promise<Client> {
-  const response = await fetch(`${API_BASE}/clients/`, {
+  const response = await authFetch(`${API_BASE}/clients/`, {
     method: "POST",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(clientData),
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -55,14 +54,13 @@ export async function createClient(token: string, clientData: CreateClientData):
 }
 
 export async function updateClient(token: string, clientSlug: string, clientData: UpdateClientData): Promise<Client> {
-  const response = await fetch(`${API_BASE}/clients/${clientSlug}/`, {
+  const response = await authFetch(`${API_BASE}/clients/${clientSlug}/`, {
     method: "PUT",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(clientData),
-  });
+  }, { token });
 
   const data = await response.json();
 
@@ -74,13 +72,12 @@ export async function updateClient(token: string, clientSlug: string, clientData
 }
 
 export async function deleteClient(token: string, clientSlug: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/clients/${clientSlug}/`, {
+  const response = await authFetch(`${API_BASE}/clients/${clientSlug}/`, {
     method: "DELETE",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, { token });
 
   if (!response.ok) {
     const data = await response.json();
@@ -89,13 +86,12 @@ export async function deleteClient(token: string, clientSlug: string): Promise<v
 }
 
 export async function getUserTenants(token: string): Promise<UserTenant[]> {
-  const response = await fetch(`${API_BASE}/members/`, {
+  const response = await authFetch(`${API_BASE}/members/`, {
     method: "GET",
     headers: {
-      Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-  });
+  }, { token });
 
   const data = await response.json();
 
