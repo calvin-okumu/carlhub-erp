@@ -16,9 +16,10 @@ interface BacklogTableProps {
     onAddTask: () => void;
     searchValue: string;
     dueSoonOnly?: boolean;
+    onClearFilters?: () => void;
 }
 
-const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, onEditTask, onDeleteTask, onAddTask, searchValue, dueSoonOnly = false }: BacklogTableProps) {
+const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, onEditTask, onDeleteTask, onAddTask, searchValue, dueSoonOnly = false, onClearFilters }: BacklogTableProps) {
     const [page, setPage] = useState(1);
 
     const isDueSoon = useCallback((date?: string) => {
@@ -62,7 +63,7 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
         }
     }, [onDeleteTask]);
 
-    const headers = ["Title", "Description", "Status", "Priority", "Progress", "Milestone", "Assignee", "Actions"];
+    const headers = ["Task", "Status", "Priority", "Progress", "Milestone", "Assignee", "Actions"];
 
     const formatDueDate = (date?: string) => {
         if (!date) return null;
@@ -73,84 +74,117 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
 
     const statusBandStyles: Record<string, string> = {
         done: 'bg-emerald-500',
-        in_progress: 'bg-pink-500',
-        in_review: 'bg-blue-500',
-        testing: 'bg-green-500',
-        to_do: 'bg-gray-400'
+        in_progress: 'bg-blue-500',
+        in_review: 'bg-amber-500',
+        testing: 'bg-sky-500',
+        to_do: 'bg-slate-400'
     };
+
+    const statusBadgeStyles: Record<string, string> = {
+        done: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        in_progress: 'bg-blue-100 text-blue-700 border-blue-200',
+        in_review: 'bg-amber-100 text-amber-700 border-amber-200',
+        testing: 'bg-sky-100 text-sky-700 border-sky-200',
+        to_do: 'bg-slate-100 text-slate-700 border-slate-200'
+    };
+
+    const priorityBadgeStyles: Record<string, string> = {
+        high: 'bg-rose-100 text-rose-700 border-rose-200',
+        medium: 'bg-amber-100 text-amber-700 border-amber-200',
+        low: 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    };
+
+    const statusLabel = (status: string) => status.replace(/_/g, ' ');
+    const priorityLabel = (priority: string) => priority.replace(/_/g, ' ');
 
     const rows = visibleTasks.map(task => {
         const dueDate = formatDueDate(task.end_date);
+        const dueSoon = isDueSoon(task.end_date);
 
         return {
-        key: task.id,
-        data: [
-            <div key={task.id + '-title'} className="flex items-center gap-3">
-                <span className={`h-10 w-1 rounded-full ${statusBandStyles[task.status] || 'bg-gray-400'}`} />
-                <div className="flex flex-col">
-                    <span className="font-medium text-gray-900">{task.title}</span>
-                    {dueDate && (
-                        <span className="mt-1 inline-flex w-fit items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-600">
-                            Due {dueDate}
-                        </span>
-                    )}
-                </div>
-            </div>,
-            task.description || "-",
-            <span
-                key={task.id + '-status'}
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${task.status === 'done'
-                        ? 'bg-green-100 text-green-800'
-                        : task.status === 'in_progress'
-                            ? 'bg-blue-100 text-blue-800'
-                            : task.status === 'in_review'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : task.status === 'testing'
-                                    ? 'bg-purple-100 text-purple-800'
-                                    : 'bg-gray-100 text-gray-800'
-                    }`}
-            >
-                {task.status.replace('_', ' ')}
-            </span>,
-            <span
-                key={task.id + '-priority'}
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${task.priority === 'high'
-                        ? 'bg-red-100 text-red-800'
-                        : task.priority === 'medium'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-green-100 text-green-800'
-                    }`}
-            >
-                {task.priority}
-            </span>,
-            <div key={task.id + '-progress'} className="flex items-center gap-2">
-                <span className="text-sm font-medium">{task.progress}%</span>
-                <div className="w-12 h-1 bg-gray-200 rounded">
-                    <div
-                        className={`h-1 rounded transition-all duration-300 ${task.progress === 100 ? 'bg-green-500' : 'bg-blue-500'
-                            }`}
-                        style={{ width: `${task.progress}%` }}
-                    />
-                </div>
-            </div>,
-            task.milestone_name || "-",
-            task.assignee ? (
-                <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-600">
-                        <User className="h-3.5 w-3.5" />
+            key: task.id,
+            data: [
+                <td key={task.id + '-task'} className="px-4 py-4 align-top">
+                    <div className="flex items-start gap-3">
+                        <span className={`mt-1 h-10 w-1.5 rounded-full ${statusBandStyles[task.status] || 'bg-slate-400'}`} />
+                        <div className="min-w-[220px]">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-semibold text-slate-900">{task.title}</span>
+                                {dueDate && (
+                                    <span
+                                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                                            dueSoon
+                                                ? 'border-amber-200 bg-amber-100 text-amber-700'
+                                                : 'border-slate-200 bg-slate-100 text-slate-600'
+                                        }`}
+                                    >
+                                        Due {dueDate}
+                                    </span>
+                                )}
+                            </div>
+                            <p className="mt-1 max-w-[320px] text-xs leading-relaxed text-slate-500">
+                                {task.description || 'No description yet.'}
+                            </p>
+                        </div>
+                    </div>
+                </td>,
+                <td key={task.id + '-status'} className="px-4 py-4 align-top">
+                    <span
+                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+                            statusBadgeStyles[task.status] || statusBadgeStyles.to_do
+                        }`}
+                    >
+                        {statusLabel(task.status)}
                     </span>
-                    <span className="text-xs text-slate-600">Assigned</span>
-                </div>
-            ) : "-",
-            <div key={task.id + '-actions'} className="flex gap-2">
-                <Button onClick={() => handleEdit(task)} variant="outline" size="sm">
-                    <Edit className="h-4 w-4" />
-                </Button>
-                <Button onClick={() => handleDelete(task.slug)} variant="danger" size="sm">
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            </div>
-        ]
+                </td>,
+                <td key={task.id + '-priority'} className="px-4 py-4 align-top">
+                    <span
+                        className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+                            priorityBadgeStyles[task.priority] || priorityBadgeStyles.medium
+                        }`}
+                    >
+                        {priorityLabel(task.priority)}
+                    </span>
+                </td>,
+                <td key={task.id + '-progress'} className="px-4 py-4 align-top">
+                    <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-slate-900">{task.progress}%</span>
+                        <div className="h-2 w-24 rounded-full bg-slate-100">
+                            <div
+                                className={`h-2 rounded-full transition-all duration-300 ${
+                                    task.progress === 100 ? 'bg-emerald-500' : 'bg-blue-500'
+                                }`}
+                                style={{ width: `${task.progress}%` }}
+                            />
+                        </div>
+                    </div>
+                </td>,
+                <td key={task.id + '-milestone'} className="px-4 py-4 align-top text-sm text-slate-600">
+                    {task.milestone_name || 'Unassigned'}
+                </td>,
+                <td key={task.id + '-assignee'} className="px-4 py-4 align-top">
+                    {task.assignee ? (
+                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500">
+                                <User className="h-3.5 w-3.5" />
+                            </span>
+                            Assigned
+                        </div>
+                    ) : (
+                        <span className="text-xs text-slate-400">Unassigned</span>
+                    )}
+                </td>,
+                <td key={task.id + '-actions'} className="px-4 py-4 align-top">
+                    <div className="flex gap-2">
+                        <Button onClick={() => handleEdit(task)} variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button onClick={() => handleDelete(task.slug)} variant="danger" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </td>
+            ]
         };
     });
 
@@ -159,17 +193,37 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
     }
 
     if (error) {
-        return <div className="text-red-500">{error}</div>;
+        return (
+            <div className="rounded-2xl border border-red-100 bg-red-50/80 p-6 text-sm text-red-600">
+                {error}
+            </div>
+        );
     }
 
     if (filteredTasks.length === 0) {
+        const hasFilters = searchValue.trim().length > 0 || dueSoonOnly;
+
         return (
             <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm p-8 text-center">
-                <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-slate-500 mb-4">No tasks in backlog</p>
-                <Button className='mx-auto' onClick={onAddTask}>
-                    Create Your First Task
-                </Button>
+                <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-3" />
+                <p className="text-slate-900 text-base font-semibold">
+                    {hasFilters ? 'No tasks match your filters' : 'No backlog tasks yet'}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                    {hasFilters
+                        ? 'Try adjusting your search or filters to find tasks faster.'
+                        : 'Start by creating a task and keep the backlog ready for planning.'}
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                    {hasFilters && onClearFilters && (
+                        <Button variant="outline" onClick={onClearFilters}>
+                            Clear filters
+                        </Button>
+                    )}
+                    <Button onClick={onAddTask}>
+                        Create Task
+                    </Button>
+                </div>
             </div>
         );
     }

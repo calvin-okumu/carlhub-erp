@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import { useProject } from '@/context/ProjectContext';
 import { useSprints } from '@/hooks/useSprints';
 import { Plus } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import SprintModal from './SprintModal';
 import SprintTable from './SprintTable';
 
@@ -20,6 +20,33 @@ export default function SprintSection() {
     const [searchValue, setSearchValue] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [milestones, setMilestones] = useState<Milestone[]>([]);
+
+    const summary = useMemo(() => {
+        const total = sprints.length;
+        const active = sprints.filter((sprint) => sprint.status === 'active').length;
+        const planned = sprints.filter((sprint) => sprint.status === 'planned').length;
+        const completed = sprints.filter((sprint) => sprint.status === 'completed').length;
+        const totalTasks = sprints.reduce((count, sprint) => count + (sprint.tasks_count ?? 0), 0);
+        const averageProgress = total
+            ? Math.round(sprints.reduce((sum, sprint) => sum + (sprint.progress ?? 0), 0) / total)
+            : 0;
+        return {
+            total,
+            active,
+            planned,
+            completed,
+            totalTasks,
+            averageProgress,
+        };
+    }, [sprints]);
+
+    const filteredCount = useMemo(() => {
+        return sprints.filter(
+            (sprint) =>
+                sprint.name.toLowerCase().includes(searchValue.toLowerCase()) &&
+                (statusFilter === 'all' || sprint.status === statusFilter)
+        ).length;
+    }, [sprints, searchValue, statusFilter]);
 
     useEffect(() => {
         const fetchMilestones = async () => {
@@ -81,13 +108,54 @@ export default function SprintSection() {
 
     return (
         <div className="space-y-6">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                    <div className="space-y-1">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Project Sprints</p>
+                        <h2 className="text-lg font-semibold text-slate-900">Sprint Delivery Hub</h2>
+                        <p className="text-sm text-slate-500">Monitor cadence, track progress, and open Kanban boards per sprint.</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="hidden items-center gap-2 rounded-full border border-slate-200/70 bg-white px-3 py-1 text-xs text-slate-500 shadow-sm sm:flex">
+                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                            {filteredCount} of {summary.total} showing
+                        </div>
+                        <Button onClick={handleAddSprint}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Sprint
+                        </Button>
+                    </div>
+                </div>
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="rounded-xl border border-slate-200/70 bg-gradient-to-br from-slate-50 to-white p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Sprints</p>
+                        <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.total}</p>
+                        <p className="text-xs text-slate-500">{summary.totalTasks} tasks tracked</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200/70 bg-gradient-to-br from-blue-50 to-white p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Active</p>
+                        <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.active}</p>
+                        <p className="text-xs text-slate-500">{summary.planned} planned next</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200/70 bg-gradient-to-br from-emerald-50 to-white p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Completed</p>
+                        <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.completed}</p>
+                        <p className="text-xs text-slate-500">Average {summary.averageProgress}% progress</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200/70 bg-gradient-to-br from-amber-50 to-white p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">In Planning</p>
+                        <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.planned}</p>
+                        <p className="text-xs text-slate-500">Keep backlog ready</p>
+                    </div>
+                </div>
+            </div>
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
                 <div className="flex flex-1 flex-wrap items-center gap-3">
                     <div className="min-w-[220px] flex-1">
                         <SearchInput
                             value={searchValue}
                             onChange={setSearchValue}
-                            placeholder="Search sprints..."
+                            placeholder="Search sprint names..."
                         />
                     </div>
                     <select
@@ -102,10 +170,7 @@ export default function SprintSection() {
                         <option value="canceled">Canceled</option>
                     </select>
                 </div>
-                <Button onClick={handleAddSprint}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Sprint
-                </Button>
+                <div className="text-xs text-slate-500">Updated in real time as sprints change.</div>
             </div>
             <SprintTable
                 sprints={sprints}

@@ -5,7 +5,7 @@ import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { AlertCircle, Columns, Edit, Trash2 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import KanbanSection from '@/components/dashboard/project-management/sprint/kanban/KanbanSection';
 
 interface SprintTableProps {
@@ -52,51 +52,94 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
         }
     }, [onDeleteSprint]);
 
-    const headers = ["Name", "Status", "Start Date", "End Date", "Milestone", "Tasks", "Progress", "Actions"];
+    useEffect(() => {
+        setPage(1);
+    }, [searchValue, statusFilter]);
+
+    const headers = ["Sprint", "Status", "Dates", "Milestone", "Tasks", "Progress", "Actions"];
 
     const rows: { key: string; data: (string | number | React.ReactNode)[] }[] = [];
 
     visibleSprints.forEach(sprint => {
+        const progressValue = Math.min(100, Math.max(0, sprint.progress ?? 0));
+        const statusClasses = sprint.status === 'completed'
+            ? 'bg-emerald-100 text-emerald-800'
+            : sprint.status === 'active'
+                ? 'bg-blue-100 text-blue-800'
+                : sprint.status === 'planned'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-slate-100 text-slate-700';
         rows.push({
             key: sprint.id,
             data: [
-                sprint.name,
-                <span
-                    key={sprint.id + '-status'}
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${sprint.status === 'completed'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : sprint.status === 'active'
-                            ? 'bg-blue-100 text-blue-800'
-                            : sprint.status === 'planned'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-slate-100 text-slate-800'
-                        }`}
-                >
-                    {sprint.status}
-                </span>,
-                sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : "-",
-                sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : "-",
-                sprint.milestone_name || "-",
-                sprint.tasks_count,
-                `${sprint.progress}%`,
-                <div key={sprint.slug + '-actions'} className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setExpandedSprintId(expandedSprintId === sprint.id ? null : sprint.id)}
+                <td className="px-4 py-4">
+                    <div className="space-y-1">
+                        <div className="text-sm font-semibold text-slate-900">{sprint.name}</div>
+                        <div className="text-xs text-slate-500">Slug {sprint.slug}</div>
+                    </div>
+                </td>,
+                <td className="px-4 py-4">
+                    <span
+                        key={sprint.id + '-status'}
+                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusClasses}`}
                     >
-                        <Columns className="h-4 w-4 mr-2" />
-                        Open Kanban
-                    </Button>
-                    <Button onClick={() => handleEdit(sprint)} variant="outline" size="sm">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                    </Button>
-                    <Button onClick={() => handleDelete(sprint.slug)} variant="danger" size="sm">
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                    </Button>
-                </div>
+                        <span className="h-2 w-2 rounded-full bg-current" />
+                        {sprint.status}
+                    </span>
+                </td>,
+                <td className="px-4 py-4">
+                    <div className="space-y-1 text-xs text-slate-500">
+                        <div>
+                            <span className="font-semibold text-slate-700">Start</span>{' '}
+                            {sprint.start_date ? new Date(sprint.start_date).toLocaleDateString() : "-"}
+                        </div>
+                        <div>
+                            <span className="font-semibold text-slate-700">End</span>{' '}
+                            {sprint.end_date ? new Date(sprint.end_date).toLocaleDateString() : "-"}
+                        </div>
+                    </div>
+                </td>,
+                <td className="px-4 py-4">
+                    <div className="text-sm text-slate-700">{sprint.milestone_name || "-"}</div>
+                </td>,
+                <td className="px-4 py-4">
+                    <div className="text-sm font-semibold text-slate-900">{sprint.tasks_count ?? 0}</div>
+                    <div className="text-xs text-slate-500">Tasks</div>
+                </td>,
+                <td className="px-4 py-4">
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs text-slate-500">
+                            <span>{progressValue}%</span>
+                            <span>{progressValue >= 100 ? 'Done' : 'In progress'}</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-slate-100">
+                            <div
+                                className="h-2 rounded-full bg-slate-900"
+                                style={{ width: `${progressValue}%` }}
+                            />
+                        </div>
+                    </div>
+                </td>,
+                <td className="px-4 py-4">
+                    <div key={sprint.slug + '-actions'} className="flex flex-wrap gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setExpandedSprintId(expandedSprintId === sprint.id ? null : sprint.id)}
+                        >
+                            <Columns className="h-4 w-4 mr-2" />
+                            Open Kanban
+                        </Button>
+                        <Button onClick={() => handleEdit(sprint)} variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                        </Button>
+                        <Button onClick={() => handleDelete(sprint.slug)} variant="danger" size="sm">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                        </Button>
+                    </div>
+                </td>
             ]
         });
 
@@ -121,11 +164,17 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
     }
 
     if (filteredSprints.length === 0) {
+        const hasFilters = searchValue.trim().length > 0 || statusFilter !== 'all';
         return (
             <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm p-8 text-center">
                 <AlertCircle className="h-8 w-8 text-slate-400 mx-auto mb-2" />
-                <p className="text-slate-500 mb-4">No sprints found</p>
-                <Button onClick={onAddSprint} className='mx-auto'>
+                <p className="text-slate-600 font-semibold mb-1">
+                    {hasFilters ? 'No sprints match your filters' : 'No sprints found'}
+                </p>
+                <p className="text-sm text-slate-500 mb-4">
+                    {hasFilters ? 'Try a different keyword or status filter.' : 'Create a sprint to start tracking delivery.'}
+                </p>
+                <Button onClick={onAddSprint} className="mx-auto">
                     Create Your First Sprint
                 </Button>
             </div>
