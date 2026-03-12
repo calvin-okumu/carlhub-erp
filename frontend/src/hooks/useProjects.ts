@@ -18,6 +18,14 @@ export function useProjects() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [itemsPerPage] = useState(10);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [summary, setSummary] = useState({
+    total: 0,
+    active: 0,
+    planning: 0,
+    onHold: 0,
+    completed: 0,
+  });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +42,7 @@ export function useProjects() {
       const data = await getProjects(token, {
         tenant: ownerTenant?.tenant,
         ordering: '-created_at',
+        ...(statusFilter ? { status: statusFilter } : {}),
         page,
         limit: itemsPerPage
       });
@@ -43,17 +52,32 @@ export function useProjects() {
       setTotalItems(data.count);
       setTotalPages(Math.ceil(data.count / itemsPerPage));
       setCurrentPage(page);
+
+      const [activeCount, planningCount, onHoldCount, completedCount] = await Promise.all([
+        getProjects(token, { tenant: ownerTenant?.tenant, status: 'active', page: 1, limit: 1 }),
+        getProjects(token, { tenant: ownerTenant?.tenant, status: 'planning', page: 1, limit: 1 }),
+        getProjects(token, { tenant: ownerTenant?.tenant, status: 'on_hold', page: 1, limit: 1 }),
+        getProjects(token, { tenant: ownerTenant?.tenant, status: 'completed', page: 1, limit: 1 }),
+      ]);
+
+      setSummary({
+        total: data.count,
+        active: activeCount.count,
+        planning: planningCount.count,
+        onHold: onHoldCount.count,
+        completed: completedCount.count,
+      });
     } catch (err) {
       console.error(err);
       setError("Failed to load projects. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [itemsPerPage]);
+  }, [itemsPerPage, statusFilter]);
 
   useEffect(() => {
     fetchProjects(1);
-  }, [fetchProjects]);
+  }, [fetchProjects, statusFilter]);
 
   const handlePageChange = useCallback((page: number) => {
     fetchProjects(page);
@@ -147,6 +171,9 @@ export function useProjects() {
     totalPages,
     totalItems,
     itemsPerPage,
+    summary,
+    statusFilter,
+    setStatusFilter,
     onPageChange: handlePageChange,
     addProject,
     editProject,

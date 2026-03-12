@@ -84,56 +84,89 @@ export default function ProjectTable({
         }
     }, [onDeleteProject]);
 
-    const headers = ["Name", "Client", "Status", "Priority", "Start Date", "End Date", "Budget", "Progress", "Milestones", "Actions"];
+    const headers = ["Project", "Status", "Timeline", "Budget", "Progress", "Milestones", "Actions"];
+
+    const statusClasses = (status: string) => (
+        status === "active"
+            ? "bg-green-100 text-green-800"
+            : status === "completed"
+                ? "bg-blue-100 text-blue-800"
+                : status === "planning"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : status === "on_hold"
+                        ? "bg-orange-100 text-orange-800"
+                        : status === "archived"
+                            ? "bg-gray-200 text-gray-700"
+                            : "bg-gray-100 text-gray-800"
+    );
+
+    const priorityClasses = (priority: string) => (
+        priority === "high"
+            ? "bg-red-100 text-red-800"
+            : priority === "medium"
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-green-100 text-green-800"
+    );
 
     const rows = filteredProjects.map(p => ({
         key: p.id,
         data: [
-            <Link key={p.id + '-name'} href={`/dashboard/project-management/${p.slug}`} className="text-blue-600 hover:text-blue-800 hover:underline">
-                {p.name}
-            </Link>,
-            p.client_name,
-            <span
-                key={p.id + '-status'}
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${p.status === "active"
-                    ? "bg-green-100 text-green-800"
-                    : p.status === "completed"
-                        ? "bg-blue-100 text-blue-800"
-                        : p.status === "planning"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : p.status === "on_hold"
-                                ? "bg-orange-100 text-orange-800"
-                                : p.status === "archived"
-                                    ? "bg-gray-200 text-gray-700"
-                                    : "bg-gray-100 text-gray-800"
-                    }`}
-            >
-                {p.status.replace('_', ' ')}
-            </span>,
-            <span
-                key={p.id + '-priority'}
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${p.priority === "high"
-                    ? "bg-red-100 text-red-800"
-                    : p.priority === "medium"
-                        ? "bg-yellow-100 text-yellow-800"
-                        : "bg-green-100 text-green-800"
-                    }`}
-            >
-                {p.priority}
-            </span>,
-            new Date(p.start_date).toLocaleDateString(),
-            new Date(p.end_date).toLocaleDateString(),
-            p.budget ? `$${p.budget}` : "-",
-            `${p.progress}%`,
-            p.milestones_count,
-            <div key={p.id + '-actions'} className="flex gap-2">
-                <Button onClick={() => handleEdit(p)} variant="outline" size="sm">
-                    <Edit className="h-4 w-4" />
-                </Button>
-                <Button onClick={() => handleDelete(p.slug)} variant="danger" size="sm">
-                    <Trash2 className="h-4 w-4" />
-                </Button>
-            </div>
+            <td key={p.id + '-project'} className="px-4 py-4">
+                <div className="flex flex-col gap-1">
+                    <Link href={`/dashboard/project-management/${p.slug}`} className="text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline">
+                        {p.name}
+                    </Link>
+                    <div className="text-xs text-gray-500">Client: {p.client_name}</div>
+                    <div className="inline-flex items-center gap-2 text-xs text-gray-500">
+                        <span className={`rounded-full px-2 py-0.5 font-medium ${priorityClasses(p.priority)}`}>
+                            Priority: {p.priority}
+                        </span>
+                    </div>
+                </div>
+            </td>,
+            <td key={p.id + '-status'} className="px-4 py-4">
+                <div className="flex flex-col gap-2">
+                    <span
+                        className={`w-fit px-2 py-1 text-xs font-semibold rounded-full ${statusClasses(p.status)}`}
+                    >
+                        {p.status.replace('_', ' ')}
+                    </span>
+                </div>
+            </td>,
+            <td key={p.id + '-timeline'} className="px-4 py-4 text-sm text-gray-700">
+                <div className="flex flex-col gap-1">
+                    <span>{new Date(p.start_date).toLocaleDateString()}</span>
+                    <span className="text-xs text-gray-500">to {new Date(p.end_date).toLocaleDateString()}</span>
+                </div>
+            </td>,
+            <td key={p.id + '-budget'} className="px-4 py-4 text-sm text-gray-900">
+                <div className="font-medium">{p.budget ? `$${p.budget}` : "-"}</div>
+            </td>,
+            <td key={p.id + '-progress'} className="px-4 py-4">
+                <div className="flex flex-col gap-2">
+                    <div className="text-sm font-medium text-gray-900">{p.progress}%</div>
+                    <div className="h-2 w-32 rounded-full bg-gray-200">
+                        <div
+                            className="h-2 rounded-full bg-blue-500"
+                            style={{ width: `${Math.min(100, Math.max(0, p.progress))}%` }}
+                        />
+                    </div>
+                </div>
+            </td>,
+            <td key={p.id + '-milestones'} className="px-4 py-4 text-sm text-gray-900">
+                <div className="font-medium">{p.milestones_count}</div>
+                <div className="text-xs text-gray-500">milestones</div>
+            </td>,
+            <td key={p.id + '-actions'} className="px-4 py-4">
+                <div className="flex items-center gap-2">
+                    <Button onClick={() => handleEdit(p)} variant="outline" size="sm">
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button onClick={() => handleDelete(p.slug)} variant="danger" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+            </td>
         ]
     }));
 
@@ -148,18 +181,26 @@ export default function ProjectTable({
     return (
         <>
             <div className="bg-white rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden">
-                <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-                    <input
-                        type="text"
-                        placeholder="Search projects..."
-                        value={searchValue}
-                        onChange={(e) => setSearchValue(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <Button onClick={handleNewProject}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Project
-                    </Button>
+                <div className="p-5 border-b border-gray-200 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <div className="text-lg font-semibold text-gray-900">Projects</div>
+                        <div className="text-sm text-gray-500">
+                            Showing {filteredProjects.length} of {totalItems} projects
+                        </div>
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <input
+                            type="text"
+                            placeholder="Search projects by name or client..."
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                            className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                        <Button onClick={handleNewProject}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            New Project
+                        </Button>
+                    </div>
                 </div>
                 {filteredProjects.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
