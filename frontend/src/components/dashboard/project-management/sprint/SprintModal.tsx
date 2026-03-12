@@ -37,7 +37,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
 
     useEffect(() => {
         if (mode === 'edit' && sprint) {
-            const milestoneObj = milestones.find(m => m.id === sprint.milestone);
+            const milestoneObj = milestones.find(m => m.slug === sprint.milestone);
             setFormData({
                 name: sprint.name,
                 status: sprint.status,
@@ -77,37 +77,51 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
             }
             // Re-validate dates after milestone change
             const newErrors = { ...errors };
-            if (formData.start_date && milestone && formData.start_date < (milestone.planned_start || '')) {
+            if (formData.start_date && milestone?.planned_start && formData.start_date < milestone.planned_start) {
                 newErrors.start_date = 'Sprint start date cannot be before the milestone\'s planned start date.';
             } else {
                 delete newErrors.start_date;
             }
-            if (formData.end_date && milestone && formData.end_date > (milestone.due_date || '')) {
+            if (formData.end_date && milestone?.due_date && formData.end_date > milestone.due_date) {
                 newErrors.end_date = 'Sprint end date cannot be after the milestone\'s due date.';
             } else {
+                delete newErrors.end_date;
+            }
+            if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
+                newErrors.end_date = 'Sprint end date must be after the start date.';
+            } else if (newErrors.end_date === 'Sprint end date must be after the start date.') {
                 delete newErrors.end_date;
             }
             setErrors(newErrors);
         }
         if (name === 'start_date') {
-            if (value && minDate && value < minDate) {
-                setErrors(prev => ({ ...prev, start_date: 'Sprint start date cannot be before the milestone\'s planned start date.' }));
-            } else {
-                setErrors(prev => {
-                    const { start_date, ...rest } = prev;
-                    return rest;
-                });
-            }
+            setErrors(prev => {
+                const next = { ...prev };
+                if (value && minDate && value < minDate) {
+                    next.start_date = 'Sprint start date cannot be before the milestone\'s planned start date.';
+                } else {
+                    delete next.start_date;
+                }
+                if (formData.end_date && value && value > formData.end_date) {
+                    next.end_date = 'Sprint end date must be after the start date.';
+                } else if (next.end_date === 'Sprint end date must be after the start date.') {
+                    delete next.end_date;
+                }
+                return next;
+            });
         }
         if (name === 'end_date') {
-            if (value && maxDate && value > maxDate) {
-                setErrors(prev => ({ ...prev, end_date: 'Sprint end date cannot be after the milestone\'s due date.' }));
-            } else {
-                setErrors(prev => {
-                    const { end_date, ...rest } = prev;
-                    return rest;
-                });
-            }
+            setErrors(prev => {
+                const next = { ...prev };
+                if (value && maxDate && value > maxDate) {
+                    next.end_date = 'Sprint end date cannot be after the milestone\'s due date.';
+                } else if (formData.start_date && value && value < formData.start_date) {
+                    next.end_date = 'Sprint end date must be after the start date.';
+                } else {
+                    delete next.end_date;
+                }
+                return next;
+            });
         }
     };
 

@@ -99,12 +99,16 @@ export default function ProjectTable({
                     ? "bg-green-100 text-green-800"
                     : p.status === "completed"
                         ? "bg-blue-100 text-blue-800"
-                        : p.status === "on-hold"
+                        : p.status === "planning"
                             ? "bg-yellow-100 text-yellow-800"
-                            : "bg-gray-100 text-gray-800"
+                            : p.status === "on_hold"
+                                ? "bg-orange-100 text-orange-800"
+                                : p.status === "archived"
+                                    ? "bg-gray-200 text-gray-700"
+                                    : "bg-gray-100 text-gray-800"
                     }`}
             >
-                {p.status}
+                {p.status.replace('_', ' ')}
             </span>,
             <span
                 key={p.id + '-priority'}

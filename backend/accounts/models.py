@@ -209,6 +209,8 @@ class UserTenant(models.Model):
         related_name='members',
         help_text="Department this user belongs to"
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:

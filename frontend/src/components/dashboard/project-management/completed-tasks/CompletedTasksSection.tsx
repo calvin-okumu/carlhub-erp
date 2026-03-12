@@ -27,7 +27,7 @@ export default function CompletedTasksSection() {
 
             try {
                 // Get all tasks for the project and filter for completed status
-                const allTasks = await getTasks(token, { projectId: project?.id });
+                const allTasks = await getTasks(token, { projectSlug: project?.slug });
                 const completedTasks = allTasks.results.filter(task => task.status === 'done');
                 setTasks(completedTasks);
             } catch (err) {
@@ -38,10 +38,10 @@ export default function CompletedTasksSection() {
             }
         };
 
-        if (project?.id) {
+        if (project?.slug) {
             fetchCompletedTasks();
         }
-    }, [project?.id]);
+    }, [project?.slug]);
 
     const handleDeleteTask = async (taskSlug: string) => {
         if (!confirm('Are you sure you want to delete this completed task?')) return;

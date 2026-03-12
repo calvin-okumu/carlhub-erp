@@ -1,17 +1,10 @@
 "use client";
 
 import React, { useState } from 'react';
-import LeaveHeader from '@/components/dashboard/leave-management/Requests/LeaveHeader';
+import { LeaveHeader } from '@/components/dashboard/leave-management/Dashboard/LeaveHeader';
 
 export default function LeaveApprovalsPage() {
-    const [searchValue, setSearchValue] = useState('');
     const [showApprovalModal, setShowApprovalModal] = useState(false);
-
-    const handleAddRequest = () => {
-        // For approvals page, this might open a different modal or do nothing
-        // since managers typically don't create requests from this page
-        console.log('Add request from approvals page');
-    };
 
     return (
         <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -20,11 +13,7 @@ export default function LeaveApprovalsPage() {
                 <p className="text-gray-600 mt-2">Review and approve pending leave requests</p>
             </div>
 
-            <LeaveHeader
-                onAddRequest={handleAddRequest}
-                searchValue={searchValue}
-                onSearchChange={setSearchValue}
-            />
+            <LeaveHeader />
 
             {/* TODO: Add filtered RequestList component for pending requests */}
             <div className="mt-8">

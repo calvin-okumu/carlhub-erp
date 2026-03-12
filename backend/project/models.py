@@ -29,6 +29,19 @@ class Client(models.Model):
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True, validators=[RegexValidator(r'^\+?1?\d{9,15}$', 'Enter a valid phone number.')])
+    address = models.TextField(blank=True, default="")
+    billing_address = models.TextField(blank=True, default="")
+    company_size = models.CharField(max_length=20, blank=True, default="")
+    credit_limit = models.DecimalField(
+        max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0'))]
+    )
+    industry = models.CharField(max_length=100, blank=True, default="")
+    lead_score = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    lead_source = models.CharField(max_length=50, blank=True, default="")
+    notes = models.TextField(blank=True, default="")
+    payment_terms = models.CharField(max_length=50, blank=True, default="")
+    tax_id = models.CharField(max_length=50, blank=True, default="")
+    website = models.CharField(max_length=200, blank=True, default="")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="prospect", db_index=True)
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="clients", null=True, blank=True, db_index=True
@@ -88,14 +101,29 @@ class Project(SoftDeleteMixin, models.Model):
     budget = models.DecimalField(
         max_digits=12, decimal_places=2, default=Decimal('0'), validators=[MinValueValidator(Decimal('0'))]
     )
-    description = models.TextField(blank=True)
-    tags = models.CharField(max_length=500, blank=True)  # Comma-separated
+    actual_hours = models.DecimalField(
+        max_digits=8, decimal_places=1, default=Decimal('0.0'), validators=[MinValueValidator(Decimal('0'))]
+    )
+    estimated_hours = models.DecimalField(
+        max_digits=8, decimal_places=1, default=Decimal('0.0'), validators=[MinValueValidator(Decimal('0'))]
+    )
+    auto_complete_on_invoice_paid = models.BooleanField(default=False)
+    notify_on_phase_change = models.BooleanField(default=False)
+    phase = models.CharField(max_length=20, default="planning")
+    risk_level = models.CharField(max_length=20, default="low")
+    client_feedback = models.TextField(blank=True, default="")
+    quality_score = models.PositiveIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+    description = models.TextField(blank=True, default="")
+    tags = models.CharField(max_length=500, blank=True, default="")  # Comma-separated
     team_members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="projects", blank=True)
     access_groups = models.ManyToManyField(Group, related_name="projects", blank=True)
     progress = models.PositiveIntegerField(
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
         if self.start_date and self.end_date and self.start_date >= self.end_date:
@@ -138,7 +166,7 @@ class Milestone(SoftDeleteMixin, models.Model):
     ]
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, default="")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="planning")
     planned_start = models.DateField(null=True, blank=True)
     actual_start = models.DateField(null=True, blank=True)
@@ -160,6 +188,8 @@ class Milestone(SoftDeleteMixin, models.Model):
         Project, on_delete=models.SET_NULL, null=True, blank=True, related_name="milestones", db_index=True
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
         if self.planned_start and self.due_date and self.planned_start >= self.due_date:
@@ -223,6 +253,7 @@ class Sprint(SoftDeleteMixin, models.Model):
         default=0, validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
         if self.start_date and self.end_date and self.start_date > self.end_date:
@@ -281,10 +312,16 @@ class Task(SoftDeleteMixin, models.Model):
         ("testing", "Testing"),
         ("done", "Done"),
     ]
+    PRIORITY_CHOICES = [
+        ("low", "Low"),
+        ("medium", "Medium"),
+        ("high", "High"),
+    ]
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, null=True, blank=True)
     description = models.TextField(blank=True)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="to_do", db_index=True)
+    priority = models.CharField(max_length=6, choices=PRIORITY_CHOICES, default="medium")
     tenant = models.ForeignKey(
         'accounts.Tenant', on_delete=models.CASCADE, related_name="tasks", null=True, blank=True, db_index=True
     )
@@ -450,4 +487,3 @@ class Payment(SoftDeleteMixin, models.Model):
 
     def __str__(self):
         return f"Payment {self.id or 'Unsaved'} for Invoice {self.invoice.id or 'Unsaved'}"
-

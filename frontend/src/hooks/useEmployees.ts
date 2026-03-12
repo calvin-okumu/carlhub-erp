@@ -1,4 +1,4 @@
-import { User } from "@/api/types";
+import type { User, UserProfile } from "@/api/types";
 import { createUser, deleteUser, getUsers, updateUser } from "@/api/users";
 import { useEffect, useState } from "react";
 
@@ -7,6 +7,9 @@ interface Employee extends User {
   tenant_name: string;
   is_approved: boolean;
 }
+
+type EmployeeInput = Partial<UserProfile> & Partial<User>;
+type CreateUserPayload = Parameters<typeof createUser>[1];
 
 export function useEmployees() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -36,13 +39,48 @@ export function useEmployees() {
     }
   };
 
-  const createEmployee = async (employeeData: Partial<Employee>) => {
+  const createEmployee = async (employeeData: EmployeeInput) => {
     try {
       const token = localStorage.getItem("access_token");
       if (!token) throw new Error("No access token");
 
+      if (!employeeData.first_name || !employeeData.last_name || !employeeData.email) {
+        throw new Error("First name, last name, and email are required to create an employee");
+      }
+
+      const payload: CreateUserPayload = {
+        first_name: employeeData.first_name,
+        last_name: employeeData.last_name,
+        email: employeeData.email,
+        phone: employeeData.phone,
+        job_title: employeeData.job_title,
+        employee_id: employeeData.employee_id,
+        employee_number: employeeData.employee_number,
+        hire_date: employeeData.hire_date,
+        street_address: employeeData.street_address,
+        city: employeeData.city,
+        state_province: employeeData.state_province,
+        postal_code: employeeData.postal_code,
+        country: employeeData.country,
+        emergency_contact: employeeData.emergency_contact,
+        emergency_phone: employeeData.emergency_phone,
+        medical_aid_provider: employeeData.medical_aid_provider,
+        medical_aid_plan: employeeData.medical_aid_plan,
+        medical_aid_number: employeeData.medical_aid_number,
+        medical_conditions: employeeData.medical_conditions,
+        allergies: employeeData.allergies,
+        medications: employeeData.medications,
+        bank_name: employeeData.bank_name,
+        account_number: employeeData.account_number,
+        branch_code: employeeData.branch_code,
+        account_type: employeeData.account_type,
+        routing_number: employeeData.routing_number,
+        swift_code: employeeData.swift_code,
+        is_active: employeeData.is_active,
+      };
+
       // First create the user
-      const newUser = await createUser(token, employeeData as any);
+      const newUser = await createUser(token, payload);
 
       // Then add to tenant as employee (this would need a separate API call)
       // For now, just refetch

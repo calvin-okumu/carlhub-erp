@@ -14,7 +14,8 @@ const StatusBadge = ({ status }: { status: string }) => {
     const styles: Record<string, string> = {
         active: 'bg-blue-100 text-blue-700 border-blue-200',
         planned: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-        completed: 'bg-green-100 text-green-700 border-green-200'
+        completed: 'bg-green-100 text-green-700 border-green-200',
+        canceled: 'bg-red-100 text-red-700 border-red-200'
     };
 
     return (

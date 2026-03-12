@@ -12,7 +12,7 @@ interface BacklogTableProps {
     loading: boolean;
     error: string | null;
     onEditTask: (task: Task) => void;
-    onDeleteTask: (id: string) => void;
+    onDeleteTask: (slug: string) => void;
     onAddTask: () => void;
     searchValue: string;
 }
@@ -42,9 +42,9 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
         onEditTask(task);
     }, [onEditTask]);
 
-    const handleDelete = useCallback((id: string) => {
+    const handleDelete = useCallback((slug: string) => {
         if (confirm("Are you sure you want to delete this task?")) {
-            onDeleteTask(id);
+            onDeleteTask(slug);
         }
     }, [onDeleteTask]);
 
@@ -97,7 +97,7 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
                 <Button onClick={() => handleEdit(task)} variant="outline" size="sm">
                     <Edit className="h-4 w-4" />
                 </Button>
-                <Button onClick={() => handleDelete(task.id)} variant="danger" size="sm">
+                <Button onClick={() => handleDelete(task.slug)} variant="danger" size="sm">
                     <Trash2 className="h-4 w-4" />
                 </Button>
             </div>

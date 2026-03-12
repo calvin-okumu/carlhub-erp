@@ -11,7 +11,7 @@ function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
-export function useTasks(projectId: string, backlog: boolean = false) {
+export function useTasks(projectSlug: string, backlog: boolean = false) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
 
     setLoading(true);
     try {
-      const data = await getTasks(token, { projectId, backlog, ordering: '-created_at' });
+      const data = await getTasks(token, { projectSlug, backlog, ordering: '-created_at' });
       setTasks(data.results);
     } catch (err) {
       console.error(err);
@@ -30,7 +30,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
     } finally {
       setLoading(false);
     }
-  }, [backlog, projectId]);
+  }, [backlog, projectSlug]);
 
     useEffect(() => {
         fetchTasks();
@@ -47,7 +47,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
      end_date?: string;
      estimated_hours?: number;
    }) => {
-     const taskData = { ...data, project: projectId };
+     const taskData = { ...data, project: projectSlug };
     const token = getToken();
     if (!token) return;
 
@@ -76,7 +76,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
 
      setLoading(true);
       try {
-        const newTask = await createTask(token, projectId, taskData);
+        const newTask = await createTask(token, projectSlug, taskData);
        console.log("Created task:", newTask);
       setTasks((prev) => prev.map((t) => (t.id === tempTask.id ? newTask : t)));
     } catch (err) {
@@ -88,7 +88,7 @@ export function useTasks(projectId: string, backlog: boolean = false) {
   };
 
   const editTask = async (
-    id: string,
+    slug: string,
     data: Partial<{
       title: string;
       description: string;
@@ -104,38 +104,38 @@ export function useTasks(projectId: string, backlog: boolean = false) {
     const token = getToken();
     if (!token) return;
 
-    const originalTask = tasks.find((t) => t.id === id);
+    const originalTask = tasks.find((t) => t.slug === slug);
     if (!originalTask) return;
 
     // Optimistic update
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...data } : t)));
+    setTasks((prev) => prev.map((t) => (t.slug === slug ? { ...t, ...data } : t)));
 
     setLoading(true);
     try {
-      const updatedTask = await updateTask(token, id, data);
-      setTasks((prev) => prev.map((t) => (t.id === id ? updatedTask : t)));
+      const updatedTask = await updateTask(token, slug, data);
+      setTasks((prev) => prev.map((t) => (t.slug === slug ? updatedTask : t)));
     } catch (err) {
       // Revert on error
-      setTasks((prev) => prev.map((t) => (t.id === id ? originalTask : t)));
+      setTasks((prev) => prev.map((t) => (t.slug === slug ? originalTask : t)));
       setError(err instanceof Error ? err.message : "Failed to update task.");
     } finally {
       setLoading(false);
     }
   };
 
-   const removeTask = async (id: string) => {
-     const token = getToken();
-     if (!token) return;
+   const removeTask = async (slug: string) => {
+      const token = getToken();
+      if (!token) return;
 
-     const taskToRemove = tasks.find((t) => t.id === id);
-     if (!taskToRemove) return;
+      const taskToRemove = tasks.find((t) => t.slug === slug);
+      if (!taskToRemove) return;
 
-     setTasks((prev) => prev.filter((t) => t.id !== id));
+      setTasks((prev) => prev.filter((t) => t.slug !== slug));
 
      // Since backend is read-only, don't call API, just keep the optimistic update
      // setLoading(true);
      // try {
-     //   await deleteTask(token, id);
+      //   await deleteTask(token, slug);
      // } catch (err) {
      //   setTasks((prev) => [...prev, taskToRemove]);
      //   setError(err instanceof Error ? err.message : "Failed to delete task.");
@@ -155,4 +155,3 @@ export function useTasks(projectId: string, backlog: boolean = false) {
     setError,
   };
 }
-

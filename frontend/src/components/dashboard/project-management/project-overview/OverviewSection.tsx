@@ -22,7 +22,7 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
                if (!token) return;
 
                  try {
-                     const sprints = await getSprints(token, { projectId: project.id });
+                      const sprints = await getSprints(token, { projectSlug: project.slug });
                      setSprintsCount(sprints.results.length);
                  } catch (err) {
                      console.error('Failed to fetch sprints count:', err);
@@ -34,7 +34,7 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
                 if (!token) return;
 
                  try {
-                     const tasks = await getTasks(token, { projectId: project.id });
+                      const tasks = await getTasks(token, { projectSlug: project.slug });
                      setTasksCount(tasks.results.length);
                  } catch (err) {
                      console.error('Failed to fetch tasks count:', err);
@@ -46,7 +46,7 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
                 if (!token) return;
 
                  try {
-                     const milestonesData = await getMilestones(token, { projectId: project.id });
+                      const milestonesData = await getMilestones(token, { projectSlug: project.slug });
                      setMilestones(milestonesData.results);
                  } catch (err) {
                      console.error('Failed to fetch milestones:', err);
@@ -56,7 +56,7 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
             fetchSprintsCount();
             fetchTasksCount();
             fetchMilestones();
-        }, [project.id]);
+        }, [project.slug]);
 
        // Calculate project progress as average of milestone progress
        const calculateProjectProgress = () => {

@@ -1,7 +1,37 @@
 import { Project, Milestone, Sprint, Task, PaginatedResponse } from './types';
 import { API_BASE } from './index';
 
-export async function getProjects(token: string, params?: { tenant?: number; search?: string; ordering?: string; status?: string; client?: number; priority?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Project>> {
+function getProjectErrorMessage(data: unknown, fallback: string) {
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>;
+    const nameError = record.name;
+    if (Array.isArray(nameError)) {
+      const duplicateName = nameError.find(
+        (message) =>
+          typeof message === "string" &&
+          message.toLowerCase().includes("already exists"),
+      );
+      if (duplicateName) {
+        return "Project name already exists.";
+      }
+    }
+    if (typeof record.detail === "string") return record.detail;
+    if (typeof record.error === "string") return record.error;
+    const nonFieldErrors = record.non_field_errors;
+    if (Array.isArray(nonFieldErrors) && typeof nonFieldErrors[0] === "string") {
+      return nonFieldErrors[0];
+    }
+  }
+
+  return fallback;
+}
+
+function normalizeMilestoneStatus(status?: string) {
+  if (status === "planned") return "planning";
+  return status;
+}
+
+export async function getProjects(token: string, params?: { tenant?: string; search?: string; ordering?: string; status?: string; client?: string; priority?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Project>> {
   const query = new URLSearchParams();
   if (params?.tenant) query.append('tenant', params.tenant.toString());
   if (params?.search) query.append('search', params.search);
@@ -31,8 +61,11 @@ export async function getProjects(token: string, params?: { tenant?: number; sea
   return data;
 }
 
-export async function getProject(token: string, id: string): Promise<Project> {
-  const response = await fetch(`${API_BASE}/projects/${id}/`, {
+export async function getProject(token: string, slug: string, tenant?: string): Promise<Project> {
+  const query = new URLSearchParams();
+  if (tenant) query.append('tenant', tenant.toString());
+  const url = `${API_BASE}/projects/${slug}/${query.toString() ? `?${query.toString()}` : ''}`;
+  const response = await fetch(url, {
     method: "GET",
     headers: {
       Authorization: `Token ${token}`,
@@ -43,7 +76,7 @@ export async function getProject(token: string, id: string): Promise<Project> {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || "Failed to fetch project");
+    throw new Error(getProjectErrorMessage(data, "Failed to fetch project"));
   }
 
   return data;
@@ -51,7 +84,7 @@ export async function getProject(token: string, id: string): Promise<Project> {
 
 export async function createProject(token: string, projectData: {
   name: string;
-  client: number;
+  client: string;
   status: string;
   priority: string;
   start_date: string;
@@ -76,7 +109,12 @@ export async function createProject(token: string, projectData: {
 
   if (!response.ok) {
     console.error('Create project failed:', data);
-    throw new Error(data.error || `Failed to create project: ${response.status} ${response.statusText}`);
+    throw new Error(
+      getProjectErrorMessage(
+        data,
+        `Failed to create project: ${response.status} ${response.statusText}`,
+      ),
+    );
   }
 
   return data;
@@ -84,7 +122,7 @@ export async function createProject(token: string, projectData: {
 
 export async function updateProject(token: string, slug: string, projectData: Partial<{
   name: string;
-  client: number;
+  client: string;
   status: string;
   priority: string;
   start_date: string;
@@ -106,7 +144,12 @@ export async function updateProject(token: string, slug: string, projectData: Pa
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || "Failed to update project");
+    throw new Error(
+      getProjectErrorMessage(
+        data,
+        `Failed to update project: ${response.status} ${response.statusText}`,
+      ),
+    );
   }
 
   return data;
@@ -127,10 +170,14 @@ export async function deleteProject(token: string, slug: string): Promise<void> 
 }
 
 // Milestone API functions
-export async function getMilestones(token: string, params?: { projectId?: number; tenant?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Milestone>> {
+export async function getMilestones(token: string, params?: { projectId?: string; projectSlug?: string; tenant?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Milestone>> {
   let url = `${API_BASE}/milestones/`;
   const query = new URLSearchParams();
-  if (params?.projectId) query.append('project', params.projectId.toString());
+  if (params?.projectSlug) {
+    query.append('project__slug', params.projectSlug);
+  } else if (params?.projectId) {
+    query.append('project', params.projectId.toString());
+  }
   if (params?.tenant) query.append('tenant', params.tenant.toString());
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
@@ -157,7 +204,7 @@ export async function getMilestones(token: string, params?: { projectId?: number
   return data;
 }
 
-export async function getMilestone(token: string, id: number): Promise<Milestone> {
+export async function getMilestone(token: string, id: string): Promise<Milestone> {
   const response = await fetch(`${API_BASE}/milestones/${id}/`, {  // Keep global for individual milestone access
     method: "GET",
     headers: {
@@ -175,7 +222,7 @@ export async function getMilestone(token: string, id: number): Promise<Milestone
   return data;
 }
 
-export async function createMilestone(token: string, projectId: number, milestoneData: {
+export async function createMilestone(token: string, milestoneData: {
   name: string;
   description?: string;
   status: string;
@@ -184,7 +231,6 @@ export async function createMilestone(token: string, projectId: number, mileston
   due_date?: string;
   assignee?: number;
   project: string;
-  tenant: number;
 }): Promise<Milestone> {
   const response = await fetch(`${API_BASE}/milestones/`, {
     method: "POST",
@@ -192,7 +238,10 @@ export async function createMilestone(token: string, projectId: number, mileston
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(milestoneData),
+    body: JSON.stringify({
+      ...milestoneData,
+      status: normalizeMilestoneStatus(milestoneData.status),
+    }),
   });
 
   const data = await response.json();
@@ -204,7 +253,7 @@ export async function createMilestone(token: string, projectId: number, mileston
   return data;
 }
 
-export async function updateMilestone(token: string, slug: string, milestoneData: Partial<{
+type MilestoneUpdateData = Partial<{
   name: string;
   description: string;
   status: string;
@@ -213,15 +262,20 @@ export async function updateMilestone(token: string, slug: string, milestoneData
   actual_start: string;
   due_date: string;
   assignee: number;
-  project: number;
-}>): Promise<Milestone> {
+  project: string;
+}>;
+
+export async function updateMilestone(token: string, slug: string, milestoneData: MilestoneUpdateData): Promise<Milestone> {
   const response = await fetch(`${API_BASE}/milestones/${slug}/`, {
     method: "PUT",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(milestoneData),
+    body: JSON.stringify({
+      ...milestoneData,
+      status: normalizeMilestoneStatus(milestoneData.status),
+    }),
   });
 
   const data = await response.json();
@@ -248,10 +302,14 @@ export async function deleteMilestone(token: string, slug: string): Promise<void
 }
 
 // Sprint API functions
-export async function getSprints(token: string, params?: { projectId?: number; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Sprint>> {
+export async function getSprints(token: string, params?: { projectId?: string; projectSlug?: string; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Sprint>> {
   let url = `${API_BASE}/sprints/`;
   const query = new URLSearchParams();
-  if (params?.projectId) query.append('milestone__project', params.projectId.toString());
+  if (params?.projectSlug) {
+    query.append('milestone__project__slug', params.projectSlug);
+  } else if (params?.projectId) {
+    query.append('milestone__project', params.projectId.toString());
+  }
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
   if (params?.status) query.append('status', params.status);
@@ -295,7 +353,7 @@ export async function getSprint(token: string, id: string): Promise<Sprint> {
   return data;
 }
 
-export async function createSprint(token: string, projectId: number, sprintData: {
+export async function createSprint(token: string, sprintData: {
   name: string;
   status: string;
   start_date?: string;
@@ -360,7 +418,7 @@ export async function deleteSprint(token: string, slug: string): Promise<void> {
 }
 
 // Sprint task management
-export async function createTaskInSprint(token: string, projectId: number, sprintSlug: string, taskData: {
+export async function createTaskInSprint(token: string, projectId: string, sprintSlug: string, taskData: {
   title: string;
   description?: string;
   status: string;
@@ -389,14 +447,22 @@ export async function createTaskInSprint(token: string, projectId: number, sprin
   return data;
 }
 
-export async function assignTaskToSprint(token: string, sprintSlug: string, taskSlug: string): Promise<{ message: string }> {
+export async function assignTaskToSprint(token: string, sprintSlug: string, task: { id?: string; slug?: string } | string): Promise<{ message: string }> {
+  const payload = typeof task === 'string'
+    ? { task_slug: task }
+    : task.slug
+      ? { task_slug: task.slug }
+      : { task_id: task.id };
+  if (!payload.task_slug && !payload.task_id) {
+    throw new Error('task_slug or task_id is required');
+  }
   const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/assign_task/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ task_id: taskSlug }),
+    body: JSON.stringify(payload),
   });
 
   const data = await response.json();
@@ -408,14 +474,22 @@ export async function assignTaskToSprint(token: string, sprintSlug: string, task
   return data;
 }
 
-export async function unassignTaskFromSprint(token: string, sprintSlug: string, taskSlug: string): Promise<{ message: string }> {
+export async function unassignTaskFromSprint(token: string, sprintSlug: string, task: { id?: string; slug?: string } | string): Promise<{ message: string }> {
+  const payload = typeof task === 'string'
+    ? { task_slug: task }
+    : task.slug
+      ? { task_slug: task.slug }
+      : { task_id: task.id };
+  if (!payload.task_slug && !payload.task_id) {
+    throw new Error('task_slug or task_id is required');
+  }
   const response = await fetch(`${API_BASE}/sprints/${sprintSlug}/unassign_task/`, {
     method: "POST",
     headers: {
       Authorization: `Token ${token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ task_id: taskSlug }),
+    body: JSON.stringify(payload),
   });
 
   const data = await response.json();
@@ -428,11 +502,15 @@ export async function unassignTaskFromSprint(token: string, sprintSlug: string, 
 }
 
 // Task API functions
-export async function getTasks(token: string, params?: { milestoneSlug?: string; sprintSlug?: string; projectId?: string; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Task>> {
+export async function getTasks(token: string, params?: { milestoneSlug?: string; sprintSlug?: string; projectId?: string; projectSlug?: string; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Task>> {
   let url = `${API_BASE}/tasks/`;
   const query = new URLSearchParams();
 
-  if (params?.projectId) query.append('milestone__project', params.projectId.toString());
+  if (params?.projectSlug) {
+    query.append('milestone__project__slug', params.projectSlug);
+  } else if (params?.projectId) {
+    query.append('milestone__project', params.projectId.toString());
+  }
   if (params?.milestoneSlug) query.append('milestone__slug', params.milestoneSlug);
   if (params?.sprintSlug) query.append('sprint__slug', params.sprintSlug);
   if (params?.backlog !== undefined) query.append('backlog', params.backlog.toString());

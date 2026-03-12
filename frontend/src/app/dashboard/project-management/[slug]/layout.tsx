@@ -1,7 +1,6 @@
  "use client";
 
  import { useState } from 'react';
- import { usePathname } from 'next/navigation';
  import { ProjectProvider } from '@/context/ProjectContext';
  import ProjectLayout from '@/components/dashboard/project-management/ProjectLayout';
  import { useProject } from '@/context/ProjectContext';
@@ -12,10 +11,9 @@ import BacklogSection from '@/components/dashboard/project-management/backlog/Ba
 import SprintSection from '@/components/dashboard/project-management/sprint/SprintSection';
 import CompletedTasksSection from '@/components/dashboard/project-management/completed-tasks/CompletedTasksSection';
 
- function ProjectLayoutWrapper({ children }: { children: React.ReactNode }) {
-     const { project, loading, error } = useProject();
-     const [activeTab, setActiveTab] = useState('overview');
-     const pathname = usePathname();
+ function ProjectLayoutWrapper() {
+    const { project, loading, error } = useProject();
+    const [activeTab, setActiveTab] = useState('overview');
 
 
 
@@ -27,12 +25,12 @@ import CompletedTasksSection from '@/components/dashboard/project-management/com
          switch (activeTab) {
               case 'overview':
                   return <OverviewSection project={project} />;
-              case 'milestones':
-                  return <MilestoneSection projectSlug={project.slug} />;
-                case 'backlog':
-                    return <BacklogSection projectSlug={project.slug} />;
-              case 'sprints':
-                  return <SprintSection projectSlug={project.slug} />;
+               case 'milestones':
+                   return <MilestoneSection />;
+               case 'backlog':
+                   return <BacklogSection />;
+               case 'sprints':
+                   return <SprintSection />;
               case 'documents':
                   return <div className="p-6 text-center text-gray-500">Documents section coming soon.</div>;
                   case 'completed-tasks':
@@ -55,8 +53,8 @@ import CompletedTasksSection from '@/components/dashboard/project-management/com
 
   export default function Layout({ children }: { children: React.ReactNode }) {
       return (
-          <ProjectProvider activeTab="" onTabChange={() => {}}>
-              <ProjectLayoutWrapper>{children}</ProjectLayoutWrapper>
-          </ProjectProvider>
-      );
-  }
+           <ProjectProvider activeTab="" onTabChange={() => {}}>
+               <ProjectLayoutWrapper />
+           </ProjectProvider>
+       );
+   }

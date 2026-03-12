@@ -14,7 +14,12 @@ export default function StatusBadge({ status, className = '' }: StatusBadgeProps
       case 'pending':
       case 'planning':
         return 'bg-yellow-100 text-yellow-800';
+      case 'on_hold':
+        return 'bg-orange-100 text-orange-800';
+      case 'archived':
+        return 'bg-gray-200 text-gray-700';
       case 'inactive':
+      case 'canceled':
       case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:

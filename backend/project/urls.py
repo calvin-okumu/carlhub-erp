@@ -16,10 +16,32 @@ router.register(r'members', views.UserTenantViewSet)
 router.register(r'invitations', views.InvitationViewSet)
 router.register(r'users', views.UserViewSet)
 
+project_milestones = views.MilestoneViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+project_sprints = views.SprintViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+project_tasks = views.TaskViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+project_sprint_tasks = views.TaskViewSet.as_view({
+    'get': 'list',
+    'post': 'create',
+})
+
 urlpatterns = [
+    path('projects/<slug:project_slug>/milestones/', project_milestones, name='project-milestones'),
+    path('projects/<slug:project_slug>/sprints/', project_sprints, name='project-sprints'),
+    path('projects/<slug:project_slug>/tasks/', project_tasks, name='project-tasks'),
+    path('projects/<slug:project_slug>/sprints/<slug:sprint_slug>/tasks/', project_sprint_tasks, name='project-sprint-tasks'),
     path('', include(router.urls)),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
+    path('change-password/', views.change_password_view, name='change_password'),
     path('approve-member/', views.approve_member_view, name='approve_member'),
     path('invite-member/', views.invite_member_view, name='invite_member'),
     path('confirm-invitation/', views.confirm_invitation_view, name='confirm_invitation'),

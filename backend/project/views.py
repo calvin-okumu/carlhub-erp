@@ -3,6 +3,8 @@ import logging
 from datetime import timedelta
 
 from django.contrib.auth import authenticate
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -76,7 +78,7 @@ class TenantViewSet(viewsets.ModelViewSet):
             # Development/Test mode: try to get tenant from user or create default
             from accounts.models import Tenant, UserTenant
             try:
-                user_tenant = UserTenant.objects.filter(user=self.request.user, is_owner=True).first()
+                user_tenant = UserTenant.objects.filter(user=self.request.user, is_approved=True).first()
                 if user_tenant:
                     tenant = user_tenant.tenant
                 else:
@@ -137,6 +139,24 @@ class ClientViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     ordering_fields = ["name", "created_at", "status"]
     ordering = ['name']
     lookup_field = 'slug'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        tenant_param = self.request.query_params.get('tenant')
+
+        if not tenant_param:
+            return queryset.none()
+
+        if hasattr(self.request, 'tenant') and self.request.tenant:
+            if str(self.request.tenant.id) != str(tenant_param):
+                return queryset.none()
+        elif self.request.user.is_authenticated:
+            if not UserTenant.objects.filter(user=self.request.user, tenant_id=tenant_param).exists():
+                return queryset.none()
+        else:
+            return queryset.none()
+
+        return queryset.filter(tenant_id=tenant_param)
 
     def perform_create(self, serializer):
         # Determine the tenant
@@ -261,39 +281,38 @@ class ProjectViewSet(TenantScopedMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        return queryset.prefetch_related('milestones', 'milestones__sprints')
+        tenant_param = self.request.query_params.get('tenant')
+
+        if not tenant_param:
+            return queryset.none()
+
+        if hasattr(self.request, 'tenant') and self.request.tenant:
+            if str(self.request.tenant.id) != str(tenant_param):
+                return queryset.none()
+        elif self.request.user.is_authenticated:
+            if not UserTenant.objects.filter(user=self.request.user, tenant_id=tenant_param).exists():
+                return queryset.none()
+        else:
+            return queryset.none()
+
+        return queryset.filter(tenant_id=tenant_param).prefetch_related('milestones', 'milestones__sprints')
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
     def perform_create(self, serializer):
-        # Determine the tenant
-        if hasattr(self.request, 'tenant') and self.request.tenant:
-            tenant = self.request.tenant
-        else:
-            # Development/Test mode: try to get tenant from user or create default
-            from accounts.models import Tenant, UserTenant
-            try:
-                user_tenant = UserTenant.objects.filter(user=self.request.user, is_owner=True).first()
-                if user_tenant:
-                    tenant = user_tenant.tenant
-                else:
-                    # Create a default tenant for testing
-                    tenant, created = Tenant.objects.get_or_create(
-                        name="Default Test Tenant",
-                        defaults={'domain': 'test.com'}
-                    )
-            except Exception as e:
-                # Fallback for any issues
-                tenant, created = Tenant.objects.get_or_create(
-                    name="Default Test Tenant",
-                    defaults={'domain': 'test.com'}
-                )
-                tenant = tenant
-
-        # Validate that the client belongs to the same tenant
         client = serializer.validated_data.get('client')
-        if client and client.tenant != tenant:
+        if not client:
+            from rest_framework import serializers
+            raise serializers.ValidationError("Client is required.")
+
+        tenant = client.tenant
+
+        if not UserTenant.objects.filter(user=self.request.user, tenant=tenant, is_approved=True).exists():
+            from rest_framework import serializers
+            raise serializers.ValidationError("Client does not belong to the current tenant.")
+
+        if hasattr(self.request, 'tenant') and self.request.tenant and self.request.tenant != tenant:
             from rest_framework import serializers
             raise serializers.ValidationError("Client does not belong to the current tenant.")
 
@@ -452,7 +471,7 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     serializer_class = MilestoneSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageMilestones]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "project"]
+    filterset_fields = ["status", "project", "project__slug"]
     search_fields = ["name", "description"]
     ordering_fields = ["name", "due_date"]
     ordering = ['name']
@@ -465,6 +484,14 @@ class MilestoneViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         project_slug = self.kwargs.get('project_slug')
         if project_slug:
             queryset = queryset.filter(project__slug=project_slug)
+
+        project_param = self.request.query_params.get('project')
+        if project_param and not project_slug:
+            try:
+                uuid.UUID(str(project_param))
+                queryset = queryset.filter(project_id=project_param)
+            except ValueError:
+                queryset = queryset.filter(project__slug=project_param)
 
         return queryset.select_related('project').prefetch_related('sprints', 'sprints__tasks')
 
@@ -530,7 +557,7 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     serializer_class = SprintSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageSprints]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "milestone", "milestone__project"]
+    filterset_fields = ["status", "milestone", "milestone__project", "milestone__slug", "milestone__project__slug"]
     search_fields = ["name"]
     ordering_fields = ["name", "start_date"]
     ordering = ['start_date']
@@ -543,6 +570,18 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         project_slug = self.kwargs.get('project_slug')
         if project_slug:
             queryset = queryset.filter(milestone__project__slug=project_slug)
+
+        milestone_project_param = self.request.query_params.get('milestone__project')
+        if milestone_project_param and not project_slug:
+            try:
+                uuid.UUID(str(milestone_project_param))
+                queryset = queryset.filter(milestone__project_id=milestone_project_param)
+            except ValueError:
+                queryset = queryset.filter(milestone__project__slug=milestone_project_param)
+
+        milestone_slug_param = self.request.query_params.get('milestone__slug')
+        if milestone_slug_param:
+            queryset = queryset.filter(milestone__slug=milestone_slug_param)
 
         return queryset
 
@@ -557,11 +596,15 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     def assign_task(self, request, slug=None):
         sprint = self.get_object()
         task_id = request.data.get('task_id')
-        if not task_id:
-            return Response({'error': 'task_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        task_slug = request.data.get('task_slug')
+        if not task_id and not task_slug:
+            return Response({'error': 'task_id or task_slug is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            task = Task.objects.get(id=task_id, milestone=sprint.milestone)
+            if task_id:
+                task = Task.objects.get(id=task_id, milestone=sprint.milestone)
+            else:
+                task = Task.objects.get(slug=task_slug, milestone=sprint.milestone)
             task.sprint = sprint
             task.save()
             return Response({'message': 'Task assigned successfully'}, status=status.HTTP_200_OK)
@@ -575,8 +618,14 @@ class SprintViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     def unassign_task(self, request, slug=None):
         sprint = self.get_object()
         task_id = request.data.get('task_id')
+        task_slug = request.data.get('task_slug')
         try:
-            task = Task.objects.get(id=task_id, sprint=sprint)
+            if task_id:
+                task = Task.objects.get(id=task_id, sprint=sprint)
+            elif task_slug:
+                task = Task.objects.get(slug=task_slug, sprint=sprint)
+            else:
+                return Response({'error': 'task_id or task_slug is required'}, status=status.HTTP_400_BAD_REQUEST)
             task.sprint = None
             task.save()
             return Response({'message': 'Task unassigned'}, status=status.HTTP_200_OK)
@@ -668,7 +717,7 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = [permissions.IsAuthenticated, CanManageTasks]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ["status", "milestone", "sprint", "assignee", "milestone__project"]
+    filterset_fields = ["status", "priority", "milestone", "sprint", "assignee", "milestone__project", "milestone__slug", "sprint__slug", "milestone__project__slug"]
     search_fields = ["title", "description"]
     ordering_fields = ["title", "created_at"]
     ordering = ['created_at']
@@ -686,6 +735,22 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         sprint_slug = self.kwargs.get('sprint_slug')
         if sprint_slug:
             queryset = queryset.filter(sprint__slug=sprint_slug)
+
+        project_param = self.request.query_params.get('milestone__project')
+        if project_param and not project_slug:
+            try:
+                uuid.UUID(str(project_param))
+                queryset = queryset.filter(milestone__project_id=project_param)
+            except ValueError:
+                queryset = queryset.filter(milestone__project__slug=project_param)
+
+        milestone_slug_param = self.request.query_params.get('milestone__slug')
+        if milestone_slug_param:
+            queryset = queryset.filter(milestone__slug=milestone_slug_param)
+
+        sprint_slug_param = self.request.query_params.get('sprint__slug')
+        if sprint_slug_param:
+            queryset = queryset.filter(sprint__slug=sprint_slug_param)
 
         # Filter by backlog status
         backlog = self.request.query_params.get('backlog')
@@ -1456,6 +1521,82 @@ def signup_view(request):
     except Exception as e:
         logger.error(f"Signup view error: {e}")
         return Response({'error': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@extend_schema(
+    summary="Change password",
+    description="Change the authenticated user's password.",
+    request={
+        'application/json': {
+            'type': 'object',
+            'properties': {
+                'current_password': {'type': 'string', 'minLength': 1},
+                'new_password': {'type': 'string', 'minLength': 1},
+            },
+            'required': ['current_password', 'new_password'],
+        }
+    },
+    responses={
+        200: {
+            'description': 'Password changed',
+            'type': 'object',
+            'properties': {'message': {'type': 'string'}},
+        },
+        400: {
+            'description': 'Validation error',
+            'type': 'object',
+            'properties': {'error': {'type': 'string'}},
+        },
+        401: {
+            'description': 'Authentication required',
+            'type': 'object',
+            'properties': {'detail': {'type': 'string'}},
+        },
+    },
+)
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def change_password_view(request):
+    logger = logging.getLogger(__name__)
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+
+    if not current_password or not new_password:
+        return Response(
+            {'error': 'current_password and new_password are required'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user = request.user
+    if not user.check_password(current_password):
+        return Response({'error': 'Current password is incorrect'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        validate_password(new_password, user=user)
+    except ValidationError as exc:
+        return Response({'error': ' '.join(exc.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+
+    try:
+        tenant = None
+        user_tenant = UserTenant.objects.filter(user=user, is_approved=True).first()
+        if user_tenant:
+            tenant = user_tenant.tenant
+
+        AuditLogger.log_event(
+            action='user_password_change',
+            resource_type='user',
+            tenant=tenant,
+            user=user,
+            resource_id=str(user.id),
+            ip_address=get_client_ip(request),
+        )
+    except Exception as exc:
+        logger.error(f"Failed to log password change audit event: {exc}")
+
+    return Response({'message': 'Password changed successfully'})
 
 
 @extend_schema(
@@ -2544,5 +2685,3 @@ def excel_import_view(request):
     except Exception as e:
         logger.error(f"Excel import failed: {e}")
         return Response({'error': 'Failed to import data'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-

@@ -13,7 +13,7 @@ import SprintTable from './SprintTable';
 
 export default function SprintSection() {
     const { project } = useProject();
-    const { sprints, loading, error, addSprint, editSprint, removeSprint } = useSprints(project?.id || 0);
+    const { sprints, loading, error, addSprint, editSprint, removeSprint } = useSprints(project?.slug ?? '');
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
@@ -27,7 +27,7 @@ export default function SprintSection() {
             if (!token) return;
 
             try {
-                const data = await getMilestones(token, { projectId: project?.id });
+                const data = await getMilestones(token, { projectSlug: project?.slug });
                 setMilestones(data.results);
             } catch (err) {
                 console.error('Failed to fetch milestones:', err);
@@ -35,7 +35,7 @@ export default function SprintSection() {
         };
 
         fetchMilestones();
-    }, [project?.id]);
+    }, [project?.slug]);
 
     const handleAddSprint = () => {
         setModalMode('add');
@@ -97,7 +97,7 @@ export default function SprintSection() {
                         <option value="planned">Planned</option>
                         <option value="active">Active</option>
                         <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="canceled">Canceled</option>
                     </select>
                 </div>
                 <Button onClick={handleAddSprint} >

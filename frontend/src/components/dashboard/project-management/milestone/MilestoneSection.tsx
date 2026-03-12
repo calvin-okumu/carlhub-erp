@@ -18,7 +18,7 @@ interface MilestoneSectionProps {
 export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
     const { project } = useProject();
     const tenantId = tenant || parseInt(localStorage.getItem('tenant') || '1');
-    const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(project?.id || 0, tenantId);
+    const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(project?.slug ?? '', tenantId);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
@@ -62,7 +62,6 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
         due_date?: string;
         assignee?: number;
         project: string;
-        tenant: number;
     }) => {
         try {
             if (modalMode === 'add') {
@@ -105,7 +104,6 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
                 mode={modalMode}
                 milestone={selectedMilestone || undefined}
                 projectSlug={project?.slug || ''}
-                tenant={tenantId}
                 assignees={users}
                 projectStart={project?.start_date}
                 projectEnd={project?.end_date}

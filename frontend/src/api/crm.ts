@@ -2,8 +2,9 @@ import { Client, CreateClientData, UpdateClientData, UserTenant } from './types'
 import { API_BASE } from './index';
 import { PaginatedResponse } from './types';
 
-export async function getClients(token: string, params?: { search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[] | PaginatedResponse<Client>> {
+export async function getClients(token: string, params?: { tenant?: string; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<Client[] | PaginatedResponse<Client>> {
   const query = new URLSearchParams();
+  if (params?.tenant) query.append('tenant', params.tenant.toString());
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
   if (params?.status) query.append('status', params.status);
@@ -104,4 +105,3 @@ export async function getUserTenants(token: string): Promise<UserTenant[]> {
 
   return data.results || data;
 }
-

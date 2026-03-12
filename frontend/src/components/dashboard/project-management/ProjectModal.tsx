@@ -18,12 +18,20 @@ interface ProjectModalProps {
 }
 
 export default function ProjectModal({ isOpen, onClose, mode, project, onSave }: ProjectModalProps) {
-    const { clients, refetch } = useClients();
-    const [formData, setFormData] = useState({
+    const { clients, currentTenant, refetch } = useClients();
+    const [formData, setFormData] = useState<{
+        name: string;
+        client: string;
+        status: 'planning' | 'active' | 'on_hold' | 'completed' | 'archived';
+        priority: 'high' | 'medium' | 'low';
+        start_date: string;
+        end_date: string;
+        budget: string;
+    }>({
         name: '',
         client: '',
-        status: 'active' as 'active' | 'completed' | 'on-hold',
-        priority: 'medium' as 'high' | 'medium' | 'low',
+        status: 'active',
+        priority: 'medium',
         start_date: '',
         end_date: '',
         budget: '',
@@ -37,11 +45,15 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
     }, [isOpen, refetch]);
 
     useEffect(() => {
+        const tenantClients = currentTenant
+            ? clients.filter((client) => String(client.tenant) === String(currentTenant.tenant))
+            : clients;
+
         if (mode === 'edit' && project) {
             setFormData({
                 name: project.name,
                 client: project.client,
-                status: project.status as 'active' | 'completed' | 'on-hold',
+                status: project.status as 'planning' | 'active' | 'on_hold' | 'completed' | 'archived',
                 priority: project.priority as 'high' | 'medium' | 'low',
                 start_date: project.start_date,
                 end_date: project.end_date,
@@ -50,7 +62,7 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
         } else {
             setFormData({
                 name: '',
-                client: clients.length > 0 ? clients[0].id : '',
+                client: tenantClients.length > 0 ? tenantClients[0].id : '',
                 status: 'active',
                 priority: 'medium',
                 start_date: '',
@@ -58,11 +70,15 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                 budget: '',
             });
         }
-    }, [mode, project, clients]);
+    }, [mode, project, clients, currentTenant]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: name === 'client' ? parseInt(value) : value }));
+        if (name === 'client') {
+            setFormData(prev => ({ ...prev, client: value }));
+            return;
+        }
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -117,12 +133,15 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                     <Select
                         id="client"
                         name="client"
-                        value={formData.client.toString()}
+                        value={formData.client}
                         onChange={handleChange}
                         required
                         className="mt-1"
                     >
-                        {clients.map(client => (
+                        {(currentTenant
+                            ? clients.filter((client) => String(client.tenant) === String(currentTenant.tenant))
+                            : clients
+                        ).map(client => (
                             <option key={client.id} value={client.id}>{client.name}</option>
                         ))}
                     </Select>
@@ -137,9 +156,11 @@ export default function ProjectModal({ isOpen, onClose, mode, project, onSave }:
                             onChange={handleChange}
                             className="mt-1"
                         >
+                            <option value="planning">Planning</option>
                             <option value="active">Active</option>
+                            <option value="on_hold">On Hold</option>
                             <option value="completed">Completed</option>
-                            <option value="on-hold">On Hold</option>
+                            <option value="archived">Archived</option>
                         </Select>
                     </div>
                     <div>

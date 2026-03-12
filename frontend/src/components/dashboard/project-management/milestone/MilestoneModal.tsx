@@ -14,7 +14,6 @@ interface MilestoneModalProps {
     mode: 'add' | 'edit';
     milestone?: Milestone;
     projectSlug: string;
-    tenant: number;
     assignees: UserTenant[];
     projectStart?: string;
     projectEnd?: string;
@@ -27,17 +26,15 @@ interface MilestoneModalProps {
         due_date?: string;
         assignee?: number;
         project: string;
-        tenant: number;
     }) => void;
 }
 
-export default function MilestoneModal({ isOpen, onClose, mode, milestone, projectSlug, tenant, assignees, projectStart, projectEnd, onSave }: MilestoneModalProps) {
+export default function MilestoneModal({ isOpen, onClose, mode, milestone, projectSlug, assignees, projectStart, projectEnd, onSave }: MilestoneModalProps) {
     const [formData, setFormData] = useState({
         name: '',
         description: '',
-        status: 'pending',
+        status: 'planning',
         planned_start: '',
-
         due_date: '',
         assignee: '',
     });
@@ -72,24 +69,40 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
         if (name === 'planned_start') {
-            if (value && projectStart && value < projectStart) {
-                setErrors(prev => ({ ...prev, planned_start: 'Milestone planned start date cannot be before the project start date.' }));
-            } else {
-                setErrors(prev => {
-                    const { planned_start, ...rest } = prev;
-                    return rest;
-                });
-            }
+            setErrors(prev => {
+                const next = { ...prev };
+                if (value && projectStart && value < projectStart) {
+                    next.planned_start = 'Milestone planned start date cannot be before the project start date.';
+                } else if (formData.due_date && value && value >= formData.due_date) {
+                    next.planned_start = 'Planned start date must be before the due date.';
+                } else {
+                    delete next.planned_start;
+                }
+                if (formData.due_date && value && value >= formData.due_date) {
+                    next.due_date = 'Due date must be after the planned start date.';
+                } else if (next.due_date === 'Due date must be after the planned start date.') {
+                    delete next.due_date;
+                }
+                return next;
+            });
         }
         if (name === 'due_date') {
-            if (value && projectEnd && value > projectEnd) {
-                setErrors(prev => ({ ...prev, due_date: 'Milestone due date cannot be after the project end date.' }));
-            } else {
-                setErrors(prev => {
-                    const { due_date, ...rest } = prev;
-                    return rest;
-                });
-            }
+            setErrors(prev => {
+                const next = { ...prev };
+                if (value && projectEnd && value > projectEnd) {
+                    next.due_date = 'Milestone due date cannot be after the project end date.';
+                } else if (formData.planned_start && value && value <= formData.planned_start) {
+                    next.due_date = 'Due date must be after the planned start date.';
+                } else {
+                    delete next.due_date;
+                }
+                if (formData.planned_start && value && value <= formData.planned_start) {
+                    next.planned_start = 'Planned start date must be before the due date.';
+                } else if (next.planned_start === 'Planned start date must be before the due date.') {
+                    delete next.planned_start;
+                }
+                return next;
+            });
         }
     };
 
@@ -103,13 +116,10 @@ export default function MilestoneModal({ isOpen, onClose, mode, milestone, proje
             name: formData.name,
             description: formData.description || undefined,
             status: formData.status,
-            progress: 0,
             planned_start: formData.planned_start || undefined,
-
             due_date: formData.due_date || undefined,
             assignee: formData.assignee ? parseInt(formData.assignee) : undefined,
             project: projectSlug,
-            tenant: tenant,
         };
 
         onSave(data);

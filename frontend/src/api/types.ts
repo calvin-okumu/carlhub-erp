@@ -24,7 +24,7 @@ export interface Client {
   email: string;
   phone: string;
   status: string;
-  tenant: number;
+  tenant: string;
   tenant_name: string;
   projects_count: string;
   created_at: string;
@@ -36,7 +36,7 @@ export interface CreateClientData {
   email: string;
   phone?: string;
   status: string;
-  tenant: number;
+  tenant: string;
 }
 
 export interface UpdateClientData {
@@ -104,7 +104,7 @@ export interface UserTenant {
   user_email: string;
   user_first_name: string;
   user_last_name: string;
-  tenant: number;
+  tenant: string;
   tenant_name: string;
   is_owner: boolean;
   is_approved: boolean;
@@ -115,7 +115,7 @@ export interface Project {
   id: string;
   name: string;
   slug: string;
-  client: number;
+  client: string;
   client_name: string;
   status: string;
   priority: string;

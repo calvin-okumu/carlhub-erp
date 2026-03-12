@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { getProject } from '@/api/project_mgmt';
+import { getUserTenants } from '@/api/crm';
 import type { Project } from '@/api/types';
 
 interface ProjectContextType {
@@ -32,7 +33,11 @@ export function ProjectProvider({ children, activeTab, onTabChange }: { children
         }
 
         try {
-            const data = await getProject(token, id);
+            const tenants = await getUserTenants(token);
+            const ownerTenant = Array.isArray(tenants)
+                ? tenants.find((tenant) => tenant.is_owner) || tenants[0]
+                : tenants;
+            const data = await getProject(token, id, ownerTenant?.tenant);
             setProject(data);
         } catch (err) {
             console.error('Error loading project:', err);

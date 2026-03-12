@@ -14,7 +14,7 @@ import BacklogTable from './BacklogTable';
 
 export default function BacklogSection() {
     const { project } = useProject();
-    const { tasks, loading, error, addTask, editTask, removeTask } = useTasks(project?.id || '', true);
+    const { tasks, loading, error, addTask, editTask, removeTask } = useTasks(project?.slug || '', true);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -30,8 +30,8 @@ export default function BacklogSection() {
 
             try {
                 const [milestonesData, sprintsData, usersData] = await Promise.all([
-                    getMilestones(token, { projectId: project?.id }),
-                    getSprints(token, { projectId: project?.id }),
+                    getMilestones(token, { projectSlug: project?.slug }),
+                    getSprints(token, { projectSlug: project?.slug }),
                     getUserTenants(token)
                 ]);
                 setMilestones(milestonesData.results);
@@ -43,7 +43,7 @@ export default function BacklogSection() {
         };
 
         fetchData();
-    }, [project?.id]);
+    }, [project?.slug]);
 
     const handleAddTask = () => {
         setModalMode('add');
@@ -72,7 +72,7 @@ export default function BacklogSection() {
             if (modalMode === 'add') {
                 await addTask(data);
             } else if (selectedTask) {
-                await editTask(selectedTask.id, data);
+                await editTask(selectedTask.slug, data);
             }
             setModalOpen(false);
         } catch (error) {
@@ -102,7 +102,6 @@ export default function BacklogSection() {
                 onDeleteTask={removeTask}
                 onAddTask={handleAddTask}
                 searchValue={searchValue}
-                projectSlug={project?.slug || ''}
             />
             <CreateTaskModal
                 isOpen={modalOpen}

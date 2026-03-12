@@ -17,6 +17,18 @@ import { getUsers } from "@/api/users";
 import { API_BASE, resendInvitation, deleteInvitation } from "@/api";
 import type { UserTenant, User, UserProfile } from "@/api/types";
 
+type InvitationApi = {
+    id: number;
+    email: string;
+    created_at: string;
+    is_used?: boolean;
+    email_confirmed?: boolean;
+    token: string;
+    slug: string;
+};
+
+type InvitationResponse = { results?: InvitationApi[] } | InvitationApi[];
+
 export const UserSection = () => {
     const [activeTab, setActiveTab] = useState<'invites' | 'activeUsers' | 'employees' | 'groups'>('employees');
     const [employeeSubTab, setEmployeeSubTab] = useState<'active' | 'terminated'>('active');
@@ -104,11 +116,13 @@ export const UserSection = () => {
             });
 
             if (response.ok) {
-                const invitations = await response.json();
+                const invitations = (await response.json()) as InvitationResponse;
 
                 // Handle different response formats (results array or direct array)
-                const invitesArray = invitations.results || invitations || [];
-                const transformedInvites = invitesArray.map((invite: any) => ({
+                const invitesArray = Array.isArray(invitations)
+                    ? invitations
+                    : invitations.results || [];
+                const transformedInvites = invitesArray.map((invite) => ({
                     id: invite.id,
                     email: invite.email,
                     sentDate: new Date(invite.created_at).toLocaleDateString(),
@@ -383,4 +397,3 @@ export const UserSection = () => {
         </div>
     );
 };
-

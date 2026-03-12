@@ -12,15 +12,16 @@ interface ProjectHeaderProps {
 
 const StatusBadge = ({ status }: { status: string }) => {
     const styles: Record<string, string> = {
+        planning: 'bg-yellow-100 text-yellow-700 border-yellow-200',
         active: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-        pending: 'bg-amber-100 text-amber-700 border-amber-200',
         completed: 'bg-blue-100 text-blue-700 border-blue-200',
-        'on-hold': 'bg-gray-100 text-gray-700 border-gray-200'
+        on_hold: 'bg-orange-100 text-orange-700 border-orange-200',
+        archived: 'bg-gray-200 text-gray-700 border-gray-300'
     };
 
     return (
-        <span className={`px-3 py-1 rounded-md text-xs font-medium border ${styles[status] || styles.pending}`}>
-            {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+        <span className={`px-3 py-1 rounded-md text-xs font-medium border ${styles[status] || styles.planning}`}>
+            {status.charAt(0).toUpperCase() + status.slice(1).replace(/[_-]/g, ' ')}
         </span>
     );
 };
@@ -56,5 +57,3 @@ export default function ProjectHeader({ project, onEdit, onExport }: ProjectHead
         </div>
     );
 }
-
-

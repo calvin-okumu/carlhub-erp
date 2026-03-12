@@ -27,13 +27,47 @@ class ClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Client
-        fields = ['id', 'name', 'slug', 'email', 'phone', 'status', 'tenant', 'tenant_name', 'projects_count', 'created_at', 'updated_at']
+        fields = [
+            'id',
+            'name',
+            'slug',
+            'email',
+            'phone',
+            'status',
+            'address',
+            'billing_address',
+            'company_size',
+            'credit_limit',
+            'industry',
+            'lead_score',
+            'lead_source',
+            'notes',
+            'payment_terms',
+            'tax_id',
+            'website',
+            'tenant',
+            'tenant_name',
+            'projects_count',
+            'created_at',
+            'updated_at',
+        ]
         read_only_fields = ['tenant']
         help_texts = {
             'name': 'Full name of the client',
             'email': 'Primary contact email address (must be unique)',
             'phone': 'Contact phone number',
             'status': 'Current status of the client relationship',
+            'address': 'Primary client address',
+            'billing_address': 'Billing address for invoices',
+            'company_size': 'Company size category',
+            'credit_limit': 'Credit limit for billing',
+            'industry': 'Client industry sector',
+            'lead_score': 'Lead score for this client',
+            'lead_source': 'Lead source channel',
+            'notes': 'Internal notes about the client',
+            'payment_terms': 'Payment terms (e.g., Net 30)',
+            'tax_id': 'Tax identification number',
+            'website': 'Client website URL',
             'tenant': 'Tenant organization this client belongs to',
         }
 
@@ -93,7 +127,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 class MilestoneSerializer(serializers.ModelSerializer):
     project_name = serializers.CharField(source='project.name', read_only=True, help_text='Name of the parent project')
     sprints_count = serializers.SerializerMethodField(help_text='Number of sprints in this milestone')
-    progress = serializers.IntegerField(min_value=0, max_value=100, help_text='Milestone progress percentage (0-100)')
+    progress = serializers.IntegerField(min_value=0, max_value=100, read_only=True, help_text='Milestone progress percentage (0-100)')
     project = serializers.CharField(help_text='Project slug')
 
     def validate_progress(self, value):
@@ -132,7 +166,7 @@ class MilestoneSerializer(serializers.ModelSerializer):
             tenant = request.tenant
         elif request and request.user.is_authenticated:
             # Fallback for dev mode
-            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            user_tenant = UserTenant.objects.filter(user=request.user, is_approved=True).first()
             tenant = user_tenant.tenant if user_tenant else None
         else:
             tenant = None
@@ -201,7 +235,7 @@ class SprintSerializer(serializers.ModelSerializer):
             tenant = request.tenant
         elif request and request.user.is_authenticated:
             # Fallback for dev mode
-            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            user_tenant = UserTenant.objects.filter(user=request.user, is_approved=True).first()
             tenant = user_tenant.tenant if user_tenant else None
         else:
             tenant = None
@@ -237,7 +271,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Task
-        fields = ['id', 'title', 'slug', 'description', 'status', 'milestone', 'milestone_name', 'sprint', 'sprint_name', 'assignee', 'start_date', 'end_date', 'estimated_hours', 'tenant', 'progress', 'is_assigned', 'created_at', 'updated_at']
+        fields = ['id', 'title', 'slug', 'description', 'status', 'priority', 'milestone', 'milestone_name', 'sprint', 'sprint_name', 'assignee', 'start_date', 'end_date', 'estimated_hours', 'tenant', 'progress', 'is_assigned', 'created_at', 'updated_at']
         read_only_fields = ['progress']
 
     @extend_schema_field(serializers.BooleanField)
@@ -257,7 +291,7 @@ class TaskSerializer(serializers.ModelSerializer):
             tenant = request.tenant
         elif request and request.user.is_authenticated:
             # Fallback for dev mode
-            user_tenant = UserTenant.objects.filter(user=request.user, is_owner=True).first()
+            user_tenant = UserTenant.objects.filter(user=request.user, is_approved=True).first()
             tenant = user_tenant.tenant if user_tenant else None
         else:
             tenant = None

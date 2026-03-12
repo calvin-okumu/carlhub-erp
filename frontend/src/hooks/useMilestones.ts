@@ -11,7 +11,7 @@ function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
-export function useMilestones(projectId: number, tenant?: number) {
+export function useMilestones(projectSlug: string, tenant?: number) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export function useMilestones(projectId: number, tenant?: number) {
 
     setLoading(true);
     try {
-      const data = await getMilestones(token, { projectId, tenant, ordering: '-created_at' });
+      const data = await getMilestones(token, { projectSlug, tenant, ordering: '-created_at' });
       setMilestones(data.results);
     } catch (err) {
       console.error(err);
@@ -30,7 +30,7 @@ export function useMilestones(projectId: number, tenant?: number) {
     } finally {
       setLoading(false);
     }
-  }, [projectId, tenant]);
+  }, [projectSlug, tenant]);
 
   useEffect(() => {
     fetchMilestones();
@@ -45,14 +45,15 @@ export function useMilestones(projectId: number, tenant?: number) {
     due_date?: string;
     assignee?: number;
     project: string;
-    tenant: number;
   }) => {
     const token = getToken();
     if (!token) return;
 
     // Temporary milestone for optimistic update
+    const tempId = `temp-${Date.now()}`;
     const tempMilestone: Milestone = {
-      id: Date.now(), // temporary id
+      id: tempId,
+      slug: tempId,
       name: data.name,
       description: data.description || "",
       status: data.status,
@@ -71,10 +72,7 @@ export function useMilestones(projectId: number, tenant?: number) {
 
     setLoading(true);
     try {
-      const newMilestone = await createMilestone(token, projectId, {
-        ...data,
-        progress: 0,
-      });
+      const newMilestone = await createMilestone(token, data);
       console.log("Created milestone:", newMilestone);
       setMilestones((prev) =>
         prev.map((m) => (m.id === tempMilestone.id ? newMilestone : m)),
@@ -165,4 +163,3 @@ export function useMilestones(projectId: number, tenant?: number) {
     setError,
   };
 }
-

@@ -33,7 +33,13 @@ export function useClients() {
       const ownerTenant = Array.isArray(tenants) ? tenants.find((t) => t.is_owner) || tenants[0] : tenants;
       setCurrentTenant(ownerTenant || null);
 
-      const data = await getClients(token, { ordering: '-created_at', ...params });
+      if (!ownerTenant) {
+        setClients([]);
+        setPagination(null);
+        return;
+      }
+
+      const data = await getClients(token, { tenant: ownerTenant.tenant, ordering: '-created_at', ...params });
       if (params?.page || params?.limit) {
         // Paginated response
         const paginatedData = data as PaginatedResponse<Client>;
