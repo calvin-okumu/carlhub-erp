@@ -230,6 +230,15 @@ const BacklogTable = React.memo(function BacklogTable({ tasks, loading, error, o
 
     return (
         <div className="bg-white/90 rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/70 px-6 py-4">
+                <div>
+                    <p className="text-sm font-semibold text-slate-900">Backlog pipeline</p>
+                    <p className="text-xs text-slate-500">
+                        {filteredTasks.length} task{filteredTasks.length === 1 ? '' : 's'} matched
+                    </p>
+                </div>
+                <p className="text-xs font-medium text-slate-500">Page {page} of {totalPages}</p>
+            </div>
             <Table headers={headers} rows={rows} currentPage={page} totalPages={totalPages} onPageChange={setPage} itemsPerPage={itemsPerPage} totalItems={filteredTasks.length} />
         </div>
     );

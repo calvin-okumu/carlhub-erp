@@ -34,7 +34,12 @@ import CompletedTasksSection from '@/components/dashboard/project-management/com
                case 'documents':
                    return (
                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-10 text-center text-slate-500 shadow-sm">
-                           Documents section coming soon.
+                           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Project Documents</p>
+                           <h2 className="mt-3 text-xl font-semibold text-slate-900">Documents Hub</h2>
+                           <p className="mt-2 text-sm text-slate-500">Store briefs, contracts, and deliverables here.</p>
+                           <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-200/70 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                               Coming soon
+                           </div>
                        </div>
                    );
                   case 'completed-tasks':

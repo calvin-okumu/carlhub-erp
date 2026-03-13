@@ -50,6 +50,14 @@ export default function BacklogSection() {
         [tasks, isDueSoon]
     );
 
+    const backlogStats = useMemo(() => {
+        const total = tasks.length;
+        const unassigned = tasks.filter((task) => !task.assignee).length;
+        const highPriority = tasks.filter((task) => task.priority === 'high').length;
+        const completed = tasks.filter((task) => task.status === 'done').length;
+        return { total, unassigned, highPriority, completed };
+    }, [tasks]);
+
     const hasFilters = searchValue.trim().length > 0 || dueSoonOnly;
 
     useEffect(() => {
@@ -112,12 +120,12 @@ export default function BacklogSection() {
 
     return (
         <div className="space-y-6">
-            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm">
+            <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
+                    <div className="min-w-[240px] flex-1 space-y-2">
                         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Project backlog</p>
-                        <h2 className="mt-2 text-2xl font-semibold text-slate-900">Backlog</h2>
-                        <p className="mt-2 text-sm text-slate-600">Review, prioritize, and prepare upcoming work for future sprints.</p>
+                        <h2 className="text-2xl font-semibold text-slate-900">Backlog</h2>
+                        <p className="text-sm text-slate-600">Review, prioritize, and prepare upcoming work for future sprints.</p>
                     </div>
                     <Button onClick={handleAddTask}>
                         <Plus className="h-4 w-4 mr-2" />
@@ -125,9 +133,10 @@ export default function BacklogSection() {
                     </Button>
                 </div>
 
-                <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-1 flex-wrap items-center gap-3">
-                        <div className="min-w-[220px] flex-1">
+                <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+                    <div className="space-y-4 rounded-xl border border-slate-200/70 bg-slate-50/70 p-4">
+                        <div className="space-y-2">
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Filters</p>
                             <SearchInput
                                 value={searchValue}
                                 onChange={setSearchValue}
@@ -137,7 +146,7 @@ export default function BacklogSection() {
                         <button
                             type="button"
                             onClick={() => setDueSoonOnly((prev) => !prev)}
-                            className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
+                            className={`inline-flex items-center justify-between gap-2 rounded-full border px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
                                 dueSoonOnly
                                     ? 'border-slate-900 bg-slate-900 text-white'
                                     : 'border-slate-200/70 bg-white text-slate-500 hover:border-slate-300'
@@ -150,11 +159,9 @@ export default function BacklogSection() {
                                 {dueSoonCount}
                             </span>
                         </button>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                        <span className="rounded-full border border-slate-200/70 bg-white px-3 py-1 text-slate-600">
+                        <div className="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-500">
                             Showing <span className="font-semibold text-slate-900">{filteredTasks.length}</span> of {tasks.length} tasks
-                        </span>
+                        </div>
                         {hasFilters && (
                             <button
                                 type="button"
@@ -168,8 +175,42 @@ export default function BacklogSection() {
                             </button>
                         )}
                     </div>
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total</p>
+                            <div className="mt-3 flex items-baseline justify-between">
+                                <span className="text-2xl font-semibold text-slate-900">{backlogStats.total}</span>
+                                <span className="text-xs font-medium text-slate-500">Tasks</span>
+                            </div>
+                            <p className="mt-3 text-xs text-slate-500">Active backlog items.</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Due soon</p>
+                            <div className="mt-3 flex items-baseline justify-between">
+                                <span className="text-2xl font-semibold text-slate-900">{dueSoonCount}</span>
+                                <span className="text-xs font-medium text-amber-600">Next 7 days</span>
+                            </div>
+                            <p className="mt-3 text-xs text-slate-500">Upcoming deadlines.</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Unassigned</p>
+                            <div className="mt-3 flex items-baseline justify-between">
+                                <span className="text-2xl font-semibold text-slate-900">{backlogStats.unassigned}</span>
+                                <span className="text-xs font-medium text-slate-500">Needs owner</span>
+                            </div>
+                            <p className="mt-3 text-xs text-slate-500">Assign for progress.</p>
+                        </div>
+                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">High priority</p>
+                            <div className="mt-3 flex items-baseline justify-between">
+                                <span className="text-2xl font-semibold text-slate-900">{backlogStats.highPriority}</span>
+                                <span className="text-xs font-medium text-rose-600">Critical</span>
+                            </div>
+                            <p className="mt-3 text-xs text-slate-500">Requires focus.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </section>
             <BacklogTable
                 tasks={tasks}
                 loading={loading}
