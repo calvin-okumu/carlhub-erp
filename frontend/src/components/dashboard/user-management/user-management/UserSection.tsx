@@ -15,6 +15,7 @@ import InviteModal from "./Employees/InviteModal";
 import { useEmployees } from "@/hooks/useEmployees";
 import { getUsers } from "@/api/users";
 import { API_BASE, resendInvitation, deleteInvitation } from "@/api";
+import { authFetch } from "@/api/client";
 import type { UserTenant, User, UserProfile } from "@/api/types";
 
 type InvitationApi = {
@@ -109,11 +110,10 @@ export const UserSection = () => {
             const token = localStorage.getItem("access_token");
             if (!token) return;
 
-            const response = await fetch(`${API_BASE}/invitations/`, {
+            const response = await authFetch(`${API_BASE}/invitations/`, {
                 headers: {
-                    'Authorization': `Token ${token}`,
                 }
-            });
+            }, { token });
 
             if (response.ok) {
                 const invitations = (await response.json()) as InvitationResponse;

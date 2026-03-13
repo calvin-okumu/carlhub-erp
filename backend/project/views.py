@@ -337,19 +337,35 @@ class ProjectViewSet(TenantScopedMixin, viewsets.ModelViewSet):
         queryset = super().get_queryset()
         tenant_param = self.request.query_params.get('tenant')
 
-        if not tenant_param:
-            return queryset.none()
+        if tenant_param:
+            if hasattr(self.request, 'tenant') and self.request.tenant:
+                if str(self.request.tenant.id) != str(tenant_param):
+                    return queryset.none()
+            elif self.request.user.is_authenticated:
+                if not UserTenant.objects.filter(
+                    user=self.request.user,
+                    tenant_id=tenant_param,
+                    is_approved=True,
+                ).exists():
+                    return queryset.none()
+            else:
+                return queryset.none()
+
+            return queryset.filter(tenant_id=tenant_param).prefetch_related('milestones', 'milestones__sprints')
 
         if hasattr(self.request, 'tenant') and self.request.tenant:
-            if str(self.request.tenant.id) != str(tenant_param):
-                return queryset.none()
-        elif self.request.user.is_authenticated:
-            if not UserTenant.objects.filter(user=self.request.user, tenant_id=tenant_param).exists():
-                return queryset.none()
-        else:
-            return queryset.none()
+            return queryset.filter(tenant=self.request.tenant).prefetch_related('milestones', 'milestones__sprints')
 
-        return queryset.filter(tenant_id=tenant_param).prefetch_related('milestones', 'milestones__sprints')
+        if self.request.user.is_authenticated:
+            tenant_ids = UserTenant.objects.filter(
+                user=self.request.user,
+                is_approved=True,
+            ).values_list('tenant_id', flat=True)
+            if not tenant_ids:
+                return queryset.none()
+            return queryset.filter(tenant_id__in=tenant_ids).prefetch_related('milestones', 'milestones__sprints')
+
+        return queryset.none()
 
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)

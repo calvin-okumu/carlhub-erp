@@ -9,6 +9,7 @@ import Table from '@/components/ui/Table';
 import Card from '@/components/ui/Card';
 import { useProject } from '@/context/ProjectContext';
 import { Trash2 } from 'lucide-react';
+import { authFetch } from '@/api/client';
 
 export default function CompletedTasksSection() {
     const { project } = useProject();
@@ -50,12 +51,9 @@ export default function CompletedTasksSection() {
         if (!token) return;
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskSlug}/`, {
+            const response = await authFetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/tasks/${taskSlug}/`, {
                 method: 'DELETE',
-                headers: {
-                        Authorization: `Bearer ${token}`,
-                },
-            });
+            }, { token });
 
             if (!response.ok) {
                 throw new Error('Failed to delete task');

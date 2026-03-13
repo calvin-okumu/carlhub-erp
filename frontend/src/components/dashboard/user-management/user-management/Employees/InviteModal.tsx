@@ -3,6 +3,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { API_BASE } from '@/api';
+import { authFetch } from '@/api/client';
 
 interface Group {
     id: number;
@@ -71,17 +72,16 @@ export default function InviteModal({ isOpen, onClose, groups = [], onInviteSent
 
         setIsLoading(true);
         try {
-            const response = await fetch(`${API_BASE}/invite-member/`, {
+            const response = await authFetch(`${API_BASE}/invite-member/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Token ${token}`,
                 },
                 body: JSON.stringify({
                     email: email.trim(),
                     role: role
                 })
-            });
+            }, { token });
 
             const data = await response.json();
 
