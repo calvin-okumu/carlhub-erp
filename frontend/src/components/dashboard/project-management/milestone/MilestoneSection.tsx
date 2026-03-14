@@ -124,71 +124,72 @@ export default function MilestoneSection() {
                                 placeholder="Search milestones..."
                             />
                         </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {[
-                                { label: 'All', value: 'all' },
-                                { label: 'Planning', value: 'planning' },
-                                { label: 'Active', value: 'active' },
-                                { label: 'Completed', value: 'completed' },
-                            ].map((item) => (
-                                <button
-                                    key={item.value}
-                                    type="button"
-                                    onClick={() => setStatusFilter(item.value as 'all' | 'planning' | 'active' | 'completed')}
-                                    className={`rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.25em] transition-all ${
-                                        statusFilter === item.value
-                                            ? 'border-slate-900 bg-slate-900 text-white'
-                                            : 'border-slate-200/70 bg-white text-slate-500 hover:border-slate-300'
-                                    }`}
-                                >
-                                    {item.label}
-                                </button>
-                            ))}
-                        </div>
                     </div>
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{milestoneStats.total}</span>
-                                <span className="text-xs font-medium text-slate-500">Milestones</span>
-                            </div>
-                            <div className="mt-4 h-2 rounded-full bg-slate-100">
-                                <div
-                                    className="h-2 rounded-full bg-blue-500"
-                                    style={{ width: `${milestoneStats.averageProgress}%` }}
-                                />
-                            </div>
-                            <p className="mt-2 text-xs text-slate-500">Avg. progress {milestoneStats.averageProgress}%</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Active</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{milestoneStats.active}</span>
-                                <span className="text-xs font-medium text-emerald-600">In progress</span>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-500">Focus milestones currently underway.</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Planning</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{milestoneStats.planning}</span>
-                                <span className="text-xs font-medium text-amber-600">Queued</span>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-500">Upcoming milestones to prepare for.</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Completed</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{milestoneStats.completed}</span>
-                                <span className="text-xs font-medium text-slate-500">Done</span>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-500">{milestoneStats.overdue} overdue milestone{milestoneStats.overdue === 1 ? '' : 's'}.</p>
-                        </div>
+                        {[
+                            {
+                                key: 'all',
+                                label: 'Total',
+                                value: milestoneStats.total,
+                                note: `Avg. progress ${milestoneStats.averageProgress}%`,
+                            },
+                            {
+                                key: 'active',
+                                label: 'Active',
+                                value: milestoneStats.active,
+                                note: 'In progress',
+                            },
+                            {
+                                key: 'planning',
+                                label: 'Planning',
+                                value: milestoneStats.planning,
+                                note: 'Queued',
+                            },
+                            {
+                                key: 'completed',
+                                label: 'Completed',
+                                value: milestoneStats.completed,
+                                note: `${milestoneStats.overdue} overdue`,
+                            },
+                        ].map((item) => {
+                            const isActive = statusFilter === item.key;
+                            return (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    onClick={() => setStatusFilter(item.key as 'all' | 'planning' | 'active' | 'completed')}
+                                    className={`rounded-2xl border p-4 text-left shadow-sm transition-all ${
+                                        isActive
+                                            ? 'border-slate-900 bg-slate-900 text-white'
+                                            : 'border-slate-200/70 bg-white/90 text-slate-900 hover:-translate-y-0.5 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <p className={`text-xs font-semibold uppercase tracking-wider ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
+                                        {item.label}
+                                    </p>
+                                    <div className="mt-3 flex items-baseline justify-between">
+                                        <span className="text-2xl font-semibold">{item.value}</span>
+                                        <span className={`text-xs font-medium ${isActive ? 'text-white/70' : 'text-slate-500'}`}>
+                                            {item.label === 'Total' ? 'Milestones' : item.note}
+                                        </span>
+                                    </div>
+                                    {item.label === 'Total' && (
+                                        <div className="mt-4 h-2 rounded-full bg-slate-100">
+                                            <div
+                                                className={`h-2 rounded-full ${isActive ? 'bg-white/60' : 'bg-blue-500'}`}
+                                                style={{ width: `${milestoneStats.averageProgress}%` }}
+                                            />
+                                        </div>
+                                    )}
+                                    <p className={`mt-2 text-xs ${isActive ? 'text-white/70' : 'text-slate-500'}`}>
+                                        {item.label === 'Total' ? item.note : item.label === 'Completed' ? `${milestoneStats.overdue} overdue` : item.note}
+                                    </p>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </section>
-
             <MilestoneTable
                 milestones={statusFilter === 'all'
                     ? milestones

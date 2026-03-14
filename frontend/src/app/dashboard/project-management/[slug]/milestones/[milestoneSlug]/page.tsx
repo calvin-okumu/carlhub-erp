@@ -65,7 +65,7 @@ export default function MilestoneDetailPage() {
     <ProjectLayout project={project} activeTab="milestones" onTabChange={handleTabChange}>
       <div className="space-y-6">
         <MilestoneDetailHeader milestone={milestone} projectSlug={project.slug} />
-        <SprintSection milestoneSlug={milestone.slug} />
+        <SprintSection milestoneSlug={milestone.slug} embedded />
       </div>
     </ProjectLayout>
   );

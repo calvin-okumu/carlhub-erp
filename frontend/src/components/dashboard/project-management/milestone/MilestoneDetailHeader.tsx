@@ -1,8 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { ArrowLeft, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import type { Milestone } from "@/api/types";
 
 interface MilestoneDetailHeaderProps {
@@ -28,20 +27,6 @@ const formatDate = (date?: string) => {
 export default function MilestoneDetailHeader({ milestone, projectSlug }: MilestoneDetailHeaderProps) {
   return (
     <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
-      <div className="mb-5 flex flex-wrap items-center gap-3 text-sm">
-        <Link
-          href={`/dashboard/project-management/${projectSlug}?tab=milestones`}
-          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back to Milestones</span>
-        </Link>
-        <span className="text-slate-300">/</span>
-        <span className="font-semibold text-slate-500">Milestone</span>
-        <span className="text-slate-300">/</span>
-        <span className="font-semibold text-slate-900">{milestone.name}</span>
-      </div>
-
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-3">

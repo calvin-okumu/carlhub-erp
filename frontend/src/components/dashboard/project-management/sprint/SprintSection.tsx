@@ -13,9 +13,10 @@ import SprintTable from './SprintTable';
 
 interface SprintSectionProps {
     milestoneSlug?: string;
+    embedded?: boolean;
 }
 
-export default function SprintSection({ milestoneSlug }: SprintSectionProps) {
+export default function SprintSection({ milestoneSlug, embedded = false }: SprintSectionProps) {
     const { project } = useProject();
     const { sprints, loading, error, addSprint, editSprint, removeSprint, refetch } = useSprints(project?.slug ?? '', milestoneSlug);
     const [modalOpen, setModalOpen] = useState(false);
@@ -117,12 +118,13 @@ export default function SprintSection({ milestoneSlug }: SprintSectionProps) {
 
     return (
         <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+            {!embedded && (
+            <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-[240px] flex-1 space-y-1">
                         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Project Sprints</p>
-                        <h2 className="text-xl font-semibold text-slate-900">Sprint Delivery Hub</h2>
-                        <p className="text-sm text-slate-600">
+                        <h2 className="text-lg font-semibold text-slate-900">Sprint Delivery Hub</h2>
+                        <p className="text-xs text-slate-500">
                             {milestoneSlug
                                 ? "Sprints tied to this milestone."
                                 : "Monitor cadence, track progress, and open Kanban boards per sprint."}
@@ -136,8 +138,8 @@ export default function SprintSection({ milestoneSlug }: SprintSectionProps) {
                     </div>
                 </div>
 
-                <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
-                    <div className="space-y-4 rounded-xl border border-slate-200/70 bg-slate-50/70 p-4">
+                <div className="mt-3 grid gap-3 xl:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+                    <div className="space-y-3 rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
                         <div className="space-y-2">
                             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Filters</p>
                             <SearchInput
@@ -146,58 +148,131 @@ export default function SprintSection({ milestoneSlug }: SprintSectionProps) {
                                 placeholder="Search sprint names..."
                             />
                         </div>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-3 py-2.5 border border-slate-200/70 rounded-full bg-white text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-300"
-                        >
-                            <option value="all">All Statuses</option>
-                            <option value="planned">Planned</option>
-                            <option value="active">Active</option>
-                            <option value="completed">Completed</option>
-                            <option value="canceled">Canceled</option>
-                        </select>
-                        <div className="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-xs text-slate-500">
+                        <div className="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-[11px] text-slate-500">
                             Showing <span className="font-semibold text-slate-900">{filteredCount}</span> of {summary.total} sprints
                         </div>
-                        <div className="text-xs text-slate-500">Updated in real time as sprints change.</div>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Sprints</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{summary.total}</span>
-                                <span className="text-xs font-medium text-slate-500">All</span>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-500">{summary.totalTasks} tasks tracked</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Active</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{summary.active}</span>
-                                <span className="text-xs font-medium text-emerald-600">In flight</span>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-500">{summary.planned} planned next</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Completed</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{summary.completed}</span>
-                                <span className="text-xs font-medium text-slate-500">Done</span>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-500">Average {summary.averageProgress}% progress</p>
-                        </div>
-                        <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">In Planning</p>
-                            <div className="mt-3 flex items-baseline justify-between">
-                                <span className="text-2xl font-semibold text-slate-900">{summary.planned}</span>
-                                <span className="text-xs font-medium text-amber-600">Queued</span>
-                            </div>
-                            <p className="mt-3 text-xs text-slate-500">Keep backlog ready</p>
-                        </div>
+                    <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                        {[
+                            {
+                                key: 'all',
+                                label: 'Total Sprints',
+                                value: summary.total,
+                                note: `${summary.totalTasks} tasks tracked`,
+                                tag: 'All',
+                            },
+                            {
+                                key: 'active',
+                                label: 'Active',
+                                value: summary.active,
+                                note: `${summary.planned} planned next`,
+                                tag: 'In flight',
+                            },
+                            {
+                                key: 'completed',
+                                label: 'Completed',
+                                value: summary.completed,
+                                note: `Avg ${summary.averageProgress}% progress`,
+                                tag: 'Done',
+                            },
+                            {
+                                key: 'planned',
+                                label: 'In Planning',
+                                value: summary.planned,
+                                note: 'Keep backlog ready',
+                                tag: 'Queued',
+                            },
+                        ].map((item) => {
+                            const isActive = statusFilter === item.key;
+                            return (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    onClick={() => setStatusFilter(item.key)}
+                                    className={`rounded-2xl border p-2.5 text-left shadow-sm transition-all ${
+                                        isActive
+                                            ? 'border-slate-900 bg-slate-900 text-white'
+                                            : 'border-slate-200/70 bg-white/90 text-slate-900 hover:-translate-y-0.5 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <p className={`text-xs font-semibold uppercase tracking-wider ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
+                                        {item.label}
+                                    </p>
+                                    <div className="mt-1 flex items-baseline justify-between">
+                                        <span className="text-2xl font-semibold">{item.value}</span>
+                                        <span className={`text-xs font-medium ${isActive ? 'text-white/70' : 'text-slate-500'}`}>
+                                            {item.tag}
+                                        </span>
+                                    </div>
+                                    <p className={`mt-1 text-[11px] ${isActive ? 'text-white/70' : 'text-slate-500'}`}>{item.note}</p>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             </section>
+            )}
+            {embedded && (
+                <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Milestone Sprints</p>
+                            <h2 className="text-lg font-semibold text-slate-900">Sprint Delivery Hub</h2>
+                        </div>
+                        <Button onClick={handleAddSprint}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Sprint
+                        </Button>
+                    </div>
+                    <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,260px)_minmax(0,1fr)]">
+                        <div className="space-y-3 rounded-xl border border-slate-200/70 bg-slate-50/70 p-3">
+                            <div className="space-y-2">
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Filters</p>
+                                <SearchInput
+                                    value={searchValue}
+                                    onChange={setSearchValue}
+                                    placeholder="Search sprint names..."
+                                />
+                            </div>
+                            <div className="rounded-xl border border-slate-200/70 bg-white px-3 py-2 text-[11px] text-slate-500">
+                                Showing <span className="font-semibold text-slate-900">{filteredCount}</span> of {summary.total} sprints
+                            </div>
+                        </div>
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                        {[
+                            { key: 'all', label: 'Total', value: summary.total, tag: 'All' },
+                            { key: 'active', label: 'Active', value: summary.active, tag: 'In flight' },
+                            { key: 'completed', label: 'Completed', value: summary.completed, tag: 'Done' },
+                            { key: 'planned', label: 'Planned', value: summary.planned, tag: 'Queued' },
+                        ].map((item) => {
+                            const isActive = statusFilter === item.key;
+                            return (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    onClick={() => setStatusFilter(item.key)}
+                                    className={`rounded-2xl border p-2.5 text-left shadow-sm transition-all ${
+                                        isActive
+                                            ? 'border-slate-900 bg-slate-900 text-white'
+                                            : 'border-slate-200/70 bg-white/90 text-slate-900 hover:-translate-y-0.5 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <p className={`text-xs font-semibold uppercase tracking-wider ${isActive ? 'text-white/70' : 'text-slate-400'}`}>
+                                        {item.label}
+                                    </p>
+                                    <div className="mt-1 flex items-baseline justify-between">
+                                        <span className="text-2xl font-semibold">{item.value}</span>
+                                        <span className={`text-xs font-medium ${isActive ? 'text-white/70' : 'text-slate-500'}`}>
+                                            {item.tag}
+                                        </span>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    </div>
+                </section>
+            )}
             <SprintTable
                 sprints={sprints}
                 loading={loading}
