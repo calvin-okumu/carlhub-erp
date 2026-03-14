@@ -11,9 +11,13 @@ import { useEffect, useMemo, useState } from 'react';
 import SprintModal from './SprintModal';
 import SprintTable from './SprintTable';
 
-export default function SprintSection() {
+interface SprintSectionProps {
+    milestoneSlug?: string;
+}
+
+export default function SprintSection({ milestoneSlug }: SprintSectionProps) {
     const { project } = useProject();
-    const { sprints, loading, error, addSprint, editSprint, removeSprint } = useSprints(project?.slug ?? '');
+    const { sprints, loading, error, addSprint, editSprint, removeSprint, refetch } = useSprints(project?.slug ?? '', milestoneSlug);
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedSprint, setSelectedSprint] = useState<Sprint | null>(null);
@@ -55,14 +59,19 @@ export default function SprintSection() {
 
             try {
                 const data = await getMilestones(token, { projectSlug: project?.slug });
-                setMilestones(data.results);
+                const results = data.results;
+                if (milestoneSlug) {
+                    setMilestones(results.filter((milestone) => milestone.slug === milestoneSlug));
+                } else {
+                    setMilestones(results);
+                }
             } catch (err) {
                 console.error('Failed to fetch milestones:', err);
             }
         };
 
         fetchMilestones();
-    }, [project?.slug]);
+    }, [project?.slug, milestoneSlug]);
 
     const handleAddSprint = () => {
         setModalMode('add');
@@ -111,9 +120,13 @@ export default function SprintSection() {
             <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-[240px] flex-1 space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Project Sprints</p>
-                        <h2 className="text-lg font-semibold text-slate-900">Sprint Delivery Hub</h2>
-                        <p className="text-sm text-slate-500">Monitor cadence, track progress, and open Kanban boards per sprint.</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Project Sprints</p>
+                        <h2 className="text-xl font-semibold text-slate-900">Sprint Delivery Hub</h2>
+                        <p className="text-sm text-slate-600">
+                            {milestoneSlug
+                                ? "Sprints tied to this milestone."
+                                : "Monitor cadence, track progress, and open Kanban boards per sprint."}
+                        </p>
                     </div>
                     <div className="flex items-center gap-3">
                         <Button onClick={handleAddSprint}>
@@ -195,6 +208,7 @@ export default function SprintSection() {
                 projectSlug={project?.slug || ''}
                 searchValue={searchValue}
                 statusFilter={statusFilter}
+                onSprintUpdated={refetch}
             />
             <SprintModal
                 isOpen={modalOpen}
@@ -202,6 +216,7 @@ export default function SprintSection() {
                 mode={modalMode}
                 sprint={selectedSprint || undefined}
                 milestones={milestones}
+                defaultMilestoneSlug={milestoneSlug}
                 onSave={handleSaveSprint}
             />
         </div>

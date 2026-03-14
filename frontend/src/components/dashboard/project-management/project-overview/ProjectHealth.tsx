@@ -44,28 +44,28 @@ export default function ProjectHealth({ project, overdueTasks = 0 }: ProjectHeal
     const getHealthColor = () => {
         switch (healthStatus) {
             case "On Track":
-                return "bg-green-50 border-green-200 text-green-700";
+                return "bg-emerald-50 border-emerald-200 text-emerald-700";
             case "At Risk":
-                return "bg-yellow-50 border-yellow-200 text-yellow-700";
+                return "bg-amber-50 border-amber-200 text-amber-700";
             case "Critical":
-                return "bg-red-50 border-red-200 text-red-700";
+                return "bg-rose-50 border-rose-200 text-rose-700";
             default:
                 return "";
         }
     };
 
     const getProgressColor = () => {
-        if (healthScore >= 70) return "bg-green-500";
-        if (healthScore >= 40) return "bg-yellow-500";
-        return "bg-red-500";
+        if (healthScore >= 70) return "bg-emerald-400";
+        if (healthScore >= 40) return "bg-amber-400";
+        return "bg-rose-400";
     };
 
     return (
-        <Card className="!rounded-2xl !border-slate-200/70 !shadow-sm p-6 space-y-4">
+        <Card className="!rounded-2xl !border-slate-200/70 !bg-white/90 !shadow-sm p-4 space-y-3 text-slate-900">
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h2 className="text-lg font-semibold text-slate-900">Project Health</h2>
-                    <p className="text-xs text-slate-500">Delivery risk overview</p>
+                    <p className="text-xs text-slate-600">Delivery risk overview</p>
                 </div>
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full border text-sm font-semibold ${getHealthColor()}`}>
                     {getHealthIcon()}
@@ -79,7 +79,7 @@ export default function ProjectHealth({ project, overdueTasks = 0 }: ProjectHeal
                         <span>Health Score</span>
                         <span className="font-semibold text-slate-900">{healthScore}%</span>
                     </div>
-                    <div className="w-full bg-slate-100 rounded-full h-2">
+                    <div className="w-full bg-slate-200 rounded-full h-2">
                         <div
                             className={`h-2 rounded-full transition-all duration-500 ${getProgressColor()}`}
                             style={{ width: `${healthScore}%` }}
@@ -94,7 +94,7 @@ export default function ProjectHealth({ project, overdueTasks = 0 }: ProjectHeal
                     </div>
                     <div className="flex justify-between">
                         <span>Tasks Overdue</span>
-                        <span className={overdueTasks > 0 ? "text-red-600 font-semibold" : "text-slate-900 font-semibold"}>
+                        <span className={overdueTasks > 0 ? "text-rose-600 font-semibold" : "text-slate-900 font-semibold"}>
                             {overdueTasks}
                         </span>
                     </div>

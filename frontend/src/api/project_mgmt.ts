@@ -303,13 +303,31 @@ export async function deleteMilestone(token: string, slug: string): Promise<void
 }
 
 // Sprint API functions
-export async function getSprints(token: string, params?: { projectId?: string; projectSlug?: string; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Sprint>> {
+export async function getSprints(
+  token: string,
+  params?: {
+    projectId?: string;
+    projectSlug?: string;
+    milestoneId?: string;
+    milestoneSlug?: string;
+    search?: string;
+    ordering?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  },
+): Promise<PaginatedResponse<Sprint>> {
   let url = `${API_BASE}/sprints/`;
   const query = new URLSearchParams();
   if (params?.projectSlug) {
     query.append('milestone__project__slug', params.projectSlug);
   } else if (params?.projectId) {
     query.append('milestone__project', params.projectId.toString());
+  }
+  if (params?.milestoneSlug) {
+    query.append('milestone__slug', params.milestoneSlug);
+  } else if (params?.milestoneId) {
+    query.append('milestone', params.milestoneId.toString());
   }
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);
@@ -503,7 +521,22 @@ export async function unassignTaskFromSprint(token: string, sprintSlug: string, 
 }
 
 // Task API functions
-export async function getTasks(token: string, params?: { milestoneSlug?: string; sprintSlug?: string; projectId?: string; projectSlug?: string; backlog?: boolean; search?: string; ordering?: string; status?: string; page?: number; limit?: number }): Promise<PaginatedResponse<Task>> {
+export async function getTasks(
+  token: string,
+  params?: {
+    milestoneSlug?: string;
+    sprintSlug?: string;
+    sprintId?: string;
+    projectId?: string;
+    projectSlug?: string;
+    backlog?: boolean;
+    search?: string;
+    ordering?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  },
+): Promise<PaginatedResponse<Task>> {
   let url = `${API_BASE}/tasks/`;
   const query = new URLSearchParams();
 
@@ -514,6 +547,7 @@ export async function getTasks(token: string, params?: { milestoneSlug?: string;
   }
   if (params?.milestoneSlug) query.append('milestone__slug', params.milestoneSlug);
   if (params?.sprintSlug) query.append('sprint__slug', params.sprintSlug);
+  if (params?.sprintId) query.append('sprint', params.sprintId);
   if (params?.backlog !== undefined) query.append('backlog', params.backlog.toString());
   if (params?.search) query.append('search', params.search);
   if (params?.ordering) query.append('ordering', params.ordering);

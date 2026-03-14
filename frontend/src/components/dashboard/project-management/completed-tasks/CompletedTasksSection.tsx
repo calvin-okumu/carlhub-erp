@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { getTasks } from '@/api/project_mgmt';
+import { getTasks, updateTask } from '@/api/project_mgmt';
 import type { Task } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
@@ -67,6 +67,19 @@ export default function CompletedTasksSection() {
         }
     };
 
+    const handleMoveBack = async (taskSlug: string) => {
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        try {
+            await updateTask(token, taskSlug, { status: 'testing' });
+            setTasks((prev) => prev.filter((task) => task.slug !== taskSlug));
+        } catch (err) {
+            console.error('Failed to move task back to testing:', err);
+            alert('Failed to move task back to testing');
+        }
+    };
+
     if (loading) return <Loader />;
     if (error) return <div className="p-6 text-center text-red-500">{error}</div>;
 
@@ -75,9 +88,9 @@ export default function CompletedTasksSection() {
             <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-[240px] flex-1 space-y-1">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Delivery archive</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Delivery Archive</p>
                         <h2 className="text-xl font-semibold text-slate-900">Completed Tasks</h2>
-                        <p className="text-sm text-slate-500">Delivered work across sprints, ready for reporting.</p>
+                        <p className="text-sm text-slate-600">Delivered work across sprints, ready for reporting.</p>
                     </div>
                     <div className="rounded-full border border-slate-200/70 bg-white px-3 py-1 text-xs text-slate-600">
                         {tasks.length} completed task{tasks.length !== 1 ? 's' : ''}
@@ -101,15 +114,25 @@ export default function CompletedTasksSection() {
                                 <span key="desc" className="max-w-xs truncate block">{task.description || 'No description'}</span>,
                                 task.sprint_name || task.sprint || 'N/A',
                                 task.updated_at ? new Date(task.updated_at).toLocaleDateString() : 'N/A',
-                                <Button
-                                    key="delete"
-                                    onClick={() => handleDeleteTask(task.slug)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-red-600 hover:text-red-800"
-                                >
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
+                                <div className="flex gap-2">
+                                    <Button
+                                        key="move"
+                                        onClick={() => handleMoveBack(task.slug)}
+                                        variant="outline"
+                                        size="sm"
+                                    >
+                                        Move to Testing
+                                    </Button>
+                                    <Button
+                                        key="delete"
+                                        onClick={() => handleDeleteTask(task.slug)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="text-red-600 hover:text-red-800"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             ]
                         }))}
                     />

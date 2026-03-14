@@ -36,19 +36,19 @@ export default function DueSoonTray({ milestones, windowDays = 14 }: DueSoonTray
         .slice(0, 4);
 
     return (
-        <Card className="!rounded-2xl !border-slate-200/70 !shadow-sm p-6">
+        <Card className="!rounded-2xl !border-slate-200/70 !bg-white/90 !shadow-sm p-4 text-slate-900">
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h2 className="text-lg font-semibold text-slate-900">Due Soon</h2>
-                    <p className="text-xs text-slate-500">Next {windowDays} days</p>
+                    <p className="text-xs text-slate-600">Next {windowDays} days</p>
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">Milestones</span>
+                <span className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">Milestones</span>
             </div>
 
             {dueSoon.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-8 text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50/70">
-                    <p className="text-sm">No upcoming milestone deadlines</p>
-                    <p className="text-xs text-slate-400 mt-1">You are clear for now</p>
+                <div className="flex flex-col items-center justify-center text-center py-6 text-slate-500 border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                    <p className="text-sm text-slate-600">No upcoming milestone deadlines</p>
+                    <p className="text-xs text-slate-500 mt-1">You are clear for now</p>
                 </div>
             ) : (
                 <div className="space-y-3">
@@ -63,13 +63,13 @@ export default function DueSoonTray({ milestones, windowDays = 14 }: DueSoonTray
                         return (
                             <div
                                 key={milestone.id}
-                                className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-white px-3.5 py-2.5 shadow-sm"
+                                className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-white px-3 py-2"
                             >
                                 <div>
-                                    <p className="text-sm font-medium text-slate-900">{milestone.name}</p>
-                                    <p className="text-xs text-slate-500">{formatDate(milestone.due_date)}</p>
+                                    <p className="text-sm font-semibold text-slate-900">{milestone.name}</p>
+                                    <p className="text-xs text-slate-600">{formatDate(milestone.due_date)}</p>
                                 </div>
-                                <div className={`flex items-center gap-2 text-xs font-semibold ${isOverdue ? "text-red-600" : "text-slate-600"}`}>
+                                <div className={`flex items-center gap-2 text-xs font-semibold ${isOverdue ? "text-rose-600" : "text-slate-600"}`}>
                                     {isOverdue ? <AlertTriangle className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                                     <span>{dueLabel}</span>
                                 </div>

@@ -18,9 +18,10 @@ interface SprintTableProps {
     projectSlug: string;
     searchValue: string;
     statusFilter: string;
+    onSprintUpdated?: () => void;
 }
 
-const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectSlug, searchValue, statusFilter }: SprintTableProps) {
+const SprintTable = React.memo(function SprintTable({ sprints, loading, error, onEditSprint, onDeleteSprint, onAddSprint, projectSlug, searchValue, statusFilter, onSprintUpdated }: SprintTableProps) {
     const [page, setPage] = useState(1);
     const [expandedSprintId, setExpandedSprintId] = useState<string | null>(null);
 
@@ -148,7 +149,7 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
                 key: sprint.id + '-kanban',
                 data: [
                     <td key={sprint.id + '-kanban-td'} colSpan={headers.length} className="p-4 bg-slate-50/70 border-t border-slate-100">
-                        <KanbanSection sprintSlug={sprint.slug} onBack={() => setExpandedSprintId(null)} />
+                        <KanbanSection sprintSlug={sprint.slug} onBack={() => setExpandedSprintId(null)} onSprintUpdated={onSprintUpdated} />
                     </td>
                 ]
             });

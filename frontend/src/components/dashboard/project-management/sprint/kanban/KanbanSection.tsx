@@ -7,7 +7,7 @@ import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import { useProject } from '@/context/ProjectContext';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import KanbanBoard from './KanbanBoard';
 import KanbanHeader from './KanbanHeader';
@@ -17,9 +17,10 @@ import CreateTaskModal from '@/components/shared/CreateTaskModal';
 interface KanbanSectionProps {
     sprintSlug: string;
     onBack?: () => void;
+    onSprintUpdated?: () => void;
 }
 
-export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps) {
+export default function KanbanSection({ sprintSlug, onBack, onSprintUpdated }: KanbanSectionProps) {
     const router = useRouter();
     const { project } = useProject();
     const [sprint, setSprint] = useState<Sprint | null>(null);
@@ -41,8 +42,40 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     const [quickAddError, setQuickAddError] = useState<string | null>(null);
     const [dueSoonOnly, setDueSoonOnly] = useState(false);
     const [bulkSelection, setBulkSelection] = useState<Record<string, Task>>({});
+    const syncTimerRef = useRef<number | null>(null);
+    const isFetchingDataRef = useRef(false);
+    const isFetchingTasksRef = useRef(false);
+    const isFetchingModalRef = useRef(false);
+    const modalLoadedRef = useRef(false);
 
-    const fetchData = useCallback(async () => {
+    const fetchTasksOnly = useCallback(async () => {
+        if (isFetchingTasksRef.current) return;
+        const token = localStorage.getItem('access_token');
+        if (!token) return;
+
+        isFetchingTasksRef.current = true;
+        try {
+            const tasksData = await getTasks(token, { projectSlug: project?.slug, sprintSlug });
+            setTasks(tasksData.results);
+
+            if (sprint) {
+                const calculatedSprintProgress = tasksData.results.length > 0
+                    ? Math.round(tasksData.results.reduce((sum, task) => sum + task.progress, 0) / tasksData.results.length)
+                    : 0;
+                setSprint({ ...sprint, progress: calculatedSprintProgress, tasks_count: tasksData.results.length });
+            }
+        } catch (err) {
+            console.error('Fetch tasks error:', err);
+        } finally {
+            isFetchingTasksRef.current = false;
+        }
+    }, [project?.slug, sprintSlug, sprint]);
+
+
+    const fetchData = useCallback(async (options?: { silent?: boolean }) => {
+        const silent = options?.silent ?? false;
+        if (isFetchingDataRef.current) return;
+        isFetchingDataRef.current = true;
         const token = localStorage.getItem('access_token');
         console.log('Token:', token ? 'present' : 'missing');
             console.log('KanbanSection fetchData called with projectSlug:', project?.slug, 'sprintSlug:', sprintSlug);
@@ -52,9 +85,13 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             setTimeout(() => {
                 router.push('/login');
             }, 2000);
+            isFetchingDataRef.current = false;
             return;
         }
 
+        if (!silent) {
+            setLoading(true);
+        }
         try {
             // Fetch the sprint directly by ID
             console.log('Fetching sprint with slug:', sprintSlug);
@@ -74,9 +111,21 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             console.error('Fetch error:', err);
             setError(err instanceof Error ? err.message : 'Failed to fetch data. Please check your connection or try again.');
         } finally {
-            setLoading(false);
+            if (!silent) {
+                setLoading(false);
+            }
+            isFetchingDataRef.current = false;
         }
     }, [sprintSlug, router, project?.slug]);
+
+    const scheduleSync = useCallback(() => {
+        if (syncTimerRef.current) {
+            window.clearTimeout(syncTimerRef.current);
+        }
+        syncTimerRef.current = window.setTimeout(async () => {
+            await fetchTasksOnly();
+        }, 800);
+    }, [fetchTasksOnly]);
 
     useEffect(() => {
         if (sprintSlug) {
@@ -85,28 +134,56 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
     }, [sprintSlug, fetchData]);
 
     useEffect(() => {
+        modalLoadedRef.current = false;
+    }, [sprintSlug, project?.slug]);
+
+    useEffect(() => {
         const fetchModalData = async () => {
+            if (isFetchingModalRef.current || modalLoadedRef.current) return;
+            isFetchingModalRef.current = true;
             const token = localStorage.getItem('access_token');
             if (!token) return;
-            try {
-                const [sprintsData, milestonesData, usersData, backlogData] = await Promise.all([
-                    getSprints(token, { projectSlug: project?.slug }),
-                    getMilestones(token, { projectSlug: project?.slug }),
-                    getUserTenants(token),
-                    getTasks(token, { projectSlug: project?.slug, backlog: true }) // backlog=true
-                ]);
-                setSprints(sprintsData.results);
-                setMilestones(milestonesData.results);
-                setUsers(usersData);
-                // Filter out tasks that are already in this sprint (safety check)
-                const filteredBacklog = backlogData.results.filter((task: Task) => task.sprint !== sprint?.slug);
-                setBacklogTasks(filteredBacklog);
-            } catch (err) {
-                console.error('Failed to fetch modal data:', err);
+
+            const [sprintsResult, milestonesResult, usersResult, backlogResult] = await Promise.allSettled([
+                getSprints(token, { projectSlug: project?.slug }),
+                getMilestones(token, { projectSlug: project?.slug }),
+                getUserTenants(token),
+                getTasks(token, { projectSlug: project?.slug, backlog: true })
+            ]);
+
+            if (sprintsResult.status === 'fulfilled') {
+                setSprints(sprintsResult.value.results);
+            } else {
+                console.error('Failed to fetch sprints for modal data:', sprintsResult.reason);
             }
+
+            if (milestonesResult.status === 'fulfilled') {
+                setMilestones(milestonesResult.value.results);
+            } else {
+                console.error('Failed to fetch milestones for modal data:', milestonesResult.reason);
+                setMilestones([]);
+            }
+
+            if (usersResult.status === 'fulfilled') {
+                setUsers(usersResult.value);
+            } else {
+                console.error('Failed to fetch users for modal data:', usersResult.reason);
+            }
+
+            if (backlogResult.status === 'fulfilled') {
+                const filteredBacklog = backlogResult.value.results.filter((task: Task) => task.sprint !== sprintSlug);
+                setBacklogTasks(filteredBacklog);
+            } else {
+                console.error('Failed to fetch backlog tasks for modal data:', backlogResult.reason);
+            }
+
+            modalLoadedRef.current = true;
+            isFetchingModalRef.current = false;
         };
-        fetchModalData();
-    }, [project?.slug, sprintSlug, sprint]);
+        if (project?.slug && sprintSlug) {
+            fetchModalData();
+        }
+    }, [project?.slug, sprintSlug]);
 
     const handleBack = () => {
         if (onBack) {
@@ -202,7 +279,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                 start_date: startDate,
                 end_date: endDate,
             });
-            await fetchData();
+            scheduleSync();
         } catch (error) {
             console.error('Error creating quick task:', error);
             setQuickAddError(error instanceof Error ? error.message : 'Failed to create task');
@@ -216,18 +293,14 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
         if (!token) return;
 
         try {
-            // Update task status - backend will handle progress calculation
-            await updateTask(token, taskSlug, { status: newStatus });
-
-            // Update local tasks state optimistically
-            const updatedTasks = tasks.map(task =>
+            // Optimistic update
+            const updatedTasks = tasks.map((task) =>
                 task.slug === taskSlug
                     ? { ...task, status: newStatus, progress: getTaskProgress(newStatus) }
                     : task
             );
             setTasks(updatedTasks);
 
-            // Recalculate sprint progress (inheriting backend averaging pattern)
             const newSprintProgress = updatedTasks.length > 0
                 ? Math.round(updatedTasks.reduce((sum, task) => sum + task.progress, 0) / updatedTasks.length)
                 : 0;
@@ -236,8 +309,8 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                 setSprint({ ...sprint, progress: newSprintProgress });
             }
 
-            // Refetch to get updated progress from backend
-            fetchData();
+            await updateTask(token, taskSlug, { status: newStatus });
+            scheduleSync();
         } catch (error) {
             console.error('Error updating task status:', error);
             alert('Failed to update task status. Please try again.');
@@ -267,7 +340,6 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
         if (selected.length === 0) return;
 
         try {
-            await Promise.all(selected.map((task) => updateTask(token, task.slug, { status })));
             const updatedTasks = tasks.map((task) =>
                 bulkSelection[task.slug]
                     ? { ...task, status, progress: getTaskProgress(status) }
@@ -283,7 +355,8 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             }
 
             handleClearSelection();
-            fetchData();
+            await Promise.all(selected.map((task) => updateTask(token, task.slug, { status })));
+            scheduleSync();
         } catch (error) {
             console.error('Error bulk updating tasks:', error);
             alert('Failed to move tasks. Please try again.');
@@ -309,9 +382,9 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
         if (!confirm('Are you sure you want to delete this task?')) return;
 
         try {
+            setTasks((prev) => prev.filter((task) => task.slug !== taskSlug));
             await deleteTask(token, taskSlug);
-            // Refetch tasks
-            fetchData();
+            scheduleSync();
         } catch (error) {
             console.error('Error deleting task:', error);
             // TODO: Show error message
@@ -350,8 +423,7 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
             setAddModalOpen(false);
             setSelectedTasks([]);
             // Refetch tasks and update sprint progress
-            await fetchData();
-            // Sprint progress will be updated in fetchData since it gets the latest sprint data
+            scheduleSync();
         } catch (error) {
             console.error('Error adding tasks:', error);
             setAddError(error instanceof Error ? error.message : 'Failed to add tasks');
@@ -378,11 +450,9 @@ export default function KanbanSection({ sprintSlug, onBack }: KanbanSectionProps
                 return;
             }
             // Sprint is already set correctly by the modal
-                await createTask(token, project.id, data);
+            await createTask(token, project.id, data);
             setCreateModalOpen(false);
-            // Refetch tasks and update sprint progress
-            await fetchData();
-            // Sprint progress will be updated in fetchData since it gets the latest sprint data
+            scheduleSync();
         } catch (error) {
             console.error('Error saving task:', error);
             // TODO: Show error message

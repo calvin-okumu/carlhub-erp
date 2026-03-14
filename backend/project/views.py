@@ -102,6 +102,23 @@ class TenantViewSet(viewsets.ModelViewSet):
         serializer.save(tenant=tenant)
 
 
+def _get_refresh_cookie_options():
+    if settings.DEBUG:
+        return {
+            "httponly": True,
+            "secure": False,
+            "samesite": "None",
+            "path": "/api/",
+        }
+
+    return {
+        "httponly": True,
+        "secure": True,
+        "samesite": "None",
+        "path": "/api/",
+    }
+
+
 def _build_auth_response(user, request):
     refresh = RefreshToken.for_user(user)
     access_token = str(refresh.access_token)
@@ -113,14 +130,7 @@ def _build_auth_response(user, request):
         "last_name": user.last_name,
         "message": "Authentication successful",
     })
-    response.set_cookie(
-        "refresh_token",
-        str(refresh),
-        httponly=True,
-        secure=not settings.DEBUG,
-        samesite="Lax",
-        path="/api/",
-    )
+    response.set_cookie("refresh_token", str(refresh), **_get_refresh_cookie_options())
     return response
 
 
@@ -141,14 +151,7 @@ class CookieTokenRefreshView(TokenRefreshView):
 
         response = Response(validated, status=status.HTTP_200_OK)
         if refresh_value:
-            response.set_cookie(
-                "refresh_token",
-                refresh_value,
-                httponly=True,
-                secure=not settings.DEBUG,
-                samesite="Lax",
-                path="/api/",
-            )
+            response.set_cookie("refresh_token", refresh_value, **_get_refresh_cookie_options())
         return response
 
 
@@ -857,7 +860,7 @@ class TaskViewSet(TenantScopedMixin, viewsets.ModelViewSet):
 
         # Validate status if provided
         if new_status:
-            valid_statuses = ['todo', 'in_progress', 'done']
+            valid_statuses = ['to_do', 'in_progress', 'in_review', 'testing', 'done']
             if new_status not in valid_statuses:
                 return Response({'error': f'Invalid status. Must be one of: {valid_statuses}'}, status=status.HTTP_400_BAD_REQUEST)
 

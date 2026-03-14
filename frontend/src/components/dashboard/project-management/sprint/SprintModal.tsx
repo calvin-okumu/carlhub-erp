@@ -14,6 +14,7 @@ interface SprintModalProps {
     sprint?: Sprint;
 
     milestones: Milestone[];
+    defaultMilestoneSlug?: string;
     onSave: (data: {
         name: string;
         status: string;
@@ -23,7 +24,7 @@ interface SprintModalProps {
     }) => void;
 }
 
-export default function SprintModal({ isOpen, onClose, mode, sprint, milestones, onSave }: SprintModalProps) {
+export default function SprintModal({ isOpen, onClose, mode, sprint, milestones, defaultMilestoneSlug, onSave }: SprintModalProps) {
     const [formData, setFormData] = useState({
         name: '',
         status: 'planned',
@@ -50,18 +51,21 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                 setMaxDate(milestoneObj.due_date || '');
             }
         } else {
+            const defaultMilestone = defaultMilestoneSlug
+                ? milestones.find((m) => m.slug === defaultMilestoneSlug)
+                : undefined;
             setFormData({
                 name: '',
                 status: 'planned',
                 start_date: '',
                 end_date: '',
-                milestone: '',
+                milestone: defaultMilestone?.slug || '',
             });
-            setMinDate('');
-            setMaxDate('');
+            setMinDate(defaultMilestone?.planned_start || '');
+            setMaxDate(defaultMilestone?.due_date || '');
         }
         setErrors({});
-    }, [mode, sprint, isOpen, milestones]);
+    }, [mode, sprint, isOpen, milestones, defaultMilestoneSlug]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -179,6 +183,7 @@ export default function SprintModal({ isOpen, onClose, mode, sprint, milestones,
                             value={formData.milestone}
                             onChange={handleChange}
                             required
+                            disabled={Boolean(defaultMilestoneSlug)}
                         >
                             <option value="">Select Milestone</option>
                              {Array.isArray(milestones) && milestones.map(milestone => (

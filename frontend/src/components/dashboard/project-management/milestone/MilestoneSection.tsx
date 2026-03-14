@@ -11,14 +11,9 @@ import { useEffect, useMemo, useState } from 'react';
 import MilestoneModal from './MilestoneModal';
 import MilestoneTable from './MilestoneTable';
 
-interface MilestoneSectionProps {
-    tenant?: number;
-}
-
-export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
+export default function MilestoneSection() {
     const { project } = useProject();
-    const tenantId = tenant || parseInt(localStorage.getItem('tenant') || '1');
-    const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(project?.slug ?? '', tenantId);
+    const { milestones, loading, error, addMilestone, editMilestone, removeMilestone } = useMilestones(project?.slug ?? '');
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedMilestone, setSelectedMilestone] = useState<Milestone | null>(null);
@@ -105,10 +100,10 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
             <section className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-[240px] flex-1 space-y-2">
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Project Milestones</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Project Milestones</p>
                         <div className="space-y-1">
                             <h1 className="text-2xl font-semibold text-slate-900">Milestone Details</h1>
-                            <p className="text-sm text-slate-500">Track progress, dates, and momentum across each milestone.</p>
+                            <p className="text-sm text-slate-600">Track progress, dates, and momentum across each milestone.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -204,6 +199,7 @@ export default function MilestoneSection({ tenant }: MilestoneSectionProps) {
                 onDeleteMilestone={removeMilestone}
                 onAddMilestone={handleAddMilestone}
                 searchValue={searchValue}
+                projectSlug={project?.slug}
             />
             <MilestoneModal
                 isOpen={modalOpen}

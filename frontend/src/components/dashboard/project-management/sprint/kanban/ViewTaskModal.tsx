@@ -15,22 +15,20 @@ interface TaskModalProps {
 export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDelete }: TaskModalProps) {
     const getNextStatus = (currentStatus: string) => {
         const statusFlow = {
-            'todo': 'in_progress',
+            'to_do': 'in_progress',
             'in_progress': 'in_review',
             'in_review': 'testing',
-            'testing': 'done',
-            'done': 'completed'
+            'testing': 'done'
         };
         return statusFlow[currentStatus as keyof typeof statusFlow];
     };
 
     const getButtonText = (currentStatus: string) => {
         const buttonTexts = {
-            'todo': 'Move to In Progress',
+            'to_do': 'Move to In Progress',
             'in_progress': 'Move to Review',
             'in_review': 'Move to Testing',
-            'testing': 'Mark as Done',
-            'done': 'Move to Completed'
+            'testing': 'Mark as Done'
         };
         return buttonTexts[currentStatus as keyof typeof buttonTexts];
     };
@@ -38,7 +36,7 @@ export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDel
     const handleStatusChange = () => {
         const nextStatus = getNextStatus(task.status);
         if (nextStatus && onStatusChange) {
-            onStatusChange(task.id, nextStatus);
+            onStatusChange(task.slug, nextStatus);
             onClose();
         }
     };
@@ -86,7 +84,7 @@ export default function TaskModal({ isOpen, onClose, task, onStatusChange, onDel
                     <p className="mt-1 text-sm text-gray-900">{task.estimated_hours || 'Not set'}</p>
                 </div>
                 <div className="flex justify-end space-x-3 pt-4">
-                    {task.status === 'completed' ? (
+                    {task.status === 'done' ? (
                         <Button onClick={handleDelete} variant="danger">
                             Delete Task
                         </Button>

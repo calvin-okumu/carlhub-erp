@@ -2,6 +2,7 @@
 
 import type { Milestone } from '@/api/types';
 import Loader from '@/components/shared/Loader';
+import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { AlertCircle, CalendarDays, Edit, Layers, Trash2 } from 'lucide-react';
@@ -15,9 +16,10 @@ interface MilestoneTableProps {
     onDeleteMilestone: (slug: string) => void;
     onAddMilestone: () => void;
     searchValue: string;
+    projectSlug?: string;
 }
 
-const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading, error, onEditMilestone, onDeleteMilestone, onAddMilestone, searchValue }: MilestoneTableProps) {
+const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading, error, onEditMilestone, onDeleteMilestone, onAddMilestone, searchValue, projectSlug }: MilestoneTableProps) {
     const [page, setPage] = useState(1);
 
     const filteredMilestones = useMemo(() =>
@@ -65,7 +67,16 @@ const MilestoneTable = React.memo(function MilestoneTable({ milestones, loading,
             <td key={milestone.id + '-details'} className="px-4 py-4 align-top">
                 <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-semibold text-slate-900">{milestone.name}</p>
+                        {projectSlug ? (
+                            <Link
+                                href={`/dashboard/project-management/${projectSlug}/milestones/${milestone.slug}`}
+                                className="text-sm font-semibold text-slate-900 hover:text-slate-700"
+                            >
+                                {milestone.name}
+                            </Link>
+                        ) : (
+                            <p className="text-sm font-semibold text-slate-900">{milestone.name}</p>
+                        )}
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                             {milestone.project_name}
                         </span>

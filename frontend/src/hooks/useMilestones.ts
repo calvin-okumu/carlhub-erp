@@ -11,7 +11,7 @@ function getToken(): string | null {
   return localStorage.getItem("access_token");
 }
 
-export function useMilestones(projectSlug: string, tenant?: number) {
+export function useMilestones(projectSlug: string) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export function useMilestones(projectSlug: string, tenant?: number) {
 
     setLoading(true);
     try {
-      const data = await getMilestones(token, { projectSlug, tenant, ordering: '-created_at' });
+      const data = await getMilestones(token, { projectSlug, ordering: '-created_at' });
       setMilestones(data.results);
     } catch (err) {
       console.error(err);
@@ -30,7 +30,7 @@ export function useMilestones(projectSlug: string, tenant?: number) {
     } finally {
       setLoading(false);
     }
-  }, [projectSlug, tenant]);
+  }, [projectSlug]);
 
   useEffect(() => {
     fetchMilestones();

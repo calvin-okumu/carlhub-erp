@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Edit, Download } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Edit, Download } from 'lucide-react';
 import type { Project } from '@/api/types';
 
 interface ProjectHeaderProps {
@@ -68,10 +69,23 @@ export default function ProjectHeader({ project, onEdit, onExport }: ProjectHead
 
     return (
         <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-6 shadow-sm">
+            <div className="mb-5 flex flex-wrap items-center gap-3 text-sm">
+                <Link
+                    href="/dashboard/project-management"
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back to Projects</span>
+                </Link>
+                <span className="text-slate-300">/</span>
+                <span className="font-semibold text-slate-500">Project</span>
+                <span className="text-slate-300">/</span>
+                <span className="font-semibold text-slate-900">{project.name}</span>
+            </div>
             <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                     <div className="flex flex-wrap items-center gap-3">
-                        <h1 className="text-2xl font-semibold text-slate-900">{project.name}</h1>
+                        <h1 className="text-3xl font-semibold text-slate-900">{project.name}</h1>
                         <StatusBadge status={project.status} />
                         <PriorityBadge priority={project.priority} />
                     </div>

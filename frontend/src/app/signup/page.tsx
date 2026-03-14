@@ -1,7 +1,7 @@
 
 "use client";
 
-import { signup, getInvitationDetails } from "@/api";
+import { signup, getInvitationDetails, refreshAccessToken } from "@/api";
 import AuthLayout from "@/components/AuthLayout";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,11 +22,32 @@ export default function SignUpPage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
+    const [checkingSession, setCheckingSession] = useState(true);
     const [invitationToken, setInvitationToken] = useState<string | null>(null);
     const [invitationDetails, setInvitationDetails] = useState<{ tenant_name: string; role: string } | null>(null);
     const [loadingInvitation, setLoadingInvitation] = useState(false);
     const router = useRouter();
     const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const bootstrapAuth = async () => {
+            const token = localStorage.getItem("access_token");
+            if (token) {
+                router.replace("/dashboard");
+                return;
+            }
+
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                router.replace("/dashboard");
+                return;
+            }
+
+            setCheckingSession(false);
+        };
+
+        bootstrapAuth();
+    }, [router]);
 
     useEffect(() => {
         const token = searchParams.get('token');
@@ -75,6 +96,10 @@ export default function SignUpPage() {
             setLoading(false);
         }
     };
+
+    if (checkingSession) {
+        return null;
+    }
 
     return (
         <AuthLayout>

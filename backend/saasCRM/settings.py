@@ -368,6 +368,15 @@ TICKETING_ATTACHMENT_MAX_BYTES = int(os.getenv("TICKETING_ATTACHMENT_MAX_BYTES",
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+DRF_USER_THROTTLE_RATE = os.getenv(
+    "DRF_USER_THROTTLE_RATE",
+    "5000/hour" if DEBUG else "1000/hour",
+)
+DRF_ANON_THROTTLE_RATE = os.getenv(
+    "DRF_ANON_THROTTLE_RATE",
+    "1000/hour" if DEBUG else "100/hour",
+)
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -385,8 +394,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/hour",
-        "user": "1000/hour",
+        "anon": DRF_ANON_THROTTLE_RATE,
+        "user": DRF_USER_THROTTLE_RATE,
     },
 }
 

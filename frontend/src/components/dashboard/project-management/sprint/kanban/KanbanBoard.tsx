@@ -12,19 +12,19 @@ interface KanbanBoardProps {
 }
 
 export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuickAdd, selectedTaskIds, onToggleSelect }: KanbanBoardProps) {
-      const columns = [
-           { id: 'to_do', title: 'To Do', status: 'to_do' },
-           { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
+       const columns = [
+            { id: 'to_do', title: 'To Do', status: 'to_do' },
+            { id: 'in_progress', title: 'In Progress', status: 'in_progress' },
             { id: 'in_review', title: 'Review', status: 'in_review' },
-           { id: 'testing', title: 'Testing', status: 'testing' }
-       ];
+            { id: 'testing', title: 'Testing', status: 'testing' }
+        ];
 
-      const colorMap: Record<string, string> = {
-           to_do: 'bg-slate-300',
-           in_progress: 'bg-pink-400',
+       const colorMap: Record<string, string> = {
+            to_do: 'bg-slate-300',
+            in_progress: 'bg-pink-400',
             in_review: 'bg-blue-400',
-           testing: 'bg-emerald-400'
-       };
+            testing: 'bg-emerald-400'
+        };
 
       const tasksByStatus = columns.reduce((acc, column) => {
           acc[column.id] = tasks.filter(task => task.status === column.status);
@@ -32,7 +32,7 @@ export default function KanbanBoard({ tasks, onTaskClick, onStatusChange, onQuic
       }, {} as Record<string, Task[]>);
 
       return (
-           <div className="grid gap-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 pb-4 sm:grid-cols-2 xl:grid-cols-4">
               {columns.map(column => (
                     <KanbanColumn
                         key={column.id}

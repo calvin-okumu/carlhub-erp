@@ -11,6 +11,29 @@ interface MetricCardProps {
     onClick?: () => void;
 }
 
+const accentStyles: Record<string, { text: string; bg: string; ring: string }> = {
+    blue: {
+        text: "text-sky-600",
+        bg: "bg-sky-100",
+        ring: "ring-sky-200",
+    },
+    green: {
+        text: "text-emerald-600",
+        bg: "bg-emerald-100",
+        ring: "ring-emerald-200",
+    },
+    purple: {
+        text: "text-violet-600",
+        bg: "bg-violet-100",
+        ring: "ring-violet-200",
+    },
+    orange: {
+        text: "text-amber-600",
+        bg: "bg-amber-100",
+        ring: "ring-amber-200",
+    },
+};
+
 export function MetricCard({
     title,
     value,
@@ -18,27 +41,23 @@ export function MetricCard({
     accentColor = "blue",
     onClick,
 }: MetricCardProps) {
-    const baseColor = {
-        text: `text-${accentColor}-600`,
-        bg: `bg-${accentColor}-50`,
-        ring: `ring-${accentColor}-100`,
-    };
+    const baseColor = accentStyles[accentColor] ?? accentStyles.blue;
 
     return (
         <div
             onClick={onClick}
-            className={`group flex items-center justify-between gap-4 p-5 rounded-2xl bg-white/90 border border-slate-200/70 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${onClick ? "cursor-pointer" : ""
+            className={`group flex items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-300 ${onClick ? "cursor-pointer" : ""
                 }`}
         >
             <div className="flex items-center gap-4">
                 <div
-                    className={`relative flex items-center justify-center p-3 rounded-xl ${baseColor.bg} ${baseColor.text} ring-4 ${baseColor.ring}`}
+                    className={`relative flex items-center justify-center rounded-xl p-2.5 ring-1 ${baseColor.bg} ${baseColor.text} ${baseColor.ring}`}
                 >
                     <Icon className="h-6 w-6" />
                 </div>
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{title}</p>
-                    <p className="mt-2 text-3xl font-semibold text-slate-900 leading-tight">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{title}</p>
+                    <p className="mt-1 text-3xl font-semibold text-slate-900 leading-tight">
                         {value}
                     </p>
                 </div>

@@ -85,7 +85,14 @@ export async function deleteClient(token: string, clientSlug: string): Promise<v
   }
 }
 
+let userTenantsCache: { data: UserTenant[]; fetchedAt: number } | null = null;
+const USER_TENANTS_TTL_MS = 60 * 1000;
+
 export async function getUserTenants(token: string): Promise<UserTenant[]> {
+  if (userTenantsCache && Date.now() - userTenantsCache.fetchedAt < USER_TENANTS_TTL_MS) {
+    return userTenantsCache.data;
+  }
+
   const response = await authFetch(`${API_BASE}/members/`, {
     method: "GET",
     headers: {
@@ -99,5 +106,7 @@ export async function getUserTenants(token: string): Promise<UserTenant[]> {
     throw new Error(data.error || "Failed to fetch user tenants");
   }
 
-  return data.results || data;
+  const result = data.results || data;
+  userTenantsCache = { data: result, fetchedAt: Date.now() };
+  return result;
 }

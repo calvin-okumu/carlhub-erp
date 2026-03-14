@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import ProjectProgress from './ProjectProgress';
 import MetricsGrid from './MetricsGrid';
-import ProjectTimeline from './ProjectTimeline';
 import ProjectHealth from './ProjectHealth';
 import ProjectInformation from './ProjectInformation';
 import DueSoonTray from './DueSoonTray';
-import QuickAddActions from './QuickAddActions';
+import DeliveryRisk from './DeliveryRisk';
 import { getSprints, getTasks, getMilestones } from '@/api/project_mgmt';
 import type { Project, Milestone } from '@/api/types';
 
@@ -67,13 +66,23 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
         return Math.round(totalProgress / milestones.length);
     };
 
-    return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 xl:grid-cols-[2fr,1fr] gap-6">
-                <ProjectProgress progress={calculateProjectProgress()} />
-                <QuickAddActions />
-            </div>
+    const getTimelineProgress = (startDate?: string, endDate?: string) => {
+        if (!startDate || !endDate) return null;
+        const start = new Date(startDate).getTime();
+        const end = new Date(endDate).getTime();
+        if (Number.isNaN(start) || Number.isNaN(end) || end <= start) return null;
+        const now = Date.now();
+        const total = end - start;
+        const elapsed = Math.min(Math.max(now - start, 0), total);
+        return Math.round((elapsed / total) * 100);
+    };
 
+    const overallProgress = project.progress ?? calculateProjectProgress();
+    const milestoneAverage = calculateProjectProgress();
+    const timelineProgress = getTimelineProgress(project.start_date, project.end_date);
+
+    return (
+        <div className="space-y-4">
             <MetricsGrid
                 milestonesCount={project.milestones_count}
                 tasksCount={tasksCount}
@@ -81,15 +90,22 @@ export default function OverviewSection({ project }: OverviewSectionProps) {
                 teamMembersCount={project.team_members.length}
             />
 
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                <div className="xl:col-span-2 space-y-6">
-                    <ProjectTimeline milestonesCount={project.milestones_count} />
-                    <DueSoonTray milestones={milestones} />
-                </div>
-                <div className="space-y-6">
-                    <ProjectInformation project={project} />
-                    <ProjectHealth project={project} />
-                </div>
+            <ProjectProgress
+                overall={overallProgress}
+                milestoneAverage={milestoneAverage}
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <ProjectInformation project={project} />
+                <ProjectHealth project={project} />
+                <DeliveryRisk
+                    project={project}
+                    timelineProgress={timelineProgress}
+                    milestonesCount={project.milestones_count}
+                    tasksCount={tasksCount}
+                    sprintsCount={sprintsCount}
+                />
+                <DueSoonTray milestones={milestones} />
             </div>
         </div>
     );

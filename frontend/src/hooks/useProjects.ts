@@ -36,11 +36,17 @@ export function useProjects() {
 
     setLoading(true);
     try {
-      const tenants = await getUserTenants(token);
-      const ownerTenant = Array.isArray(tenants) ? tenants.find((t) => t.is_owner) || tenants[0] : tenants;
+      let tenantId: string | undefined;
+      try {
+        const tenants = await getUserTenants(token);
+        const ownerTenant = Array.isArray(tenants) ? tenants.find((t) => t.is_owner) || tenants[0] : tenants;
+        tenantId = ownerTenant?.tenant;
+      } catch (err) {
+        console.warn("Failed to fetch user tenants, falling back to unscoped projects.", err);
+      }
 
       const data = await getProjects(token, {
-        tenant: ownerTenant?.tenant,
+        ...(tenantId ? { tenant: tenantId } : {}),
         ordering: '-created_at',
         ...(statusFilter ? { status: statusFilter } : {}),
         page,
@@ -53,19 +59,23 @@ export function useProjects() {
       setTotalPages(Math.ceil(data.count / itemsPerPage));
       setCurrentPage(page);
 
-      const [activeCount, planningCount, onHoldCount, completedCount] = await Promise.all([
-        getProjects(token, { tenant: ownerTenant?.tenant, status: 'active', page: 1, limit: 1 }),
-        getProjects(token, { tenant: ownerTenant?.tenant, status: 'planning', page: 1, limit: 1 }),
-        getProjects(token, { tenant: ownerTenant?.tenant, status: 'on_hold', page: 1, limit: 1 }),
-        getProjects(token, { tenant: ownerTenant?.tenant, status: 'completed', page: 1, limit: 1 }),
-      ]);
+      const statusCounts = data.results.reduce(
+        (acc, project) => {
+          if (project.status === 'active') acc.active += 1;
+          if (project.status === 'planning') acc.planning += 1;
+          if (project.status === 'on_hold') acc.onHold += 1;
+          if (project.status === 'completed') acc.completed += 1;
+          return acc;
+        },
+        { active: 0, planning: 0, onHold: 0, completed: 0 }
+      );
 
       setSummary({
         total: data.count,
-        active: activeCount.count,
-        planning: planningCount.count,
-        onHold: onHoldCount.count,
-        completed: completedCount.count,
+        active: statusCounts.active,
+        planning: statusCounts.planning,
+        onHold: statusCounts.onHold,
+        completed: statusCounts.completed,
       });
     } catch (err) {
       console.error(err);

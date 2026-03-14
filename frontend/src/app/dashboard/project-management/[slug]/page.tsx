@@ -1,12 +1,7 @@
 "use client";
 
-import OverviewSection from '@/components/dashboard/project-management/project-overview/OverviewSection';
-import { useProject } from '@/context/ProjectContext';
+import ProjectPage from '@/components/dashboard/project-management/ProjectPage';
 
-export default function ProjectPage() {
-     const { project } = useProject();
-
-    if (!project) return null;
-
-     return <OverviewSection project={project} />;
+export default function Page() {
+  return <ProjectPage />;
 }

@@ -1,10 +1,10 @@
 "use client";
 
-import { login } from "@/api";
+import { login, refreshAccessToken } from "@/api";
 import AuthLayout from "@/components/AuthLayout";
 import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 type FormData = {
@@ -18,7 +18,28 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
+    const [checkingSession, setCheckingSession] = useState(true);
     const router = useRouter();
+
+    useEffect(() => {
+        const bootstrapAuth = async () => {
+            const token = localStorage.getItem("access_token");
+            if (token) {
+                router.replace("/dashboard");
+                return;
+            }
+
+            const refreshed = await refreshAccessToken();
+            if (refreshed) {
+                router.replace("/dashboard");
+                return;
+            }
+
+            setCheckingSession(false);
+        };
+
+        bootstrapAuth();
+    }, [router]);
 
     const onSubmit = async (data: FormData) => {
         setError("");
@@ -50,6 +71,10 @@ export default function LoginPage() {
     };
 
 
+
+    if (checkingSession) {
+        return null;
+    }
 
     return (
         <AuthLayout>
