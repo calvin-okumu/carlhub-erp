@@ -4,6 +4,7 @@ import type { Project } from '@/api/types';
 import Loader from '@/components/shared/Loader';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
+import { useAuth } from '@/hooks/useAuth';
 import type { ProjectFormData } from '@/types/project';
 import { Edit, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -41,6 +42,7 @@ export default function ProjectTable({
     const [modalOpen, setModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const { can } = useAuth();
 
     // For now, we'll do client-side search filtering on the current page's results
     // In a full implementation, search would be sent to the API
@@ -159,12 +161,16 @@ export default function ProjectTable({
             </td>,
             <td key={p.id + '-actions'} className="px-4 py-4">
                 <div className="flex items-center gap-2">
-                    <Button onClick={() => handleEdit(p)} variant="outline" size="sm">
-                        <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button onClick={() => handleDelete(p.slug)} variant="danger" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {can('edit_projects') && (
+                        <Button onClick={() => handleEdit(p)} variant="outline" size="sm">
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                    )}
+                    {can('delete_projects') && (
+                        <Button onClick={() => handleDelete(p.slug)} variant="danger" size="sm">
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    )}
                 </div>
             </td>
         ]
@@ -196,10 +202,12 @@ export default function ProjectTable({
                             onChange={(e) => setSearchValue(e.target.value)}
                             className="w-full sm:w-64 px-4 py-2.5 border border-slate-200/70 rounded-full bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-300"
                         />
-                        <Button onClick={handleNewProject}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            New Project
-                        </Button>
+                        {can('create_projects') && (
+                            <Button onClick={handleNewProject}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                New Project
+                            </Button>
+                        )}
                     </div>
                 </div>
                 {filteredProjects.length === 0 ? (

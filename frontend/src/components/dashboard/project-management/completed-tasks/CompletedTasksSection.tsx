@@ -114,9 +114,8 @@ export default function CompletedTasksSection() {
                                 <span key="desc" className="max-w-xs truncate block">{task.description || 'No description'}</span>,
                                 task.sprint_name || task.sprint || 'N/A',
                                 task.updated_at ? new Date(task.updated_at).toLocaleDateString() : 'N/A',
-                                <div className="flex gap-2">
+                                <div key="actions" className="flex gap-2">
                                     <Button
-                                        key="move"
                                         onClick={() => handleMoveBack(task.slug)}
                                         variant="outline"
                                         size="sm"
@@ -124,7 +123,6 @@ export default function CompletedTasksSection() {
                                         Move to Testing
                                     </Button>
                                     <Button
-                                        key="delete"
                                         onClick={() => handleDeleteTask(task.slug)}
                                         variant="outline"
                                         size="sm"

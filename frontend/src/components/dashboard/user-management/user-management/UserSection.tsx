@@ -13,6 +13,7 @@ import TerminatedEmployeeTable from "./Employees/TerminatedEmployeeTable";
 import EmployeeModal from "./Employees/EmployeeModal";
 import InviteModal from "./Employees/InviteModal";
 import { useEmployees } from "@/hooks/useEmployees";
+import { useAuth } from "@/hooks/useAuth";
 import { getUsers } from "@/api/users";
 import { API_BASE, resendInvitation, deleteInvitation } from "@/api";
 import { authFetch } from "@/api/client";
@@ -58,6 +59,7 @@ export const UserSection = () => {
     const [invitesLoading, setInvitesLoading] = useState(false);
 
     const { employees, loading, createEmployee, updateEmployee, deleteEmployee, refetch } = useEmployees();
+    const { can } = useAuth();
     const [users, setUsers] = useState<Array<{
         id: number;
         name: string;
@@ -277,9 +279,11 @@ export const UserSection = () => {
                 <div className="flex justify-between items-center mb-4">
                     {activeTab === 'employees' && (
                         <div className="flex items-center space-x-4">
+                            {can('view_all_employees') && (
                             <Button onClick={handleAddEmployee} className="bg-blue-600 text-white">
                                 + Add Employee
                             </Button>
+                            )}
                             {/* Employee Sub-tabs */}
                             <div className="flex bg-gray-100 rounded-lg p-1">
                                 <button
@@ -303,7 +307,7 @@ export const UserSection = () => {
                             </div>
                         </div>
                     )}
-                    {activeTab === 'invites' && (
+                    {activeTab === 'invites' && can('invite_members') && (
                         <div className="flex items-center space-x-4">
                             <Button onClick={handleInviteMember} className="bg-blue-600 text-white">
                                 + Invite Member

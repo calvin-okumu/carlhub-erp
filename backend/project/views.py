@@ -28,7 +28,11 @@ from accounts.audit import AuditLogger, get_client_ip
 from accounts.email_service import EmailService, EmailError
 
 from .models import Client, Invoice, Milestone, Payment, Project, Sprint, Task
-from .permissions import CanManageClients, CanManageInvoices, CanManageMilestones, CanManagePayments, CanManageProjects, CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner
+from .permissions import (
+    CanManageClients, CanManageInvoices, CanManageInvitations,
+    CanManageMilestones, CanManagePayments, CanManageProjects,
+    CanManageSprints, CanManageTasks, IsTenantCreator, IsTenantOwner,
+)
 from .serializers import HealthCheckSerializer
 from .serializers import ClientSerializer, CustomUserSerializer, InvitationSerializer, InvoiceSerializer, MilestoneSerializer, PaymentSerializer, ProjectSerializer, SprintSerializer, TaskSerializer, TenantSerializer, UserTenantSerializer
 
@@ -1233,7 +1237,7 @@ class InvitationViewSet(TenantScopedMixin, viewsets.ModelViewSet):
     """
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
-    permission_classes = [permissions.IsAuthenticated, CanManageTasks]
+    permission_classes = [permissions.IsAuthenticated, CanManageInvitations]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["tenant", "is_used", "role"]
     search_fields = ["email", "tenant__name"]
@@ -1344,6 +1348,71 @@ class UserViewSet(viewsets.ModelViewSet):
 
 def login_page(request):
     return render(request, 'login.html')
+
+
+@extend_schema(
+    summary="Current user identity + RBAC context",
+    description=(
+        "Returns the authenticated user's basic info together with their "
+        "role, is_owner flag, and tenant details.  This is the single "
+        "endpoint the frontend calls after login to populate its RBAC "
+        "context (stored in localStorage as 'user')."
+    ),
+    responses={
+        200: {
+            'description': 'User identity and RBAC context',
+            'type': 'object',
+            'properties': {
+                'id':          {'type': 'integer'},
+                'email':       {'type': 'string'},
+                'first_name':  {'type': 'string'},
+                'last_name':   {'type': 'string'},
+                'role':        {'type': 'string'},
+                'is_owner':    {'type': 'boolean'},
+                'is_approved': {'type': 'boolean'},
+                'tenant':      {'type': 'string'},
+                'tenant_name': {'type': 'string'},
+                'department':  {'type': 'string', 'nullable': True},
+            },
+        },
+        401: {'description': 'Not authenticated'},
+    },
+)
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def me_view(request):
+    """Return the current user's identity and RBAC context in one call."""
+    user = request.user
+    data = {
+        'id':         user.id,
+        'email':      user.email,
+        'first_name': user.first_name,
+        'last_name':  user.last_name,
+        # RBAC fields — default to safe values if no UserTenant exists yet
+        'role':        'Employee',
+        'is_owner':    False,
+        'is_approved': False,
+        'tenant':      None,
+        'tenant_name': None,
+        'department':  None,
+    }
+
+    try:
+        ut = user.usertenant  # OneToOne reverse accessor
+        data.update({
+            'role':        ut.role,
+            'is_owner':    ut.is_owner,
+            'is_approved': ut.is_approved,
+            'tenant':      str(ut.tenant.id),
+            'tenant_name': ut.tenant.name,
+            'department':  ut.department.name if ut.department else None,
+        })
+    except Exception:
+        # No UserTenant record yet (e.g. superuser without tenant)
+        pass
+
+    return Response(data)
+
 
 @extend_schema(
     summary="User login",
@@ -1544,22 +1613,8 @@ def signup_view(request):
         is_approved = True if role == 'Tenant Owner' or invitation_token else False
         UserTenant.objects.create(user=user, tenant=tenant, is_owner=(role == 'Tenant Owner'), is_approved=is_approved, role=role)
 
-        # Assign group only if approved
-        if is_approved:
-            from django.contrib.auth.models import Group
-            group_name = {
-                'Tenant Owner': 'Tenant Owners',
-                'Employee': 'Employees',
-                'Manager': 'Project Managers'
-            }.get(role, 'Employees')
-
-            try:
-                group = Group.objects.get(name=group_name)
-                user.groups.add(group)
-            except Group.DoesNotExist:
-                # Fallback: create group if it doesn't exist (shouldn't happen with migration)
-                group, created = Group.objects.get_or_create(name=group_name)
-                user.groups.add(group)
+        # Group assignment is handled by the sync_group_membership signal on
+        # UserTenant post_save. No inline group logic needed here.
 
         # Log successful signup (with error handling)
         try:
@@ -1752,25 +1807,8 @@ def approve_member_view(request):
         member_user_tenant.is_approved = True
         member_user_tenant.save()
 
-        # Assign group based on role
-        from django.contrib.auth.models import Group
-        group_name = {
-            'Tenant Owner': 'Tenant Owners',
-            'Employee': 'Employees',
-            'Manager': 'Project Managers'
-        }.get(member_user_tenant.role, 'Employees')
-
-        try:
-            group = Group.objects.get(name=group_name)
-            member_user_tenant.user.groups.add(group)
-        except Group.DoesNotExist:
-            # Fallback: create group if it doesn't exist (shouldn't happen with migration)
-            group, created = Group.objects.get_or_create(name=group_name)
-            member_user_tenant.user.groups.add(group)
-        except Group.DoesNotExist:
-            # Fallback: create group if it doesn't exist
-            group, created = Group.objects.get_or_create(name=group_name)
-            member_user_tenant.user.groups.add(group)
+        # Group assignment is handled by the sync_group_membership signal on
+        # UserTenant post_save (triggered by member_user_tenant.save() above).
 
         # Log member approval (with error handling)
         try:
@@ -1793,7 +1831,7 @@ def approve_member_view(request):
             'type': 'object',
             'properties': {
                 'email': {'type': 'string', 'format': 'email'},
-                'role': {'type': 'string', 'enum': ['Employee', 'Manager', 'Tenant Owner']}
+                'role': {'type': 'string', 'enum': ['Employee', 'Department Manager', 'HR Manager', 'General Manager', 'Tenant Owner']}
             },
             'required': ['email']
         }
@@ -1839,14 +1877,32 @@ def invite_member_view(request):
             except UserTenant.DoesNotExist:
                 return Response({'error': 'No tenant ownership found'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if user is owner
+        # Check if user can invite (HR Manager and above, or owner)
+        from accounts.rbac import INVITER_ROLES, VALID_ROLES, can_invite_role
         try:
-            user_tenant = UserTenant.objects.get(user=request.user, tenant=tenant, is_owner=True)
+            inviter_tenant = UserTenant.objects.get(user=request.user, tenant=tenant, is_approved=True)
         except UserTenant.DoesNotExist:
-            return Response({'error': 'Only owners can invite members'}, status=status.HTTP_403_FORBIDDEN)
+            return Response({'error': 'You are not a member of this tenant'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not (inviter_tenant.is_owner or inviter_tenant.role in INVITER_ROLES):
+            return Response({'error': 'Only HR Managers and above can invite members'}, status=status.HTTP_403_FORBIDDEN)
 
         email = request.data.get('email')
         role = request.data.get('role', 'Employee')
+
+        # Validate role value
+        if role not in VALID_ROLES:
+            return Response(
+                {'error': f'Invalid role. Must be one of: {", ".join(sorted(VALID_ROLES))}'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Enforce invite ceiling — cannot invite someone to a higher role than permitted
+        if not (inviter_tenant.is_owner or can_invite_role(inviter_tenant.role, role)):
+            return Response(
+                {'error': f'You do not have permission to invite a {role}'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         if not email:
             return Response({'error': 'Email required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -2303,29 +2359,25 @@ def assign_admin_view(request):
         if owner_count <= 1:
             return Response({'error': 'Cannot remove admin role: tenant must have at least one owner'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Update the role
-    user_tenant.is_owner = assign_admin
-    user_tenant.role = 'Tenant Owner' if assign_admin else 'Employee'
-    user_tenant.save()
-
-    # Update user groups
-    from django.contrib.auth.models import Group
+    # Update the role.
+    # On promotion: set Tenant Owner.
+    # On demotion: use the caller-supplied target_role (default Employee) so
+    # that a Dept Manager promoted to owner and later demoted keeps their
+    # original role instead of being silently reset to Employee.
     if assign_admin:
-        # Add to Tenant Owners group
-        try:
-            owner_group = Group.objects.get(name='Tenant Owners')
-            target_user.groups.add(owner_group)
-        except Group.DoesNotExist:
-            pass
+        user_tenant.is_owner = True
+        user_tenant.role = 'Tenant Owner'
     else:
-        # Remove from Tenant Owners group, add to Employees
-        try:
-            owner_group = Group.objects.get(name='Tenant Owners')
-            target_user.groups.remove(owner_group)
-            employee_group = Group.objects.get(name='Employees')
-            target_user.groups.add(employee_group)
-        except Group.DoesNotExist:
-            pass
+        target_role = request.data.get('target_role', 'Employee')
+        from accounts.rbac import VALID_ROLES
+        if target_role not in VALID_ROLES:
+            target_role = 'Employee'
+        user_tenant.is_owner = False
+        user_tenant.role = target_role
+
+    # Save triggers the sync_group_membership signal which handles group
+    # assignment and removal automatically.
+    user_tenant.save()
 
     # Log the admin assignment/removal
     try:

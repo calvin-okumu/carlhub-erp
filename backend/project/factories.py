@@ -143,4 +143,4 @@ class UserTenantFactory(factory.django.DjangoModelFactory):
     tenant = factory.SubFactory(TenantFactory)
     is_owner = factory.Faker('boolean')
     is_approved = factory.LazyAttribute(lambda obj: True if obj.is_owner else factory.Faker('boolean')())
-    role = factory.Iterator(['Employee', 'Manager', 'Tenant Owner'])
+    role = factory.Iterator(['Employee', 'Department Manager', 'HR Manager', 'General Manager', 'Tenant Owner'])

@@ -18,6 +18,8 @@ export const getLeaveRequests = async (
     approved_by?: number;
     page?: number;
     page_size?: number;
+    /** Maximum number of results to return (maps to DRF ?limit=) */
+    limit?: number;
   }
 ): Promise<PaginatedResponse<LeaveRequest>> => {
   const searchParams = new URLSearchParams();

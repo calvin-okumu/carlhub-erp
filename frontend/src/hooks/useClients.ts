@@ -107,8 +107,12 @@ export function useClients() {
     const originalClient = clients.find(c => c.slug === slug);
     if (!originalClient) return;
 
-    // Optimistic update
-    setClients(prev => prev.map(c => c.slug === slug ? { ...c, ...data } : c));
+    // Optimistic update — cast tenant to string to satisfy Client type
+    setClients(prev => prev.map(c =>
+      c.slug === slug
+        ? { ...c, ...data, tenant: data.tenant !== undefined ? String(data.tenant) : c.tenant }
+        : c
+    ));
 
     setLoading(true);
     try {

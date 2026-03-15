@@ -1,6 +1,6 @@
 "use client";
 
-import { login, refreshAccessToken } from "@/api";
+import { fetchMe, login, refreshAccessToken } from "@/api/auth";
 import AuthLayout from "@/components/AuthLayout";
 import { AlertCircle, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -49,12 +49,24 @@ export default function LoginPage() {
         try {
             const result = await login(data.email, data.password);
 
+            // Store access token first so fetchMe can use it
             localStorage.setItem("access_token", result.access);
+
+            // Fetch RBAC context (role, is_owner, tenant etc.) from /api/me/
+            const me = await fetchMe(result.access);
+
             localStorage.setItem("user", JSON.stringify({
-                id: result.user_id,
-                email: result.email,
-                first_name: result.first_name,
-                last_name: result.last_name,
+                id:          result.user_id,
+                email:       result.email,
+                first_name:  result.first_name,
+                last_name:   result.last_name,
+                // RBAC fields — populated from /api/me/ response
+                role:        me?.role        ?? 'Employee',
+                is_owner:    me?.is_owner    ?? false,
+                is_approved: me?.is_approved ?? false,
+                tenant:      me?.tenant      ?? null,
+                tenant_name: me?.tenant_name ?? null,
+                department:  me?.department  ?? null,
             }));
 
             setSuccess("Login successful! Redirecting...");

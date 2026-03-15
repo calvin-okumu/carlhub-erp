@@ -40,6 +40,7 @@ urlpatterns = [
     path('projects/<slug:project_slug>/tasks/', project_tasks, name='project-tasks'),
     path('projects/<slug:project_slug>/sprints/<slug:sprint_slug>/tasks/', project_sprint_tasks, name='project-sprint-tasks'),
     path('', include(router.urls)),
+    path('me/', views.me_view, name='me'),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

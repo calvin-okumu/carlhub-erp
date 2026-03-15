@@ -51,7 +51,7 @@ class UserSpecificAccessControlTests(TestCase):
             tenant=self.tenant,
             is_owner=False,
             is_approved=True,
-            role='Manager'
+            role='HR Manager'
         )
         self.employee1_tenant = UserTenant.objects.create(
             user=self.employee1,

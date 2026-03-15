@@ -73,22 +73,21 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
         rows.push({
             key: sprint.id,
             data: [
-                <td className="px-4 py-4">
+                <td key={sprint.id + '-name'} className="px-4 py-4">
                     <div className="space-y-1">
                         <div className="text-sm font-semibold text-slate-900">{sprint.name}</div>
                         <div className="text-xs text-slate-500">Slug {sprint.slug}</div>
                     </div>
                 </td>,
-                <td className="px-4 py-4">
+                <td key={sprint.id + '-status'} className="px-4 py-4">
                     <span
-                        key={sprint.id + '-status'}
                         className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusClasses}`}
                     >
                         <span className="h-2 w-2 rounded-full bg-current" />
                         {sprint.status}
                     </span>
                 </td>,
-                <td className="px-4 py-4">
+                <td key={sprint.id + '-dates'} className="px-4 py-4">
                     <div className="space-y-1 text-xs text-slate-500">
                         <div>
                             <span className="font-semibold text-slate-700">Start</span>{' '}
@@ -100,14 +99,14 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
                         </div>
                     </div>
                 </td>,
-                <td className="px-4 py-4">
+                <td key={sprint.id + '-milestone'} className="px-4 py-4">
                     <div className="text-sm text-slate-700">{sprint.milestone_name || "-"}</div>
                 </td>,
-                <td className="px-4 py-4">
+                <td key={sprint.id + '-tasks'} className="px-4 py-4">
                     <div className="text-sm font-semibold text-slate-900">{sprint.tasks_count ?? 0}</div>
                     <div className="text-xs text-slate-500">Tasks</div>
                 </td>,
-                <td className="px-4 py-4">
+                <td key={sprint.id + '-progress'} className="px-4 py-4">
                     <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs text-slate-500">
                             <span>{progressValue}%</span>
@@ -121,8 +120,8 @@ const SprintTable = React.memo(function SprintTable({ sprints, loading, error, o
                         </div>
                     </div>
                 </td>,
-                <td className="px-4 py-4">
-                    <div key={sprint.slug + '-actions'} className="flex flex-wrap gap-2">
+                <td key={sprint.id + '-actions'} className="px-4 py-4">
+                    <div className="flex flex-wrap gap-2">
                         <Button
                             variant="outline"
                             size="sm"

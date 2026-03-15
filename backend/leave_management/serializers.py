@@ -125,16 +125,21 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
         return False
 
     def _can_create_for_others(self, user):
-        """Check if user can create leave requests for others."""
-        # Superusers can create for anyone
+        """Check if user can create leave requests for others.
+
+        HR Manager and above (including Tenant Owner) are permitted.
+        """
+        from accounts.rbac import MANAGER_ROLES
+
         if user.is_superuser:
             return True
-        
-        # Check if user has tenant admin/owner role
+
         try:
             user_tenant = user.usertenant
-            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
-        except:
+            return user_tenant.is_approved and (
+                user_tenant.is_owner or user_tenant.role in MANAGER_ROLES
+            )
+        except Exception:
             return False
 
     def create(self, validated_data):

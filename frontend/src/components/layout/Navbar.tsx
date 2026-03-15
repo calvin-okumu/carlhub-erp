@@ -13,12 +13,25 @@ import {
 import { useRouter } from "next/navigation";
 import { logout } from "@/api";
 import { useEffect, useRef, useState } from "react";
+import { useAuth, clearSession } from "@/hooks/useAuth";
+import { isSeniorOrAbove } from "@/utils/permissions";
 
 export default function Header() {
     const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const router = useRouter();
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const { user, role, isOwner } = useAuth();
+
+    // Derive display values from the session
+    const displayName = user.first_name
+        ? `${user.first_name} ${user.last_name}`.trim()
+        : user.email || 'User';
+    const initials = user.first_name
+        ? `${user.first_name[0]}${user.last_name?.[0] ?? ''}`.toUpperCase()
+        : 'U';
+    // User Management link is visible to General Manager and above, or the owner
+    const canManageUsers = isOwner || isSeniorOrAbove(role);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -117,17 +130,31 @@ export default function Header() {
                                 type="button"
                                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                                 className="flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 px-2 py-1.5 text-sm text-slate-600 hover:border-slate-300"
+                                title={`${displayName} — ${role}`}
                             >
-                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white">
-                                    <User className="h-4 w-4" />
+                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white text-xs font-bold">
+                                    {initials}
                                 </span>
-                                <span className="hidden text-xs font-semibold uppercase tracking-[0.2em] md:inline-flex">
-                                    Admin
+                                <span className="hidden flex-col items-start md:flex">
+                                    <span className="text-xs font-semibold text-slate-700 leading-tight max-w-[100px] truncate">
+                                        {displayName}
+                                    </span>
+                                    <span className="text-[10px] uppercase tracking-[0.18em] text-slate-400 leading-tight">
+                                        {role}
+                                    </span>
                                 </span>
                                 <ChevronDown className="h-4 w-4 text-slate-400" />
                             </button>
                             {isProfileMenuOpen && (
-                                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200/70 bg-white shadow-xl">
+                                <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-slate-200/70 bg-white shadow-xl">
+                                    {/* User identity header */}
+                                    <div className="px-4 py-3 border-b border-slate-100">
+                                        <p className="text-sm font-semibold text-slate-800 truncate">{displayName}</p>
+                                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                                        <span className="mt-1.5 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                                            {role}
+                                        </span>
+                                    </div>
                                     <div className="p-2">
                                         <button
                                             onClick={() => {
@@ -149,22 +176,24 @@ export default function Header() {
                                             <Building className="h-4 w-4" />
                                             Organization List
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                setIsProfileMenuOpen(false);
-                                                router.push("/dashboard/user-management/user-management");
-                                            }}
-                                            className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                                        >
-                                            <Users className="h-4 w-4" />
-                                            User Management
-                                        </button>
+                                        {/* User Management — only visible to General Manager and above */}
+                                        {canManageUsers && (
+                                            <button
+                                                onClick={() => {
+                                                    setIsProfileMenuOpen(false);
+                                                    router.push("/dashboard/user-management/user-management");
+                                                }}
+                                                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                                            >
+                                                <Users className="h-4 w-4" />
+                                                User Management
+                                            </button>
+                                        )}
                                         <div className="my-2 border-t border-slate-100" />
                                         <button
                                             onClick={async () => {
                                                 await logout();
-                                                localStorage.removeItem("access_token");
-                                                localStorage.removeItem("user");
+                                                clearSession();
                                                 setIsProfileMenuOpen(false);
                                                 router.push("/login");
                                             }}

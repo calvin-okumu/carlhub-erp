@@ -55,16 +55,23 @@ export async function getUsers(token: string): Promise<User[]> {
     throw new Error(`Expected an array of users or an object with a nested array ('results', 'data', 'users', 'members', 'items'), but got: ${typeof data}. Check console for full structure.`);
   }
 
-  // Transform UserTenant[] to User[]
+  // Transform UserTenant[] to User[], preserving RBAC fields
   return usersArray.map((ut: UserTenant) => ({
-    id: ut.user,
-    email: ut.user_email,
-    first_name: ut.user_first_name,
-    last_name: ut.user_last_name,
-    is_active: true, // Assume active since they're members
-    date_joined: '', // Not available in UserTenant
+    id:          ut.user,
+    email:       ut.user_email,
+    first_name:  ut.user_first_name,
+    last_name:   ut.user_last_name,
+    is_active:   ut.is_approved,       // treat approved = active
+    date_joined: '',                   // not available in UserTenant
     organization: ut.tenant_name,
-    job: ut.role,
+    // RBAC fields — preserved as first-class properties
+    role:        ut.role,
+    is_owner:    ut.is_owner,
+    is_approved: ut.is_approved,
+    tenant:      ut.tenant,
+    tenant_name: ut.tenant_name,
+    // Backwards compat: job is still the role string for display components
+    job:         ut.role,
   }));
 }
 

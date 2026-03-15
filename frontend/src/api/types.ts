@@ -44,7 +44,8 @@ export interface UpdateClientData {
   email?: string;
   phone?: string;
   status?: string;
-  tenant?: number;
+  /** Accept both UUID strings (GET responses) and numeric IDs (legacy) */
+  tenant?: string | number;
 }
 
 export interface User {
@@ -55,7 +56,18 @@ export interface User {
   is_active: boolean;
   date_joined: string;
   organization?: string;
+  /** Job title — kept for backward compat with existing display code */
   job?: string;
+  /** UserTenant.role — one of the five valid role strings */
+  role?: string;
+  /** Whether this user is the tenant owner */
+  is_owner?: boolean;
+  /** Whether this user's membership has been approved */
+  is_approved?: boolean;
+  /** Tenant UUID */
+  tenant?: string;
+  /** Tenant display name */
+  tenant_name?: string;
 }
 
 export interface UserProfile {
@@ -108,7 +120,8 @@ export interface UserTenant {
   tenant_name: string;
   is_owner: boolean;
   is_approved: boolean;
-  role: string;
+  /** One of the five valid role strings defined in ROLE_CHOICES */
+  role: 'Employee' | 'Department Manager' | 'HR Manager' | 'General Manager' | 'Tenant Owner';
 }
 
 export interface Project {

@@ -5,6 +5,7 @@ import type { Client } from '@/api/types';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import StatCard from '@/components/ui/StatCard';
+import { useAuth } from '@/hooks/useAuth';
 import { UserCheck, UserPlus, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -17,6 +18,7 @@ interface ClientHeaderProps {
 export default function ClientHeader({ onAddClient, searchValue, onSearchChange }: ClientHeaderProps) {
     const [allClients, setAllClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
+    const { can } = useAuth();
 
     useEffect(() => {
         const fetchAllClients = async () => {
@@ -94,9 +96,11 @@ export default function ClientHeader({ onAddClient, searchValue, onSearchChange 
                     onChange={(e) => onSearchChange(e.target.value)}
                     className="max-w-xs"
                 />
-                <Button onClick={handleAddClient}>
-                    + Add Client
-                </Button>
+                {can('create_clients') && (
+                    <Button onClick={handleAddClient}>
+                        + Add Client
+                    </Button>
+                )}
             </div>
         </div>
     );

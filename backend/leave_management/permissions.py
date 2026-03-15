@@ -1,40 +1,27 @@
 from rest_framework import permissions
 
 from accounts.models import UserTenant
+from accounts.rbac import MANAGER_ROLES
+# Import the canonical HasTenantAccess — no duplication needed
+from project.permissions import HasTenantAccess  # noqa: F401 (re-exported for compat)
 
 
 def is_tenant_admin_or_owner(user):
-    """Check if user is tenant admin or owner."""
-    # Superusers are always admins
+    """Return True if the user holds a manager-level role or is the tenant owner.
+
+    Accepts: superusers, approved UserTenants with role in MANAGER_ROLES, or
+    any user where is_owner=True.
+    """
     if user.is_superuser:
         return True
-    
-    # Check tenant admin/owner role
+
     try:
         user_tenant = user.usertenant
-        return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
-    except:
+        return user_tenant.is_approved and (
+            user_tenant.is_owner or user_tenant.role in MANAGER_ROLES
+        )
+    except Exception:
         return False
-
-
-class HasTenantAccess(permissions.BasePermission):
-    """
-    Base permission class that ensures tenant isolation for leave management.
-    All leave objects must belong to the current tenant.
-    """
-    def has_permission(self, request, view) -> bool:
-        # Allow in dev mode (no tenant context)
-        if not hasattr(request, 'tenant') or request.tenant is None:
-            return True
-        # User must be associated with the tenant
-        return bool(UserTenant.objects.filter(user=request.user, tenant=request.tenant, is_approved=True).exists())
-
-    def has_object_permission(self, request, view, obj) -> bool:
-        # Allow in dev mode
-        if not hasattr(request, 'tenant') or request.tenant is None:
-            return True
-        # Object must belong to current tenant
-        return bool(hasattr(obj, 'tenant') and obj.tenant == request.tenant)
 
 
 class CanManageLeaveRequests(permissions.BasePermission):

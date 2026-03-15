@@ -652,7 +652,7 @@ class PermissionTests(APITestCase):
         # Create UserTenant relationships for the test users
         from accounts.models import UserTenant
         UserTenant.objects.create(user=self.client_manager, tenant=self.org, is_owner=True, is_approved=True, role='Tenant Owner')
-        UserTenant.objects.create(user=self.project_manager, tenant=self.org, is_owner=False, is_approved=True, role='Manager')
+        UserTenant.objects.create(user=self.project_manager, tenant=self.org, is_owner=False, is_approved=True, role='Department Manager')
         UserTenant.objects.create(user=self.api_manager, tenant=self.org, is_owner=True, is_approved=True, role='Tenant Owner')
         # regular_user has no UserTenant relationship - should have no access
 
@@ -713,12 +713,25 @@ class GroupTests(TestCase):
         call_command('setup_groups')
 
     def test_default_groups_created(self):
-        """Test that default groups are created"""
+        """Test that the RBAC groups created by setup_groups all exist."""
         from django.contrib.auth.models import Group
-        default_groups = ['Tenant Owners', 'Project Managers', 'Employees', 'Clients', 'Administrators']
+        # Groups now mirror UserTenant.ROLE_CHOICES (one group per role) plus
+        # the legacy 'Project Managers' alias and external 'Clients' group.
+        default_groups = [
+            'Tenant Owners',
+            'General Managers',
+            'HR Managers',
+            'Department Managers',
+            'Project Managers',  # legacy alias kept for backwards compat
+            'Employees',
+            'Clients',
+        ]
 
         for group_name in default_groups:
-            self.assertTrue(Group.objects.filter(name=group_name).exists())
+            self.assertTrue(
+                Group.objects.filter(name=group_name).exists(),
+                f"Expected group '{group_name}' to exist after setup_groups",
+            )
 
     def test_user_group_assignment_on_signup(self):
         """Test that users are assigned to appropriate groups during signup"""

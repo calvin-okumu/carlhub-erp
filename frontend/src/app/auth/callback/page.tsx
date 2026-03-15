@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { API_BASE } from "@/api";
+import { fetchMe } from "@/api/auth";
 
 export default function AuthCallbackPage() {
     const router = useRouter();
@@ -18,11 +19,21 @@ export default function AuthCallbackPage() {
                 if (response.ok) {
                     const data = await response.json();
                     localStorage.setItem("access_token", data.access);
+
+                    // Fetch RBAC context from /api/me/
+                    const me = await fetchMe(data.access);
+
                     localStorage.setItem("user", JSON.stringify({
-                        id: data.user_id,
-                        email: data.email,
-                        first_name: data.first_name,
-                        last_name: data.last_name,
+                        id:          data.user_id,
+                        email:       data.email,
+                        first_name:  data.first_name,
+                        last_name:   data.last_name,
+                        role:        me?.role        ?? 'Employee',
+                        is_owner:    me?.is_owner    ?? false,
+                        is_approved: me?.is_approved ?? false,
+                        tenant:      me?.tenant      ?? null,
+                        tenant_name: me?.tenant_name ?? null,
+                        department:  me?.department  ?? null,
                     }));
                     router.push("/dashboard");
                 } else {

@@ -30,6 +30,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import type { Role } from "@/utils/permissions";
 
 type NavItem = {
     name: string;
@@ -38,6 +40,11 @@ type NavItem = {
     description?: string;
     badge?: string;
     match?: "exact" | "prefix";
+    /**
+     * Minimum roles required to see this item.
+     * Omit (undefined) to show to all authenticated users.
+     */
+    roles?: Role[];
 };
 
 const primaryItems: NavItem[] = [
@@ -117,30 +124,36 @@ const operationsItems: NavItem[] = [
     },
 ];
 
+// Finance section — General Manager and above only
+const FINANCE_ROLES: Role[] = ["General Manager", "Tenant Owner"];
 const financeItems: NavItem[] = [
     {
         name: "Accounts",
         href: "/dashboard/finance/accounts",
         icon: Wallet,
         description: "Ledgers",
+        roles: FINANCE_ROLES,
     },
     {
         name: "Quotes",
         href: "/dashboard/finance/quotes",
         icon: FileText,
         description: "Estimates",
+        roles: FINANCE_ROLES,
     },
     {
         name: "Invoices",
         href: "/dashboard/finance/invoices",
         icon: Receipt,
         description: "Billing",
+        roles: FINANCE_ROLES,
     },
     {
         name: "Expenses",
         href: "/dashboard/finance/expenses",
         icon: FileText,
         description: "Spend tracking",
+        roles: FINANCE_ROLES,
     },
 ];
 
@@ -207,12 +220,16 @@ const peopleItems: NavItem[] = [
         href: "/dashboard/leave/approvals",
         icon: ShieldCheck,
         description: "Manager view",
+        // Only Dept Manager and above can see the approvals queue
+        roles: ["Department Manager", "HR Manager", "General Manager", "Tenant Owner"],
     },
     {
         name: "Policies",
         href: "/dashboard/leave/policies",
         icon: NotebookPen,
         description: "Rules",
+        // Only HR Manager and above can manage policies
+        roles: ["HR Manager", "General Manager", "Tenant Owner"],
     },
 ];
 
@@ -265,6 +282,7 @@ export default function Sidebar() {
     const [openSection, setOpenSection] = useState<string | null>("Core");
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const isCommandCenterActive = pathname === "/dashboard";
+    const { role } = useAuth();
 
     const isActiveRoute = useCallback((item: NavItem) => {
         if (item.match === "prefix") {
@@ -329,6 +347,14 @@ export default function Sidebar() {
             {sections.map((section) => {
                 const isOpen = openSection === section.title;
 
+                // Filter items by role — undefined roles = visible to all
+                const visibleItems = section.items.filter(
+                    (item) => !item.roles || item.roles.includes(role)
+                );
+
+                // Hide the entire section if no items are visible
+                if (visibleItems.length === 0) return null;
+
                 return (
                     <div key={section.title} className="rounded-2xl border border-slate-200/70 bg-white/80 p-3">
                         <button
@@ -344,7 +370,7 @@ export default function Sidebar() {
                                 <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-slate-400">
                                     {section.title}
                                 </p>
-                                <p className="text-xs text-slate-500">{section.items.length} destinations</p>
+                                <p className="text-xs text-slate-500">{visibleItems.length} destinations</p>
                             </div>
                             <span className="flex items-center gap-2 rounded-full border border-slate-200/70 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
                                 View
@@ -356,7 +382,7 @@ export default function Sidebar() {
                             </span>
                         </button>
                         <div className={`${isOpen ? "mt-3 space-y-2" : "hidden"}`}>
-                            {section.items.map((item) => {
+                            {visibleItems.map((item) => {
                                 const isActive = isActiveRoute(item);
 
                                 return (

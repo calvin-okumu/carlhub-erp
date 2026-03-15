@@ -1,5 +1,6 @@
 import { LoginResponse, SignupResponse } from './types';
 import { API_BASE } from './index';
+import type { Session } from '@/hooks/useAuth';
 
 export async function login(
   email: string,
@@ -176,4 +177,25 @@ export async function logout(): Promise<void> {
     method: "POST",
     credentials: "include",
   });
+}
+
+/**
+ * Fetch the current user's RBAC context from /api/me/.
+ * Returns null on failure (e.g. token just expired).
+ */
+export async function fetchMe(accessToken: string): Promise<Session | null> {
+  try {
+    const response = await fetch(`${API_BASE}/me/`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+    if (!response.ok) return null;
+    return (await response.json()) as Session;
+  } catch {
+    return null;
+  }
 }

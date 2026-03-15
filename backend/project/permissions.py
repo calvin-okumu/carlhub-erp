@@ -1,6 +1,7 @@
 from rest_framework import permissions
 
 from accounts.models import UserTenant
+from accounts.rbac import INVITER_ROLES
 
 
 class HasTenantAccess(permissions.BasePermission):
@@ -512,6 +513,55 @@ class CanManageSprints(permissions.BasePermission):
             'destroy': 'delete',
         }
         return action_map.get(view.action, 'view')
+
+
+class CanManageInvitations(permissions.BasePermission):
+    """
+    Permission for the InvitationViewSet.
+
+    Reading invitations: any approved tenant member.
+    Creating / editing / deleting invitations: HR Manager role and above,
+    or the tenant owner.
+
+    This replaces the erroneous CanManageTasks guard that was previously
+    applied to InvitationViewSet.
+    """
+
+    def has_permission(self, request, view) -> bool:
+        if not hasattr(request, 'tenant') or request.tenant is None:
+            return True  # dev-mode bypass
+
+        # Must be an approved member at minimum
+        try:
+            user_tenant = UserTenant.objects.get(
+                user=request.user,
+                tenant=request.tenant,
+                is_approved=True,
+            )
+        except UserTenant.DoesNotExist:
+            return False
+
+        action = self._get_action_from_view(view)
+
+        # Read-only allowed for all approved members
+        if action == 'view':
+            return True
+
+        # Mutations require INVITER_ROLES or owner
+        return user_tenant.is_owner or user_tenant.role in INVITER_ROLES
+
+    def has_object_permission(self, request, view, obj) -> bool:
+        if not hasattr(request, 'tenant') or request.tenant is None:
+            return True  # dev-mode bypass
+        return bool(hasattr(obj, 'tenant') and obj.tenant == request.tenant)
+
+    def _get_action_from_view(self, view):
+        action_map = {
+            'list': 'view', 'retrieve': 'view',
+            'create': 'add', 'update': 'change',
+            'partial_update': 'change', 'destroy': 'delete',
+        }
+        return action_map.get(getattr(view, 'action', ''), 'view')
 
 
 # Legacy classes for backward compatibility (deprecated)

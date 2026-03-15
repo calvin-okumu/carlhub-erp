@@ -79,10 +79,13 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             return True
         
         # Check tenant admin/owner role
+        from accounts.rbac import MANAGER_ROLES
         try:
             user_tenant = user.usertenant
-            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
-        except:
+            return user_tenant.is_approved and (
+                user_tenant.is_owner or user_tenant.role in MANAGER_ROLES
+            )
+        except Exception:
             return False
 
     def perform_create(self, serializer):
@@ -344,10 +347,13 @@ class LeaveBalanceViewSet(viewsets.ModelViewSet):
             return True
         
         # Check tenant admin/owner role
+        from accounts.rbac import MANAGER_ROLES
         try:
             user_tenant = user.usertenant
-            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
-        except:
+            return user_tenant.is_approved and (
+                user_tenant.is_owner or user_tenant.role in MANAGER_ROLES
+            )
+        except Exception:
             return False
 
 
@@ -401,6 +407,9 @@ class LeavePolicyViewSet(viewsets.ModelViewSet):
         # Check tenant admin/owner role
         try:
             user_tenant = user.usertenant
-            return user_tenant.is_approved and (user_tenant.is_owner or user_tenant.role in ['Manager', 'Tenant Owner'])
-        except:
+            from accounts.rbac import MANAGER_ROLES
+            return user_tenant.is_approved and (
+                user_tenant.is_owner or user_tenant.role in MANAGER_ROLES
+            )
+        except Exception:
             return False
